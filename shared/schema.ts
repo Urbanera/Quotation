@@ -120,10 +120,29 @@ export type Image = typeof images.$inferSelect;
 export type InsertImage = z.infer<typeof insertImageSchema>;
 
 // Installation charge schema
+export const installationCharges = pgTable("installation_charges", {
+  id: serial("id").primaryKey(),
+  roomId: integer("room_id").notNull(),
+  cabinetType: text("cabinet_type").notNull(),
+  widthMm: integer("width_mm").notNull(),
+  heightMm: integer("height_mm").notNull(), 
+  areaSqft: doublePrecision("area_sqft").notNull(),
+  pricePerSqft: doublePrecision("price_per_sqft").notNull(),
+  amount: doublePrecision("amount").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertInstallationChargeSchema = createInsertSchema(installationCharges).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export interface InstallationCharge {
   id?: number;
   roomId: number;
-  description: string;
+  cabinetType: string;
   widthMm: number;
   heightMm: number;
   areaSqft: number;
@@ -151,17 +170,17 @@ export const roomFormSchema = z.object({
 });
 
 export const installationFormSchema = z.object({
-  installDescription: z.string().optional(),
+  cabinetType: z.string().min(1, "Type of cabinets is required"),
   widthMm: z.string().refine(
-    (val) => !isNaN(Number(val)) && Number(val) >= 0, 
+    (val) => !isNaN(Number(val)) && Number(val) > 0, 
     { message: "Width must be a positive number" }
-  ).optional(),
+  ),
   heightMm: z.string().refine(
-    (val) => !isNaN(Number(val)) && Number(val) >= 0, 
+    (val) => !isNaN(Number(val)) && Number(val) > 0, 
     { message: "Height must be a positive number" }
-  ).optional(),
+  ),
   pricePerSqft: z.string().refine(
-    (val) => !isNaN(Number(val)) && Number(val) >= 0, 
+    (val) => !isNaN(Number(val)) && Number(val) > 0, 
     { message: "Price per sq.ft must be a positive number" }
   ).default("130"),
 });

@@ -5,6 +5,7 @@ import {
   products, Product, InsertProduct,
   accessories, Accessory, InsertAccessory,
   images, Image, InsertImage,
+  InstallationCharge,
   QuotationWithDetails, RoomWithItems
 } from "@shared/schema";
 
