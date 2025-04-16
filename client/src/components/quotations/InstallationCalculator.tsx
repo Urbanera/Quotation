@@ -122,7 +122,7 @@ export default function InstallationCalculator({
 
   return (
     <div className="bg-white shadow rounded-lg p-4 mb-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Installation Calculator</h3>
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Installation & Handling Charges</h3>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField

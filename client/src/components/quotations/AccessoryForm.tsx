@@ -83,69 +83,33 @@ export default function AccessoryForm({
           )}
         />
         
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="sellingPrice"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Selling Price (₹)</FormLabel>
-                <FormControl>
-                  <div className="relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">₹</span>
-                    </div>
-                    <Input 
-                      placeholder="0.00"
-                      className="pl-7"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      onBlur={() => calculateDiscountedPrice()}
-                      {...field} 
-                    />
+        <FormField
+          control={form.control}
+          name="sellingPrice"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Price (₹)</FormLabel>
+              <FormControl>
+                <div className="relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">₹</span>
                   </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="discountedPrice"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Discounted Price (₹)</FormLabel>
-                <FormControl>
-                  <div className="relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">₹</span>
-                    </div>
-                    <Input 
-                      placeholder="0.00"
-                      className="pl-7"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      {...field} 
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                  <Input 
+                    placeholder="0.00"
+                    className="pl-7"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...field} 
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
         <div className="flex justify-end space-x-3">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => calculateDiscountedPrice()}
-          >
-            Calculate 10% Discount
-          </Button>
           <Button 
             type="submit" 
             disabled={isSubmitting}

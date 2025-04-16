@@ -148,18 +148,7 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
           </div>
         ) : (
           <div>
-            {/* Installation Calculator */}
-            <InstallationCalculator
-              roomId={activeRoom.id}
-              installDescription={activeRoom.installDescription}
-              widthMm={activeRoom.widthMm}
-              heightMm={activeRoom.heightMm}
-              areaSqft={activeRoom.areaSqft}
-              pricePerSqft={activeRoom.pricePerSqft}
-              installAmount={activeRoom.installAmount}
-            />
-          
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               {/* Products Section */}
               <div>
                 <ProductList 
@@ -185,6 +174,17 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                 </div>
               </div>
             </div>
+            
+            {/* Installation Calculator - moved below products and accessories */}
+            <InstallationCalculator
+              roomId={activeRoom.id}
+              installDescription={activeRoom.installDescription}
+              widthMm={activeRoom.widthMm}
+              heightMm={activeRoom.heightMm}
+              areaSqft={activeRoom.areaSqft}
+              pricePerSqft={activeRoom.pricePerSqft}
+              installAmount={activeRoom.installAmount}
+            />
           </div>
         )}
       </div>

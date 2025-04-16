@@ -223,6 +223,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const installationData = req.body;
       
+      // Ensure we're getting valid data
+      if (!id || isNaN(id)) {
+        return res.status(400).json({ message: "Invalid room ID" });
+      }
+      
+      // Check if the room exists first
+      const existingRoom = await storage.getRoom(id);
+      if (!existingRoom) {
+        return res.status(404).json({ message: "Room not found" });
+      }
+      
+      // Ensure content type is set to JSON
+      res.setHeader('Content-Type', 'application/json');
+      
       const room = await storage.updateRoom(id, {
         installDescription: installationData.installDescription,
         widthMm: installationData.widthMm,
@@ -232,13 +246,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         installAmount: installationData.installAmount
       });
       
-      if (!room) {
-        return res.status(404).json({ message: "Room not found" });
-      }
-      
-      res.json(room);
+      return res.status(200).json(room);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update installation charges" });
+      console.error("Installation update error:", error);
+      return res.status(500).json({ message: "Failed to update installation charges" });
     }
   });
 
