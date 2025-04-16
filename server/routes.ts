@@ -218,6 +218,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/rooms/:id/installation", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const installationData = req.body;
+      
+      const room = await storage.updateRoom(id, {
+        installDescription: installationData.installDescription,
+        widthMm: installationData.widthMm,
+        heightMm: installationData.heightMm,
+        areaSqft: installationData.areaSqft,
+        pricePerSqft: installationData.pricePerSqft,
+        installAmount: installationData.installAmount
+      });
+      
+      if (!room) {
+        return res.status(404).json({ message: "Room not found" });
+      }
+      
+      res.json(room);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update installation charges" });
+    }
+  });
+
   app.post("/api/quotations/:quotationId/rooms", validateRequest(roomFormSchema), async (req, res) => {
     try {
       const quotationId = parseInt(req.params.quotationId);

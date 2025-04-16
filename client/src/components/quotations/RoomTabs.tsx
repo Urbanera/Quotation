@@ -10,6 +10,7 @@ import ProductList from "./ProductList";
 import AccessoryList from "./AccessoryList";
 import ImageUpload from "./ImageUpload";
 import RoomForm from "./RoomForm";
+import InstallationCalculator from "./InstallationCalculator";
 
 interface RoomTabsProps {
   quotationId: number;
@@ -146,29 +147,42 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
             <p className="text-red-500">Error loading room data. Please try again.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Products Section */}
-            <div>
-              <ProductList 
-                roomId={activeRoom.id} 
-                products={activeRoom.products} 
-              />
-            </div>
-            
-            {/* Accessories and Images */}
-            <div>
-              <div className="mb-6">
-                <AccessoryList 
+          <div>
+            {/* Installation Calculator */}
+            <InstallationCalculator
+              roomId={activeRoom.id}
+              installDescription={activeRoom.installDescription}
+              widthMm={activeRoom.widthMm}
+              heightMm={activeRoom.heightMm}
+              areaSqft={activeRoom.areaSqft}
+              pricePerSqft={activeRoom.pricePerSqft}
+              installAmount={activeRoom.installAmount}
+            />
+          
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Products Section */}
+              <div>
+                <ProductList 
                   roomId={activeRoom.id} 
-                  accessories={activeRoom.accessories} 
+                  products={activeRoom.products} 
                 />
               </div>
               
+              {/* Accessories and Images */}
               <div>
-                <ImageUpload 
-                  roomId={activeRoom.id} 
-                  images={activeRoom.images} 
-                />
+                <div className="mb-6">
+                  <AccessoryList 
+                    roomId={activeRoom.id} 
+                    accessories={activeRoom.accessories} 
+                  />
+                </div>
+                
+                <div>
+                  <ImageUpload 
+                    roomId={activeRoom.id} 
+                    images={activeRoom.images} 
+                  />
+                </div>
               </div>
             </div>
           </div>
