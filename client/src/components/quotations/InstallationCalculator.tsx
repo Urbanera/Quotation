@@ -59,8 +59,30 @@ export default function InstallationCalculator({
   // Update installation mutation
   const updateInstallationMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest("PUT", `/api/rooms/${roomId}/installation`, data);
-      return await response.json();
+      try {
+        // Get the current room data first
+        const roomResponse = await apiRequest("GET", `/api/rooms/${roomId}`);
+        const roomData = await roomResponse.json();
+        
+        // Use a regular room update instead of a specialized installation endpoint
+        const response = await apiRequest("PUT", `/api/rooms/${roomId}`, {
+          name: roomData.name,
+          quotationId: roomData.quotationId,
+          description: roomData.description || "",
+          order: roomData.order,
+          // Update installation fields
+          installDescription: data.installDescription,
+          widthMm: data.widthMm ? parseInt(data.widthMm, 10) : null,
+          heightMm: data.heightMm ? parseInt(data.heightMm, 10) : null,
+          areaSqft: data.areaSqft,
+          pricePerSqft: data.pricePerSqft ? parseFloat(data.pricePerSqft) : 130,
+          installAmount: data.installAmount
+        });
+        return await response.json();
+      } catch (error) {
+        console.error("Installation update error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
@@ -70,7 +92,8 @@ export default function InstallationCalculator({
         description: "Installation charges have been updated successfully.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Mutation error:", error);
       toast({
         title: "Error",
         description: "Failed to update installation charges.",

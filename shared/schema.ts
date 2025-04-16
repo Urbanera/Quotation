@@ -119,11 +119,24 @@ export type InsertAccessory = z.infer<typeof insertAccessorySchema>;
 export type Image = typeof images.$inferSelect;
 export type InsertImage = z.infer<typeof insertImageSchema>;
 
+// Installation charge schema
+export interface InstallationCharge {
+  id?: number;
+  roomId: number;
+  description: string;
+  widthMm: number;
+  heightMm: number;
+  areaSqft: number;
+  pricePerSqft: number;
+  amount: number;
+}
+
 // Define extended types for client-side use
 export interface RoomWithItems extends Room {
   products: Product[];
   accessories: Accessory[];
   images: Image[];
+  installationCharges?: InstallationCharge[];
 }
 
 export interface QuotationWithDetails extends Quotation {

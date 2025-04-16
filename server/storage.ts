@@ -54,6 +54,8 @@ export interface IStorage {
   createImage(image: InsertImage): Promise<Image>;
   deleteImage(id: number): Promise<boolean>;
   reorderImages(imageIds: number[]): Promise<boolean>;
+
+
 }
 
 export class MemStorage implements IStorage {
