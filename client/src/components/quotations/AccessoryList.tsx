@@ -1,0 +1,269 @@
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Accessory } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import AccessoryForm from "./AccessoryForm";
+
+interface AccessoryListProps {
+  roomId: number;
+  accessories: Accessory[];
+}
+
+export default function AccessoryList({ roomId, accessories }: AccessoryListProps) {
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(null);
+  const [accessoryToDelete, setAccessoryToDelete] = useState<Accessory | null>(null);
+  const { toast } = useToast();
+
+  // Add accessory mutation
+  const addAccessoryMutation = useMutation({
+    mutationFn: async (accessoryData: Omit<Accessory, 'id'>) => {
+      const response = await apiRequest("POST", `/api/rooms/${roomId}/accessories`, accessoryData);
+      return await response.json();
+    },
+    onSuccess: () => {
+      setIsAddDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      toast({
+        title: "Accessory added",
+        description: "Accessory has been added successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add accessory.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Edit accessory mutation
+  const editAccessoryMutation = useMutation({
+    mutationFn: async (accessoryData: Omit<Accessory, 'id' | 'roomId'>) => {
+      if (!selectedAccessory) return null;
+      const response = await apiRequest("PUT", `/api/accessories/${selectedAccessory.id}`, accessoryData);
+      return await response.json();
+    },
+    onSuccess: () => {
+      setIsEditDialogOpen(false);
+      setSelectedAccessory(null);
+      queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      toast({
+        title: "Accessory updated",
+        description: "Accessory has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update accessory.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete accessory mutation
+  const deleteAccessoryMutation = useMutation({
+    mutationFn: async (accessoryId: number) => {
+      await apiRequest("DELETE", `/api/accessories/${accessoryId}`);
+    },
+    onSuccess: () => {
+      setAccessoryToDelete(null);
+      queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      toast({
+        title: "Accessory deleted",
+        description: "Accessory has been removed successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete accessory.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleAddAccessory = (data: any) => {
+    addAccessoryMutation.mutate({
+      roomId,
+      name: data.name,
+      description: data.description || "",
+      sellingPrice: parseFloat(data.sellingPrice),
+      discountedPrice: parseFloat(data.discountedPrice),
+    });
+  };
+
+  const handleEditAccessory = (data: any) => {
+    editAccessoryMutation.mutate({
+      name: data.name,
+      description: data.description || "",
+      sellingPrice: parseFloat(data.sellingPrice),
+      discountedPrice: parseFloat(data.discountedPrice),
+    });
+  };
+
+  const handleDeleteAccessory = () => {
+    if (accessoryToDelete) {
+      deleteAccessoryMutation.mutate(accessoryToDelete.id);
+    }
+  };
+
+  const handleEditClick = (accessory: Accessory) => {
+    setSelectedAccessory(accessory);
+    setIsEditDialogOpen(true);
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg leading-6 font-medium text-gray-900">Accessories</h3>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="bg-indigo-100 text-indigo-600 hover:bg-indigo-200 border-none">
+              <Plus className="h-4 w-4 mr-1" />
+              Add Accessory
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Accessory</DialogTitle>
+            </DialogHeader>
+            <AccessoryForm 
+              onSubmit={handleAddAccessory} 
+              isSubmitting={addAccessoryMutation.isPending}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
+      
+      {accessories.length === 0 ? (
+        <div className="bg-white border rounded-md p-6 mb-4 text-center">
+          <p className="text-gray-500 text-sm">No accessories added yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {accessories.map((accessory) => (
+            <div 
+              key={accessory.id} 
+              className="bg-white border rounded-md p-4 mb-4 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900">{accessory.name}</h4>
+                  {accessory.description && (
+                    <p className="text-sm text-gray-500 mt-1">{accessory.description}</p>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleEditClick(accessory)}
+                    className="text-gray-400 hover:text-gray-500"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span className="sr-only">Edit</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setAccessoryToDelete(accessory)}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500">Selling Price</label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">₹</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={accessory.sellingPrice}
+                      readOnly
+                      className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md bg-gray-50"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500">Discounted Price</label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">₹</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={accessory.discountedPrice}
+                      readOnly
+                      className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md bg-gray-50"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Edit Accessory Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Accessory</DialogTitle>
+          </DialogHeader>
+          {selectedAccessory && (
+            <AccessoryForm 
+              onSubmit={handleEditAccessory} 
+              isSubmitting={editAccessoryMutation.isPending}
+              defaultValues={selectedAccessory}
+              isEdit
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!accessoryToDelete} onOpenChange={(open) => !open && setAccessoryToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {accessoryToDelete?.name}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteAccessory}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

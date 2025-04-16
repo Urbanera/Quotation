@@ -1,0 +1,243 @@
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { FileText, FileOutput } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { QuotationWithDetails, Room } from "@shared/schema";
+
+interface QuotationSummaryProps {
+  quotationId: number;
+  installationHandling: number;
+  setInstallationHandling: (value: number) => void;
+  gstPercentage: number;
+  setGstPercentage: (value: number) => void;
+  onSave: () => void;
+}
+
+export default function QuotationSummary({
+  quotationId,
+  installationHandling,
+  setInstallationHandling,
+  gstPercentage,
+  setGstPercentage,
+  onSave
+}: QuotationSummaryProps) {
+  const { toast } = useToast();
+
+  const { data: quotation, isLoading } = useQuery<QuotationWithDetails>({
+    queryKey: [`/api/quotations/${quotationId}`],
+    enabled: !!quotationId,
+  });
+
+  // Input change handlers
+  const handleInstallationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value) && value >= 0) {
+      setInstallationHandling(value);
+    }
+  };
+
+  const handleGstChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value) && value >= 0) {
+      setGstPercentage(value);
+    }
+  };
+
+  const calculateTotals = () => {
+    if (!quotation) return {
+      totalSelling: 0,
+      totalDiscounted: 0,
+      gstAmount: 0,
+      finalPrice: 0
+    };
+    
+    const totalSelling = quotation.totalSellingPrice;
+    const totalDiscounted = quotation.totalDiscountedPrice;
+    const gstAmount = (totalDiscounted + installationHandling) * (gstPercentage / 100);
+    const finalPrice = totalDiscounted + installationHandling + gstAmount;
+    
+    return {
+      totalSelling,
+      totalDiscounted,
+      gstAmount,
+      finalPrice
+    };
+  };
+
+  const totals = calculateTotals();
+
+  if (isLoading) {
+    return (
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="h-10 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!quotation) {
+    return (
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <p className="text-red-500">Error loading quotation data. Please try again.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white shadow rounded-lg mb-6">
+      <div className="px-4 py-5 sm:p-6">
+        <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Quotation Summary</h3>
+        
+        <div className="overflow-hidden border border-gray-200 rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Product Description
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Selling Price
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Discounted Price
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {quotation.rooms.map((room) => (
+                <tr key={room.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {room.name.toUpperCase()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    ₹{room.sellingPrice.toLocaleString('en-IN')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    ₹{room.discountedPrice.toLocaleString('en-IN')}
+                  </td>
+                </tr>
+              ))}
+              
+              <tr className="bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  Total Of All Items
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                  ₹{totals.totalSelling.toLocaleString('en-IN')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600 text-right">
+                  ₹{totals.totalDiscounted.toLocaleString('en-IN')}
+                </td>
+              </tr>
+              
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  Installation and Handling
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  ₹{installationHandling.toLocaleString('en-IN')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  ₹{installationHandling.toLocaleString('en-IN')}
+                </td>
+              </tr>
+              
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  GST {gstPercentage}%
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  ₹{((totals.totalSelling + installationHandling) * (gstPercentage / 100)).toLocaleString('en-IN')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  ₹{totals.gstAmount.toLocaleString('en-IN')}
+                </td>
+              </tr>
+              
+              <tr className="bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                  Final Price
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
+                  ₹{(totals.totalSelling + installationHandling + ((totals.totalSelling + installationHandling) * (gstPercentage / 100))).toLocaleString('en-IN')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
+                  ₹{totals.finalPrice.toLocaleString('en-IN')}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+          <div className="sm:col-span-3">
+            <label htmlFor="installation-handling" className="block text-sm font-medium text-gray-700">Installation and Handling</label>
+            <div className="mt-1 relative rounded-md shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="text-gray-500 sm:text-sm">₹</span>
+              </div>
+              <Input
+                type="number"
+                id="installation-handling"
+                value={installationHandling}
+                onChange={handleInstallationChange}
+                onBlur={onSave}
+                className="pl-7 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+          </div>
+          <div className="sm:col-span-3">
+            <label htmlFor="gst-percentage" className="block text-sm font-medium text-gray-700">GST Percentage</label>
+            <div className="mt-1 relative rounded-md shadow-sm">
+              <Input
+                type="number"
+                id="gst-percentage"
+                value={gstPercentage}
+                onChange={handleGstChange}
+                onBlur={onSave}
+                className="pr-8 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <span className="text-gray-500 sm:text-sm">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-6 flex justify-end space-x-3">
+          <Button
+            variant="outline"
+            onClick={() => {
+              toast({
+                title: "Feature coming soon",
+                description: "Basic quote generation will be available soon."
+              });
+            }}
+            className="gap-2"
+          >
+            <FileText className="h-5 w-5" />
+            Basic Quote
+          </Button>
+          <Button
+            onClick={() => {
+              toast({
+                title: "Feature coming soon",
+                description: "Presentation quote generation will be available soon."
+              });
+            }}
+            className="bg-indigo-600 hover:bg-indigo-700 gap-2"
+          >
+            <FileOutput className="h-5 w-5" />
+            Presentation Quote
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
