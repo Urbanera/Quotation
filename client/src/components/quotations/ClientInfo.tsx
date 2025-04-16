@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Customer } from "@shared/schema";
 import {
@@ -38,18 +38,16 @@ export default function ClientInfo({
       <h3 className="text-lg leading-6 font-medium text-gray-900">Client Information</h3>
       <div className="mt-4 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
         <div className="sm:col-span-6">
-          <FormItem>
-            <FormLabel>Customer</FormLabel>
+          <div className="grid gap-1.5">
+            <Label htmlFor="customer-select">Customer</Label>
             <Select 
               value={selectedCustomerId?.toString() || ""} 
               onValueChange={(value) => onCustomerSelect(parseInt(value))}
               disabled={isLoading}
             >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a customer" />
-                </SelectTrigger>
-              </FormControl>
+              <SelectTrigger id="customer-select">
+                <SelectValue placeholder="Select a customer" />
+              </SelectTrigger>
               <SelectContent>
                 {customers.map((customer) => (
                   <SelectItem key={customer.id} value={customer.id.toString()}>
@@ -58,42 +56,34 @@ export default function ClientInfo({
                 ))}
               </SelectContent>
             </Select>
-          </FormItem>
+          </div>
         </div>
 
         {selectedCustomer && (
           <>
             <div className="sm:col-span-3">
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input value={selectedCustomer.name} readOnly />
-                </FormControl>
-              </FormItem>
+              <div className="grid gap-1.5">
+                <Label htmlFor="customer-name">Name</Label>
+                <Input id="customer-name" value={selectedCustomer.name} readOnly />
+              </div>
             </div>
             <div className="sm:col-span-3">
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input value={selectedCustomer.email} readOnly />
-                </FormControl>
-              </FormItem>
+              <div className="grid gap-1.5">
+                <Label htmlFor="customer-email">Email</Label>
+                <Input id="customer-email" value={selectedCustomer.email} readOnly />
+              </div>
             </div>
             <div className="sm:col-span-3">
-              <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                  <Input value={selectedCustomer.phone} readOnly />
-                </FormControl>
-              </FormItem>
+              <div className="grid gap-1.5">
+                <Label htmlFor="customer-phone">Phone</Label>
+                <Input id="customer-phone" value={selectedCustomer.phone} readOnly />
+              </div>
             </div>
             <div className="sm:col-span-3">
-              <FormItem>
-                <FormLabel>Address</FormLabel>
-                <FormControl>
-                  <Input value={selectedCustomer.address} readOnly />
-                </FormControl>
-              </FormItem>
+              <div className="grid gap-1.5">
+                <Label htmlFor="customer-address">Address</Label>
+                <Input id="customer-address" value={selectedCustomer.address} readOnly />
+              </div>
             </div>
           </>
         )}
