@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Grip, Pencil } from "lucide-react";
+import { Plus, Grip, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Room, RoomWithItems } from "@shared/schema";
+import { Room, RoomWithItems, InstallationCharge } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ProductList from "./ProductList";
@@ -19,7 +19,8 @@ interface RoomTabsProps {
 export default function RoomTabs({ quotationId }: RoomTabsProps) {
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
   const [addRoomDialogOpen, setAddRoomDialogOpen] = useState(false);
-  const [editingInstallation, setEditingInstallation] = useState(false);
+  const [editingInstallation, setEditingInstallation] = useState<number | null>(null);
+  const [addingInstallation, setAddingInstallation] = useState(false);
   const { toast } = useToast();
 
   // Fetch rooms for this quotation
@@ -178,78 +179,137 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
             
             {/* Installation Charges - moved below products and accessories */}
             <div className="bg-white shadow rounded-lg p-4 mb-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Installation & Handling Charges</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Installation & Handling Charges</h3>
+                {!addingInstallation && (
+                  <Button 
+                    onClick={() => setAddingInstallation(true)}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                    size="sm"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Add Charge
+                  </Button>
+                )}
+              </div>
               
-              {/* Current installation charge */}
-              {(activeRoom.installDescription || activeRoom.widthMm || activeRoom.heightMm) && !editingInstallation && (
-                <div className="mb-6 p-4 border border-gray-200 rounded-lg">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-medium">{activeRoom.installDescription || "Installation Charge"}</h4>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-500">
-                        {activeRoom.widthMm && activeRoom.heightMm ? 
-                          `${activeRoom.widthMm} mm × ${activeRoom.heightMm} mm (${activeRoom.areaSqft?.toFixed(2)} sq.ft)` : 
-                          "Dimensions not set"}
+              {/* List installation charges */}
+              {activeRoom.installationCharges && activeRoom.installationCharges.length > 0 ? (
+                <div className="space-y-4 mb-6">
+                  {activeRoom.installationCharges.map((charge) => (
+                    <div key={charge.id} className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{charge.cabinetType || "Installation Charge"}</h4>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-500">
+                            {charge.widthMm && charge.heightMm ? 
+                              `${charge.widthMm} mm × ${charge.heightMm} mm (${charge.areaSqft.toFixed(2)} sq.ft)` : 
+                              "Dimensions not set"}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Price per sq.ft: ₹{charge.pricePerSqft.toFixed(2)}
+                          </div>
+                          <div className="font-medium text-indigo-600">
+                            Total: ₹{charge.amount.toFixed(2)}
+                          </div>
+                        </div>
                       </div>
-                      <div className="font-medium text-indigo-600">
-                        ₹{activeRoom.installAmount?.toFixed(2) || "0.00"}
+                      <div className="mt-2 flex justify-end space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingInstallation(charge.id || null)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 border-red-600 hover:bg-red-50"
+                          onClick={() => {
+                            if (charge.id) {
+                              apiRequest("DELETE", `/api/installation-charges/${charge.id}`)
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: [`/api/rooms/${activeRoom.id}`] });
+                                  queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+                                  toast({
+                                    title: "Installation charge deleted",
+                                    description: "The installation charge has been deleted successfully.",
+                                  });
+                                })
+                                .catch(() => {
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to delete installation charge.",
+                                    variant: "destructive",
+                                  });
+                                });
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          Delete
+                        </Button>
                       </div>
                     </div>
-                  </div>
-                  <div className="mt-2 flex justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingInstallation(true)}
-                    >
-                      <Pencil className="h-3.5 w-3.5 mr-1" />
-                      Edit
-                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500 mb-4">
+                  No installation charges added yet. Click the "Add Charge" button to add one.
+                </div>
+              )}
+              
+              {/* Installation charges total */}
+              {activeRoom.installationCharges && activeRoom.installationCharges.length > 0 && (
+                <div className="flex justify-end p-4 bg-gray-50 rounded-lg mb-4">
+                  <div className="text-right">
+                    <div className="text-sm text-gray-500">Installation Charges Total</div>
+                    <div className="font-bold text-lg text-indigo-600">
+                      ₹{activeRoom.installationCharges.reduce((sum, charge) => sum + charge.amount, 0).toFixed(2)}
+                    </div>
                   </div>
                 </div>
               )}
               
-              {/* Editing the existing installation charge */}
-              {editingInstallation && (
+              {/* Editing an installation charge */}
+              {editingInstallation !== null && (
                 <div className="mb-6">
                   <div className="flex justify-between items-center mb-4">
                     <h4 className="text-md font-medium">Edit Installation Charge</h4>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setEditingInstallation(false)}
+                      onClick={() => setEditingInstallation(null)}
                     >
                       Cancel
                     </Button>
                   </div>
                   <InstallationCalculator
                     roomId={activeRoom.id}
-                    installDescription={activeRoom.installDescription}
-                    widthMm={activeRoom.widthMm}
-                    heightMm={activeRoom.heightMm}
-                    areaSqft={activeRoom.areaSqft}
-                    pricePerSqft={activeRoom.pricePerSqft}
-                    installAmount={activeRoom.installAmount}
-                    onSaveSuccess={() => setEditingInstallation(false)}
+                    charge={activeRoom.installationCharges?.find(charge => charge.id === editingInstallation) || null}
+                    onSaveSuccess={() => setEditingInstallation(null)}
                   />
                 </div>
               )}
               
               {/* Adding a new installation charge */}
-              {!editingInstallation && !(activeRoom.installDescription || activeRoom.widthMm || activeRoom.heightMm) && (
+              {addingInstallation && (
                 <div className="mb-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-md font-medium">Add Installation Charge</h4>
+                    <h4 className="text-md font-medium">Add New Installation Charge</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAddingInstallation(false)}
+                    >
+                      Cancel
+                    </Button>
                   </div>
                   <InstallationCalculator
                     roomId={activeRoom.id}
-                    installDescription={null}
-                    widthMm={null}
-                    heightMm={null}
-                    areaSqft={null}
-                    pricePerSqft={130}
-                    installAmount={null}
-                    onSaveSuccess={() => {}}
+                    onSaveSuccess={() => setAddingInstallation(false)}
                   />
                 </div>
               )}
