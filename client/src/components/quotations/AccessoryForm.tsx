@@ -22,18 +22,7 @@ const accessoryFormSchema = z.object({
   sellingPrice: z.string().refine(
     (val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, 
     { message: "Selling price must be a positive number" }
-  ),
-  discountedPrice: z.string().refine(
-    (val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, 
-    { message: "Discounted price must be a positive number" }
-  ),
-}).refine((data) => {
-  const sellingPrice = parseFloat(data.sellingPrice);
-  const discountedPrice = parseFloat(data.discountedPrice);
-  return discountedPrice <= sellingPrice;
-}, {
-  message: "Discounted price cannot be higher than selling price",
-  path: ["discountedPrice"],
+  )
 });
 
 interface AccessoryFormProps {
@@ -56,18 +45,8 @@ export default function AccessoryForm({
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
       sellingPrice: defaultValues?.sellingPrice?.toString() || "",
-      discountedPrice: defaultValues?.discountedPrice?.toString() || "",
     },
   });
-
-  // Auto-calculate discounted price (10% off by default)
-  const calculateDiscountedPrice = () => {
-    const sellingPrice = parseFloat(form.getValues("sellingPrice"));
-    if (!isNaN(sellingPrice)) {
-      const discountedPrice = (sellingPrice * 0.9).toFixed(2);
-      form.setValue("discountedPrice", discountedPrice);
-    }
-  };
 
   return (
     <Form {...form}>

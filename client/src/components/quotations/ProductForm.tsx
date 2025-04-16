@@ -22,18 +22,7 @@ const productFormSchema = z.object({
   sellingPrice: z.string().refine(
     (val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, 
     { message: "Selling price must be a positive number" }
-  ),
-  discountedPrice: z.string().refine(
-    (val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, 
-    { message: "Discounted price must be a positive number" }
-  ),
-}).refine((data) => {
-  const sellingPrice = parseFloat(data.sellingPrice);
-  const discountedPrice = parseFloat(data.discountedPrice);
-  return discountedPrice <= sellingPrice;
-}, {
-  message: "Discounted price cannot be higher than selling price",
-  path: ["discountedPrice"],
+  )
 });
 
 interface ProductFormProps {
@@ -56,18 +45,8 @@ export default function ProductForm({
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
       sellingPrice: defaultValues?.sellingPrice?.toString() || "",
-      discountedPrice: defaultValues?.discountedPrice?.toString() || "",
     },
   });
-
-  // Auto-calculate discounted price (10% off by default)
-  const calculateDiscountedPrice = () => {
-    const sellingPrice = parseFloat(form.getValues("sellingPrice"));
-    if (!isNaN(sellingPrice)) {
-      const discountedPrice = (sellingPrice * 0.9).toFixed(2);
-      form.setValue("discountedPrice", discountedPrice);
-    }
-  };
 
   return (
     <Form {...form}>
@@ -104,69 +83,33 @@ export default function ProductForm({
           )}
         />
         
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="sellingPrice"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Selling Price (₹)</FormLabel>
-                <FormControl>
-                  <div className="relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">₹</span>
-                    </div>
-                    <Input 
-                      placeholder="0.00"
-                      className="pl-7"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      onBlur={() => calculateDiscountedPrice()}
-                      {...field} 
-                    />
+        <FormField
+          control={form.control}
+          name="sellingPrice"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Selling Price (₹)</FormLabel>
+              <FormControl>
+                <div className="relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">₹</span>
                   </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="discountedPrice"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Discounted Price (₹)</FormLabel>
-                <FormControl>
-                  <div className="relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">₹</span>
-                    </div>
-                    <Input 
-                      placeholder="0.00"
-                      className="pl-7"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      {...field} 
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                  <Input 
+                    placeholder="0.00"
+                    className="pl-7"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...field} 
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div className="flex justify-end space-x-3">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => calculateDiscountedPrice()}
-          >
-            Calculate 10% Discount
-          </Button>
+        <div className="flex justify-end">
           <Button 
             type="submit" 
             disabled={isSubmitting}
