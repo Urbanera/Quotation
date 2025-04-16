@@ -27,6 +27,7 @@ interface InstallationCalculatorProps {
   areaSqft?: number | null;
   pricePerSqft?: number | null;
   installAmount?: number | null;
+  onSaveSuccess?: () => void;
 }
 
 export default function InstallationCalculator({
@@ -36,7 +37,8 @@ export default function InstallationCalculator({
   heightMm,
   areaSqft,
   pricePerSqft,
-  installAmount
+  installAmount,
+  onSaveSuccess
 }: InstallationCalculatorProps) {
   const { toast } = useToast();
   const initialArea = areaSqft !== undefined && areaSqft !== null ? areaSqft : null;
@@ -91,6 +93,10 @@ export default function InstallationCalculator({
         title: "Installation charges updated",
         description: "Installation charges have been updated successfully.",
       });
+      
+      if (onSaveSuccess) {
+        onSaveSuccess();
+      }
     },
     onError: (error) => {
       console.error("Mutation error:", error);
@@ -145,7 +151,7 @@ export default function InstallationCalculator({
 
   return (
     <div className="bg-white shadow rounded-lg p-4 mb-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Installation & Handling Charges</h3>
+      {/* Title moved to parent component */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField

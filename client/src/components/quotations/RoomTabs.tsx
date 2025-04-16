@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Grip } from "lucide-react";
+import { Plus, Grip, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Room, RoomWithItems } from "@shared/schema";
@@ -19,6 +19,7 @@ interface RoomTabsProps {
 export default function RoomTabs({ quotationId }: RoomTabsProps) {
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
   const [addRoomDialogOpen, setAddRoomDialogOpen] = useState(false);
+  const [editingInstallation, setEditingInstallation] = useState(false);
   const { toast } = useToast();
 
   // Fetch rooms for this quotation
@@ -175,16 +176,84 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
               </div>
             </div>
             
-            {/* Installation Calculator - moved below products and accessories */}
-            <InstallationCalculator
-              roomId={activeRoom.id}
-              installDescription={activeRoom.installDescription}
-              widthMm={activeRoom.widthMm}
-              heightMm={activeRoom.heightMm}
-              areaSqft={activeRoom.areaSqft}
-              pricePerSqft={activeRoom.pricePerSqft}
-              installAmount={activeRoom.installAmount}
-            />
+            {/* Installation Charges - moved below products and accessories */}
+            <div className="bg-white shadow rounded-lg p-4 mb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Installation & Handling Charges</h3>
+              
+              {/* Current installation charge */}
+              {(activeRoom.installDescription || activeRoom.widthMm || activeRoom.heightMm) && !editingInstallation && (
+                <div className="mb-6 p-4 border border-gray-200 rounded-lg">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium">{activeRoom.installDescription || "Installation Charge"}</h4>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-500">
+                        {activeRoom.widthMm && activeRoom.heightMm ? 
+                          `${activeRoom.widthMm} mm × ${activeRoom.heightMm} mm (${activeRoom.areaSqft?.toFixed(2)} sq.ft)` : 
+                          "Dimensions not set"}
+                      </div>
+                      <div className="font-medium text-indigo-600">
+                        ₹{activeRoom.installAmount?.toFixed(2) || "0.00"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingInstallation(true)}
+                    >
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
+                      Edit
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Editing the existing installation charge */}
+              {editingInstallation && (
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-md font-medium">Edit Installation Charge</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingInstallation(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                  <InstallationCalculator
+                    roomId={activeRoom.id}
+                    installDescription={activeRoom.installDescription}
+                    widthMm={activeRoom.widthMm}
+                    heightMm={activeRoom.heightMm}
+                    areaSqft={activeRoom.areaSqft}
+                    pricePerSqft={activeRoom.pricePerSqft}
+                    installAmount={activeRoom.installAmount}
+                    onSaveSuccess={() => setEditingInstallation(false)}
+                  />
+                </div>
+              )}
+              
+              {/* Adding a new installation charge */}
+              {!editingInstallation && !(activeRoom.installDescription || activeRoom.widthMm || activeRoom.heightMm) && (
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-md font-medium">Add Installation Charge</h4>
+                  </div>
+                  <InstallationCalculator
+                    roomId={activeRoom.id}
+                    installDescription={null}
+                    widthMm={null}
+                    heightMm={null}
+                    areaSqft={null}
+                    pricePerSqft={130}
+                    installAmount={null}
+                    onSaveSuccess={() => {}}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

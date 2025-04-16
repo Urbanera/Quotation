@@ -196,8 +196,14 @@ export class MemStorage implements IStorage {
     const id = this.quotationIdCounter++;
     const now = new Date();
     const newQuotation: Quotation = {
-      ...quotation,
       id,
+      customerId: quotation.customerId,
+      totalSellingPrice: quotation.totalSellingPrice || 0,
+      totalDiscountedPrice: quotation.totalDiscountedPrice || 0,
+      installationHandling: quotation.installationHandling || 0,
+      gstPercentage: quotation.gstPercentage || 0,
+      gstAmount: quotation.gstAmount || 0,
+      finalPrice: quotation.finalPrice || 0,
       createdAt: now,
       updatedAt: now,
     };
@@ -273,9 +279,19 @@ export class MemStorage implements IStorage {
       : -1;
     
     const newRoom: Room = {
-      ...room,
       id,
+      quotationId: room.quotationId,
+      name: room.name,
       order: room.order ?? maxOrder + 1,
+      description: room.description ?? null,
+      sellingPrice: room.sellingPrice ?? 0,
+      discountedPrice: room.discountedPrice ?? 0,
+      installDescription: room.installDescription ?? null,
+      widthMm: room.widthMm ?? null, 
+      heightMm: room.heightMm ?? null,
+      areaSqft: room.areaSqft ?? null,
+      pricePerSqft: room.pricePerSqft ?? null,
+      installAmount: room.installAmount ?? null
     };
     this.rooms.set(id, newRoom);
     
