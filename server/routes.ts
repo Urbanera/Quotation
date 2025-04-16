@@ -493,6 +493,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to reorder images" });
     }
   });
+  
+  // Installation Charge routes
+  app.get("/api/rooms/:roomId/installation-charges", async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const charges = await storage.getInstallationCharges(roomId);
+      res.json(charges);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch installation charges" });
+    }
+  });
+  
+  app.get("/api/installation-charges/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const charge = await storage.getInstallationCharge(id);
+      
+      if (!charge) {
+        return res.status(404).json({ message: "Installation charge not found" });
+      }
+      
+      res.json(charge);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch installation charge" });
+    }
+  });
+  
+  app.post("/api/installation-charges", async (req, res) => {
+    try {
+      const charge = req.body;
+      
+      if (!charge.roomId || !charge.cabinetType || !charge.widthMm || 
+          !charge.heightMm || !charge.areaSqft || !charge.pricePerSqft || !charge.amount) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      const newCharge = await storage.createInstallationCharge(charge);
+      res.status(201).json(newCharge);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create installation charge" });
+    }
+  });
+  
+  app.put("/api/installation-charges/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const charge = req.body;
+      
+      const updatedCharge = await storage.updateInstallationCharge(id, charge);
+      if (!updatedCharge) {
+        return res.status(404).json({ message: "Installation charge not found" });
+      }
+      
+      res.json(updatedCharge);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update installation charge" });
+    }
+  });
+  
+  app.delete("/api/installation-charges/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteInstallationCharge(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Installation charge not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete installation charge" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

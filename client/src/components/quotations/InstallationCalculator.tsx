@@ -1,20 +1,20 @@
-import { useState, useEffect, SetStateAction } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+import * as z from "zod";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { installationFormSchema } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { InstallationCharge, installationFormSchema } from "@shared/schema";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -27,17 +27,12 @@ interface InstallationCalculatorProps {
 
 export default function InstallationCalculator({
   roomId,
-  installDescription,
-  widthMm,
-  heightMm,
-  areaSqft,
-  pricePerSqft,
-  installAmount,
+  charge,
   onSaveSuccess
 }: InstallationCalculatorProps) {
   const { toast } = useToast();
-  const initialArea = areaSqft !== undefined && areaSqft !== null ? areaSqft : null;
-  const initialAmount = installAmount !== undefined && installAmount !== null ? installAmount : null;
+  const initialArea = charge?.areaSqft || null;
+  const initialAmount = charge?.amount || null;
   
   const [calculatedArea, setCalculatedArea] = useState<number | null>(initialArea);
   const [calculatedAmount, setCalculatedAmount] = useState<number | null>(initialAmount);
@@ -46,38 +41,28 @@ export default function InstallationCalculator({
   const form = useForm<z.infer<typeof installationFormSchema>>({
     resolver: zodResolver(installationFormSchema),
     defaultValues: {
-      installDescription: installDescription || "",
-      widthMm: widthMm?.toString() || "",
-      heightMm: heightMm?.toString() || "",
-      pricePerSqft: pricePerSqft?.toString() || "130",
+      cabinetType: charge?.cabinetType || "",
+      widthMm: charge?.widthMm?.toString() || "",
+      heightMm: charge?.heightMm?.toString() || "",
+      pricePerSqft: charge?.pricePerSqft?.toString() || "130",
     },
   });
 
-  // Update installation mutation
-  const updateInstallationMutation = useMutation({
-    mutationFn: async (data: any) => {
+  // Create or update installation charge mutation
+  const installationMutation = useMutation({
+    mutationFn: async (data: InstallationCharge) => {
       try {
-        // Get the current room data first
-        const roomResponse = await apiRequest("GET", `/api/rooms/${roomId}`);
-        const roomData = await roomResponse.json();
+        // API endpoint will differ depending on whether we're creating or updating
+        const endpoint = charge?.id 
+          ? `/api/installation-charges/${charge.id}` 
+          : `/api/installation-charges`;
         
-        // Use a regular room update instead of a specialized installation endpoint
-        const response = await apiRequest("PUT", `/api/rooms/${roomId}`, {
-          name: roomData.name,
-          quotationId: roomData.quotationId,
-          description: roomData.description || "",
-          order: roomData.order,
-          // Update installation fields
-          installDescription: data.installDescription,
-          widthMm: data.widthMm ? parseInt(data.widthMm, 10) : null,
-          heightMm: data.heightMm ? parseInt(data.heightMm, 10) : null,
-          areaSqft: data.areaSqft,
-          pricePerSqft: data.pricePerSqft ? parseFloat(data.pricePerSqft) : 130,
-          installAmount: data.installAmount
-        });
+        const method = charge?.id ? "PUT" : "POST";
+        
+        const response = await apiRequest(method, endpoint, data);
         return await response.json();
       } catch (error) {
-        console.error("Installation update error:", error);
+        console.error("Installation charge error:", error);
         throw error;
       }
     },
@@ -85,8 +70,8 @@ export default function InstallationCalculator({
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
       toast({
-        title: "Installation charges updated",
-        description: "Installation charges have been updated successfully.",
+        title: "Installation charge saved",
+        description: "The installation charge has been saved successfully.",
       });
       
       if (onSaveSuccess) {
@@ -97,7 +82,7 @@ export default function InstallationCalculator({
       console.error("Mutation error:", error);
       toast({
         title: "Error",
-        description: "Failed to update installation charges.",
+        description: "Failed to save installation charge.",
         variant: "destructive",
       });
     }
@@ -134,24 +119,27 @@ export default function InstallationCalculator({
       return;
     }
 
-    updateInstallationMutation.mutate({
-      installDescription: data.installDescription,
-      widthMm: parseFloat(data.widthMm || "0"),
-      heightMm: parseFloat(data.heightMm || "0"),
+    const installationChargeData: InstallationCharge = {
+      id: charge?.id,
+      roomId: roomId,
+      cabinetType: data.cabinetType,
+      widthMm: parseFloat(data.widthMm),
+      heightMm: parseFloat(data.heightMm),
       areaSqft: calculatedArea,
-      pricePerSqft: parseFloat(data.pricePerSqft || "130"),
-      installAmount: calculatedAmount
-    });
+      pricePerSqft: parseFloat(data.pricePerSqft),
+      amount: calculatedAmount
+    };
+
+    installationMutation.mutate(installationChargeData);
   };
 
   return (
     <div className="bg-white shadow rounded-lg p-4 mb-6">
-      {/* Title moved to parent component */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="installDescription"
+            name="cabinetType"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Type of cabinets</FormLabel>
@@ -252,11 +240,11 @@ export default function InstallationCalculator({
           <div className="flex justify-end">
             <Button 
               type="submit" 
-              disabled={updateInstallationMutation.isPending}
+              disabled={installationMutation.isPending}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
-              {updateInstallationMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Installation Charges
+              {installationMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Installation Charge
             </Button>
           </div>
         </form>
