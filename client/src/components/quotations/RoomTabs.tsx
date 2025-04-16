@@ -19,7 +19,7 @@ interface RoomTabsProps {
 export default function RoomTabs({ quotationId }: RoomTabsProps) {
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
   const [addRoomDialogOpen, setAddRoomDialogOpen] = useState(false);
-  const [editingInstallation, setEditingInstallation] = useState<number | null>(null);
+  const [editingInstallationId, setEditingInstallationId] = useState<number | null>(null);
   const [addingInstallation, setAddingInstallation] = useState(false);
   const { toast } = useToast();
 
@@ -218,7 +218,7 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setEditingInstallation(charge.id || null)}
+                          onClick={() => setEditingInstallationId(charge.id || null)}
                         >
                           <Pencil className="h-3.5 w-3.5 mr-1" />
                           Edit
@@ -274,22 +274,22 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
               )}
               
               {/* Editing an installation charge */}
-              {editingInstallation !== null && (
+              {editingInstallationId !== null && (
                 <div className="mb-6">
                   <div className="flex justify-between items-center mb-4">
                     <h4 className="text-md font-medium">Edit Installation Charge</h4>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setEditingInstallation(null)}
+                      onClick={() => setEditingInstallationId(null)}
                     >
                       Cancel
                     </Button>
                   </div>
                   <InstallationCalculator
                     roomId={activeRoom.id}
-                    charge={activeRoom.installationCharges?.find(charge => charge.id === editingInstallation) || null}
-                    onSaveSuccess={() => setEditingInstallation(null)}
+                    charge={activeRoom.installationCharges?.find(charge => charge.id === editingInstallationId) || null}
+                    onSaveSuccess={() => setEditingInstallationId(null)}
                   />
                 </div>
               )}
