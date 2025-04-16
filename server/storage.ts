@@ -389,8 +389,12 @@ export class MemStorage implements IStorage {
   async createProduct(product: InsertProduct): Promise<Product> {
     const id = this.productIdCounter++;
     const newProduct: Product = {
-      ...product,
       id,
+      name: product.name,
+      description: product.description === undefined ? null : product.description,
+      sellingPrice: product.sellingPrice,
+      discountedPrice: typeof product.discountedPrice === 'number' ? product.discountedPrice : 0,
+      roomId: product.roomId
     };
     this.products.set(id, newProduct);
     
@@ -453,8 +457,12 @@ export class MemStorage implements IStorage {
   async createAccessory(accessory: InsertAccessory): Promise<Accessory> {
     const id = this.accessoryIdCounter++;
     const newAccessory: Accessory = {
-      ...accessory,
       id,
+      name: accessory.name,
+      description: accessory.description === undefined ? null : accessory.description,
+      sellingPrice: accessory.sellingPrice,
+      discountedPrice: typeof accessory.discountedPrice === 'number' ? accessory.discountedPrice : 0,
+      roomId: accessory.roomId
     };
     this.accessories.set(id, newAccessory);
     
