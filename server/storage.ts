@@ -55,8 +55,13 @@ export interface IStorage {
   createImage(image: InsertImage): Promise<Image>;
   deleteImage(id: number): Promise<boolean>;
   reorderImages(imageIds: number[]): Promise<boolean>;
-
-
+  
+  // Installation charge operations
+  getInstallationCharges(roomId: number): Promise<InstallationCharge[]>;
+  getInstallationCharge(id: number): Promise<InstallationCharge | undefined>;
+  createInstallationCharge(charge: InstallationCharge): Promise<InstallationCharge>;
+  updateInstallationCharge(id: number, charge: Partial<InstallationCharge>): Promise<InstallationCharge | undefined>;
+  deleteInstallationCharge(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -66,6 +71,7 @@ export class MemStorage implements IStorage {
   private products: Map<number, Product>;
   private accessories: Map<number, Accessory>;
   private images: Map<number, Image>;
+  private installationCharges: Map<number, InstallationCharge>;
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
@@ -73,6 +79,7 @@ export class MemStorage implements IStorage {
   private productIdCounter: number;
   private accessoryIdCounter: number;
   private imageIdCounter: number;
+  private installationChargeIdCounter: number;
   
   constructor() {
     this.customers = new Map();
@@ -81,6 +88,7 @@ export class MemStorage implements IStorage {
     this.products = new Map();
     this.accessories = new Map();
     this.images = new Map();
+    this.installationCharges = new Map();
     
     this.customerIdCounter = 1;
     this.quotationIdCounter = 1;
@@ -88,6 +96,7 @@ export class MemStorage implements IStorage {
     this.productIdCounter = 1;
     this.accessoryIdCounter = 1;
     this.imageIdCounter = 1;
+    this.installationChargeIdCounter = 1;
     
     // Add some initial data
     this.initializeData();
@@ -262,11 +271,15 @@ export class MemStorage implements IStorage {
       .filter(image => image.roomId === id)
       .sort((a, b) => a.order - b.order);
     
+    const roomInstallationCharges = Array.from(this.installationCharges.values())
+      .filter(charge => charge.roomId === id);
+    
     return {
       ...room,
       products: roomProducts,
       accessories: roomAccessories,
       images: roomImages,
+      installationCharges: roomInstallationCharges,
     };
   }
   
@@ -322,7 +335,7 @@ export class MemStorage implements IStorage {
     const room = this.rooms.get(id);
     if (!room) return false;
     
-    // Delete associated products, accessories, and images
+    // Delete associated products, accessories, images, and installation charges
     const productsToDelete = Array.from(this.products.values())
       .filter(product => product.roomId === id);
     
@@ -342,6 +355,15 @@ export class MemStorage implements IStorage {
     
     for (const image of imagesToDelete) {
       this.images.delete(image.id);
+    }
+    
+    const chargesToDelete = Array.from(this.installationCharges.values())
+      .filter(charge => charge.roomId === id);
+    
+    for (const charge of chargesToDelete) {
+      if (charge.id !== undefined) {
+        this.installationCharges.delete(charge.id);
+      }
     }
     
     const quotationId = room.quotationId;
@@ -576,6 +598,70 @@ export class MemStorage implements IStorage {
     return true;
   }
   
+  // Installation charge operations
+  async getInstallationCharges(roomId: number): Promise<InstallationCharge[]> {
+    return Array.from(this.installationCharges.values())
+      .filter(charge => charge.roomId === roomId);
+  }
+  
+  async getInstallationCharge(id: number): Promise<InstallationCharge | undefined> {
+    return this.installationCharges.get(id);
+  }
+  
+  async createInstallationCharge(charge: InstallationCharge): Promise<InstallationCharge> {
+    const id = this.installationChargeIdCounter++;
+    const newCharge: InstallationCharge = {
+      ...charge,
+      id
+    };
+    this.installationCharges.set(id, newCharge);
+    
+    // Update room and quotation prices
+    const room = this.rooms.get(charge.roomId);
+    if (room) {
+      await this.updateRoomPrices(room.id);
+      await this.updateQuotationPrices(room.quotationId);
+    }
+    
+    return newCharge;
+  }
+  
+  async updateInstallationCharge(id: number, charge: Partial<InstallationCharge>): Promise<InstallationCharge | undefined> {
+    const existingCharge = this.installationCharges.get(id);
+    if (!existingCharge) return undefined;
+    
+    const updatedCharge: InstallationCharge = {
+      ...existingCharge,
+      ...charge
+    };
+    this.installationCharges.set(id, updatedCharge);
+    
+    // Update room and quotation prices
+    const room = this.rooms.get(existingCharge.roomId);
+    if (room) {
+      await this.updateRoomPrices(room.id);
+      await this.updateQuotationPrices(room.quotationId);
+    }
+    
+    return updatedCharge;
+  }
+  
+  async deleteInstallationCharge(id: number): Promise<boolean> {
+    const charge = this.installationCharges.get(id);
+    if (!charge) return false;
+    
+    const result = this.installationCharges.delete(id);
+    
+    // Update room and quotation prices
+    const room = this.rooms.get(charge.roomId);
+    if (room) {
+      await this.updateRoomPrices(room.id);
+      await this.updateQuotationPrices(room.quotationId);
+    }
+    
+    return result;
+  }
+  
   // Helper methods for price calculations
   private async updateRoomPrices(roomId: number) {
     const room = this.rooms.get(roomId);
@@ -613,11 +699,21 @@ export class MemStorage implements IStorage {
     const totalDiscountedPrice = rooms
       .reduce((sum, room) => sum + room.discountedPrice, 0);
     
+    // Calculate total installation charges
+    let totalInstallationCharges = 0;
+    for (const room of rooms) {
+      const charges = await this.getInstallationCharges(room.id);
+      totalInstallationCharges += charges.reduce((sum, charge) => sum + charge.amount, 0);
+    }
+    
+    // Include installation charges and handling in GST calculation
+    const totalChargesAndHandling = totalInstallationCharges + quotation.installationHandling;
+    
     // Calculate GST
-    const gstAmount = (totalDiscountedPrice + quotation.installationHandling) * (quotation.gstPercentage / 100);
+    const gstAmount = (totalDiscountedPrice + totalChargesAndHandling) * (quotation.gstPercentage / 100);
     
     // Calculate final price
-    const finalPrice = totalDiscountedPrice + quotation.installationHandling + gstAmount;
+    const finalPrice = totalDiscountedPrice + totalChargesAndHandling + gstAmount;
     
     this.quotations.set(quotationId, {
       ...quotation,
