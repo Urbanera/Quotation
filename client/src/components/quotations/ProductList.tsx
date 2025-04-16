@@ -106,7 +106,7 @@ export default function ProductList({ roomId, products }: ProductListProps) {
       name: data.name,
       description: data.description || "",
       sellingPrice: parseFloat(data.sellingPrice),
-      discountedPrice: parseFloat(data.discountedPrice),
+      discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
     });
   };
 
@@ -115,7 +115,7 @@ export default function ProductList({ roomId, products }: ProductListProps) {
       name: data.name,
       description: data.description || "",
       sellingPrice: parseFloat(data.sellingPrice),
-      discountedPrice: parseFloat(data.discountedPrice),
+      discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
     });
   };
 
@@ -199,9 +199,9 @@ export default function ProductList({ roomId, products }: ProductListProps) {
                   </Button>
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="mt-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500">Selling Price</label>
+                  <label className="block text-xs font-medium text-gray-500">Price</label>
                   <div className="mt-1 relative rounded-md shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <span className="text-gray-500 sm:text-sm">₹</span>
@@ -209,20 +209,6 @@ export default function ProductList({ roomId, products }: ProductListProps) {
                     <input
                       type="text"
                       value={product.sellingPrice}
-                      readOnly
-                      className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md bg-gray-50"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500">Discounted Price</label>
-                  <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">₹</span>
-                    </div>
-                    <input
-                      type="text"
-                      value={product.discountedPrice}
                       readOnly
                       className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md bg-gray-50"
                     />

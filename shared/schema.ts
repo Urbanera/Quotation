@@ -46,6 +46,13 @@ export const rooms = pgTable("rooms", {
   sellingPrice: doublePrecision("selling_price").notNull().default(0),
   discountedPrice: doublePrecision("discounted_price").notNull().default(0),
   order: integer("order").notNull().default(0),
+  // Installation charge calculator fields
+  installDescription: text("install_description"),
+  widthMm: integer("width_mm"),
+  heightMm: integer("height_mm"),
+  areaSqft: doublePrecision("area_sqft"),
+  pricePerSqft: doublePrecision("price_per_sqft").default(130),
+  installAmount: doublePrecision("install_amount").default(0),
 });
 
 export const insertRoomSchema = createInsertSchema(rooms).omit({
@@ -59,7 +66,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description"),
   sellingPrice: doublePrecision("selling_price").notNull(),
-  discountedPrice: doublePrecision("discounted_price").notNull(),
+  discountedPrice: doublePrecision("discounted_price").notNull().default(0),
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({
@@ -73,7 +80,7 @@ export const accessories = pgTable("accessories", {
   name: text("name").notNull(),
   description: text("description"),
   sellingPrice: doublePrecision("selling_price").notNull(),
-  discountedPrice: doublePrecision("discounted_price").notNull(),
+  discountedPrice: doublePrecision("discounted_price").notNull().default(0),
 });
 
 export const insertAccessorySchema = createInsertSchema(accessories).omit({
@@ -130,11 +137,26 @@ export const roomFormSchema = z.object({
   description: z.string().optional(),
 });
 
+export const installationFormSchema = z.object({
+  installDescription: z.string().optional(),
+  widthMm: z.string().refine(
+    (val) => !isNaN(Number(val)) && Number(val) >= 0, 
+    { message: "Width must be a positive number" }
+  ).optional(),
+  heightMm: z.string().refine(
+    (val) => !isNaN(Number(val)) && Number(val) >= 0, 
+    { message: "Height must be a positive number" }
+  ).optional(),
+  pricePerSqft: z.string().refine(
+    (val) => !isNaN(Number(val)) && Number(val) >= 0, 
+    { message: "Price per sq.ft must be a positive number" }
+  ).default("130"),
+});
+
 export const productAccessoryFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   sellingPrice: z.number().min(0, "Selling price must be a positive number"),
-  discountedPrice: z.number().min(0, "Discounted price must be a positive number"),
 });
 
 export const quotationFormSchema = z.object({
