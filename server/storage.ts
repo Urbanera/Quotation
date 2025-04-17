@@ -65,6 +65,27 @@ export interface IStorage {
   createInstallationCharge(charge: InstallationCharge): Promise<InstallationCharge>;
   updateInstallationCharge(id: number, charge: Partial<InstallationCharge>): Promise<InstallationCharge | undefined>;
   deleteInstallationCharge(id: number): Promise<boolean>;
+  
+  // User operations
+  getUsers(): Promise<User[]>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUser(id: number): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
+  
+  // Team operations
+  getTeams(): Promise<Team[]>;
+  getTeam(id: number): Promise<Team | undefined>;
+  getTeamWithMembers(id: number): Promise<Team & { members: User[] }>;
+  createTeam(team: InsertTeam): Promise<Team>;
+  updateTeam(id: number, team: Partial<InsertTeam>): Promise<Team | undefined>;
+  deleteTeam(id: number): Promise<boolean>;
+  
+  // Team Member operations
+  getTeamMembers(teamId: number): Promise<User[]>;
+  addTeamMember(teamMember: InsertTeamMember): Promise<TeamMember>;
+  removeTeamMember(teamId: number, userId: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -75,6 +96,9 @@ export class MemStorage implements IStorage {
   private accessories: Map<number, Accessory>;
   private images: Map<number, Image>;
   private installationCharges: Map<number, InstallationCharge>;
+  private users: Map<number, User>;
+  private teams: Map<number, Team>;
+  private teamMembers: Map<number, TeamMember>;
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
@@ -83,6 +107,9 @@ export class MemStorage implements IStorage {
   private accessoryIdCounter: number;
   private imageIdCounter: number;
   private installationChargeIdCounter: number;
+  private userIdCounter: number;
+  private teamIdCounter: number;
+  private teamMemberIdCounter: number;
   
   constructor() {
     this.customers = new Map();
@@ -92,6 +119,9 @@ export class MemStorage implements IStorage {
     this.accessories = new Map();
     this.images = new Map();
     this.installationCharges = new Map();
+    this.users = new Map();
+    this.teams = new Map();
+    this.teamMembers = new Map();
     
     this.customerIdCounter = 1;
     this.quotationIdCounter = 1;
@@ -100,6 +130,9 @@ export class MemStorage implements IStorage {
     this.accessoryIdCounter = 1;
     this.imageIdCounter = 1;
     this.installationChargeIdCounter = 1;
+    this.userIdCounter = 1;
+    this.teamIdCounter = 1;
+    this.teamMemberIdCounter = 1;
     
     // Add some initial data
     this.initializeData();
@@ -116,6 +149,38 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     };
     this.customers.set(customer.id, customer);
+    
+    // Add admin user
+    const adminUser: User = {
+      id: this.userIdCounter++,
+      username: "admin",
+      password: "AdminPass123", // This would be hashed in a real application
+      email: "admin@example.com",
+      fullName: "Administrator",
+      role: "admin",
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.users.set(adminUser.id, adminUser);
+    
+    // Add a design team
+    const designTeam: Team = {
+      id: this.teamIdCounter++,
+      name: "Core Design Team",
+      description: "Main team of designers working on all projects",
+      createdAt: new Date()
+    };
+    this.teams.set(designTeam.id, designTeam);
+    
+    // Add admin to the design team
+    const teamMember: TeamMember = {
+      id: this.teamMemberIdCounter++,
+      teamId: designTeam.id,
+      userId: adminUser.id,
+      createdAt: new Date()
+    };
+    this.teamMembers.set(teamMember.id, teamMember);
   }
   
   // Customer operations
@@ -734,6 +799,147 @@ export class MemStorage implements IStorage {
       finalPrice,
       updatedAt: new Date(),
     });
+  }
+  
+  // User operations
+  async getUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.username === username);
+  }
+  
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+  
+  async createUser(user: InsertUser): Promise<User> {
+    const id = this.userIdCounter++;
+    const now = new Date();
+    const newUser: User = {
+      ...user,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.users.set(id, newUser);
+    return newUser;
+  }
+  
+  async updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined> {
+    const existingUser = this.users.get(id);
+    if (!existingUser) return undefined;
+    
+    const updatedUser: User = {
+      ...existingUser,
+      ...user,
+      updatedAt: new Date(),
+    };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    // Also remove user from all teams
+    const teamMembersToDelete = Array.from(this.teamMembers.values())
+      .filter(tm => tm.userId === id);
+    
+    for (const teamMember of teamMembersToDelete) {
+      this.teamMembers.delete(teamMember.id);
+    }
+    
+    return this.users.delete(id);
+  }
+  
+  // Team operations
+  async getTeams(): Promise<Team[]> {
+    return Array.from(this.teams.values());
+  }
+  
+  async getTeam(id: number): Promise<Team | undefined> {
+    return this.teams.get(id);
+  }
+  
+  async getTeamWithMembers(id: number): Promise<Team & { members: User[] }> {
+    const team = this.teams.get(id);
+    if (!team) throw new Error("Team not found");
+    
+    const teamMemberList = Array.from(this.teamMembers.values())
+      .filter(tm => tm.teamId === id);
+    
+    const members = teamMemberList.map(tm => this.users.get(tm.userId))
+      .filter((user): user is User => !!user);
+    
+    return {
+      ...team,
+      members
+    };
+  }
+  
+  async createTeam(team: InsertTeam): Promise<Team> {
+    const id = this.teamIdCounter++;
+    const newTeam: Team = {
+      ...team,
+      id,
+      createdAt: new Date(),
+    };
+    this.teams.set(id, newTeam);
+    return newTeam;
+  }
+  
+  async updateTeam(id: number, team: Partial<InsertTeam>): Promise<Team | undefined> {
+    const existingTeam = this.teams.get(id);
+    if (!existingTeam) return undefined;
+    
+    const updatedTeam: Team = {
+      ...existingTeam,
+      ...team,
+    };
+    this.teams.set(id, updatedTeam);
+    return updatedTeam;
+  }
+  
+  async deleteTeam(id: number): Promise<boolean> {
+    // Delete all team members
+    const teamMembersToDelete = Array.from(this.teamMembers.values())
+      .filter(tm => tm.teamId === id);
+    
+    for (const teamMember of teamMembersToDelete) {
+      this.teamMembers.delete(teamMember.id);
+    }
+    
+    return this.teams.delete(id);
+  }
+  
+  // Team Member operations
+  async getTeamMembers(teamId: number): Promise<User[]> {
+    const teamMemberIds = Array.from(this.teamMembers.values())
+      .filter(tm => tm.teamId === teamId)
+      .map(tm => tm.userId);
+    
+    return teamMemberIds.map(userId => this.users.get(userId))
+      .filter((user): user is User => !!user);
+  }
+  
+  async addTeamMember(teamMember: InsertTeamMember): Promise<TeamMember> {
+    const id = this.teamMemberIdCounter++;
+    const newTeamMember: TeamMember = {
+      ...teamMember,
+      id,
+      createdAt: new Date(),
+    };
+    this.teamMembers.set(id, newTeamMember);
+    return newTeamMember;
+  }
+  
+  async removeTeamMember(teamId: number, userId: number): Promise<boolean> {
+    const teamMember = Array.from(this.teamMembers.values())
+      .find(tm => tm.teamId === teamId && tm.userId === userId);
+    
+    if (!teamMember) return false;
+    
+    return this.teamMembers.delete(teamMember.id);
   }
 }
 
