@@ -6,7 +6,10 @@ import {
   accessories, Accessory, InsertAccessory,
   images, Image, InsertImage,
   InstallationCharge,
-  QuotationWithDetails, RoomWithItems
+  QuotationWithDetails, RoomWithItems,
+  users, User, InsertUser,
+  teams, Team, InsertTeam,
+  teamMembers, TeamMember, InsertTeamMember
 } from "@shared/schema";
 
 export interface IStorage {
