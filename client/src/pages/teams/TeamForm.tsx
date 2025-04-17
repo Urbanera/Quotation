@@ -1,25 +1,22 @@
-import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { Team, teamFormSchema } from '@shared/schema';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { apiRequest } from '@/lib/queryClient';
+import { teamFormSchema } from '@shared/schema';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
 interface TeamFormProps {
-  defaultValues?: Team;
+  defaultValues?: {
+    id?: number;
+    name: string;
+    description?: string;
+  };
   isEdit?: boolean;
   onSubmitSuccess: () => void;
 }
@@ -27,47 +24,66 @@ interface TeamFormProps {
 export default function TeamForm({ defaultValues, isEdit = false, onSubmitSuccess }: TeamFormProps) {
   const { toast } = useToast();
 
-  // Define form with default values
   const form = useForm<z.infer<typeof teamFormSchema>>({
     resolver: zodResolver(teamFormSchema),
-    defaultValues: isEdit 
-      ? defaultValues
-      : {
-          name: '',
-          description: '',
-        },
+    defaultValues: {
+      name: defaultValues?.name || '',
+      description: defaultValues?.description || '',
+    },
   });
 
-  // Create the mutation for handling the form submission
-  const mutation = useMutation({
+  const createTeamMutation = useMutation({
     mutationFn: async (values: z.infer<typeof teamFormSchema>) => {
-      if (isEdit && defaultValues) {
-        return await apiRequest('PUT', `/api/teams/${defaultValues.id}`, values);
-      } else {
-        return await apiRequest('POST', '/api/teams', values);
-      }
+      const response = await apiRequest('POST', '/api/teams', values);
+      return await response.json();
     },
     onSuccess: () => {
       toast({
-        title: `Team ${isEdit ? 'updated' : 'created'} successfully`,
-        description: isEdit 
-          ? "The team has been updated." 
-          : "The team has been created. You can now add members to it.",
+        title: 'Team created',
+        description: 'The team has been created successfully.',
       });
+      form.reset();
       onSubmitSuccess();
     },
     onError: (error) => {
       toast({
-        title: `Failed to ${isEdit ? 'update' : 'create'} team`,
-        description: error.message,
+        title: 'Error',
+        description: `Failed to create team: ${error.message}`,
         variant: 'destructive',
       });
     },
   });
 
-  // Handle form submission
+  const updateTeamMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof teamFormSchema>) => {
+      if (!defaultValues?.id) return null;
+      
+      const response = await apiRequest('PUT', `/api/teams/${defaultValues.id}`, values);
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Team updated',
+        description: 'The team has been updated successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/teams'] });
+      onSubmitSuccess();
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to update team: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
   function onSubmit(values: z.infer<typeof teamFormSchema>) {
-    mutation.mutate(values);
+    if (isEdit) {
+      updateTeamMutation.mutate(values);
+    } else {
+      createTeamMutation.mutate(values);
+    }
   }
 
   return (
@@ -80,16 +96,13 @@ export default function TeamForm({ defaultValues, isEdit = false, onSubmitSucces
             <FormItem>
               <FormLabel>Team Name</FormLabel>
               <FormControl>
-                <Input placeholder="Design Team" {...field} />
+                <Input {...field} />
               </FormControl>
-              <FormDescription>
-                A descriptive name for the team
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-
+        
         <FormField
           control={form.control}
           name="description"
@@ -98,28 +111,22 @@ export default function TeamForm({ defaultValues, isEdit = false, onSubmitSucces
               <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Team responsibilities and purpose..." 
+                  placeholder="Enter a brief description of this team's purpose"
+                  className="resize-none"
                   {...field} 
-                  value={field.value || ''} // Handle null value
                 />
               </FormControl>
-              <FormDescription>
-                Optional description of the team's purpose and responsibilities
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-
-        <div className="flex justify-end gap-3">
-          <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending
-              ? `${isEdit ? 'Updating' : 'Creating'}...`
-              : isEdit
-              ? 'Update Team'
-              : 'Create Team'}
-          </Button>
-        </div>
+        
+        <Button 
+          type="submit" 
+          disabled={createTeamMutation.isPending || updateTeamMutation.isPending}
+        >
+          {isEdit ? 'Update Team' : 'Create Team'}
+        </Button>
       </form>
     </Form>
   );

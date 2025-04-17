@@ -122,14 +122,21 @@ export default function UsersPage() {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle>{user.displayName}</CardTitle>
+                    <CardTitle>{user.fullName}</CardTitle>
                     <CardDescription>
                       @{user.username}
                     </CardDescription>
                   </div>
-                  <Badge className={getRoleBadgeColor(user.role)}>
-                    {user.role}
-                  </Badge>
+                  <div className="flex gap-2">
+                    {!user.active && (
+                      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                        Inactive
+                      </Badge>
+                    )}
+                    <Badge className={getRoleBadgeColor(user.role)}>
+                      {user.role}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
