@@ -35,6 +35,7 @@ export default function EditQuotation() {
     if (quotation) {
       setSelectedCustomerId(quotation.customerId);
       setInstallationHandling(quotation.installationHandling);
+      setGlobalDiscount(quotation.globalDiscount || 0);
       setGstPercentage(quotation.gstPercentage);
     }
   }, [quotation]);
@@ -47,6 +48,7 @@ export default function EditQuotation() {
       await apiRequest("PUT", `/api/quotations/${id}`, {
         customerId: selectedCustomerId,
         installationHandling,
+        globalDiscount,
         gstPercentage
       });
       
@@ -64,7 +66,7 @@ export default function EditQuotation() {
         variant: "destructive",
       });
     }
-  }, [id, selectedCustomerId, installationHandling, gstPercentage, toast]);
+  }, [id, selectedCustomerId, installationHandling, globalDiscount, gstPercentage, toast]);
 
   if (quotationLoading) {
     return (
@@ -164,6 +166,8 @@ export default function EditQuotation() {
               quotationId={parseInt(id)} 
               installationHandling={installationHandling}
               setInstallationHandling={setInstallationHandling}
+              globalDiscount={globalDiscount}
+              setGlobalDiscount={setGlobalDiscount}
               gstPercentage={gstPercentage}
               setGstPercentage={setGstPercentage}
               onSave={handleSaveQuotation}

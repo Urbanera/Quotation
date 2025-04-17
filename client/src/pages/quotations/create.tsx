@@ -16,6 +16,7 @@ export default function CreateQuotation() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [quotationId, setQuotationId] = useState<number | null>(null);
   const [installationHandling, setInstallationHandling] = useState<number>(0);
+  const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [gstPercentage, setGstPercentage] = useState<number>(18);
 
   // Fetch customers
@@ -62,6 +63,7 @@ export default function CreateQuotation() {
       createQuotationMutation.mutate({
         customerId: selectedCustomerId,
         installationHandling,
+        globalDiscount,
         gstPercentage
       });
     } else {
@@ -70,6 +72,7 @@ export default function CreateQuotation() {
         await apiRequest("PUT", `/api/quotations/${quotationId}`, {
           customerId: selectedCustomerId,
           installationHandling,
+          globalDiscount,
           gstPercentage
         });
         toast({
@@ -156,6 +159,8 @@ export default function CreateQuotation() {
               quotationId={quotationId} 
               installationHandling={installationHandling}
               setInstallationHandling={setInstallationHandling}
+              globalDiscount={globalDiscount}
+              setGlobalDiscount={setGlobalDiscount}
               gstPercentage={gstPercentage}
               setGstPercentage={setGstPercentage}
               onSave={handleSaveQuotation}
