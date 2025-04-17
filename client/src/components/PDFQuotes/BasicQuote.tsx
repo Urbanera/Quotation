@@ -104,17 +104,32 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 </td>
               </tr>
               
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Installation and Handling
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  {formatCurrency(quotation.installationHandling)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  {formatCurrency(quotation.installationHandling)}
-                </td>
-              </tr>
+              {/* Calculate total installation charges */}
+              {(() => {
+                // Get total installation charges from all rooms
+                const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
+                  if (!room.installationCharges) return sum;
+                  return sum + room.installationCharges.reduce((chargeSum, charge) => 
+                    chargeSum + charge.amount, 0);
+                }, 0);
+                
+                // Add handling charges
+                const totalWithHandling = totalInstallCharges + quotation.installationHandling;
+                
+                return (
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      Installation and Handling
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {formatCurrency(totalWithHandling)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {formatCurrency(totalWithHandling)}
+                    </td>
+                  </tr>
+                );
+              })()}
               
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -133,7 +148,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                   Final Price
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                  {formatCurrency(quotation.totalSellingPrice + quotation.installationHandling + quotation.gstAmount)}
+                  {formatCurrency(quotation.finalPrice)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
                   {formatCurrency(quotation.finalPrice)}

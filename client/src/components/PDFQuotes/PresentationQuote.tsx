@@ -146,17 +146,32 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   {formatCurrency(quotation.totalDiscountedPrice)}
                 </td>
               </tr>
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Professional Installation
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                  {formatCurrency(quotation.installationHandling)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  {formatCurrency(quotation.installationHandling)}
-                </td>
-              </tr>
+              {/* Calculate total installation charges */}
+              {(() => {
+                // Get total installation charges from all rooms
+                const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
+                  if (!room.installationCharges) return sum;
+                  return sum + room.installationCharges.reduce((chargeSum, charge) => 
+                    chargeSum + charge.amount, 0);
+                }, 0);
+                
+                // Add handling charges
+                const totalWithHandling = totalInstallCharges + quotation.installationHandling;
+                
+                return (
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      Professional Installation
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                      {formatCurrency(totalWithHandling)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {formatCurrency(totalWithHandling)}
+                    </td>
+                  </tr>
+                );
+              })()}
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   Taxes ({quotation.gstPercentage}% GST)
