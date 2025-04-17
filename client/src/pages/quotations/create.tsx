@@ -89,7 +89,7 @@ export default function CreateQuotation() {
         });
       }
     }
-  }, [selectedCustomerId, quotationId, installationHandling, gstPercentage, createQuotationMutation, toast]);
+  }, [selectedCustomerId, quotationId, installationHandling, globalDiscount, gstPercentage, createQuotationMutation, toast]);
 
   return (
     <div className="pb-8">

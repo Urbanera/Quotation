@@ -195,6 +195,7 @@ export const productAccessoryFormSchema = z.object({
 export const quotationFormSchema = z.object({
   customerId: z.number().min(1, "Customer is required"),
   installationHandling: z.number().min(0, "Installation & handling must be a positive number"),
+  globalDiscount: z.number().min(0, "Global discount must be a positive number"),
   gstPercentage: z.number().min(0, "GST percentage must be a positive number"),
 });
 
