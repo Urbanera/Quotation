@@ -65,10 +65,17 @@ export default function QuotationSummary({
   const getTotalInstallationCharges = () => {
     if (!roomInstallationCharges.length) return 0;
     
-    return roomInstallationCharges.reduce((sum, roomData) => {
-      return sum + roomData.charges.reduce((chargeSum, charge) => 
-        chargeSum + charge.amount, 0);
-    }, 0);
+    // Get all charges from all rooms
+    let totalAmount = 0;
+    
+    for (const roomData of roomInstallationCharges) {
+      // Sum up all charges for this room
+      for (const charge of roomData.charges) {
+        totalAmount += charge.amount;
+      }
+    }
+    
+    return totalAmount;
   };
 
   const calculateTotals = () => {

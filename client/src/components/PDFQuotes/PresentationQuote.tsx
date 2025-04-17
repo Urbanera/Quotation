@@ -173,11 +173,17 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               {/* Installation and handling charges */}
               {(() => {
                 // Get total installation charges from all rooms
-                const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
-                  if (!room.installationCharges) return sum;
-                  return sum + room.installationCharges.reduce((chargeSum, charge) => 
-                    chargeSum + charge.amount, 0);
-                }, 0);
+                let totalInstallCharges = 0;
+                
+                // Loop through each room
+                for (const room of quotation.rooms) {
+                  // If room has installation charges, add them all up
+                  if (room.installationCharges && room.installationCharges.length > 0) {
+                    for (const charge of room.installationCharges) {
+                      totalInstallCharges += charge.amount;
+                    }
+                  }
+                }
                 
                 // Add handling charges
                 const totalWithHandling = totalInstallCharges + quotation.installationHandling;
@@ -203,12 +209,18 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   ? Math.round(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))
                   : quotation.totalSellingPrice;
                 
-                // Get total installation charges from all rooms
-                const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
-                  if (!room.installationCharges) return sum;
-                  return sum + room.installationCharges.reduce((chargeSum, charge) => 
-                    chargeSum + charge.amount, 0);
-                }, 0);
+                // Calculate installation charges the same way as above
+                let totalInstallCharges = 0;
+                
+                // Loop through each room
+                for (const room of quotation.rooms) {
+                  // If room has installation charges, add them all up
+                  if (room.installationCharges && room.installationCharges.length > 0) {
+                    for (const charge of room.installationCharges) {
+                      totalInstallCharges += charge.amount;
+                    }
+                  }
+                }
                 
                 // Add handling charges
                 const totalWithHandling = totalInstallCharges + quotation.installationHandling;
