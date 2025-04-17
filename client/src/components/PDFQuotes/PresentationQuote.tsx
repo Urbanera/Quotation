@@ -146,6 +146,20 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   {formatCurrency(quotation.totalDiscountedPrice)}
                 </td>
               </tr>
+              
+              {quotation.globalDiscount > 0 && (
+                <tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    Client Discount ({quotation.globalDiscount}%)
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                    -{formatCurrency(quotation.totalDiscountedPrice * (quotation.globalDiscount / 100))}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600 text-right">
+                    -{formatCurrency(quotation.totalDiscountedPrice * (quotation.globalDiscount / 100))}
+                  </td>
+                </tr>
+              )}
               {/* Calculate total installation charges */}
               {(() => {
                 // Get total installation charges from all rooms
@@ -188,7 +202,19 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   Total Investment
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right line-through">
-                  {formatCurrency(quotation.totalSellingPrice + quotation.installationHandling + quotation.gstAmount)}
+                  {(() => {
+                    // Calculate total installation charges for original price
+                    const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
+                      if (!room.installationCharges) return sum;
+                      return sum + room.installationCharges.reduce((chargeSum, charge) => 
+                        chargeSum + charge.amount, 0);
+                    }, 0);
+                    
+                    // Add handling charges to get total
+                    const totalWithHandling = totalInstallCharges + quotation.installationHandling;
+                    
+                    return formatCurrency(quotation.totalSellingPrice + totalWithHandling + quotation.gstAmount);
+                  })()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-lg font-bold text-indigo-700 text-right">
                   {formatCurrency(quotation.finalPrice)}
