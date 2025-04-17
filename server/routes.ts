@@ -15,6 +15,12 @@ import {
   productAccessoryFormSchema,
   quotationFormSchema,
   customerFormSchema,
+  userFormSchema,
+  teamFormSchema,
+  teamMemberFormSchema,
+  insertUserSchema,
+  insertTeamSchema,
+  insertTeamMemberSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -587,6 +593,211 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch installation charges" });
+    }
+  });
+
+  // User routes
+  app.get("/api/users", async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      // Don't return password field in the response
+      const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+      res.json(usersWithoutPasswords);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+  
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      // Don't return password field in the response
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+  
+  app.post("/api/users", validateRequest(userFormSchema), async (req, res) => {
+    try {
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      const user = await storage.createUser(req.body);
+      // Don't return password field in the response
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+  
+  app.put("/api/users/:id", validateRequest(userFormSchema), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Check if username is being changed and if it's already taken
+      if (req.body.username) {
+        const existingUser = await storage.getUserByUsername(req.body.username);
+        if (existingUser && existingUser.id !== id) {
+          return res.status(400).json({ message: "Username already exists" });
+        }
+      }
+      
+      const user = await storage.updateUser(id, req.body);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Don't return password field in the response
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+  
+  app.delete("/api/users/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteUser(id);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+  
+  // Team routes
+  app.get("/api/teams", async (req, res) => {
+    try {
+      const teams = await storage.getTeams();
+      res.json(teams);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch teams" });
+    }
+  });
+  
+  app.get("/api/teams/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const team = await storage.getTeam(id);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+      res.json(team);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch team" });
+    }
+  });
+  
+  app.get("/api/teams/:id/members", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const team = await storage.getTeamWithMembers(id);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+      // Don't return password field in the response
+      const membersWithoutPasswords = team.members.map(({ password, ...member }) => member);
+      res.json({ ...team, members: membersWithoutPasswords });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch team members" });
+    }
+  });
+  
+  app.post("/api/teams", validateRequest(teamFormSchema), async (req, res) => {
+    try {
+      const team = await storage.createTeam(req.body);
+      res.status(201).json(team);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create team" });
+    }
+  });
+  
+  app.put("/api/teams/:id", validateRequest(teamFormSchema), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const team = await storage.updateTeam(id, req.body);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+      res.json(team);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update team" });
+    }
+  });
+  
+  app.delete("/api/teams/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteTeam(id);
+      if (!success) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete team" });
+    }
+  });
+  
+  // Team Member routes
+  app.post("/api/teams/:teamId/members", validateRequest(teamMemberFormSchema), async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const userId = req.body.userId;
+      
+      // Check if the team exists
+      const team = await storage.getTeam(teamId);
+      if (!team) {
+        return res.status(404).json({ message: "Team not found" });
+      }
+      
+      // Check if the user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if user is already in the team
+      const teamMembers = await storage.getTeamMembers(teamId);
+      if (teamMembers.some(member => member.id === userId)) {
+        return res.status(400).json({ message: "User is already a member of this team" });
+      }
+      
+      const teamMember = await storage.addTeamMember({
+        teamId,
+        userId,
+      });
+      
+      res.status(201).json(teamMember);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to add team member" });
+    }
+  });
+  
+  app.delete("/api/teams/:teamId/members/:userId", async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const userId = parseInt(req.params.userId);
+      
+      const success = await storage.removeTeamMember(teamId, userId);
+      if (!success) {
+        return res.status(404).json({ message: "Team member not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove team member" });
     }
   });
 

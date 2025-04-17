@@ -820,6 +820,8 @@ export class MemStorage implements IStorage {
     const newUser: User = {
       ...user,
       id,
+      role: user.role ?? 'viewer', // Default to viewer if role not specified
+      active: user.active ?? true, // Default to active if not specified
       createdAt: now,
       updatedAt: now,
     };
@@ -882,6 +884,7 @@ export class MemStorage implements IStorage {
     const newTeam: Team = {
       ...team,
       id,
+      description: team.description ?? null, // Ensure description is string or null
       createdAt: new Date(),
     };
     this.teams.set(id, newTeam);
