@@ -140,7 +140,9 @@ export default function QuotationSummary({
                   Selling Price
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Discounted Price
+                  {globalDiscount > 0 
+                    ? `Discounted Price (Incl. ${globalDiscount}% Discount)` 
+                    : "Discounted Price"}
                 </th>
               </tr>
             </thead>
@@ -161,29 +163,19 @@ export default function QuotationSummary({
               
               <tr className="bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Total Of All Items
+                  {globalDiscount > 0 
+                    ? `Total Of All Items (After ${globalDiscount}% Global Discount)` 
+                    : "Total Of All Items"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
                   ₹{totals.totalSelling.toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600 text-right">
-                  ₹{totals.totalDiscounted.toLocaleString('en-IN')}
+                  ₹{totals.totalAfterGlobalDiscount.toLocaleString('en-IN')}
                 </td>
               </tr>
               
-              {globalDiscount > 0 && (
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    Global Discount ({globalDiscount}%)
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                    -₹{(totals.totalDiscounted * (globalDiscount / 100)).toLocaleString('en-IN')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                    -₹{(totals.totalDiscounted * (globalDiscount / 100)).toLocaleString('en-IN')}
-                  </td>
-                </tr>
-              )}
+
               
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
