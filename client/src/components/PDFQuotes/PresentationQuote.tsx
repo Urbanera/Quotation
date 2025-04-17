@@ -101,21 +101,21 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
       </div>
 
-      {/* Cost Summary */}
+      {/* Project Cost Summary */}
       <div className="p-8 bg-gray-50">
-        <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Investment Summary</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Project Cost Summary</h3>
         <div className="overflow-hidden border rounded-lg shadow-sm mt-6 bg-white">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-indigo-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
-                  Room
+                  Product Description
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-indigo-800 uppercase tracking-wider">
-                  Original Price
+                  Selling Price
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-indigo-800 uppercase tracking-wider">
-                  Special Price
+                  Discounted Price
                 </th>
               </tr>
             </thead>
@@ -123,7 +123,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               {quotation.rooms.map((room) => (
                 <tr key={room.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {room.name}
+                    {room.name.toUpperCase()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                     {formatCurrency(room.sellingPrice)}
@@ -133,11 +133,9 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   </td>
                 </tr>
               ))}
-            </tbody>
-            <tfoot>
               <tr className="bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Subtotal
+                  Total Of All Items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                   {formatCurrency(quotation.totalSellingPrice)}
@@ -146,7 +144,27 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   {formatCurrency(quotation.totalDiscountedPrice)}
                 </td>
               </tr>
-              {/* Show installation charges */}
+              
+              {(() => {
+                // Calculate discounted price after global discount
+                const discountedPrice = quotation.totalDiscountedPrice;
+                
+                return (
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      Discounted Price
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                      {formatCurrency(discountedPrice)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {formatCurrency(discountedPrice)}
+                    </td>
+                  </tr>
+                );
+              })()}
+              
+              {/* Installation and handling charges */}
               {(() => {
                 // Get total installation charges from all rooms
                 const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
@@ -161,7 +179,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 return (
                   <tr>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      Professional Installation
+                      Installation and Handling
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                       {formatCurrency(totalWithHandling)}
@@ -172,9 +190,10 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   </tr>
                 );
               })()}
+              
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Taxes ({quotation.gstPercentage}% GST)
+                  GST {quotation.gstPercentage}%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                   {formatCurrency(quotation.gstAmount)}
@@ -183,30 +202,19 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   {formatCurrency(quotation.gstAmount)}
                 </td>
               </tr>
+              
               <tr className="bg-indigo-50">
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                  Total Investment
+                  Final Price
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right line-through">
-                  {(() => {
-                    // Calculate total installation charges for original price
-                    const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
-                      if (!room.installationCharges) return sum;
-                      return sum + room.installationCharges.reduce((chargeSum, charge) => 
-                        chargeSum + charge.amount, 0);
-                    }, 0);
-                    
-                    // Add handling charges to get total
-                    const totalWithHandling = totalInstallCharges + quotation.installationHandling;
-                    
-                    return formatCurrency(quotation.totalSellingPrice + totalWithHandling + quotation.gstAmount);
-                  })()}
+                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
+                  {formatCurrency(quotation.finalPrice)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-lg font-bold text-indigo-700 text-right">
                   {formatCurrency(quotation.finalPrice)}
                 </td>
               </tr>
-            </tfoot>
+            </tbody>
           </table>
         </div>
       </div>

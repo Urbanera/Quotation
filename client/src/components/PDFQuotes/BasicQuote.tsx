@@ -59,15 +59,15 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
         </div>
       </div>
 
-      {/* Quotation Details */}
+      {/* Project Cost Summary */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold mb-4 text-gray-700">Quotation Details</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-700">Project Cost Summary</h3>
         <div className="border rounded-md overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Item Description
+                  Product Description
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Selling Price
@@ -104,7 +104,26 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 </td>
               </tr>
               
-              {/* Show installation charges */}
+              {(() => {
+                // Calculate discounted price after global discount
+                const discountedPrice = quotation.totalDiscountedPrice;
+                
+                return (
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      Discounted Price
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {formatCurrency(discountedPrice)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {formatCurrency(discountedPrice)}
+                    </td>
+                  </tr>
+                );
+              })()}
+              
+              {/* Installation and handling charges */}
               {(() => {
                 // Get total installation charges from all rooms
                 const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
@@ -136,18 +155,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                   GST {quotation.gstPercentage}%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  {(() => {
-                    // Calculate GST on original price
-                    const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
-                      if (!room.installationCharges) return sum;
-                      return sum + room.installationCharges.reduce((chargeSum, charge) => 
-                        chargeSum + charge.amount, 0);
-                    }, 0);
-                    
-                    const totalWithHandling = totalInstallCharges + quotation.installationHandling;
-                    const originalGst = (quotation.totalSellingPrice + totalWithHandling) * (quotation.gstPercentage / 100);
-                    return formatCurrency(originalGst);
-                  })()}
+                  {formatCurrency(quotation.gstAmount)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                   {formatCurrency(quotation.gstAmount)}
@@ -159,18 +167,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                   Final Price
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                  {(() => {
-                    // Calculate final price based on original values
-                    const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
-                      if (!room.installationCharges) return sum;
-                      return sum + room.installationCharges.reduce((chargeSum, charge) => 
-                        chargeSum + charge.amount, 0);
-                    }, 0);
-                    
-                    const totalWithHandling = totalInstallCharges + quotation.installationHandling;
-                    const originalGst = (quotation.totalSellingPrice + totalWithHandling) * (quotation.gstPercentage / 100);
-                    return formatCurrency(quotation.totalSellingPrice + totalWithHandling + originalGst);
-                  })()}
+                  {formatCurrency(quotation.finalPrice)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
                   {formatCurrency(quotation.finalPrice)}
