@@ -104,20 +104,6 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 </td>
               </tr>
               
-              {quotation.globalDiscount > 0 && (
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    Global Discount ({quotation.globalDiscount}%)
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                    -{formatCurrency(quotation.totalDiscountedPrice * (quotation.globalDiscount / 100))}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                    -{formatCurrency(quotation.totalDiscountedPrice * (quotation.globalDiscount / 100))}
-                  </td>
-                </tr>
-              )}
-              
               {/* Calculate total installation charges */}
               {(() => {
                 // Get total installation charges from all rooms
