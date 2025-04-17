@@ -10,6 +10,9 @@ import QuotationsList from "./pages/quotations";
 import CreateQuotation from "./pages/quotations/create";
 import EditQuotation from "./pages/quotations/edit";
 import ViewQuotation from "./pages/quotations/view";
+import UsersPage from "./pages/users/UsersPage";
+import TeamsPage from "./pages/teams/TeamsPage";
+import TeamDetailsPage from "./pages/teams/TeamDetailsPage";
 import NotFound from "./pages/not-found";
 
 function App() {
@@ -25,6 +28,9 @@ function App() {
           <Route path="/quotations/create" component={CreateQuotation} />
           <Route path="/quotations/edit/:id" component={EditQuotation} />
           <Route path="/quotations/view/:id" component={ViewQuotation} />
+          <Route path="/users" component={UsersPage} />
+          <Route path="/teams" component={TeamsPage} />
+          <Route path="/teams/:id" component={TeamDetailsPage} />
           <Route component={NotFound} />
         </Switch>
       </MainLayout>

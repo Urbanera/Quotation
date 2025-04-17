@@ -5,7 +5,10 @@ import {
   Users, 
   FileText, 
   Package, 
-  Settings 
+  Settings,
+  UserCog,
+  UserPlus,
+  UserCheck
 } from "lucide-react";
 
 interface SidebarProps {
@@ -18,6 +21,8 @@ const navigation = [
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Quotations", href: "/quotations", icon: FileText },
   { name: "Products", href: "/products", icon: Package },
+  { name: "Teams", href: "/teams", icon: UserCheck },
+  { name: "Users", href: "/users", icon: UserCog },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
