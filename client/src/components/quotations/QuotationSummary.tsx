@@ -147,25 +147,32 @@ export default function QuotationSummary({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {quotation.rooms.map((room) => (
-                <tr key={room.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {room.name.toUpperCase()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                    ₹{room.sellingPrice.toLocaleString('en-IN')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                    {room.sellingPrice !== room.discountedPrice ? (
-                      <>
-                        ₹{room.discountedPrice.toLocaleString('en-IN')}
-                      </>
-                    ) : (
-                      <>₹{room.discountedPrice.toLocaleString('en-IN')}</>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {quotation.rooms.map((room) => {
+                // Calculate the discounted price with global discount applied
+                const calculatedDiscountedPrice = globalDiscount > 0
+                  ? room.sellingPrice * (1 - globalDiscount / 100)
+                  : room.sellingPrice;
+                
+                return (
+                  <tr key={room.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {room.name.toUpperCase()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      ₹{room.sellingPrice.toLocaleString('en-IN')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {globalDiscount > 0 ? (
+                        <span className="text-indigo-600 font-medium">
+                          ₹{Math.round(calculatedDiscountedPrice).toLocaleString('en-IN')}
+                        </span>
+                      ) : (
+                        <>₹{room.sellingPrice.toLocaleString('en-IN')}</>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
               
               <tr className="bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

@@ -80,23 +80,32 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {quotation.rooms.map((room) => (
-                <tr key={room.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {room.name.toUpperCase()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                    {formatCurrency(room.sellingPrice)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                    {room.sellingPrice !== room.discountedPrice ? (
-                      <>{formatCurrency(room.discountedPrice)}</>
-                    ) : (
-                      <>{formatCurrency(room.discountedPrice)}</>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {quotation.rooms.map((room) => {
+                // Calculate the discounted price with global discount applied
+                const calculatedDiscountedPrice = quotation.globalDiscount > 0
+                  ? room.sellingPrice * (1 - quotation.globalDiscount / 100)
+                  : room.sellingPrice;
+                
+                return (
+                  <tr key={room.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {room.name.toUpperCase()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                      {formatCurrency(room.sellingPrice)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {quotation.globalDiscount > 0 ? (
+                        <span className="text-indigo-600 font-medium">
+                          {formatCurrency(Math.round(calculatedDiscountedPrice))}
+                        </span>
+                      ) : (
+                        <>{formatCurrency(room.sellingPrice)}</>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
               
               <tr className="bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
