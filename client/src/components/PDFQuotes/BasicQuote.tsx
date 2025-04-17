@@ -73,7 +73,9 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                   Selling Price
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Discounted Price
+                  {quotation.globalDiscount > 0 
+                    ? `Discounted Price (Incl. ${quotation.globalDiscount}% Discount)` 
+                    : "Discounted Price"}
                 </th>
               </tr>
             </thead>
@@ -87,7 +89,11 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                     {formatCurrency(room.sellingPrice)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                    {formatCurrency(room.discountedPrice)}
+                    {room.sellingPrice !== room.discountedPrice ? (
+                      <>{formatCurrency(room.discountedPrice)}</>
+                    ) : (
+                      <>{formatCurrency(room.discountedPrice)}</>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -104,24 +110,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 </td>
               </tr>
               
-              {(() => {
-                // Calculate discounted price after global discount
-                const discountedPrice = quotation.totalDiscountedPrice;
-                
-                return (
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      Discounted Price
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatCurrency(discountedPrice)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatCurrency(discountedPrice)}
-                    </td>
-                  </tr>
-                );
-              })()}
+
               
               {/* Installation and handling charges */}
               {(() => {

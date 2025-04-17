@@ -156,7 +156,13 @@ export default function QuotationSummary({
                     ₹{room.sellingPrice.toLocaleString('en-IN')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                    ₹{room.discountedPrice.toLocaleString('en-IN')}
+                    {room.sellingPrice !== room.discountedPrice ? (
+                      <>
+                        ₹{room.discountedPrice.toLocaleString('en-IN')}
+                      </>
+                    ) : (
+                      <>₹{room.discountedPrice.toLocaleString('en-IN')}</>
+                    )}
                   </td>
                 </tr>
               ))}
