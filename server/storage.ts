@@ -765,22 +765,55 @@ export class MemStorage implements IStorage {
     const totalSellingPrice = rooms
       .reduce((sum, room) => sum + room.sellingPrice, 0);
     
-    const totalDiscountedPrice = rooms
+    // Apply global discount to each room's prices
+    if (quotation.globalDiscount > 0) {
+      for (const room of rooms) {
+        // Calculate the discounted price with global discount applied
+        const globalDiscountedPrice = room.sellingPrice * (1 - quotation.globalDiscount / 100);
+        
+        // Update the room with the new discounted price
+        this.rooms.set(room.id, {
+          ...room,
+          discountedPrice: globalDiscountedPrice,
+        });
+      }
+    } else {
+      // If no global discount, make sure rooms have their original prices
+      for (const room of rooms) {
+        // Get products and accessories for this room
+        const products = await this.getProducts(room.id);
+        const accessories = await this.getAccessories(room.id);
+        
+        // Calculate the original discounted price
+        const originalDiscountedPrice = [
+          ...products.map(p => p.discountedPrice > 0 ? p.discountedPrice : p.sellingPrice),
+          ...accessories.map(a => a.discountedPrice > 0 ? a.discountedPrice : a.sellingPrice),
+        ].reduce((sum, price) => sum + price, 0);
+        
+        // Update the room with the original discounted price
+        this.rooms.set(room.id, {
+          ...room,
+          discountedPrice: originalDiscountedPrice,
+        });
+      }
+    }
+    
+    // Get rooms again after updating their discounted prices
+    const updatedRooms = await this.getRooms(quotationId);
+    
+    // Calculate total discounted price based on updated room prices
+    const totalDiscountedPrice = updatedRooms
       .reduce((sum, room) => sum + room.discountedPrice, 0);
     
     // Calculate total installation charges
     let totalInstallationCharges = 0;
-    for (const room of rooms) {
+    for (const room of updatedRooms) {
       const charges = await this.getInstallationCharges(room.id);
       totalInstallationCharges += charges.reduce((sum, charge) => sum + charge.amount, 0);
     }
     
-    // Apply global discount to the already discounted price
-    const globalDiscountAmount = quotation.globalDiscount > 0 
-      ? totalDiscountedPrice * (quotation.globalDiscount / 100)
-      : 0;
-    
-    const priceAfterGlobalDiscount = totalDiscountedPrice - globalDiscountAmount;
+    // The global discount is already applied to each room
+    const priceAfterGlobalDiscount = totalDiscountedPrice;
     
     // Include installation charges and handling in GST calculation
     const totalChargesAndHandling = totalInstallationCharges + quotation.installationHandling;
