@@ -125,7 +125,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               {quotation.rooms.map((room) => {
                 // Calculate the discounted price with global discount applied
                 const calculatedDiscountedPrice = quotation.globalDiscount > 0
-                  ? room.sellingPrice * (1 - quotation.globalDiscount / 100)
+                  ? room.sellingPrice - (room.sellingPrice * quotation.globalDiscount / 100)
                   : room.sellingPrice;
                 
                 return (

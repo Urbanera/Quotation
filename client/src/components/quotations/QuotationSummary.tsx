@@ -150,7 +150,7 @@ export default function QuotationSummary({
               {quotation.rooms.map((room) => {
                 // Calculate the discounted price with global discount applied
                 const calculatedDiscountedPrice = globalDiscount > 0
-                  ? room.sellingPrice * (1 - globalDiscount / 100)
+                  ? room.sellingPrice - (room.sellingPrice * globalDiscount / 100)
                   : room.sellingPrice;
                 
                 return (
@@ -183,8 +183,14 @@ export default function QuotationSummary({
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
                   ₹{totals.totalSelling.toLocaleString('en-IN')}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600 text-right">
-                  ₹{totals.totalAfterGlobalDiscount.toLocaleString('en-IN')}
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
+                  {globalDiscount > 0 ? (
+                    <span className="text-indigo-600 font-medium">
+                      ₹{totals.totalAfterGlobalDiscount.toLocaleString('en-IN')}
+                    </span>
+                  ) : (
+                    <>₹{totals.totalAfterGlobalDiscount.toLocaleString('en-IN')}</>
+                  )}
                 </td>
               </tr>
               
