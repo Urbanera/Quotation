@@ -119,7 +119,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
                   {quotation.globalDiscount > 0 ? (
                     <span className="text-indigo-600 font-medium">
-                      {formatCurrency(quotation.totalDiscountedPrice)}
+                      {formatCurrency(Math.round(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100)))}
                     </span>
                   ) : (
                     <>{formatCurrency(quotation.totalSellingPrice)}</>
@@ -156,29 +156,57 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 );
               })()}
               
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  GST {quotation.gstPercentage}%
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  {formatCurrency(quotation.gstAmount)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  {formatCurrency(quotation.gstAmount)}
-                </td>
-              </tr>
-              
-              <tr className="bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                  Final Price
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                  {formatCurrency(quotation.finalPrice)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
-                  {formatCurrency(quotation.finalPrice)}
-                </td>
-              </tr>
+              {(() => {
+                // Calculate the discounted total
+                const discountedTotal = quotation.globalDiscount > 0
+                  ? Math.round(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))
+                  : quotation.totalSellingPrice;
+                
+                // Get total installation charges from all rooms
+                const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
+                  if (!room.installationCharges) return sum;
+                  return sum + room.installationCharges.reduce((chargeSum, charge) => 
+                    chargeSum + charge.amount, 0);
+                }, 0);
+                
+                // Add handling charges
+                const totalWithHandling = totalInstallCharges + quotation.installationHandling;
+                
+                // Calculate GST based on discounted total + installation/handling
+                const gstAmount = Math.round((discountedTotal + totalWithHandling) * (quotation.gstPercentage / 100));
+                
+                // Calculate final price
+                const finalPrice = discountedTotal + totalWithHandling + gstAmount;
+                
+                return (
+                  <>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        GST {quotation.gstPercentage}%
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {formatCurrency(Math.round((quotation.totalSellingPrice + totalWithHandling) * (quotation.gstPercentage / 100)))}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {formatCurrency(gstAmount)}
+                      </td>
+                    </tr>
+                    
+                    <tr className="bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                        Final Price
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
+                        {formatCurrency(quotation.totalSellingPrice + totalWithHandling + 
+                          Math.round((quotation.totalSellingPrice + totalWithHandling) * (quotation.gstPercentage / 100)))}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
+                        {formatCurrency(finalPrice)}
+                      </td>
+                    </tr>
+                  </>
+                );
+              })()}
             </tbody>
           </table>
         </div>
