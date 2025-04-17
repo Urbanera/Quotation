@@ -146,7 +146,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   {formatCurrency(quotation.totalDiscountedPrice)}
                 </td>
               </tr>
-              {/* Calculate total installation charges */}
+              {/* Show installation charges */}
               {(() => {
                 // Get total installation charges from all rooms
                 const totalInstallCharges = quotation.rooms.reduce((sum, room) => {

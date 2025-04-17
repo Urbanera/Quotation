@@ -104,7 +104,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 </td>
               </tr>
               
-              {/* Calculate total installation charges */}
+              {/* Show installation charges */}
               {(() => {
                 // Get total installation charges from all rooms
                 const totalInstallCharges = quotation.rooms.reduce((sum, room) => {
