@@ -180,7 +180,7 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
             {/* Installation Charges - moved below products and accessories */}
             <div className="bg-white shadow rounded-lg p-4 mb-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Installation & Handling Charges</h3>
+                <h3 className="text-lg font-medium text-gray-900">Installation Charges</h3>
                 {!addingInstallation && (
                   <Button 
                     onClick={() => setAddingInstallation(true)}

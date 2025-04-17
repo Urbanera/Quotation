@@ -45,6 +45,17 @@ export default function QuotationSummary({
     }
   };
 
+  const getTotalInstallationCharges = () => {
+    if (!quotation || !quotation.rooms) return 0;
+    
+    return quotation.rooms.reduce((sum, room) => {
+      if (!room.installationCharges) return sum;
+      
+      return sum + room.installationCharges.reduce((chargeSum, charge) => 
+        chargeSum + charge.amount, 0);
+    }, 0);
+  };
+
   const calculateTotals = () => {
     if (!quotation) return {
       totalSelling: 0,
@@ -55,8 +66,9 @@ export default function QuotationSummary({
     
     const totalSelling = quotation.totalSellingPrice;
     const totalDiscounted = quotation.totalDiscountedPrice;
-    const gstAmount = (totalDiscounted + installationHandling) * (gstPercentage / 100);
-    const finalPrice = totalDiscounted + installationHandling + gstAmount;
+    const totalInstallationCharges = getTotalInstallationCharges();
+    const gstAmount = (totalDiscounted + totalInstallationCharges + installationHandling) * (gstPercentage / 100);
+    const finalPrice = totalDiscounted + totalInstallationCharges + installationHandling + gstAmount;
     
     return {
       totalSelling,
@@ -138,7 +150,18 @@ export default function QuotationSummary({
               
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Installation and Handling
+                  Installation Charges (Sum of all rooms)
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  ₹{getTotalInstallationCharges().toLocaleString('en-IN')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  ₹{getTotalInstallationCharges().toLocaleString('en-IN')}
+                </td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  Handling Charges
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                   ₹{installationHandling.toLocaleString('en-IN')}
@@ -153,7 +176,7 @@ export default function QuotationSummary({
                   GST {gstPercentage}%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{((totals.totalSelling + installationHandling) * (gstPercentage / 100)).toLocaleString('en-IN')}
+                  ₹{((totals.totalSelling + getTotalInstallationCharges() + installationHandling) * (gstPercentage / 100)).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                   ₹{totals.gstAmount.toLocaleString('en-IN')}
@@ -165,7 +188,7 @@ export default function QuotationSummary({
                   Final Price
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                  ₹{(totals.totalSelling + installationHandling + ((totals.totalSelling + installationHandling) * (gstPercentage / 100))).toLocaleString('en-IN')}
+                  ₹{(totals.totalSelling + getTotalInstallationCharges() + installationHandling + ((totals.totalSelling + getTotalInstallationCharges() + installationHandling) * (gstPercentage / 100))).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
                   ₹{totals.finalPrice.toLocaleString('en-IN')}
@@ -177,7 +200,7 @@ export default function QuotationSummary({
         
         <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
           <div className="sm:col-span-3">
-            <label htmlFor="installation-handling" className="block text-sm font-medium text-gray-700">Installation and Handling</label>
+            <label htmlFor="installation-handling" className="block text-sm font-medium text-gray-700">Handling Charges</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <span className="text-gray-500 sm:text-sm">₹</span>
