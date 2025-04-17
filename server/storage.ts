@@ -706,14 +706,21 @@ export class MemStorage implements IStorage {
       totalInstallationCharges += charges.reduce((sum, charge) => sum + charge.amount, 0);
     }
     
+    // Apply global discount to the already discounted price
+    const globalDiscountAmount = quotation.globalDiscount > 0 
+      ? totalDiscountedPrice * (quotation.globalDiscount / 100)
+      : 0;
+    
+    const priceAfterGlobalDiscount = totalDiscountedPrice - globalDiscountAmount;
+    
     // Include installation charges and handling in GST calculation
     const totalChargesAndHandling = totalInstallationCharges + quotation.installationHandling;
     
     // Calculate GST
-    const gstAmount = (totalDiscountedPrice + totalChargesAndHandling) * (quotation.gstPercentage / 100);
+    const gstAmount = (priceAfterGlobalDiscount + totalChargesAndHandling) * (quotation.gstPercentage / 100);
     
     // Calculate final price
-    const finalPrice = totalDiscountedPrice + totalChargesAndHandling + gstAmount;
+    const finalPrice = priceAfterGlobalDiscount + totalChargesAndHandling + gstAmount;
     
     this.quotations.set(quotationId, {
       ...quotation,
