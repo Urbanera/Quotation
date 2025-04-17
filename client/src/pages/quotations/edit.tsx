@@ -16,6 +16,7 @@ export default function EditQuotation() {
   const { toast } = useToast();
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [installationHandling, setInstallationHandling] = useState<number>(0);
+  const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [gstPercentage, setGstPercentage] = useState<number>(18);
 
   // Fetch quotation details

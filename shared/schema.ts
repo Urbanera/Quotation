@@ -24,6 +24,7 @@ export const quotations = pgTable("quotations", {
   totalSellingPrice: doublePrecision("total_selling_price").notNull(),
   totalDiscountedPrice: doublePrecision("total_discounted_price").notNull(),
   installationHandling: doublePrecision("installation_handling").notNull(),
+  globalDiscount: doublePrecision("global_discount").notNull().default(0),
   gstPercentage: doublePrecision("gst_percentage").notNull().default(18),
   gstAmount: doublePrecision("gst_amount").notNull(),
   finalPrice: doublePrecision("final_price").notNull(),

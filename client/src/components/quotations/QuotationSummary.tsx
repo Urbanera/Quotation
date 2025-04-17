@@ -10,6 +10,8 @@ interface QuotationSummaryProps {
   quotationId: number;
   installationHandling: number;
   setInstallationHandling: (value: number) => void;
+  globalDiscount: number;
+  setGlobalDiscount: (value: number) => void;
   gstPercentage: number;
   setGstPercentage: (value: number) => void;
   onSave: () => void;
@@ -19,6 +21,8 @@ export default function QuotationSummary({
   quotationId,
   installationHandling,
   setInstallationHandling,
+  globalDiscount,
+  setGlobalDiscount,
   gstPercentage,
   setGstPercentage,
   onSave
@@ -35,6 +39,13 @@ export default function QuotationSummary({
     const value = parseFloat(e.target.value);
     if (!isNaN(value) && value >= 0) {
       setInstallationHandling(value);
+    }
+  };
+
+  const handleGlobalDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value) && value >= 0) {
+      setGlobalDiscount(value);
     }
   };
 
@@ -60,19 +71,27 @@ export default function QuotationSummary({
     if (!quotation) return {
       totalSelling: 0,
       totalDiscounted: 0,
+      totalAfterGlobalDiscount: 0,
       gstAmount: 0,
       finalPrice: 0
     };
     
     const totalSelling = quotation.totalSellingPrice;
     const totalDiscounted = quotation.totalDiscountedPrice;
+    
+    // Apply global discount to the already discounted price
+    const totalAfterGlobalDiscount = globalDiscount > 0 
+      ? totalDiscounted - (totalDiscounted * (globalDiscount / 100))
+      : totalDiscounted;
+    
     const totalInstallationCharges = getTotalInstallationCharges();
-    const gstAmount = (totalDiscounted + totalInstallationCharges + installationHandling) * (gstPercentage / 100);
-    const finalPrice = totalDiscounted + totalInstallationCharges + installationHandling + gstAmount;
+    const gstAmount = (totalAfterGlobalDiscount + totalInstallationCharges + installationHandling) * (gstPercentage / 100);
+    const finalPrice = totalAfterGlobalDiscount + totalInstallationCharges + installationHandling + gstAmount;
     
     return {
       totalSelling,
       totalDiscounted,
+      totalAfterGlobalDiscount,
       gstAmount,
       finalPrice
     };
@@ -148,6 +167,20 @@ export default function QuotationSummary({
                 </td>
               </tr>
               
+              {globalDiscount > 0 && (
+                <tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    Global Discount ({globalDiscount}%)
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    -₹{(totals.totalDiscounted * (globalDiscount / 100)).toLocaleString('en-IN')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    -₹{(totals.totalDiscounted * (globalDiscount / 100)).toLocaleString('en-IN')}
+                  </td>
+                </tr>
+              )}
+              
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   Installation Charges (Sum of all rooms)
@@ -198,8 +231,8 @@ export default function QuotationSummary({
           </table>
         </div>
         
-        <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-          <div className="sm:col-span-3">
+        <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-3">
+          <div>
             <label htmlFor="installation-handling" className="block text-sm font-medium text-gray-700">Handling Charges</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -215,7 +248,23 @@ export default function QuotationSummary({
               />
             </div>
           </div>
-          <div className="sm:col-span-3">
+          <div>
+            <label htmlFor="global-discount" className="block text-sm font-medium text-gray-700">Global Discount</label>
+            <div className="mt-1 relative rounded-md shadow-sm">
+              <Input
+                type="number"
+                id="global-discount"
+                value={globalDiscount}
+                onChange={handleGlobalDiscountChange}
+                onBlur={onSave}
+                className="pr-8 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <span className="text-gray-500 sm:text-sm">%</span>
+              </div>
+            </div>
+          </div>
+          <div>
             <label htmlFor="gst-percentage" className="block text-sm font-medium text-gray-700">GST Percentage</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <Input
