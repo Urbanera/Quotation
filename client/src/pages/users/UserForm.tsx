@@ -1,279 +1,228 @@
-import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { User, userFormSchema } from '@shared/schema';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { apiRequest } from '@/lib/queryClient';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from "@/components/ui/switch";
+import { userFormSchema } from '@shared/schema';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
-// Password validation schema (only required for new users)
-const passwordSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters long"),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
-
-// Type for form without the password
-type UserWithoutPassword = Omit<User, 'password'>;
-
 interface UserFormProps {
-  defaultValues?: UserWithoutPassword;
+  defaultValues?: {
+    id?: number;
+    username: string;
+    password?: string;
+    fullName: string;
+    email: string;
+    role: 'admin' | 'manager' | 'designer' | 'viewer';
+    active?: boolean;
+  };
   isEdit?: boolean;
   onSubmitSuccess: () => void;
 }
 
 export default function UserForm({ defaultValues, isEdit = false, onSubmitSuccess }: UserFormProps) {
   const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(!isEdit);
 
-  // Create the form schema based on whether it's an edit form or not
-  const formSchema = isEdit 
+  // Add password requirement for new users
+  const formSchema = isEdit
     ? userFormSchema.extend({
-        password: z.string().min(8, "Password must be at least 8 characters long").optional(),
-        confirmPassword: z.string().optional()
-      }).refine(
-        (data) => !data.password || (data.password === data.confirmPassword), 
-        {
-          message: "Passwords do not match",
-          path: ["confirmPassword"],
-        }
-      )
+        password: z.string().optional(),
+      })
     : userFormSchema.extend({
-        password: z.string().min(8, "Password must be at least 8 characters long"),
-        confirmPassword: z.string()
-      }).refine(
-        (data) => data.password === data.confirmPassword, 
-        {
-          message: "Passwords do not match",
-          path: ["confirmPassword"],
-        }
-      );
+        password: z.string().min(6, 'Password must be at least 6 characters'),
+      });
 
-  // Define form with default values
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: isEdit 
-      ? { 
-          ...defaultValues,
-          password: '',
-          confirmPassword: '',
-        } 
-      : {
-          username: '',
-          email: '',
-          fullName: '',
-          password: '',
-          confirmPassword: '',
-          role: 'viewer',
-          active: true,
-        },
+    defaultValues: {
+      username: defaultValues?.username || '',
+      password: '',
+      fullName: defaultValues?.fullName || '',
+      email: defaultValues?.email || '',
+      role: defaultValues?.role || 'designer',
+      active: defaultValues?.active !== undefined ? defaultValues.active : true,
+    },
   });
 
-  // Create the mutation for handling the form submission
-  const mutation = useMutation({
+  const createUserMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      // Remove confirmPassword as it's not needed in the API
-      const { confirmPassword, ...userData } = values;
-      
-      // If editing and no password provided, remove the password field
-      if (isEdit && !userData.password) {
-        delete userData.password;
-      }
-      
-      if (isEdit && defaultValues) {
-        return await apiRequest('PUT', `/api/users/${defaultValues.id}`, userData);
-      } else {
-        return await apiRequest('POST', '/api/users', userData);
-      }
+      const response = await apiRequest('POST', '/api/users', values);
+      return await response.json();
     },
     onSuccess: () => {
       toast({
-        title: `User ${isEdit ? 'updated' : 'created'} successfully`,
-        description: isEdit 
-          ? "The user has been updated." 
-          : "The user has been created and can now log in.",
+        title: 'User created',
+        description: 'The user has been created successfully.',
       });
+      form.reset();
       onSubmitSuccess();
     },
     onError: (error) => {
       toast({
-        title: `Failed to ${isEdit ? 'update' : 'create'} user`,
-        description: error.message,
+        title: 'Error',
+        description: `Failed to create user: ${error.message}`,
         variant: 'destructive',
       });
     },
   });
 
-  // Handle form submission
+  const updateUserMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      if (!defaultValues?.id) return null;
+      
+      // If password is empty, don't send it (keep the existing one)
+      const dataToSend = values.password ? values : {
+        username: values.username,
+        fullName: values.fullName,
+        email: values.email,
+        role: values.role,
+        active: values.active,
+      };
+      
+      const response = await apiRequest('PUT', `/api/users/${defaultValues.id}`, dataToSend);
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'User updated',
+        description: 'The user has been updated successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      onSubmitSuccess();
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to update user: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
   function onSubmit(values: z.infer<typeof formSchema>) {
-    mutation.mutate(values);
+    if (isEdit) {
+      updateUserMutation.mutate(values);
+    } else {
+      createUserMutation.mutate(values);
+    }
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="fullName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="John Doe" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="john@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username</FormLabel>
-                <FormControl>
-                  <Input placeholder="johndoe" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Used for logging into the system
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Role</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="designer">Designer</SelectItem>
-                    <SelectItem value="viewer">Viewer</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Determines access permissions
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        {(showPassword || !isEdit) && (
           <FormField
             control={form.control}
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{isEdit ? "New Password (optional)" : "Password"}</FormLabel>
+                <div className="flex justify-between items-center">
+                  <FormLabel>Password</FormLabel>
+                  {isEdit && (
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-xs"
+                    >
+                      {showPassword ? 'Cancel' : 'Change Password'}
+                    </Button>
+                  )}
+                </div>
                 <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
+                  <Input type="password" {...field} />
                 </FormControl>
-                <FormDescription>
-                  {isEdit ? "Leave blank to keep current password" : "Minimum 8 characters"}
-                </FormDescription>
+                {isEdit && showPassword && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Leave blank to keep the current password
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
+        )}
+        
         <FormField
           control={form.control}
-          name="active"
+          name="fullName"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Active Status</FormLabel>
-                <FormDescription>
-                  Inactive users cannot log into the system
-                </FormDescription>
-              </div>
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Input {...field} />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
-
-        <div className="flex justify-end gap-3">
-          <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending
-              ? `${isEdit ? 'Updating' : 'Creating'}...`
-              : isEdit
-              ? 'Update User'
-              : 'Create User'}
-          </Button>
-        </div>
+        
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Role</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="designer">Designer</SelectItem>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <Button 
+          type="submit" 
+          disabled={createUserMutation.isPending || updateUserMutation.isPending}
+        >
+          {isEdit ? 'Update User' : 'Create User'}
+        </Button>
       </form>
     </Form>
   );
