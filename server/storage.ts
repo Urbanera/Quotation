@@ -211,6 +211,7 @@ export class MemStorage implements IStorage {
       totalSellingPrice: quotation.totalSellingPrice || 0,
       totalDiscountedPrice: quotation.totalDiscountedPrice || 0,
       installationHandling: quotation.installationHandling || 0,
+      globalDiscount: quotation.globalDiscount || 0,
       gstPercentage: quotation.gstPercentage || 0,
       gstAmount: quotation.gstAmount || 0,
       finalPrice: quotation.finalPrice || 0,
