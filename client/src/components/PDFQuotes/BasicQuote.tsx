@@ -109,13 +109,21 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
               
               <tr className="bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Total Of All Items
+                  {quotation.globalDiscount > 0 
+                    ? `Total Of All Items (After ${quotation.globalDiscount}% Global Discount)` 
+                    : "Total Of All Items"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
                   {formatCurrency(quotation.totalSellingPrice)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600 text-right">
-                  {formatCurrency(quotation.totalDiscountedPrice)}
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
+                  {quotation.globalDiscount > 0 ? (
+                    <span className="text-indigo-600 font-medium">
+                      {formatCurrency(quotation.totalDiscountedPrice)}
+                    </span>
+                  ) : (
+                    <>{formatCurrency(quotation.totalSellingPrice)}</>
+                  )}
                 </td>
               </tr>
               
