@@ -566,6 +566,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete installation charge" });
     }
   });
+  
+  // Get all installation charges for all rooms in a quotation
+  app.get("/api/quotations/:quotationId/installation-charges", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.quotationId);
+      
+      // Get all rooms for the quotation
+      const rooms = await storage.getRooms(quotationId);
+      
+      // For each room, get the installation charges
+      const result = await Promise.all(rooms.map(async (room) => {
+        const charges = await storage.getInstallationCharges(room.id);
+        return {
+          roomId: room.id,
+          charges
+        };
+      }));
+      
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch installation charges" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

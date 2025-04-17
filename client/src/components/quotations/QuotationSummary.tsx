@@ -4,7 +4,7 @@ import { FileText, FileOutput } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { QuotationWithDetails, Room } from "@shared/schema";
+import { QuotationWithDetails, Room, InstallationCharge } from "@shared/schema";
 
 interface QuotationSummaryProps {
   quotationId: number;
@@ -56,13 +56,17 @@ export default function QuotationSummary({
     }
   };
 
+  // Fetch installation charges for all rooms in the quotation
+  const { data: roomInstallationCharges = [] } = useQuery<{roomId: number, charges: InstallationCharge[]}[]>({
+    queryKey: [`/api/quotations/${quotationId}/installation-charges`],
+    enabled: !!quotationId && !!quotation?.rooms?.length,
+  });
+
   const getTotalInstallationCharges = () => {
-    if (!quotation || !quotation.rooms) return 0;
+    if (!roomInstallationCharges.length) return 0;
     
-    return quotation.rooms.reduce((sum, room) => {
-      if (!room.installationCharges) return sum;
-      
-      return sum + room.installationCharges.reduce((chargeSum, charge) => 
+    return roomInstallationCharges.reduce((sum, roomData) => {
+      return sum + roomData.charges.reduce((chargeSum, charge) => 
         chargeSum + charge.amount, 0);
     }, 0);
   };
