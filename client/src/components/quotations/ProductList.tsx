@@ -105,7 +105,7 @@ export default function ProductList({ roomId, products }: ProductListProps) {
       roomId,
       name: data.name,
       description: data.description || "",
-      price: parseFloat(data.sellingPrice),
+      sellingPrice: parseFloat(data.sellingPrice),
       discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
     });
   };
@@ -114,7 +114,7 @@ export default function ProductList({ roomId, products }: ProductListProps) {
     editProductMutation.mutate({
       name: data.name,
       description: data.description || "",
-      price: parseFloat(data.sellingPrice),
+      sellingPrice: parseFloat(data.sellingPrice),
       discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
     });
   };
@@ -208,7 +208,7 @@ export default function ProductList({ roomId, products }: ProductListProps) {
                     </div>
                     <input
                       type="text"
-                      value={product.price || 0}
+                      value={product.sellingPrice || 0}
                       readOnly
                       className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md bg-gray-50"
                     />

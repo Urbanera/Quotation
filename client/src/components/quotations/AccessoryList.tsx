@@ -105,7 +105,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
       roomId,
       name: data.name,
       description: data.description || "",
-      price: parseFloat(data.sellingPrice),
+      sellingPrice: parseFloat(data.sellingPrice),
       discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
     });
   };
@@ -114,7 +114,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
     editAccessoryMutation.mutate({
       name: data.name,
       description: data.description || "",
-      price: parseFloat(data.sellingPrice),
+      sellingPrice: parseFloat(data.sellingPrice),
       discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
     });
   };
@@ -201,7 +201,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
                     </div>
                     <input
                       type="text"
-                      value={accessory.sellingPrice}
+                      value={accessory.sellingPrice || 0}
                       readOnly
                       className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md bg-gray-50"
                     />

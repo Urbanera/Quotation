@@ -44,7 +44,7 @@ export default function ProductForm({
     defaultValues: {
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
-      sellingPrice: defaultValues?.sellingPrice?.toString() || "",
+      sellingPrice: defaultValues?.price?.toString() || "",
     },
   });
 

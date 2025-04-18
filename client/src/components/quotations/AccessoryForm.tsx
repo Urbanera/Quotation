@@ -44,7 +44,7 @@ export default function AccessoryForm({
     defaultValues: {
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
-      sellingPrice: defaultValues?.sellingPrice?.toString() || "",
+      sellingPrice: defaultValues?.price?.toString() || "",
     },
   });
 
