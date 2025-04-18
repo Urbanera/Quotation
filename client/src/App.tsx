@@ -14,6 +14,7 @@ import ViewQuotation from "./pages/quotations/view";
 import UsersPage from "./pages/users/UsersPage";
 import TeamsPage from "./pages/teams/TeamsPage";
 import TeamDetailsPage from "./pages/teams/TeamDetailsPage";
+import SettingsPage from "./pages/settings";
 import NotFound from "./pages/not-found";
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
           <Route path="/users" component={UsersPage} />
           <Route path="/teams" component={TeamsPage} />
           <Route path="/teams/:id" component={TeamDetailsPage} />
+          <Route path="/settings" component={SettingsPage} />
           <Route component={NotFound} />
         </Switch>
       </MainLayout>
