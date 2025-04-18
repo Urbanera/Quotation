@@ -57,10 +57,17 @@ export default function QuotationSummary({
   };
 
   // Fetch installation charges for all rooms in the quotation
-  const { data: roomInstallationCharges = [] } = useQuery<{roomId: number, charges: InstallationCharge[]}[]>({
+  const { data: roomInstallationCharges = [], refetch: refetchInstallationCharges } = useQuery<{roomId: number, charges: InstallationCharge[]}[]>({
     queryKey: [`/api/quotations/${quotationId}/installation-charges`],
     enabled: !!quotationId && !!quotation?.rooms?.length,
   });
+  
+  // Refetch installation charges whenever quotation data changes
+  useEffect(() => {
+    if (quotationId && quotation?.rooms?.length) {
+      refetchInstallationCharges();
+    }
+  }, [quotationId, quotation, refetchInstallationCharges]);
 
   const getTotalInstallationCharges = () => {
     if (!roomInstallationCharges.length) return 0;

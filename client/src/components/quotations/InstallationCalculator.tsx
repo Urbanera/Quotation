@@ -66,9 +66,14 @@ export default function InstallationCalculator({
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const quotationId = data.quotationId;
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      // Invalidate the installation charges query for this quotation
+      if (quotationId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/installation-charges`] });
+      }
       toast({
         title: "Installation charge saved",
         description: "The installation charge has been saved successfully.",
@@ -137,23 +142,24 @@ export default function InstallationCalculator({
     <div className="bg-white shadow rounded-lg p-4 mb-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="cabinetType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Type of cabinets</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Enter type of cabinets (e.g., Kitchen, Wardrobe)"
-                    className="resize-none min-h-[80px]"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 gap-4">
+            <FormField
+              control={form.control}
+              name="cabinetType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type of cabinets</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter type of cabinets (e.g., Kitchen, Wardrobe)"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <FormField
@@ -194,18 +200,6 @@ export default function InstallationCalculator({
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Area (sq.ft)
-              </label>
-              <Input
-                type="text"
-                value={calculatedArea ? calculatedArea.toFixed(2) : ""}
-                readOnly
-                className="bg-gray-50"
-              />
-            </div>
-
             <FormField
               control={form.control}
               name="pricePerSqft"
@@ -223,6 +217,18 @@ export default function InstallationCalculator({
                 </FormItem>
               )}
             />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Area (sq.ft)
+              </label>
+              <Input
+                type="text"
+                value={calculatedArea ? calculatedArea.toFixed(2) : ""}
+                readOnly
+                className="bg-gray-50"
+              />
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
