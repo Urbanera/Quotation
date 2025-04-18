@@ -185,6 +185,7 @@ export class MemStorage implements IStorage {
       phone: "+1 (555) 123-4567",
       email: "info@interiodesigns.com",
       website: "https://www.interiodesigns.com",
+      logo: null,
       taxId: "TAX123456789",
       updatedAt: new Date()
     };
@@ -337,6 +338,59 @@ export class MemStorage implements IStorage {
     });
   }
   
+  // Settings operations
+  async getCompanySettings(): Promise<CompanySettings | undefined> {
+    return this.companySettings;
+  }
+
+  async updateCompanySettings(settings: Partial<InsertCompanySettings>): Promise<CompanySettings> {
+    if (!this.companySettings) {
+      this.companySettings = {
+        id: 1,
+        name: settings.name || "Company Name",
+        address: settings.address || "Company Address",
+        phone: settings.phone || "Phone Number",
+        email: settings.email || "email@example.com",
+        website: settings.website || "",
+        logo: settings.logo || null,
+        taxId: settings.taxId || "",
+        updatedAt: new Date()
+      };
+    } else {
+      this.companySettings = {
+        ...this.companySettings,
+        ...settings,
+        updatedAt: new Date()
+      };
+    }
+    return this.companySettings;
+  }
+
+  async getAppSettings(): Promise<AppSettings | undefined> {
+    return this.appSettings;
+  }
+
+  async updateAppSettings(settings: Partial<InsertAppSettings>): Promise<AppSettings> {
+    if (!this.appSettings) {
+      this.appSettings = {
+        id: 1,
+        defaultGlobalDiscount: settings.defaultGlobalDiscount || 0,
+        defaultGstPercentage: settings.defaultGstPercentage || 18,
+        defaultTermsAndConditions: settings.defaultTermsAndConditions || "",
+        quotationTemplateId: settings.quotationTemplateId || "default",
+        presentationTemplateId: settings.presentationTemplateId || "default",
+        updatedAt: new Date()
+      };
+    } else {
+      this.appSettings = {
+        ...this.appSettings,
+        ...settings,
+        updatedAt: new Date()
+      };
+    }
+    return this.appSettings;
+  }
+
   // Customer operations
   async getCustomers(): Promise<Customer[]> {
     return Array.from(this.customers.values());

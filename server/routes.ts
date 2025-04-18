@@ -24,6 +24,10 @@ import {
   insertTeamMemberSchema,
   milestoneFormSchema,
   insertMilestoneSchema,
+  companySettingsFormSchema,
+  appSettingsFormSchema,
+  insertCompanySettingsSchema,
+  insertAppSettingsSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1018,6 +1022,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to reorder milestones" });
+    }
+  });
+
+  // Company Settings routes
+  app.get("/api/settings/company", async (req, res) => {
+    try {
+      const settings = await storage.getCompanySettings();
+      res.json(settings || {});
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch company settings" });
+    }
+  });
+
+  app.put("/api/settings/company", validateRequest(companySettingsFormSchema), async (req, res) => {
+    try {
+      const settings = await storage.updateCompanySettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update company settings" });
+    }
+  });
+
+  // Handle company logo upload
+  app.post("/api/settings/company/logo", upload.single("logo"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      const logoPath = `/uploads/${req.file.filename}`;
+      const settings = await storage.updateCompanySettings({ logo: logoPath });
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to upload logo" });
+    }
+  });
+
+  // App Settings routes
+  app.get("/api/settings/app", async (req, res) => {
+    try {
+      const settings = await storage.getAppSettings();
+      res.json(settings || {});
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch app settings" });
+    }
+  });
+
+  app.put("/api/settings/app", validateRequest(appSettingsFormSchema), async (req, res) => {
+    try {
+      const settings = await storage.updateAppSettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update app settings" });
     }
   });
 
