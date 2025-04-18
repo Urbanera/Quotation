@@ -155,6 +155,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.get("/api/follow-ups", async (req, res) => {
+    try {
+      const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
+      
+      if (!customerId) {
+        return res.status(400).json({ message: "Customer ID is required" });
+      }
+      
+      const followUps = await storage.getFollowUps(customerId);
+      res.json(followUps);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch follow-ups" });
+    }
+  });
+  
   app.get("/api/follow-ups/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -219,6 +234,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Quotation routes
   app.get("/api/quotations", async (req, res) => {
     try {
+      const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
+      
+      if (customerId) {
+        const quotations = await storage.getQuotationsByCustomer(customerId);
+        return res.json(quotations);
+      }
+      
       const quotations = await storage.getQuotations();
       res.json(quotations);
     } catch (error) {

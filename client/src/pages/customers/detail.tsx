@@ -82,7 +82,7 @@ export default function CustomerDetailPage() {
     defaultValues: {
       customerId,
       notes: "",
-      isCompleted: false,
+      completed: false,
     },
   });
 
@@ -99,7 +99,7 @@ export default function CustomerDetailPage() {
       form.reset({
         customerId,
         notes: "",
-        isCompleted: false,
+        completed: false,
       });
     },
     onError: () => {
@@ -361,8 +361,8 @@ export default function CustomerDetailPage() {
                       <li key={followUp.id} className="px-4 py-4 sm:px-6">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <div className={`p-2 rounded-full ${followUp.isCompleted ? 'bg-green-100' : followUp.nextFollowUpDate && new Date(followUp.nextFollowUpDate) < new Date() ? 'bg-red-100' : 'bg-yellow-100'}`}>
-                              {followUp.isCompleted ? (
+                            <div className={`p-2 rounded-full ${followUp.completed ? 'bg-green-100' : followUp.nextFollowUpDate && new Date(followUp.nextFollowUpDate) < new Date() ? 'bg-red-100' : 'bg-yellow-100'}`}>
+                              {followUp.completed ? (
                                 <CheckCircle2 className="h-5 w-5 text-green-600" />
                               ) : (
                                 <Clock className="h-5 w-5 text-amber-600" />
@@ -371,9 +371,9 @@ export default function CustomerDetailPage() {
                             <div className="ml-4">
                               <div className="flex items-center">
                                 <h4 className="text-sm font-medium text-gray-900">
-                                  {followUp.isCompleted ? 'Completed' : 'Scheduled'} Follow-up
+                                  {followUp.completed ? 'Completed' : 'Scheduled'} Follow-up
                                 </h4>
-                                {followUp.isCompleted ? (
+                                {followUp.completed ? (
                                   <Badge className="ml-2 bg-green-100 text-green-800 border-green-200">
                                     Completed
                                   </Badge>
@@ -397,13 +397,13 @@ export default function CustomerDetailPage() {
                                 {followUp.nextFollowUpDate && (
                                   <div>Follow-up Date: {format(new Date(followUp.nextFollowUpDate), 'PPP')}</div>
                                 )}
-                                {followUp.completedAt && (
-                                  <div>Completed: {format(new Date(followUp.completedAt), 'PPP')}</div>
+                                {followUp.completed && (
+                                  <div>Completed: {format(new Date(followUp.interactionDate), 'PPP')}</div>
                                 )}
                               </div>
                             </div>
                           </div>
-                          {!followUp.isCompleted && (
+                          {!followUp.completed && (
                             <Button
                               variant="outline"
                               size="sm"
