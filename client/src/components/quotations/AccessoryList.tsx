@@ -105,7 +105,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
       roomId,
       name: data.name,
       description: data.description || "",
-      sellingPrice: parseFloat(data.sellingPrice),
+      price: parseFloat(data.sellingPrice),
       discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
     });
   };
@@ -114,7 +114,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
     editAccessoryMutation.mutate({
       name: data.name,
       description: data.description || "",
-      sellingPrice: parseFloat(data.sellingPrice),
+      price: parseFloat(data.sellingPrice),
       discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
     });
   };
