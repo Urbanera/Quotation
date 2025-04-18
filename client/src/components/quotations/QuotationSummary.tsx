@@ -161,7 +161,9 @@ export default function QuotationSummary({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {quotation.rooms.map((room) => {
+              {quotation.rooms && quotation.rooms.map((room) => {
+                if (!room) return null;
+                
                 // Calculate the discounted price with global discount applied
                 const calculatedDiscountedPrice = globalDiscount > 0
                   ? room.sellingPrice - (room.sellingPrice * globalDiscount / 100)
@@ -170,10 +172,10 @@ export default function QuotationSummary({
                 return (
                   <tr key={room.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {room.name.toUpperCase()}
+                      {room.name ? room.name.toUpperCase() : 'UNTITLED ROOM'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      ₹{room.sellingPrice.toLocaleString('en-IN')}
+                      ₹{room.sellingPrice ? room.sellingPrice.toLocaleString('en-IN') : '0'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                       {globalDiscount > 0 ? (
@@ -181,7 +183,7 @@ export default function QuotationSummary({
                           ₹{Math.round(calculatedDiscountedPrice).toLocaleString('en-IN')}
                         </span>
                       ) : (
-                        <>₹{room.sellingPrice.toLocaleString('en-IN')}</>
+                        <>₹{room.sellingPrice ? room.sellingPrice.toLocaleString('en-IN') : '0'}</>
                       )}
                     </td>
                   </tr>
@@ -195,15 +197,15 @@ export default function QuotationSummary({
                     : "Total Of All Items"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                  ₹{totals.totalSelling.toLocaleString('en-IN')}
+                  ₹{(totals.totalSelling || 0).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
                   {globalDiscount > 0 ? (
                     <span className="text-indigo-600 font-medium">
-                      ₹{totals.totalAfterGlobalDiscount.toLocaleString('en-IN')}
+                      ₹{(totals.totalAfterGlobalDiscount || 0).toLocaleString('en-IN')}
                     </span>
                   ) : (
-                    <>₹{totals.totalAfterGlobalDiscount.toLocaleString('en-IN')}</>
+                    <>₹{(totals.totalAfterGlobalDiscount || 0).toLocaleString('en-IN')}</>
                   )}
                 </td>
               </tr>
@@ -215,10 +217,10 @@ export default function QuotationSummary({
                   Installation Charges (Sum of all rooms)
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{getTotalInstallationCharges().toLocaleString('en-IN')}
+                  ₹{(getTotalInstallationCharges() || 0).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{getTotalInstallationCharges().toLocaleString('en-IN')}
+                  ₹{(getTotalInstallationCharges() || 0).toLocaleString('en-IN')}
                 </td>
               </tr>
               <tr>
@@ -226,10 +228,10 @@ export default function QuotationSummary({
                   Handling Charges
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{installationHandling.toLocaleString('en-IN')}
+                  ₹{(installationHandling || 0).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{installationHandling.toLocaleString('en-IN')}
+                  ₹{(installationHandling || 0).toLocaleString('en-IN')}
                 </td>
               </tr>
               
@@ -238,10 +240,10 @@ export default function QuotationSummary({
                   GST {gstPercentage}%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{((totals.totalSelling + getTotalInstallationCharges() + installationHandling) * (gstPercentage / 100)).toLocaleString('en-IN')}
+                  ₹{(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100)).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{totals.gstAmount.toLocaleString('en-IN')}
+                  ₹{(totals.gstAmount || 0).toLocaleString('en-IN')}
                 </td>
               </tr>
               
@@ -250,10 +252,10 @@ export default function QuotationSummary({
                   Final Price
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                  ₹{(totals.totalSelling + getTotalInstallationCharges() + installationHandling + ((totals.totalSelling + getTotalInstallationCharges() + installationHandling) * (gstPercentage / 100))).toLocaleString('en-IN')}
+                  ₹{(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) + (((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100))).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
-                  ₹{totals.finalPrice.toLocaleString('en-IN')}
+                  ₹{(totals.finalPrice || 0).toLocaleString('en-IN')}
                 </td>
               </tr>
             </tbody>

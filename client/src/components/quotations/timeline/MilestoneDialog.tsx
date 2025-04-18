@@ -356,3 +356,6 @@ export function MilestoneDialog({
     </Dialog>
   );
 }
+
+// Named export
+export default MilestoneDialog;

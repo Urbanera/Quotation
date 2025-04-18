@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { MilestoneDialog } from "./MilestoneDialog";
+import MilestoneDialog from "./MilestoneDialog";
 
 type ProjectTimelineProps = {
   quotationId: number;
@@ -269,3 +269,6 @@ export function ProjectTimeline({ quotationId }: ProjectTimelineProps) {
     </div>
   );
 }
+
+// Default export
+export default ProjectTimeline;
