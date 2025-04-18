@@ -126,7 +126,7 @@ export default function Dashboard() {
                 quotations.slice(0, 5).map((quotation) => (
                   <li key={quotation.id}>
                     <Link href={`/quotations/view/${quotation.id}`}>
-                      <a className="block hover:bg-gray-50">
+                      <div className="block hover:bg-gray-50 cursor-pointer">
                         <div className="px-4 py-4 sm:px-6">
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium text-indigo-600 truncate">
@@ -134,7 +134,7 @@ export default function Dashboard() {
                             </p>
                             <div className="ml-2 flex-shrink-0 flex">
                               <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                ₹{quotation.finalPrice.toLocaleString('en-IN')}
+                                ₹{(quotation.finalPrice || 0).toLocaleString('en-IN')}
                               </p>
                             </div>
                           </div>
@@ -152,7 +152,7 @@ export default function Dashboard() {
                             </div>
                           </div>
                         </div>
-                      </a>
+                      </div>
                     </Link>
                   </li>
                 ))

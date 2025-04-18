@@ -120,7 +120,7 @@ export default function QuotationsList() {
                           Quotation #{quotation.id}
                         </h3>
                         <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          ₹{quotation.finalPrice.toLocaleString('en-IN')}
+                          ₹{(quotation.finalPrice || 0).toLocaleString('en-IN')}
                         </span>
                       </div>
                       <div className="mt-2 flex">
