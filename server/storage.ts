@@ -733,7 +733,7 @@ export class MemStorage implements IStorage {
       name: product.name,
       description: product.description,
       quantity: product.quantity,
-      price: product.price,
+      sellingPrice: product.sellingPrice,
       discount: product.discount,
       discountType: product.discountType,
       discountedPrice: product.discountedPrice,
