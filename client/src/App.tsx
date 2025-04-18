@@ -6,6 +6,7 @@ import Dashboard from "./pages/dashboard";
 import CustomersList from "./pages/customers";
 import AddCustomer from "./pages/customers/add";
 import EditCustomer from "./pages/customers/edit";
+import CustomerDetailPage from "./pages/customers/detail";
 import QuotationsList from "./pages/quotations";
 import CreateQuotation from "./pages/quotations/create";
 import EditQuotation from "./pages/quotations/edit";
@@ -24,6 +25,7 @@ function App() {
           <Route path="/customers" component={CustomersList} />
           <Route path="/customers/add" component={AddCustomer} />
           <Route path="/customers/edit/:id" component={EditCustomer} />
+          <Route path="/customers/view/:id" component={CustomerDetailPage} />
           <Route path="/quotations" component={QuotationsList} />
           <Route path="/quotations/create" component={CreateQuotation} />
           <Route path="/quotations/edit/:id" component={EditQuotation} />

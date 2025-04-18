@@ -1,9 +1,9 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye } from "lucide-react";
 import { Customer } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -114,6 +114,12 @@ export default function CustomersList() {
                       </div>
                     </div>
                     <div className="ml-5 flex-shrink-0 flex space-x-2">
+                      <Link href={`/customers/view/${customer.id}`}>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4" />
+                          <span className="sr-only">View</span>
+                        </Button>
+                      </Link>
                       <Link href={`/customers/edit/${customer.id}`}>
                         <Button variant="outline" size="sm">
                           <Edit className="h-4 w-4" />

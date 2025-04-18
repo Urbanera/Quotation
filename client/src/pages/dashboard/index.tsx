@@ -2,8 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Users, Plus, FolderPlus } from "lucide-react";
+import { FileText, Users, Plus, FolderPlus, Bell } from "lucide-react";
 import { Customer, Quotation } from "@shared/schema";
+import PendingFollowUps from "@/components/customers/PendingFollowUps";
 
 export default function Dashboard() {
   const { data: customers, isLoading: isLoadingCustomers } = useQuery<Customer[]>({
@@ -101,6 +102,11 @@ export default function Dashboard() {
           </Card>
         </div>
         
+        {/* Pending Follow-ups Section */}
+        <div className="mt-8">
+          <PendingFollowUps />
+        </div>
+
         {/* Recent Quotations */}
         <div className="mt-8">
           <div className="flex items-center justify-between">

@@ -1,91 +1,106 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { useParams, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useParams, useLocation, Link } from "wouter";
-import { 
-  ChevronLeft, 
-  Edit, 
-  ChevronRight, 
-  Plus,
-  Calendar,
-  User,
-  Phone,
-  Mail,
-  MapPin,
-  FileText,
-  Clock
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Customer, FollowUp, Quotation } from "@shared/schema";
 import { format } from "date-fns";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { 
+  ClipboardList, 
+  FileText, 
+  Mail, 
+  MapPin, 
+  Phone, 
+  ChevronLeft, 
+  CalendarClock, 
+  CheckCircle2, 
+  Calendar as CalendarIcon, 
+  Clock,
+  FileEdit
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Table, 
+  TableBody, 
+  TableCaption, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Customer, FollowUp, Quotation, insertFollowUpSchema } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
-const followUpFormSchema = z.object({
-  customerId: z.number(),
-  notes: z.string().min(1, "Notes are required"),
-  interactionDate: z.string(),
-  nextFollowUpDate: z.string().optional(),
-  completed: z.boolean().default(false),
+const followUpFormSchema = insertFollowUpSchema.extend({
+  nextFollowUpDate: z.date({
+    required_error: "A follow-up date is required",
+  }),
 });
 
 export default function CustomerDetailPage() {
-  const [, navigate] = useLocation();
   const { id } = useParams<{ id: string }>();
-  const customerId = parseInt(id);
   const { toast } = useToast();
-  const [isFollowUpDialogOpen, setIsFollowUpDialogOpen] = useState(false);
+  const [completingId, setCompletingId] = useState<number | null>(null);
+  const customerId = parseInt(id);
 
-  // Query customer details
-  const { 
-    data: customer, 
-    isLoading: isCustomerLoading,
-    error: customerError
-  } = useQuery<Customer>({
-    queryKey: [`/api/customers/${customerId}`],
+  const { data: customer, isLoading: isLoadingCustomer } = useQuery<Customer>({
+    queryKey: ["/api/customers", customerId],
+    queryFn: () => fetch(`/api/customers/${customerId}`).then((res) => res.json()),
     enabled: !isNaN(customerId),
   });
 
-  // Query customer follow-ups
-  const { 
-    data: followUps, 
-    isLoading: isFollowUpsLoading 
-  } = useQuery<FollowUp[]>({
-    queryKey: [`/api/customers/${customerId}/follow-ups`],
+  const { data: followUps, isLoading: isLoadingFollowUps } = useQuery<FollowUp[]>({
+    queryKey: ["/api/follow-ups", customerId],
+    queryFn: () => fetch(`/api/follow-ups?customerId=${customerId}`).then((res) => res.json()),
     enabled: !isNaN(customerId),
   });
 
-  // Query customer quotations
-  const { 
-    data: quotations, 
-    isLoading: isQuotationsLoading 
-  } = useQuery<Quotation[]>({
-    queryKey: [`/api/customers/${customerId}/quotations`],
+  const { data: quotations, isLoading: isLoadingQuotations } = useQuery<Quotation[]>({
+    queryKey: ["/api/quotations", "customer", customerId],
+    queryFn: () => fetch(`/api/quotations?customerId=${customerId}`).then((res) => res.json()),
     enabled: !isNaN(customerId),
   });
 
-  // Create follow-up mutation
-  const createFollowUpMutation = useMutation({
-    mutationFn: (followUpData: z.infer<typeof followUpFormSchema>) => {
-      return apiRequest("POST", "/api/follow-ups", followUpData);
+  const form = useForm<z.infer<typeof followUpFormSchema>>({
+    resolver: zodResolver(followUpFormSchema),
+    defaultValues: {
+      customerId,
+      notes: "",
+      isCompleted: false,
+    },
+  });
+
+  const followUpMutation = useMutation({
+    mutationFn: (data: z.infer<typeof followUpFormSchema>) => {
+      return apiRequest("POST", "/api/follow-ups", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/customers/${customerId}/follow-ups`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/follow-ups", customerId] });
       toast({
         title: "Follow-up created",
-        description: "The follow-up has been added successfully.",
+        description: "The follow-up has been scheduled successfully.",
       });
-      setIsFollowUpDialogOpen(false);
+      form.reset({
+        customerId,
+        notes: "",
+        isCompleted: false,
+      });
     },
     onError: () => {
       toast({
@@ -96,17 +111,18 @@ export default function CustomerDetailPage() {
     },
   });
 
-  // Mark follow-up as complete mutation
-  const markCompleteFollowUpMutation = useMutation({
+  const markCompleteMutation = useMutation({
     mutationFn: (followUpId: number) => {
+      setCompletingId(followUpId);
       return apiRequest("PUT", `/api/follow-ups/${followUpId}/complete`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/customers/${customerId}/follow-ups`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/follow-ups", customerId] });
       toast({
         title: "Follow-up completed",
         description: "The follow-up has been marked as complete.",
       });
+      setCompletingId(null);
     },
     onError: () => {
       toast({
@@ -114,57 +130,59 @@ export default function CustomerDetailPage() {
         description: "Failed to mark follow-up as complete. Please try again.",
         variant: "destructive",
       });
-    },
-  });
-
-  // Setup form
-  const form = useForm<z.infer<typeof followUpFormSchema>>({
-    resolver: zodResolver(followUpFormSchema),
-    defaultValues: {
-      customerId: customerId,
-      notes: "",
-      interactionDate: new Date().toISOString().split('T')[0],
-      nextFollowUpDate: "",
-      completed: false,
+      setCompletingId(null);
     },
   });
 
   function onFollowUpSubmit(values: z.infer<typeof followUpFormSchema>) {
-    createFollowUpMutation.mutate(values);
+    followUpMutation.mutate(values);
   }
 
   function handleMarkComplete(followUpId: number) {
-    markCompleteFollowUpMutation.mutate(followUpId);
+    markCompleteMutation.mutate(followUpId);
   }
 
-  // Show loading state
-  if (isCustomerLoading) {
+  if (isLoadingCustomer) {
     return (
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-2 text-gray-500">Loading customer details...</p>
+          <div className="flex items-center text-sm text-gray-500">
+            <Link href="/customers">
+              <Button variant="outline" size="sm" className="mr-4">
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Back to Customers
+              </Button>
+            </Link>
+            <h1 className="text-2xl font-semibold text-gray-900">Loading Customer...</h1>
+          </div>
+          <div className="mt-6 flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
           </div>
         </div>
       </div>
     );
   }
 
-  // Show error state
-  if (customerError || !customer) {
+  if (!customer) {
     return (
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <div className="text-center py-8">
-            <p className="text-red-500">Error loading customer data. Please try again.</p>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/customers")}
-              className="mt-4"
-            >
-              Back to Customers
-            </Button>
+          <div className="flex items-center text-sm text-gray-500">
+            <Link href="/customers">
+              <Button variant="outline" size="sm" className="mr-4">
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Back to Customers
+              </Button>
+            </Link>
+            <h1 className="text-2xl font-semibold text-red-600">Customer Not Found</h1>
+          </div>
+          <div className="mt-6 bg-white shadow rounded-lg p-6 text-center">
+            <p className="text-gray-600">The customer you are looking for does not exist or has been deleted.</p>
+            <Link href="/customers">
+              <Button className="mt-4 bg-indigo-600 hover:bg-indigo-700">
+                View All Customers
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -174,91 +192,80 @@ export default function CustomerDetailPage() {
   return (
     <div className="py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          <div className="flex items-center mb-4 sm:mb-0">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/customers")}
-              className="mr-4"
-            >
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Back
+        <div className="flex items-center mb-5">
+          <Link href="/customers">
+            <Button variant="outline" size="sm" className="mr-4">
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back to Customers
             </Button>
-            <h1 className="text-2xl font-semibold text-gray-900">Customer Details</h1>
+          </Link>
+          <h1 className="text-2xl font-semibold text-gray-900">{customer.name}</h1>
+          <Link href={`/customers/edit/${customer.id}`}>
+            <Button variant="outline" size="sm" className="ml-4">
+              <FileEdit className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
+          </Link>
+        </div>
+
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+          <div className="px-4 py-5 sm:px-6">
+            <h3 className="text-lg font-medium leading-6 text-gray-900">Customer Information</h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">Personal details and contact information.</p>
           </div>
-          <div className="flex space-x-3">
-            <Link href={`/customers/edit/${customer.id}`}>
-              <Button variant="outline">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Customer
-              </Button>
-            </Link>
+          <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
+            <dl className="sm:divide-y sm:divide-gray-200">
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500 flex items-center">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Email address
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{customer.email}</dd>
+              </div>
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500 flex items-center">
+                  <Phone className="h-4 w-4 mr-2" />
+                  Phone
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{customer.phone}</dd>
+              </div>
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500 flex items-center">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Address
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{customer.address}</dd>
+              </div>
+              <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500 flex items-center">
+                  <ClipboardList className="h-4 w-4 mr-2" />
+                  Notes
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                  {customer.notes ? customer.notes : <span className="text-gray-400 italic">No notes available</span>}
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
 
-        {/* Customer Info Card */}
-        <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
-          <div className="px-6 py-5">
-            <h2 className="text-xl font-semibold text-gray-900 mb-1">{customer.name}</h2>
-            <p className="text-sm text-gray-500">Customer ID: {customer.id}</p>
-            
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-start">
-                <Mail className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Email</p>
-                  <p className="mt-1">{customer.email}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Phone className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Phone</p>
-                  <p className="mt-1">{customer.phone}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start col-span-1 md:col-span-2">
-                <MapPin className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Address</p>
-                  <p className="mt-1">{customer.address}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs for Follow-Ups and Quotations */}
-        <Tabs defaultValue="follow-ups" className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="follow-ups">Follow-ups</TabsTrigger>
-              <TabsTrigger value="quotations">Quotations</TabsTrigger>
-            </TabsList>
-          </div>
-
-          {/* Follow-ups Tab */}
-          <TabsContent value="follow-ups" className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Customer Follow-ups</h3>
-              <Dialog open={isFollowUpDialogOpen} onOpenChange={setIsFollowUpDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Follow-up
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Follow-up</DialogTitle>
-                    <DialogDescription>
-                      Record your interaction with the customer and set a reminder for the next follow-up if needed.
-                    </DialogDescription>
-                  </DialogHeader>
-                  
+        <Tabs defaultValue="follow-ups" className="w-full mb-6">
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="follow-ups" className="flex items-center">
+              <CalendarClock className="h-4 w-4 mr-2" />
+              Follow-ups
+            </TabsTrigger>
+            <TabsTrigger value="quotations" className="flex items-center">
+              <FileText className="h-4 w-4 mr-2" />
+              Quotations
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="follow-ups">
+            <div className="bg-white shadow sm:rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg font-medium leading-6 text-gray-900">Schedule a Follow-up</h3>
+                <div className="mt-5">
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onFollowUpSubmit)} className="space-y-4">
                       <FormField
@@ -266,178 +273,232 @@ export default function CustomerDetailPage() {
                         name="notes"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Notes</FormLabel>
+                            <FormLabel>Follow-up Notes</FormLabel>
                             <FormControl>
-                              <Textarea placeholder="Enter details of your interaction" {...field} />
+                              <Textarea
+                                placeholder="Enter follow-up details, discussion points, or action items..."
+                                className="resize-none"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
-                      <FormField
-                        control={form.control}
-                        name="interactionDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Interaction Date</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
                       <FormField
                         control={form.control}
                         name="nextFollowUpDate"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Next Follow-up Date (Optional)</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Follow-up Date</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) =>
+                                    date < new Date(new Date().setHours(0, 0, 0, 0))
+                                  }
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
-                      <DialogFooter>
-                        <Button 
-                          type="submit" 
-                          disabled={createFollowUpMutation.isPending}
-                        >
-                          {createFollowUpMutation.isPending ? "Saving..." : "Save Follow-up"}
-                        </Button>
-                      </DialogFooter>
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-indigo-600 hover:bg-indigo-700"
+                        disabled={followUpMutation.isPending}
+                      >
+                        {followUpMutation.isPending ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Scheduling...
+                          </div>
+                        ) : (
+                          <>Schedule Follow-up</>
+                        )}
+                      </Button>
                     </form>
                   </Form>
-                </DialogContent>
-              </Dialog>
+                </div>
+              </div>
             </div>
-            
-            {isFollowUpsLoading ? (
-              <div className="text-center py-6">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
-                <p className="mt-2 text-gray-500">Loading follow-ups...</p>
-              </div>
-            ) : !followUps?.length ? (
-              <div className="text-center py-12 border rounded-md">
-                <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">No follow-ups recorded yet.</p>
-                <Button onClick={() => setIsFollowUpDialogOpen(true)}>
-                  Add Your First Follow-up
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {followUps.map((followUp) => (
-                  <Card key={followUp.id} className={followUp.completed ? "bg-gray-50 border-gray-200" : ""}>
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-base font-medium flex items-center">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            {new Date(followUp.interactionDate).toLocaleDateString()}
-                          </CardTitle>
-                          {followUp.nextFollowUpDate && (
-                            <CardDescription>
-                              Next follow-up: {new Date(followUp.nextFollowUpDate).toLocaleDateString()}
-                            </CardDescription>
+
+            <div className="mt-6">
+              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Follow-up History</h3>
+              {isLoadingFollowUps ? (
+                <div className="text-center py-10">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-500">Loading follow-ups...</p>
+                </div>
+              ) : !followUps?.length ? (
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg py-10 text-center">
+                  <p className="text-gray-500">No follow-ups recorded yet.</p>
+                </div>
+              ) : (
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                  <ul className="divide-y divide-gray-200">
+                    {followUps.map((followUp) => (
+                      <li key={followUp.id} className="px-4 py-4 sm:px-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className={`p-2 rounded-full ${followUp.isCompleted ? 'bg-green-100' : followUp.nextFollowUpDate && new Date(followUp.nextFollowUpDate) < new Date() ? 'bg-red-100' : 'bg-yellow-100'}`}>
+                              {followUp.isCompleted ? (
+                                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                              ) : (
+                                <Clock className="h-5 w-5 text-amber-600" />
+                              )}
+                            </div>
+                            <div className="ml-4">
+                              <div className="flex items-center">
+                                <h4 className="text-sm font-medium text-gray-900">
+                                  {followUp.isCompleted ? 'Completed' : 'Scheduled'} Follow-up
+                                </h4>
+                                {followUp.isCompleted ? (
+                                  <Badge className="ml-2 bg-green-100 text-green-800 border-green-200">
+                                    Completed
+                                  </Badge>
+                                ) : followUp.nextFollowUpDate && new Date(followUp.nextFollowUpDate) < new Date() ? (
+                                  <Badge className="ml-2 bg-red-100 text-red-800 border-red-200">
+                                    Overdue
+                                  </Badge>
+                                ) : (
+                                  <Badge className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-200">
+                                    Pending
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="mt-1 text-sm text-gray-500 whitespace-pre-wrap">
+                                {followUp.notes}
+                              </div>
+                              <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-4">
+                                {followUp.createdAt && (
+                                  <div>Created: {format(new Date(followUp.createdAt), 'PPP')}</div>
+                                )}
+                                {followUp.nextFollowUpDate && (
+                                  <div>Follow-up Date: {format(new Date(followUp.nextFollowUpDate), 'PPP')}</div>
+                                )}
+                                {followUp.completedAt && (
+                                  <div>Completed: {format(new Date(followUp.completedAt), 'PPP')}</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {!followUp.isCompleted && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleMarkComplete(followUp.id)}
+                              disabled={markCompleteMutation.isPending && completingId === followUp.id}
+                            >
+                              {markCompleteMutation.isPending && completingId === followUp.id ? (
+                                <div className="flex items-center">
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+                                  Marking...
+                                </div>
+                              ) : (
+                                <>
+                                  <CheckCircle2 className="h-4 w-4 mr-1" />
+                                  Mark Complete
+                                </>
+                              )}
+                            </Button>
                           )}
                         </div>
-                        <Badge variant={followUp.completed ? "outline" : "default"}>
-                          {followUp.completed ? "Completed" : "Pending"}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm">{followUp.notes}</p>
-                    </CardContent>
-                    {!followUp.completed && (
-                      <CardFooter className="pt-0 flex justify-end">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleMarkComplete(followUp.id)}
-                          disabled={markCompleteFollowUpMutation.isPending}
-                        >
-                          Mark as Complete
-                        </Button>
-                      </CardFooter>
-                    )}
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Quotations Tab */}
-          <TabsContent value="quotations" className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Customer Quotations</h3>
-              <Link href={`/quotations/create?customerId=${customer.id}`}>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Quotation
-                </Button>
-              </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-            
-            {isQuotationsLoading ? (
-              <div className="text-center py-6">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
-                <p className="mt-2 text-gray-500">Loading quotations...</p>
+          </TabsContent>
+          
+          <TabsContent value="quotations">
+            <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">Customer Quotations</h3>
+                  <Link href={`/quotations/create?customerId=${customer.id}`}>
+                    <Button className="bg-indigo-600 hover:bg-indigo-700">
+                      Create New Quotation
+                    </Button>
+                  </Link>
+                </div>
+                
+                {isLoadingQuotations ? (
+                  <div className="text-center py-10">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-500">Loading quotations...</p>
+                  </div>
+                ) : !quotations?.length ? (
+                  <div className="py-10 text-center">
+                    <p className="text-gray-500">No quotations created for this customer yet.</p>
+                  </div>
+                ) : (
+                  <div className="mt-5">
+                    <Table>
+                      <TableCaption>A list of quotations for {customer.name}</TableCaption>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Quotation #</TableHead>
+                          <TableHead>Created Date</TableHead>
+                          <TableHead>Final Price</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {quotations.map((quotation) => (
+                          <TableRow key={quotation.id}>
+                            <TableCell className="font-medium">#{quotation.id}</TableCell>
+                            <TableCell>{format(new Date(quotation.createdAt), 'PP')}</TableCell>
+                            <TableCell>₹{quotation.finalPrice.toLocaleString('en-IN')}</TableCell>
+                            <TableCell>
+                              <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                                Active
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end space-x-2">
+                                <Link href={`/quotations/view/${quotation.id}`}>
+                                  <Button variant="outline" size="sm">
+                                    View
+                                  </Button>
+                                </Link>
+                                <Link href={`/quotations/edit/${quotation.id}`}>
+                                  <Button variant="outline" size="sm">
+                                    Edit
+                                  </Button>
+                                </Link>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
-            ) : !quotations?.length ? (
-              <div className="text-center py-12 border rounded-md">
-                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">No quotations created yet.</p>
-                <Link href={`/quotations/create?customerId=${customer.id}`}>
-                  <Button>
-                    Create First Quotation
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {quotations.map((quotation) => (
-                  <Card key={quotation.id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-base font-medium">
-                          Quotation #{quotation.id}
-                        </CardTitle>
-                        <Badge variant="outline">
-                          {new Date(quotation.createdAt).toLocaleDateString()}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                        <div>
-                          <p className="text-sm text-gray-500">Total Price</p>
-                          <p className="font-medium">${quotation.finalPrice.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Created</p>
-                          <p className="font-medium">{format(new Date(quotation.createdAt), 'MMM d, yyyy')}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="pt-0">
-                      <Link href={`/quotations/view/${quotation.id}`}>
-                        <Button variant="outline" size="sm">
-                          View Details
-                          <ChevronRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
