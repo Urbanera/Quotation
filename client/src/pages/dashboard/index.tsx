@@ -180,7 +180,7 @@ export default function Dashboard() {
                 customers.slice(0, 5).map((customer) => (
                   <li key={customer.id}>
                     <Link href={`/customers/edit/${customer.id}`}>
-                      <a className="block hover:bg-gray-50">
+                      <div className="block hover:bg-gray-50 cursor-pointer">
                         <div className="px-4 py-4 sm:px-6">
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium text-indigo-600 truncate">
@@ -200,7 +200,7 @@ export default function Dashboard() {
                             </div>
                           </div>
                         </div>
-                      </a>
+                      </div>
                     </Link>
                   </li>
                 ))
