@@ -10,7 +10,8 @@ import {
   users, User, InsertUser,
   teams, Team, InsertTeam,
   teamMembers, TeamMember, InsertTeamMember,
-  followUps, FollowUp, InsertFollowUp
+  followUps, FollowUp, InsertFollowUp,
+  milestones, Milestone, InsertMilestone
 } from "@shared/schema";
 
 export interface IStorage {
@@ -96,6 +97,15 @@ export interface IStorage {
   getTeamMembers(teamId: number): Promise<User[]>;
   addTeamMember(teamMember: InsertTeamMember): Promise<TeamMember>;
   removeTeamMember(teamId: number, userId: number): Promise<boolean>;
+  
+  // Project Timeline operations
+  getMilestones(quotationId: number): Promise<Milestone[]>;
+  getMilestone(id: number): Promise<Milestone | undefined>;
+  createMilestone(milestone: InsertMilestone): Promise<Milestone>;
+  updateMilestone(id: number, milestone: Partial<InsertMilestone>): Promise<Milestone | undefined>;
+  deleteMilestone(id: number): Promise<boolean>;
+  reorderMilestones(milestoneIds: number[]): Promise<boolean>;
+  updateMilestoneStatus(id: number, status: "pending" | "in_progress" | "completed" | "delayed", completedDate?: Date): Promise<Milestone | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -110,6 +120,7 @@ export class MemStorage implements IStorage {
   private teams: Map<number, Team>;
   private teamMembers: Map<number, TeamMember>;
   private followUps: Map<number, FollowUp>;
+  private milestones: Map<number, Milestone>;
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
@@ -122,6 +133,7 @@ export class MemStorage implements IStorage {
   private teamIdCounter: number;
   private teamMemberIdCounter: number;
   private followUpIdCounter: number;
+  private milestoneIdCounter: number;
   
   constructor() {
     this.customers = new Map();
@@ -135,6 +147,7 @@ export class MemStorage implements IStorage {
     this.teams = new Map();
     this.teamMembers = new Map();
     this.followUps = new Map();
+    this.milestones = new Map();
     
     this.customerIdCounter = 1;
     this.quotationIdCounter = 1;
@@ -147,6 +160,7 @@ export class MemStorage implements IStorage {
     this.teamIdCounter = 1;
     this.teamMemberIdCounter = 1;
     this.followUpIdCounter = 1;
+    this.milestoneIdCounter = 1;
     
     // Add some initial data
     this.initializeData();

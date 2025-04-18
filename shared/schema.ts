@@ -311,3 +311,36 @@ export const followUpFormSchema = z.object({
   completed: z.boolean().default(false),
   userId: z.number().optional().nullable(),
 });
+
+// Project Timeline schema
+export const milestoneStatusEnum = pgEnum('milestone_status', ['pending', 'in_progress', 'completed', 'delayed']);
+
+export const milestones = pgTable("milestones", {
+  id: serial("id").primaryKey(),
+  quotationId: integer("quotation_id").notNull().references(() => quotations.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: milestoneStatusEnum("status").notNull().default('pending'),
+  completedDate: timestamp("completed_date"),
+  order: integer("order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMilestoneSchema = createInsertSchema(milestones).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Milestone = typeof milestones.$inferSelect;
+export type InsertMilestone = z.infer<typeof insertMilestoneSchema>;
+
+export const milestoneFormSchema = z.object({
+  quotationId: z.number().min(1, "Quotation is required"),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional().nullable(),
+  startDate: z.string().or(z.date()),
+  endDate: z.string().or(z.date()),
+  status: z.enum(['pending', 'in_progress', 'completed', 'delayed']).default('pending'),
+});
