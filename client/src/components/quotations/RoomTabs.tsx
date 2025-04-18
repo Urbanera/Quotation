@@ -233,6 +233,8 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                                 .then(() => {
                                   queryClient.invalidateQueries({ queryKey: [`/api/rooms/${activeRoom.id}`] });
                                   queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+                                  // Invalidate installation charges query for this quotation
+                                  queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/installation-charges`] });
                                   toast({
                                     title: "Installation charge deleted",
                                     description: "The installation charge has been deleted successfully.",
@@ -288,6 +290,7 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                   </div>
                   <InstallationCalculator
                     roomId={activeRoom.id}
+                    quotationId={quotationId}
                     charge={activeRoom.installationCharges?.find(charge => charge.id === editingInstallationId) || null}
                     onSaveSuccess={() => setEditingInstallationId(null)}
                   />
@@ -309,6 +312,7 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                   </div>
                   <InstallationCalculator
                     roomId={activeRoom.id}
+                    quotationId={quotationId}
                     onSaveSuccess={() => setAddingInstallation(false)}
                   />
                 </div>

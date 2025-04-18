@@ -22,12 +22,14 @@ import { Loader2 } from "lucide-react";
 interface InstallationCalculatorProps {
   roomId: number;
   charge?: InstallationCharge | null;
+  quotationId?: number;
   onSaveSuccess?: () => void;
 }
 
 export default function InstallationCalculator({
   roomId,
   charge,
+  quotationId,
   onSaveSuccess
 }: InstallationCalculatorProps) {
   const { toast } = useToast();
@@ -67,12 +69,16 @@ export default function InstallationCalculator({
       }
     },
     onSuccess: (data) => {
-      const quotationId = data.quotationId;
+      const dataQuotationId = data.quotationId;
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      
       // Invalidate the installation charges query for this quotation
+      // Use the passed quotationId first, then fall back to the data.quotationId
       if (quotationId) {
         queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/installation-charges`] });
+      } else if (dataQuotationId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${dataQuotationId}/installation-charges`] });
       }
       toast({
         title: "Installation charge saved",
