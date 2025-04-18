@@ -51,6 +51,7 @@ const followUpFormSchema = insertFollowUpSchema.extend({
   nextFollowUpDate: z.date({
     required_error: "A follow-up date is required",
   }),
+  interactionDate: z.date().default(() => new Date()),
 });
 
 export default function CustomerDetailPage() {
@@ -83,6 +84,7 @@ export default function CustomerDetailPage() {
       customerId,
       notes: "",
       completed: false,
+      interactionDate: new Date(),
     },
   });
 
@@ -100,6 +102,7 @@ export default function CustomerDetailPage() {
         customerId,
         notes: "",
         completed: false,
+        interactionDate: new Date(),
       });
     },
     onError: () => {
@@ -242,7 +245,7 @@ export default function CustomerDetailPage() {
                   Notes
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                  {customer.notes ? customer.notes : <span className="text-gray-400 italic">No notes available</span>}
+                  {(customer as any).notes ? (customer as any).notes : <span className="text-gray-400 italic">No notes available</span>}
                 </dd>
               </div>
             </dl>
