@@ -1128,6 +1128,151 @@ export class MemStorage implements IStorage {
     
     return this.teamMembers.delete(teamMember.id);
   }
+  
+  // Project Timeline operations
+  async getMilestones(quotationId: number): Promise<Milestone[]> {
+    return Array.from(this.milestones.values())
+      .filter(milestone => milestone.quotationId === quotationId)
+      .sort((a, b) => a.order - b.order);
+  }
+  
+  async getMilestone(id: number): Promise<Milestone | undefined> {
+    return this.milestones.get(id);
+  }
+  
+  async createMilestone(milestone: InsertMilestone): Promise<Milestone> {
+    const id = this.milestoneIdCounter++;
+    
+    // Convert date strings to Date objects if needed
+    const startDate = typeof milestone.startDate === 'string' 
+      ? new Date(milestone.startDate) 
+      : milestone.startDate;
+      
+    const endDate = typeof milestone.endDate === 'string' 
+      ? new Date(milestone.endDate) 
+      : milestone.endDate;
+      
+    const completedDate = milestone.completedDate
+      ? (typeof milestone.completedDate === 'string' 
+          ? new Date(milestone.completedDate) 
+          : milestone.completedDate)
+      : null;
+    
+    // Find the highest order for milestones with the same quotationId
+    const existingMilestones = await this.getMilestones(milestone.quotationId);
+    const maxOrder = existingMilestones.length > 0
+      ? Math.max(...existingMilestones.map(m => m.order))
+      : -1;
+    
+    const newMilestone: Milestone = {
+      id,
+      quotationId: milestone.quotationId,
+      title: milestone.title,
+      description: milestone.description || null,
+      startDate,
+      endDate,
+      status: milestone.status,
+      completedDate,
+      order: milestone.order !== undefined ? milestone.order : maxOrder + 1,
+      createdAt: new Date(),
+    };
+    
+    this.milestones.set(id, newMilestone);
+    return newMilestone;
+  }
+  
+  async updateMilestone(id: number, milestone: Partial<InsertMilestone>): Promise<Milestone | undefined> {
+    const existingMilestone = this.milestones.get(id);
+    if (!existingMilestone) return undefined;
+    
+    // Handle date conversions
+    let startDate = existingMilestone.startDate;
+    if (milestone.startDate) {
+      startDate = typeof milestone.startDate === 'string'
+        ? new Date(milestone.startDate)
+        : milestone.startDate;
+    }
+    
+    let endDate = existingMilestone.endDate;
+    if (milestone.endDate) {
+      endDate = typeof milestone.endDate === 'string'
+        ? new Date(milestone.endDate)
+        : milestone.endDate;
+    }
+    
+    let completedDate = existingMilestone.completedDate;
+    if (milestone.completedDate !== undefined) {
+      completedDate = milestone.completedDate
+        ? (typeof milestone.completedDate === 'string'
+            ? new Date(milestone.completedDate)
+            : milestone.completedDate)
+        : null;
+    }
+    
+    const updatedMilestone: Milestone = {
+      ...existingMilestone,
+      ...milestone,
+      startDate,
+      endDate,
+      completedDate,
+      description: milestone.description !== undefined ? milestone.description : existingMilestone.description,
+    };
+    
+    this.milestones.set(id, updatedMilestone);
+    return updatedMilestone;
+  }
+  
+  async deleteMilestone(id: number): Promise<boolean> {
+    return this.milestones.delete(id);
+  }
+  
+  async reorderMilestones(milestoneIds: number[]): Promise<boolean> {
+    try {
+      // Validate all IDs exist
+      for (const id of milestoneIds) {
+        if (!this.milestones.has(id)) {
+          return false;
+        }
+      }
+      
+      // Update order for each milestone
+      milestoneIds.forEach((id, index) => {
+        const milestone = this.milestones.get(id);
+        if (milestone) {
+          this.milestones.set(id, {
+            ...milestone,
+            order: index
+          });
+        }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error reordering milestones:", error);
+      return false;
+    }
+  }
+  
+  async updateMilestoneStatus(id: number, status: "pending" | "in_progress" | "completed" | "delayed", completedDate?: Date): Promise<Milestone | undefined> {
+    const milestone = this.milestones.get(id);
+    if (!milestone) return undefined;
+    
+    let newCompletedDate = milestone.completedDate;
+    if (status === "completed" && !milestone.completedDate) {
+      newCompletedDate = completedDate || new Date();
+    } else if (status !== "completed") {
+      newCompletedDate = null;
+    }
+    
+    const updatedMilestone: Milestone = {
+      ...milestone,
+      status,
+      completedDate: newCompletedDate
+    };
+    
+    this.milestones.set(id, updatedMilestone);
+    return updatedMilestone;
+  }
 }
 
 export const storage = new MemStorage();

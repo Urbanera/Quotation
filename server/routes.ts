@@ -22,6 +22,8 @@ import {
   insertUserSchema,
   insertTeamSchema,
   insertTeamMemberSchema,
+  milestoneFormSchema,
+  insertMilestoneSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -903,6 +905,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to remove team member" });
+    }
+  });
+
+  // Project Timeline/Milestone routes
+  app.get("/api/quotations/:quotationId/milestones", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.quotationId);
+      const milestones = await storage.getMilestones(quotationId);
+      res.json(milestones);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch milestones" });
+    }
+  });
+
+  app.get("/api/milestones/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const milestone = await storage.getMilestone(id);
+      if (!milestone) {
+        return res.status(404).json({ message: "Milestone not found" });
+      }
+      res.json(milestone);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch milestone" });
+    }
+  });
+
+  app.post("/api/quotations/:quotationId/milestones", validateRequest(milestoneFormSchema), async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.quotationId);
+      const milestoneData = {
+        ...req.body,
+        quotationId,
+      };
+      
+      const milestone = await storage.createMilestone(milestoneData);
+      res.status(201).json(milestone);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create milestone" });
+    }
+  });
+
+  app.put("/api/milestones/:id", validateRequest(milestoneFormSchema), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const milestone = await storage.updateMilestone(id, req.body);
+      if (!milestone) {
+        return res.status(404).json({ message: "Milestone not found" });
+      }
+      res.json(milestone);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update milestone" });
+    }
+  });
+
+  app.put("/api/milestones/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status, completedDate } = req.body;
+      
+      // Validate status
+      const validStatuses = ["pending", "in_progress", "completed", "delayed"];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ 
+          message: "Invalid status. Must be one of: pending, in_progress, completed, delayed" 
+        });
+      }
+      
+      // Parse completedDate if provided
+      let parsedCompletedDate: Date | undefined = undefined;
+      if (completedDate) {
+        parsedCompletedDate = new Date(completedDate);
+      }
+      
+      const milestone = await storage.updateMilestoneStatus(id, status, parsedCompletedDate);
+      if (!milestone) {
+        return res.status(404).json({ message: "Milestone not found" });
+      }
+      
+      res.json(milestone);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update milestone status" });
+    }
+  });
+
+  app.delete("/api/milestones/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteMilestone(id);
+      if (!success) {
+        return res.status(404).json({ message: "Milestone not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete milestone" });
+    }
+  });
+
+  app.post("/api/quotations/:quotationId/milestones/reorder", async (req, res) => {
+    try {
+      const { milestoneIds } = req.body;
+      if (!Array.isArray(milestoneIds)) {
+        return res.status(400).json({ message: "Invalid milestone IDs" });
+      }
+      
+      const success = await storage.reorderMilestones(milestoneIds);
+      if (!success) {
+        return res.status(400).json({ message: "Failed to reorder milestones" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reorder milestones" });
     }
   });
 
