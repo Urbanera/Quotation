@@ -2,10 +2,11 @@ import { useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit } from "lucide-react";
+import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange } from "lucide-react";
 import { QuotationWithDetails } from "@shared/schema";
 import BasicQuote from "@/components/PDFQuotes/BasicQuote";
 import PresentationQuote from "@/components/PDFQuotes/PresentationQuote";
+import { ProjectTimeline } from "@/components/quotations/timeline/ProjectTimeline";
 import { useToast } from "@/hooks/use-toast";
 import {
   Tabs,
@@ -123,7 +124,7 @@ export default function ViewQuotation() {
       <div className="mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsList className="grid w-full max-w-md grid-cols-3">
               <TabsTrigger value="basic" className="flex items-center">
                 <FileText className="mr-2 h-4 w-4" />
                 Basic Quote
@@ -131,6 +132,10 @@ export default function ViewQuotation() {
               <TabsTrigger value="presentation" className="flex items-center">
                 <FileOutput className="mr-2 h-4 w-4" />
                 Presentation Quote
+              </TabsTrigger>
+              <TabsTrigger value="timeline" className="flex items-center">
+                <CalendarRange className="mr-2 h-4 w-4" />
+                Timeline
               </TabsTrigger>
             </TabsList>
             
@@ -143,6 +148,12 @@ export default function ViewQuotation() {
             <TabsContent value="presentation" className="mt-6">
               <div className="bg-white shadow rounded-lg p-6">
                 <PresentationQuote ref={presentationQuoteRef} quotation={quotation} />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="timeline" className="mt-6">
+              <div className="bg-white shadow rounded-lg p-6">
+                <ProjectTimeline quotationId={parseInt(id || "0")} />
               </div>
             </TabsContent>
           </Tabs>
