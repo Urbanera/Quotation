@@ -282,3 +282,32 @@ export const teamMemberFormSchema = z.object({
   teamId: z.number().min(1, "Team is required"),
   userId: z.number().min(1, "User is required"),
 });
+
+// Customer Follow-up schema
+export const followUps = pgTable("follow_ups", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull().references(() => customers.id),
+  notes: text("notes").notNull(),
+  interactionDate: timestamp("interaction_date").defaultNow().notNull(),
+  nextFollowUpDate: timestamp("next_follow_up_date"),
+  completed: boolean("completed").default(false).notNull(),
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertFollowUpSchema = createInsertSchema(followUps).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type FollowUp = typeof followUps.$inferSelect;
+export type InsertFollowUp = z.infer<typeof insertFollowUpSchema>;
+
+export const followUpFormSchema = z.object({
+  customerId: z.number().min(1, "Customer is required"),
+  notes: z.string().min(1, "Notes are required"),
+  interactionDate: z.string().or(z.date()),
+  nextFollowUpDate: z.string().or(z.date()).optional().nullable(),
+  completed: z.boolean().default(false),
+  userId: z.number().optional().nullable(),
+});

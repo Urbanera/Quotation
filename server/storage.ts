@@ -9,7 +9,8 @@ import {
   QuotationWithDetails, RoomWithItems,
   users, User, InsertUser,
   teams, Team, InsertTeam,
-  teamMembers, TeamMember, InsertTeamMember
+  teamMembers, TeamMember, InsertTeamMember,
+  followUps, FollowUp, InsertFollowUp
 } from "@shared/schema";
 
 export interface IStorage {
@@ -19,6 +20,15 @@ export interface IStorage {
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: number, customer: InsertCustomer): Promise<Customer | undefined>;
   deleteCustomer(id: number): Promise<boolean>;
+  
+  // Customer Follow-up operations
+  getFollowUps(customerId: number): Promise<FollowUp[]>;
+  getFollowUp(id: number): Promise<FollowUp | undefined>;
+  createFollowUp(followUp: InsertFollowUp): Promise<FollowUp>;
+  updateFollowUp(id: number, followUp: Partial<InsertFollowUp>): Promise<FollowUp | undefined>;
+  deleteFollowUp(id: number): Promise<boolean>;
+  getPendingFollowUps(): Promise<Array<FollowUp & { customer: Customer }>>;
+  markFollowUpComplete(id: number): Promise<FollowUp | undefined>;
   
   // Quotation operations
   getQuotations(): Promise<Quotation[]>;
@@ -99,6 +109,7 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private teams: Map<number, Team>;
   private teamMembers: Map<number, TeamMember>;
+  private followUps: Map<number, FollowUp>;
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
@@ -110,6 +121,7 @@ export class MemStorage implements IStorage {
   private userIdCounter: number;
   private teamIdCounter: number;
   private teamMemberIdCounter: number;
+  private followUpIdCounter: number;
   
   constructor() {
     this.customers = new Map();
