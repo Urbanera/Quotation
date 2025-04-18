@@ -2,6 +2,40 @@ import { pgTable, text, serial, integer, doublePrecision, timestamp, json, boole
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Company Settings schema
+export const companySettings = pgTable("company_settings", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  address: text("address").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email").notNull(),
+  website: text("website"),
+  logo: text("logo"),
+  taxId: text("tax_id"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCompanySettingsSchema = createInsertSchema(companySettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+// App Settings schema
+export const appSettings = pgTable("app_settings", {
+  id: serial("id").primaryKey(),
+  defaultGlobalDiscount: doublePrecision("default_global_discount").notNull().default(0),
+  defaultGstPercentage: doublePrecision("default_gst_percentage").notNull().default(18),
+  defaultTermsAndConditions: text("default_terms_and_conditions"),
+  quotationTemplateId: text("quotation_template_id").default("default"),
+  presentationTemplateId: text("presentation_template_id").default("default"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertAppSettingsSchema = createInsertSchema(appSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Customer schema
 export const customers = pgTable("customers", {
   id: serial("id").primaryKey(),
@@ -102,6 +136,12 @@ export const insertImageSchema = createInsertSchema(images).omit({
 });
 
 // Types for DB operations
+export type CompanySettings = typeof companySettings.$inferSelect;
+export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
+
+export type AppSettings = typeof appSettings.$inferSelect;
+export type InsertAppSettings = z.infer<typeof insertAppSettingsSchema>;
+
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 
@@ -219,6 +259,23 @@ export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
 });
 
 // Custom schemas for client-side validation
+export const companySettingsFormSchema = z.object({
+  name: z.string().min(1, "Company name is required"),
+  address: z.string().min(1, "Company address is required"),
+  phone: z.string().min(8, "Phone number must be at least 8 digits"),
+  email: z.string().email("Invalid email address"),
+  website: z.string().url("Website must be a valid URL").optional().or(z.literal("")),
+  taxId: z.string().optional().or(z.literal("")),
+});
+
+export const appSettingsFormSchema = z.object({
+  defaultGlobalDiscount: z.number().min(0, "Default discount must be a positive number"),
+  defaultGstPercentage: z.number().min(0, "Default GST percentage must be a positive number"),
+  defaultTermsAndConditions: z.string().optional().or(z.literal("")),
+  quotationTemplateId: z.string().default("default"),
+  presentationTemplateId: z.string().default("default"),
+});
+
 export const roomFormSchema = z.object({
   name: z.string().min(1, "Room name is required"),
   description: z.string().optional(),

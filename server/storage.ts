@@ -1,4 +1,6 @@
 import {
+  companySettings, CompanySettings, InsertCompanySettings,
+  appSettings, AppSettings, InsertAppSettings,
   customers, Customer, InsertCustomer,
   quotations, Quotation, InsertQuotation,
   rooms, Room, InsertRoom,
@@ -15,6 +17,12 @@ import {
 } from "@shared/schema";
 
 export interface IStorage {
+  // Settings operations
+  getCompanySettings(): Promise<CompanySettings | undefined>;
+  updateCompanySettings(settings: Partial<InsertCompanySettings>): Promise<CompanySettings>;
+  getAppSettings(): Promise<AppSettings | undefined>;
+  updateAppSettings(settings: Partial<InsertAppSettings>): Promise<AppSettings>;
+
   // Customer operations
   getCustomers(): Promise<Customer[]>;
   getCustomer(id: number): Promise<Customer | undefined>;
@@ -109,6 +117,8 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  private companySettings: CompanySettings | undefined;
+  private appSettings: AppSettings | undefined;
   private customers: Map<number, Customer>;
   private quotations: Map<number, Quotation>;
   private rooms: Map<number, Room>;
@@ -167,6 +177,29 @@ export class MemStorage implements IStorage {
   }
 
   private initializeData() {
+    // Initialize company settings
+    this.companySettings = {
+      id: 1,
+      name: "Interio Designs",
+      address: "123 Design Avenue, Suite 456, Design District",
+      phone: "+1 (555) 123-4567",
+      email: "info@interiodesigns.com",
+      website: "https://www.interiodesigns.com",
+      taxId: "TAX123456789",
+      updatedAt: new Date()
+    };
+
+    // Initialize app settings
+    this.appSettings = {
+      id: 1,
+      defaultGlobalDiscount: 5,
+      defaultGstPercentage: 18,
+      defaultTermsAndConditions: "1. All prices are valid for 30 days from quotation date.\n2. 50% advance payment required to start work.\n3. Balance payment due upon completion.\n4. Material colors may vary slightly from samples.\n5. Changes to design after approval may incur additional charges.",
+      quotationTemplateId: "default",
+      presentationTemplateId: "default",
+      updatedAt: new Date()
+    };
+    
     // Add a demo customer
     const customer: Customer = {
       id: this.customerIdCounter++,
