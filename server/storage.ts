@@ -222,6 +222,86 @@ export class MemStorage implements IStorage {
       createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     };
     this.followUps.set(followUp.id, followUp);
+    
+    // Create a demo quotation for project timeline
+    const now = new Date();
+    const quotation: Quotation = {
+      id: this.quotationIdCounter++,
+      customerId: customer.id,
+      quotationNumber: "Q-2025-001",
+      status: "draft",
+      title: "Kitchen Renovation Demo",
+      description: "Complete kitchen redesign with modern appliances",
+      gstPercentage: 7,
+      globalDiscount: 5,
+      installationHandling: 500,
+      totalSellingPrice: 15000,
+      totalDiscountedPrice: 14250,
+      gstAmount: 1032.5,
+      finalPrice: 15782.5,
+      validUntil: new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
+      terms: "Standard terms and conditions apply",
+      createdAt: now,
+      updatedAt: now
+    };
+    this.quotations.set(quotation.id, quotation);
+    
+    // Add project timeline milestones for the demo quotation
+    const milestones = [
+      {
+        id: this.milestoneIdCounter++,
+        quotationId: quotation.id,
+        title: "Design Approval",
+        description: "Client approves final design concept",
+        startDate: new Date(),
+        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 5),
+        status: "pending" as const,
+        completedDate: null,
+        order: 0,
+        createdAt: new Date()
+      },
+      {
+        id: this.milestoneIdCounter++,
+        quotationId: quotation.id,
+        title: "Material Procurement",
+        description: "Purchase and delivery of all materials",
+        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 6),
+        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 15),
+        status: "pending" as const,
+        completedDate: null,
+        order: 1,
+        createdAt: new Date()
+      },
+      {
+        id: this.milestoneIdCounter++,
+        quotationId: quotation.id,
+        title: "Installation Phase",
+        description: "Installation of all fixtures and cabinets",
+        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 16),
+        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 25),
+        status: "pending" as const,
+        completedDate: null,
+        order: 2,
+        createdAt: new Date()
+      },
+      {
+        id: this.milestoneIdCounter++,
+        quotationId: quotation.id,
+        title: "Final Inspection",
+        description: "Quality check and client acceptance",
+        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 26),
+        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 28),
+        status: "pending" as const,
+        completedDate: null,
+        order: 3,
+        createdAt: new Date()
+      }
+    ];
+    
+    // Add milestones to the storage
+    milestones.forEach(milestone => {
+      this.milestones.set(milestone.id, milestone);
+    });
   }
   
   // Customer operations
@@ -438,6 +518,10 @@ export class MemStorage implements IStorage {
     const newQuotation: Quotation = {
       id,
       customerId: quotation.customerId,
+      quotationNumber: quotation.quotationNumber || `Q-${now.getFullYear()}-${id.toString().padStart(3, '0')}`,
+      status: quotation.status || "draft",
+      title: quotation.title || "",
+      description: quotation.description || null,
       totalSellingPrice: quotation.totalSellingPrice || 0,
       totalDiscountedPrice: quotation.totalDiscountedPrice || 0,
       installationHandling: quotation.installationHandling || 0,
@@ -445,6 +529,8 @@ export class MemStorage implements IStorage {
       gstPercentage: quotation.gstPercentage || 0,
       gstAmount: quotation.gstAmount || 0,
       finalPrice: quotation.finalPrice || 0,
+      validUntil: quotation.validUntil || new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
+      terms: quotation.terms || "Standard terms and conditions apply",
       createdAt: now,
       updatedAt: now,
     };
