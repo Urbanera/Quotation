@@ -792,7 +792,7 @@ export class MemStorage implements IStorage {
       name: accessory.name,
       description: accessory.description,
       quantity: accessory.quantity,
-      price: accessory.price,
+      sellingPrice: accessory.sellingPrice,
       discount: accessory.discount,
       discountType: accessory.discountType,
       discountedPrice: accessory.discountedPrice,
@@ -980,14 +980,14 @@ export class MemStorage implements IStorage {
     
     // Add product prices
     for (const product of products) {
-      sellingPrice += product.price * product.quantity;
-      discountedPrice += product.discountedPrice * product.quantity;
+      sellingPrice += product.sellingPrice;
+      discountedPrice += product.discountedPrice;
     }
     
     // Add accessory prices
     for (const accessory of accessories) {
-      sellingPrice += accessory.price * accessory.quantity;
-      discountedPrice += accessory.discountedPrice * accessory.quantity;
+      sellingPrice += accessory.sellingPrice;
+      discountedPrice += accessory.discountedPrice;
     }
     
     // Update room
