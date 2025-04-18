@@ -18,6 +18,7 @@ import {
   userFormSchema,
   teamFormSchema,
   teamMemberFormSchema,
+  followUpFormSchema,
   insertUserSchema,
   insertTeamSchema,
   insertTeamMemberSchema,
@@ -130,6 +131,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(quotations);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch quotations" });
+    }
+  });
+  
+  // Get follow-ups for a customer
+  app.get("/api/customers/:id/follow-ups", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const followUps = await storage.getFollowUps(id);
+      res.json(followUps);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch follow-ups" });
+    }
+  });
+  
+  // Follow-up routes
+  app.get("/api/follow-ups/pending", async (req, res) => {
+    try {
+      const pendingFollowUps = await storage.getPendingFollowUps();
+      res.json(pendingFollowUps);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending follow-ups" });
+    }
+  });
+  
+  app.get("/api/follow-ups/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const followUp = await storage.getFollowUp(id);
+      if (!followUp) {
+        return res.status(404).json({ message: "Follow-up not found" });
+      }
+      res.json(followUp);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch follow-up" });
+    }
+  });
+  
+  app.post("/api/follow-ups", validateRequest(followUpFormSchema), async (req, res) => {
+    try {
+      const followUp = await storage.createFollowUp(req.body);
+      res.status(201).json(followUp);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create follow-up" });
+    }
+  });
+  
+  app.put("/api/follow-ups/:id", validateRequest(followUpFormSchema), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const followUp = await storage.updateFollowUp(id, req.body);
+      if (!followUp) {
+        return res.status(404).json({ message: "Follow-up not found" });
+      }
+      res.json(followUp);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update follow-up" });
+    }
+  });
+  
+  app.put("/api/follow-ups/:id/complete", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const followUp = await storage.markFollowUpComplete(id);
+      if (!followUp) {
+        return res.status(404).json({ message: "Follow-up not found" });
+      }
+      res.json(followUp);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark follow-up as complete" });
+    }
+  });
+  
+  app.delete("/api/follow-ups/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteFollowUp(id);
+      if (!success) {
+        return res.status(404).json({ message: "Follow-up not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete follow-up" });
     }
   });
 
