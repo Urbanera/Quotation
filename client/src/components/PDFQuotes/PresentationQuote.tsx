@@ -321,14 +321,15 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           This proposal is valid for 30 days from the date issued. Don't miss this opportunity to create your dream space.
         </p>
         <div className="inline-block bg-white text-indigo-700 py-3 px-6 rounded-lg font-semibold text-lg">
-          Contact Us: +91 98765 43210
+          Contact Us: {companySettings?.phone || "+91 98765 43210"}
         </div>
       </div>
 
       {/* Footer */}
       <div className="p-6 bg-gray-50 text-center text-sm text-gray-500 rounded-b-lg">
-        <p>DesignQuotes Interior Services • 123 Design Street, Creativity District</p>
-        <p>design@example.com • www.designquotes.com</p>
+        <p>{companyName} • {companySettings?.address || "123 Design Street, Creativity District"}</p>
+        <p>{companySettings?.email || "design@example.com"} • {companySettings?.phone || "+91 98765 43210"}</p>
+        {companySettings?.website && <p>{companySettings.website}</p>}
       </div>
     </div>
   );

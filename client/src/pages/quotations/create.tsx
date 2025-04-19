@@ -1,11 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { ChevronLeft, Eye, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Customer, quotationFormSchema } from "@shared/schema";
+import { AppSettings, Customer, quotationFormSchema } from "@shared/schema";
 import ClientInfo from "@/components/quotations/ClientInfo";
 import RoomTabs from "@/components/quotations/RoomTabs";
 import QuotationSummary from "@/components/quotations/QuotationSummary";
@@ -18,6 +18,20 @@ export default function CreateQuotation() {
   const [installationHandling, setInstallationHandling] = useState<number>(0);
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [gstPercentage, setGstPercentage] = useState<number>(18);
+  
+  // Fetch app settings for default values
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ["/api/settings/app"],
+    retry: 1,
+  });
+  
+  // Set default values from app settings
+  useEffect(() => {
+    if (appSettings) {
+      setGlobalDiscount(appSettings.defaultGlobalDiscount);
+      setGstPercentage(appSettings.defaultGstPercentage);
+    }
+  }, [appSettings]);
 
   // Fetch customers
   const { data: customers, isLoading: customersLoading } = useQuery<Customer[]>({
