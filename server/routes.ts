@@ -748,6 +748,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/accessory-catalog/category/:category", async (req, res) => {
+    try {
+      const category = req.params.category;
+      // Validate category
+      if (!["handle", "kitchen", "light", "wardrobe"].includes(category)) {
+        return res.status(400).json({ message: "Invalid category. Must be one of: handle, kitchen, light, wardrobe" });
+      }
+      
+      const items = await storage.getAccessoryCatalogByCategory(category as "handle" | "kitchen" | "light" | "wardrobe");
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch accessory catalog items by category" });
+    }
+  });
+
   app.get("/api/accessory-catalog/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
