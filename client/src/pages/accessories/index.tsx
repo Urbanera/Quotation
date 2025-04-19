@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import PageHeader from "./PageHeader";
+import { Download, Upload, FileUp } from "lucide-react";
 import { 
   Dialog,
   DialogContent,
@@ -25,6 +26,15 @@ export default function AccessoryCatalogPage() {
   const [category, setCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResults, setImportResults] = useState<{ 
+    totalRows?: number, 
+    successCount?: number, 
+    errorCount?: number, 
+    errors?: string[] 
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch accessory catalog data
   const { data: accessories, isLoading, error } = useQuery<AccessoryCatalog[]>({
@@ -58,6 +68,67 @@ export default function AccessoryCatalogPage() {
       });
     },
   });
+  
+  // Handle export
+  const handleExport = () => {
+    window.location.href = "/api/accessory-catalog/export";
+  };
+  
+  // Handle file selection for import
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Check file type
+    if (!file.name.endsWith('.csv')) {
+      toast({
+        title: "Invalid file",
+        description: "Please select a CSV file",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Upload file
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    setImporting(true);
+    setImportResults(null);
+    
+    fetch('/api/accessory-catalog/import', {
+      method: 'POST',
+      body: formData,
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Import failed");
+        return res.json();
+      })
+      .then(results => {
+        setImportResults(results);
+        if (results.successCount > 0) {
+          queryClient.invalidateQueries({ queryKey: ["/api/accessory-catalog"] });
+          toast({
+            title: "Import successful",
+            description: `${results.successCount} items imported successfully`,
+          });
+        }
+      })
+      .catch(error => {
+        toast({
+          title: "Import failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setImporting(false);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      });
+  };
 
   // Filter accessories based on category and search query
   const filteredAccessories = accessories?.filter((item) => {
@@ -85,25 +156,106 @@ export default function AccessoryCatalogPage() {
         title="Accessory Catalog"
         description="Manage and organize accessories by category"
         actions={
-          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> Add New Accessory
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Add New Accessory</DialogTitle>
-                <DialogDescription>
-                  Create a new accessory item for your catalog.
-                </DialogDescription>
-              </DialogHeader>
-              <AccessoryCatalogForm
-                onSubmit={createMutation.mutate}
-                isSubmitting={createMutation.isPending}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="mr-2 h-4 w-4" /> Export CSV
+            </Button>
+            
+            <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Upload className="mr-2 h-4 w-4" /> Import CSV
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Import Accessories from CSV</DialogTitle>
+                  <DialogDescription>
+                    Upload a CSV file to import accessories in bulk.
+                    The CSV must include code, name, and category columns.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4 py-4">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="csv-file" className="text-sm font-medium">
+                      CSV File
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        id="csv-file"
+                        type="file" 
+                        accept=".csv"
+                        onChange={handleFileSelect}
+                        ref={fileInputRef}
+                        disabled={importing}
+                      />
+                      {importing && <Loader2 className="h-4 w-4 animate-spin" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Required columns: code, name, category (handle, kitchen, light, wardrobe)
+                    </p>
+                  </div>
+                  
+                  {importResults && (
+                    <div className="rounded-md border p-4 mt-4">
+                      <h4 className="text-sm font-medium mb-2">Import Results</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>Total rows:</div>
+                        <div>{importResults.totalRows}</div>
+                        <div>Successful imports:</div>
+                        <div>{importResults.successCount}</div>
+                        <div>Failed imports:</div>
+                        <div>{importResults.errorCount}</div>
+                      </div>
+                      
+                      {importResults.errors && importResults.errors.length > 0 && (
+                        <div className="mt-2">
+                          <h5 className="text-sm font-medium mb-1">Errors:</h5>
+                          <div className="max-h-32 overflow-y-auto text-xs">
+                            <ul className="list-disc list-inside space-y-1">
+                              {importResults.errors.map((error, index) => (
+                                <li key={index} className="text-destructive">{error}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setImportDialogOpen(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" /> Add New Accessory
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Add New Accessory</DialogTitle>
+                  <DialogDescription>
+                    Create a new accessory item for your catalog.
+                  </DialogDescription>
+                </DialogHeader>
+                <AccessoryCatalogForm
+                  onSubmit={createMutation.mutate}
+                  isSubmitting={createMutation.isPending}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         }
       />
 

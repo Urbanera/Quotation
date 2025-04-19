@@ -1,0 +1,9 @@
+code,name,category,description,sellingPrice,kitchenPrice,wardrobePrice,size,image
+LH-101,Modern Handle,handle,Sleek modern handle design,12.50,,,90mm,
+LH-102,Classic Handle,handle,Traditional handle design with elegant finish,15.75,,,120mm,
+KA-201,Pull-out Basket,kitchen,Stainless steel pull-out basket,65.00,60.00,,450mm,
+KA-202,Corner Solution,kitchen,Kitchen corner solution system,120.00,110.00,,600mm,
+LL-301,LED Strip Light,light,Energy-efficient LED strip light,35.00,,,1000mm,
+LL-302,Cabinet Spotlight,light,Recessed spotlights for cabinets,22.50,,,50mm,
+WA-401,Clothes Lift,wardrobe,Adjustable wardrobe clothes lift,45.00,,40.00,900mm,
+WA-402,Shoe Rack,wardrobe,Pull-out shoe rack system,55.00,,50.00,600mm,

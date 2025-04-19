@@ -762,6 +762,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch accessory catalog items by category" });
     }
   });
+  
+  // CSV export route for accessory catalog
+  app.get("/api/accessory-catalog/export", async (req, res) => {
+    try {
+      const items = await storage.getAccessoryCatalog();
+      
+      // Create CSV header
+      let csv = "code,name,category,description,sellingPrice,kitchenPrice,wardrobePrice,size,image\n";
+      
+      // Add each item as a row
+      items.forEach(item => {
+        const row = [
+          item.code,
+          `"${item.name.replace(/"/g, '""')}"`, // Escape double quotes in fields
+          item.category,
+          item.description ? `"${item.description.replace(/"/g, '""')}"` : '',
+          item.sellingPrice,
+          item.kitchenPrice || '',
+          item.wardrobePrice || '',
+          item.size || '',
+          item.image || ''
+        ].join(',');
+        
+        csv += row + "\n";
+      });
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=accessory-catalog.csv');
+      res.send(csv);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to export accessory catalog" });
+    }
+  });
+  
+  // CSV import route for accessory catalog
+  const csvUpload = multer({ 
+    dest: path.join(process.cwd(), "uploads", "temp"), 
+    limits: { fileSize: 10 * 1024 * 1024 } 
+  });
+  
+  app.post("/api/accessory-catalog/import", csvUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      // Read the uploaded CSV file
+      const csvData = fs.readFileSync(req.file.path, 'utf8');
+      const lines = csvData.split('\n');
+      
+      // Skip header row, process each line
+      const header = lines[0].toLowerCase();
+      if (!header.includes('code') || !header.includes('name') || !header.includes('category')) {
+        return res.status(400).json({ 
+          message: "Invalid CSV format. The file must include code, name, and category columns." 
+        });
+      }
+      
+      const results = {
+        totalRows: lines.length - 1, // Exclude header
+        successCount: 0,
+        errorCount: 0,
+        errors: []
+      };
+      
+      // Process each line (skipping header)
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue; // Skip empty lines
+        
+        const columns = lines[i].split(',');
+        const row = header.split(',').reduce((obj, header, index) => {
+          let value = columns[index] || '';
+          
+          // Remove quotes if present
+          if (value.startsWith('"') && value.endsWith('"')) {
+            value = value.substring(1, value.length - 1).replace(/""/g, '"');
+          }
+          
+          obj[header.trim()] = value.trim();
+          return obj;
+        }, {});
+        
+        try {
+          // Validate required fields
+          if (!row.code || !row.name || !row.category) {
+            throw new Error(`Row ${i}: Missing required fields (code, name, or category)`);
+          }
+          
+          // Validate category
+          if (!['handle', 'kitchen', 'light', 'wardrobe'].includes(row.category)) {
+            throw new Error(`Row ${i}: Invalid category. Must be one of: handle, kitchen, light, wardrobe`);
+          }
+          
+          // Prepare item for insertion
+          const accessoryItem = {
+            code: row.code,
+            name: row.name,
+            category: row.category as "handle" | "kitchen" | "light" | "wardrobe",
+            description: row.description || null,
+            sellingPrice: parseFloat(row.sellingprice) || 0,
+            kitchenPrice: row.category === 'kitchen' ? parseFloat(row.kitchenprice) || null : null,
+            wardrobePrice: row.category === 'wardrobe' ? parseFloat(row.wardrobeprice) || null : null,
+            size: row.size || null,
+            image: row.image || null
+          };
+          
+          // Validate with schema
+          accessoryCatalogFormSchema.parse(accessoryItem);
+          
+          // Check for existing item with same code
+          const existingItems = await storage.getAccessoryCatalog();
+          const existingItem = existingItems.find(item => item.code === accessoryItem.code);
+          
+          if (existingItem) {
+            // Update existing item
+            await storage.updateAccessoryCatalogItem(existingItem.id, accessoryItem);
+          } else {
+            // Create new item
+            await storage.createAccessoryCatalogItem(accessoryItem);
+          }
+          
+          results.successCount++;
+        } catch (error) {
+          results.errorCount++;
+          if (error instanceof Error) {
+            results.errors.push(error.message);
+          } else {
+            results.errors.push(`Row ${i}: Unknown error`);
+          }
+        }
+      }
+      
+      // Clean up temporary file
+      fs.unlinkSync(req.file.path);
+      
+      res.status(200).json(results);
+    } catch (error) {
+      // Clean up temporary file if it exists
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      res.status(500).json({ 
+        message: "Failed to import accessory catalog",
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
 
   app.get("/api/accessory-catalog/:id", async (req, res) => {
     try {
