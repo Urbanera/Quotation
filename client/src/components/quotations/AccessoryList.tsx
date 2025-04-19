@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
@@ -17,6 +17,7 @@ import { Accessory } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import AccessoryForm from "./AccessoryForm";
+import AccessoryCatalogSelector from "@/components/accessories/AccessoryCatalogSelector";
 
 interface AccessoryListProps {
   roomId: number;
@@ -134,28 +135,51 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg leading-6 font-medium text-gray-900">Accessories</h3>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="bg-indigo-100 text-indigo-600 hover:bg-indigo-200 border-none">
-              <Plus className="h-4 w-4 mr-1" />
-              Add Accessory
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Accessory</DialogTitle>
-            </DialogHeader>
-            <AccessoryForm 
-              onSubmit={handleAddAccessory} 
-              isSubmitting={addAccessoryMutation.isPending}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex space-x-3">
+          {/* Add From Catalog Button */}
+          <AccessoryCatalogSelector 
+            roomId={roomId} 
+            onAdd={() => {
+              queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+            }}
+          />
+          
+          {/* Add Custom Accessory Button */}
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="bg-indigo-100 text-indigo-600 hover:bg-indigo-200 border-none">
+                <Plus className="h-4 w-4 mr-1" />
+                Add Custom
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Custom Accessory</DialogTitle>
+              </DialogHeader>
+              <AccessoryForm 
+                onSubmit={handleAddAccessory} 
+                isSubmitting={addAccessoryMutation.isPending}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       
       {accessories.length === 0 ? (
         <div className="bg-white border rounded-md p-6 mb-4 text-center">
-          <p className="text-gray-500 text-sm">No accessories added yet.</p>
+          <p className="text-gray-500 text-sm mb-2">No accessories added yet.</p>
+          <p className="text-gray-400 text-xs mb-3">Add accessories from the catalog or create custom ones</p>
+          <div className="flex justify-center space-x-3">
+            <Button 
+              variant="outline"
+              size="sm" 
+              onClick={() => setIsAddDialogOpen(true)}
+              className="text-xs"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Add Custom
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">

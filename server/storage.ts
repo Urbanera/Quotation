@@ -13,7 +13,8 @@ import {
   teams, Team, InsertTeam,
   teamMembers, TeamMember, InsertTeamMember,
   followUps, FollowUp, InsertFollowUp,
-  milestones, Milestone, InsertMilestone
+  milestones, Milestone, InsertMilestone,
+  accessoryCatalog, AccessoryCatalog, InsertAccessoryCatalog
 } from "@shared/schema";
 
 export interface IStorage {
@@ -114,6 +115,14 @@ export interface IStorage {
   deleteMilestone(id: number): Promise<boolean>;
   reorderMilestones(milestoneIds: number[]): Promise<boolean>;
   updateMilestoneStatus(id: number, status: "pending" | "in_progress" | "completed" | "delayed", completedDate?: Date): Promise<Milestone | undefined>;
+  
+  // Accessory Catalog operations
+  getAccessoryCatalog(): Promise<AccessoryCatalog[]>;
+  getAccessoryCatalogByCategory(category: "handle" | "kitchen" | "light" | "wardrobe"): Promise<AccessoryCatalog[]>;
+  getAccessoryCatalogItem(id: number): Promise<AccessoryCatalog | undefined>;
+  createAccessoryCatalogItem(item: InsertAccessoryCatalog): Promise<AccessoryCatalog>;
+  updateAccessoryCatalogItem(id: number, item: Partial<InsertAccessoryCatalog>): Promise<AccessoryCatalog | undefined>;
+  deleteAccessoryCatalogItem(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
