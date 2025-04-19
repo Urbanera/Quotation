@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, ArrowUpDown, SortAsc, SortDesc } from "lucide-react";
 import { Quotation, Customer } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -18,10 +18,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+type SortField = "quotationNumber" | "createdAt" | "totalAmount";
+type SortOrder = "asc" | "desc";
 
 export default function QuotationsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
+  const [sortField, setSortField] = useState<SortField>("createdAt");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc"); // Newest first by default
   const { toast } = useToast();
 
   const { data: quotations, isLoading: quotationsLoading } = useQuery<Quotation[]>({
@@ -33,7 +51,7 @@ export default function QuotationsList() {
   });
 
   const isLoading = quotationsLoading || customersLoading;
-
+  
   const handleDeleteQuotation = async () => {
     if (!quotationToDelete) return;
     
@@ -53,21 +71,46 @@ export default function QuotationsList() {
       });
     }
   };
-
-  // Find customer name by customer ID
-  const getCustomerName = (customerId: number) => {
+  
+  // Get customer name by ID
+  const getCustomerName = (customerId: number): string => {
     const customer = customers?.find(c => c.id === customerId);
     return customer ? customer.name : `Customer #${customerId}`;
   };
 
-  // Filter quotations by search term
-  const filteredQuotations = quotations?.filter(quotation => {
-    const customerName = getCustomerName(quotation.customerId);
-    return (
-      customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quotation.id.toString().includes(searchTerm)
-    );
-  });
+  // Sorted and filtered quotations
+  const filteredQuotations = useMemo(() => {
+    if (!quotations) return [];
+    
+    // First filter by search term
+    let result = quotations.filter(quotation => {
+      const customerName = getCustomerName(quotation.customerId);
+      return (
+        customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        quotation.quotationNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        quotation.id.toString().includes(searchTerm)
+      );
+    });
+    
+    // Then sort
+    return [...result].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case "quotationNumber":
+          comparison = a.quotationNumber.localeCompare(b.quotationNumber);
+          break;
+        case "createdAt":
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case "totalAmount":
+          comparison = (a.finalPrice || 0) - (b.finalPrice || 0);
+          break;
+      }
+      
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+  }, [quotations, customers, searchTerm, sortField, sortOrder]);
 
   return (
     <div className="py-6">
