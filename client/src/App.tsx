@@ -11,6 +11,7 @@ import QuotationsList from "./pages/quotations";
 import CreateQuotation from "./pages/quotations/create";
 import EditQuotation from "./pages/quotations/edit";
 import ViewQuotation from "./pages/quotations/view";
+import AccessoryCatalogPage from "./pages/accessories";
 import UsersPage from "./pages/users/UsersPage";
 import TeamsPage from "./pages/teams/TeamsPage";
 import TeamDetailsPage from "./pages/teams/TeamDetailsPage";
