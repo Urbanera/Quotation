@@ -140,6 +140,7 @@ export class MemStorage implements IStorage {
   private teamMembers: Map<number, TeamMember>;
   private followUps: Map<number, FollowUp>;
   private milestones: Map<number, Milestone>;
+  private accessoryCatalogItems: Map<number, AccessoryCatalog>;
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
@@ -153,6 +154,7 @@ export class MemStorage implements IStorage {
   private teamMemberIdCounter: number;
   private followUpIdCounter: number;
   private milestoneIdCounter: number;
+  private accessoryCatalogIdCounter: number;
   
   constructor() {
     this.customers = new Map();
@@ -167,6 +169,7 @@ export class MemStorage implements IStorage {
     this.teamMembers = new Map();
     this.followUps = new Map();
     this.milestones = new Map();
+    this.accessoryCatalogItems = new Map();
     
     this.customerIdCounter = 1;
     this.quotationIdCounter = 1;
@@ -180,6 +183,7 @@ export class MemStorage implements IStorage {
     this.teamMemberIdCounter = 1;
     this.followUpIdCounter = 1;
     this.milestoneIdCounter = 1;
+    this.accessoryCatalogIdCounter = 1;
     
     // Add some initial data
     this.initializeData();
@@ -344,6 +348,80 @@ export class MemStorage implements IStorage {
     // Add milestones to the storage
     milestones.forEach(milestone => {
       this.milestones.set(milestone.id, milestone);
+    });
+    
+    // Add sample accessory catalog items
+    const accessoryCatalogItems = [
+      {
+        id: this.accessoryCatalogIdCounter++,
+        category: "handle" as const,
+        code: "LH-101",
+        name: "Modern Chrome Pull Handle",
+        description: "Sleek chrome finish handle for modern cabinet designs",
+        sellingPrice: 850,
+        kitchenPrice: 850,
+        wardrobePrice: 850,
+        size: "128mm",
+        image: "handle-chrome.jpg",
+        createdAt: new Date()
+      },
+      {
+        id: this.accessoryCatalogIdCounter++,
+        category: "handle" as const,
+        code: "LH-203",
+        name: "Brushed Gold Cabinet Handle",
+        description: "Elegant brushed gold finish for luxury cabinets",
+        sellingPrice: 1200,
+        kitchenPrice: 1200,
+        wardrobePrice: 1200,
+        size: "160mm",
+        image: "handle-gold.jpg",
+        createdAt: new Date()
+      },
+      {
+        id: this.accessoryCatalogIdCounter++,
+        category: "kitchen" as const,
+        code: "LK-305",
+        name: "Pull-Out Spice Rack",
+        description: "Space-saving pull-out spice rack for kitchen cabinets",
+        sellingPrice: 3500,
+        kitchenPrice: 3500,
+        wardrobePrice: null,
+        size: "400mm width",
+        image: "kitchen-spice-rack.jpg",
+        createdAt: new Date()
+      },
+      {
+        id: this.accessoryCatalogIdCounter++,
+        category: "light" as const,
+        code: "LL-405",
+        name: "LED Cabinet Light Strip",
+        description: "Energy-efficient LED strip for under-cabinet lighting",
+        sellingPrice: 1800,
+        kitchenPrice: 1800,
+        wardrobePrice: 1800,
+        size: "1m",
+        image: "light-led-strip.jpg",
+        createdAt: new Date()
+      },
+      {
+        id: this.accessoryCatalogIdCounter++,
+        category: "wardrobe" as const,
+        code: "LW-503",
+        name: "Pull-Out Trouser Rack",
+        description: "Extendable rack for organizing trousers and pants",
+        sellingPrice: 2600,
+        kitchenPrice: null,
+        wardrobePrice: 2600,
+        size: "600mm width",
+        image: "wardrobe-trouser-rack.jpg",
+        createdAt: new Date()
+      }
+    ];
+    
+    // Add accessory catalog items to storage
+    accessoryCatalogItems.forEach(item => {
+      this.accessoryCatalogItems.set(item.id, item);
     });
   }
   
@@ -551,6 +629,66 @@ export class MemStorage implements IStorage {
     
     this.followUps.set(id, updatedFollowUp);
     return updatedFollowUp;
+  }
+  
+  // Accessory Catalog operations
+  async getAccessoryCatalog(): Promise<AccessoryCatalog[]> {
+    return Array.from(this.accessoryCatalogItems.values());
+  }
+  
+  async getAccessoryCatalogByCategory(category: "handle" | "kitchen" | "light" | "wardrobe"): Promise<AccessoryCatalog[]> {
+    return Array.from(this.accessoryCatalogItems.values())
+      .filter(item => item.category === category);
+  }
+  
+  async getAccessoryCatalogItem(id: number): Promise<AccessoryCatalog | undefined> {
+    return this.accessoryCatalogItems.get(id);
+  }
+  
+  async createAccessoryCatalogItem(item: InsertAccessoryCatalog): Promise<AccessoryCatalog> {
+    const id = this.accessoryCatalogIdCounter++;
+    
+    const newItem: AccessoryCatalog = {
+      id,
+      category: item.category,
+      code: item.code,
+      name: item.name,
+      description: item.description || null,
+      sellingPrice: item.sellingPrice,
+      kitchenPrice: item.kitchenPrice || null,
+      wardrobePrice: item.wardrobePrice || null,
+      size: item.size || null,
+      image: item.image || null,
+      createdAt: new Date()
+    };
+    
+    this.accessoryCatalogItems.set(id, newItem);
+    return newItem;
+  }
+  
+  async updateAccessoryCatalogItem(id: number, item: Partial<InsertAccessoryCatalog>): Promise<AccessoryCatalog | undefined> {
+    const existingItem = this.accessoryCatalogItems.get(id);
+    if (!existingItem) return undefined;
+    
+    const updatedItem: AccessoryCatalog = {
+      ...existingItem,
+      category: item.category || existingItem.category,
+      code: item.code || existingItem.code,
+      name: item.name || existingItem.name,
+      description: item.description !== undefined ? item.description : existingItem.description,
+      sellingPrice: item.sellingPrice !== undefined ? item.sellingPrice : existingItem.sellingPrice,
+      kitchenPrice: item.kitchenPrice !== undefined ? item.kitchenPrice : existingItem.kitchenPrice,
+      wardrobePrice: item.wardrobePrice !== undefined ? item.wardrobePrice : existingItem.wardrobePrice,
+      size: item.size !== undefined ? item.size : existingItem.size,
+      image: item.image !== undefined ? item.image : existingItem.image,
+    };
+    
+    this.accessoryCatalogItems.set(id, updatedItem);
+    return updatedItem;
+  }
+  
+  async deleteAccessoryCatalogItem(id: number): Promise<boolean> {
+    return this.accessoryCatalogItems.delete(id);
   }
   
   // Quotation operations
