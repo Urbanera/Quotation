@@ -40,12 +40,15 @@ export default function AccessoryCatalogSelector({ roomId, onAdd }: AccessoryCat
 
   // Add accessory to room mutation
   const addAccessoryMutation = useMutation({
-    mutationFn: async (item: AccessoryCatalog) => {
+    mutationFn: async (data: { item: AccessoryCatalog, quantity: number }) => {
+      const { item, quantity } = data;
+      
       // Prepare accessory data for the room
       const accessoryData = {
         name: item.name,
         description: item.description || '',
         sellingPrice: item.sellingPrice,
+        quantity: quantity,
       };
 
       const res = await apiRequest("POST", `/api/rooms/${roomId}/accessories`, accessoryData);
@@ -92,9 +95,25 @@ export default function AccessoryCatalogSelector({ roomId, onAdd }: AccessoryCat
     return true;
   });
 
-  const handleAddAccessory = (item: AccessoryCatalog) => {
-    addAccessoryMutation.mutate(item);
-    setIsOpen(false);
+  // State for selected accessory and quantity
+  const [selectedAccessory, setSelectedAccessory] = useState<AccessoryCatalog | null>(null);
+  const [quantity, setQuantity] = useState(1);
+
+  const handleAddAccessory = () => {
+    if (selectedAccessory) {
+      addAccessoryMutation.mutate({ 
+        item: selectedAccessory, 
+        quantity: quantity 
+      });
+      setIsOpen(false);
+      // Reset the selected accessory and quantity
+      setSelectedAccessory(null);
+      setQuantity(1);
+    }
+  };
+
+  const handleSelectAccessory = (item: AccessoryCatalog) => {
+    setSelectedAccessory(item);
   };
 
   return (
@@ -134,6 +153,88 @@ export default function AccessoryCatalogSelector({ roomId, onAdd }: AccessoryCat
           </Tabs>
         </div>
 
+        {selectedAccessory ? (
+          <div className="bg-muted/50 p-5 rounded-lg mb-4">
+            <h3 className="text-lg font-semibold mb-2">Selected: {selectedAccessory.name}</h3>
+            <div className="flex items-center space-x-2 mb-4">
+              <span className="text-sm text-muted-foreground">Code: {selectedAccessory.code}</span>
+              {selectedAccessory.size && (
+                <span className="text-sm text-muted-foreground">• Size: {selectedAccessory.size}</span>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label htmlFor="quantity" className="block text-sm font-medium mb-1">
+                  Quantity
+                </label>
+                <div className="flex items-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  >
+                    -
+                  </Button>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="h-9 w-16 mx-2 text-center"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Total Price
+                </label>
+                <div className="text-2xl font-bold">
+                  ₹{(selectedAccessory.sellingPrice * quantity).toLocaleString('en-IN')}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setSelectedAccessory(null)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddAccessory}
+                disabled={addAccessoryMutation.isPending}
+              >
+                {addAccessoryMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add to Room
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+                
         <div className="flex-grow overflow-y-auto pr-2">
           {isLoading ? (
             <div className="flex justify-center items-center h-48">
@@ -174,10 +275,10 @@ export default function AccessoryCatalogSelector({ roomId, onAdd }: AccessoryCat
                       <div className="font-semibold">₹{item.sellingPrice.toLocaleString('en-IN')}</div>
                       <Button
                         size="sm"
-                        onClick={() => handleAddAccessory(item)}
+                        onClick={() => handleSelectAccessory(item)}
                         disabled={addAccessoryMutation.isPending}
                       >
-                        <Plus className="h-4 w-4 mr-1" /> Add
+                        <Plus className="h-4 w-4 mr-1" /> Select
                       </Button>
                     </CardFooter>
                   </div>
