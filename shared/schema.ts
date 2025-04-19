@@ -116,6 +116,7 @@ export const accessories = pgTable("accessories", {
   description: text("description"),
   sellingPrice: doublePrecision("selling_price").notNull(),
   discountedPrice: doublePrecision("discounted_price").notNull().default(0),
+  quantity: integer("quantity").notNull().default(1),
 });
 
 export const insertAccessorySchema = createInsertSchema(accessories).omit({
@@ -331,6 +332,7 @@ export const productAccessoryFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   sellingPrice: z.number().min(0, "Selling price must be a positive number"),
+  quantity: z.number().min(1, "Quantity must be at least 1").default(1),
 });
 
 export const quotationFormSchema = z.object({
