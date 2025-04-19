@@ -165,9 +165,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               })}
               <tr className="bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {quotation.globalDiscount > 0 
-                    ? `Total Of All Items (After ${quotation.globalDiscount}% Global Discount)` 
-                    : "Total Of All Items"}
+                  Total Of All Items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                   {formatCurrency(quotation.totalSellingPrice)}
