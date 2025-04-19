@@ -108,6 +108,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
       description: data.description || "",
       sellingPrice: parseFloat(data.sellingPrice),
       discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
+      quantity: parseInt(data.quantity) || 1,
     });
   };
 
@@ -117,6 +118,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
       description: data.description || "",
       sellingPrice: parseFloat(data.sellingPrice),
       discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
+      quantity: parseInt(data.quantity) || 1,
     });
   };
 
@@ -216,18 +218,45 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
                   </Button>
                 </div>
               </div>
-              <div className="mt-4">
+              <div className="mt-4 grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500">Price</label>
+                  <label className="block text-xs font-medium text-gray-500">Unit Price</label>
                   <div className="mt-1 relative rounded-md shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <span className="text-gray-500 sm:text-sm">₹</span>
                     </div>
                     <input
                       type="text"
-                      value={accessory.sellingPrice || 0}
+                      value={accessory.sellingPrice.toLocaleString('en-IN')}
                       readOnly
-                      className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md bg-gray-50"
+                      className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-3 sm:text-sm border-gray-300 rounded-md bg-gray-50"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-500">Quantity</label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <input
+                      type="text"
+                      value={accessory.quantity || 1}
+                      readOnly
+                      className="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50 text-center"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-500">Total Price</label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">₹</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={((accessory.quantity || 1) * accessory.sellingPrice).toLocaleString('en-IN')}
+                      readOnly
+                      className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-3 sm:text-sm border-gray-300 rounded-md bg-gray-50 font-medium"
                     />
                   </div>
                 </div>

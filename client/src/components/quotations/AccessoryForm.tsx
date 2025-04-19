@@ -22,7 +22,11 @@ const accessoryFormSchema = z.object({
   sellingPrice: z.string().refine(
     (val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, 
     { message: "Selling price must be a positive number" }
-  )
+  ),
+  quantity: z.string().refine(
+    (val) => !isNaN(parseInt(val)) && parseInt(val) >= 1,
+    { message: "Quantity must be at least 1" }
+  ).default("1")
 });
 
 interface AccessoryFormProps {
@@ -45,6 +49,7 @@ export default function AccessoryForm({
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
       sellingPrice: defaultValues?.sellingPrice?.toString() || "",
+      quantity: defaultValues?.quantity?.toString() || "1",
     },
   });
 
@@ -83,31 +88,53 @@ export default function AccessoryForm({
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="sellingPrice"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Price (₹)</FormLabel>
-              <FormControl>
-                <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">₹</span>
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="sellingPrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Price (₹)</FormLabel>
+                <FormControl>
+                  <div className="relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">₹</span>
+                    </div>
+                    <Input 
+                      placeholder="0.00"
+                      className="pl-7"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...field} 
+                    />
                   </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="quantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Quantity</FormLabel>
+                <FormControl>
                   <Input 
-                    placeholder="0.00"
-                    className="pl-7"
+                    placeholder="1"
                     type="number"
-                    step="0.01"
-                    min="0"
+                    min="1"
+                    step="1"
                     {...field} 
                   />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         
         <div className="flex justify-end space-x-3">
           <Button 
