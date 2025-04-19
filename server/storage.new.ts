@@ -221,6 +221,112 @@ export class MemStorage implements IStorage {
       createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     };
     this.followUps.set(followUp.id, followUp);
+    
+    // Add sample accessory catalog items
+    
+    // Handle accessories
+    const handleItems = [
+      {
+        category: "handle" as const,
+        code: "LH-101",
+        name: "Lecco Aluminium Handle",
+        description: "Modern aluminium profile handle",
+        sellingPrice: 120,
+        size: "196mm",
+        image: ""
+      },
+      {
+        category: "handle" as const,
+        code: "LH-202",
+        name: "Lecco SS Profile Handle",
+        description: "Stainless steel profile handle",
+        sellingPrice: 220,
+        size: "320mm",
+        image: ""
+      }
+    ];
+    
+    // Kitchen accessories
+    const kitchenItems = [
+      {
+        category: "kitchen" as const,
+        code: "LA-101",
+        name: "Corner Carousel Unit",
+        description: "Quality rotary corner unit for kitchen storage",
+        sellingPrice: 4800,
+        kitchenPrice: 4800,
+        wardrobePrice: null,
+        image: ""
+      },
+      {
+        category: "kitchen" as const,
+        code: "LA-102",
+        name: "Pull-Out Pantry Unit",
+        description: "Sleek pull-out pantry storage",
+        sellingPrice: 12500,
+        kitchenPrice: 12500,
+        wardrobePrice: null,
+        image: ""
+      }
+    ];
+    
+    // Light accessories
+    const lightItems = [
+      {
+        category: "light" as const,
+        code: "LL-101",
+        name: "Profile LED Light",
+        description: "Aluminum profile with LED strip",
+        sellingPrice: 1800,
+        size: "1m",
+        image: ""
+      },
+      {
+        category: "light" as const,
+        code: "LL-202",
+        name: "Sensor Cabinet Light",
+        description: "Motion activated cabinet light",
+        sellingPrice: 980,
+        size: "300mm",
+        image: ""
+      }
+    ];
+    
+    // Wardrobe accessories
+    const wardrobeItems = [
+      {
+        category: "wardrobe" as const,
+        code: "LW-101",
+        name: "Pull-Down Hanging Rail",
+        description: "Adjustable pull-down rail system",
+        sellingPrice: 3200,
+        wardrobePrice: 3200,
+        kitchenPrice: null,
+        image: ""
+      },
+      {
+        category: "wardrobe" as const,
+        code: "LW-202",
+        name: "Trouser Rack",
+        description: "Pull-out rack for trousers",
+        sellingPrice: 2500,
+        wardrobePrice: 2500,
+        kitchenPrice: null,
+        image: ""
+      }
+    ];
+    
+    // Add all items to catalog
+    const allItems = [...handleItems, ...kitchenItems, ...lightItems, ...wardrobeItems];
+    
+    for (const item of allItems) {
+      const catalogItem: AccessoryCatalog = {
+        id: this.accessoryCatalogIdCounter++,
+        ...item,
+        createdAt: new Date()
+      };
+      this.accessoryCatalog.set(catalogItem.id, catalogItem);
+    }
   }
   
   // Customer operations
@@ -1126,6 +1232,49 @@ export class MemStorage implements IStorage {
     if (!teamMember) return false;
     
     return this.teamMembers.delete(teamMember.id);
+  }
+  
+  // Accessory Catalog operations
+  async getAccessoryCatalog(): Promise<AccessoryCatalog[]> {
+    return Array.from(this.accessoryCatalog.values());
+  }
+  
+  async getAccessoryCatalogByCategory(category: string): Promise<AccessoryCatalog[]> {
+    return Array.from(this.accessoryCatalog.values())
+      .filter(item => item.category === category)
+      .sort((a, b) => a.code.localeCompare(b.code));
+  }
+  
+  async getAccessoryCatalogItem(id: number): Promise<AccessoryCatalog | undefined> {
+    return this.accessoryCatalog.get(id);
+  }
+  
+  async createAccessoryCatalogItem(item: InsertAccessoryCatalog): Promise<AccessoryCatalog> {
+    const id = this.accessoryCatalogIdCounter++;
+    const newItem: AccessoryCatalog = {
+      ...item,
+      id,
+      createdAt: new Date()
+    };
+    this.accessoryCatalog.set(id, newItem);
+    return newItem;
+  }
+  
+  async updateAccessoryCatalogItem(id: number, item: Partial<InsertAccessoryCatalog>): Promise<AccessoryCatalog | undefined> {
+    const existingItem = this.accessoryCatalog.get(id);
+    if (!existingItem) return undefined;
+    
+    const updatedItem: AccessoryCatalog = {
+      ...existingItem,
+      ...item,
+    };
+    
+    this.accessoryCatalog.set(id, updatedItem);
+    return updatedItem;
+  }
+  
+  async deleteAccessoryCatalogItem(id: number): Promise<boolean> {
+    return this.accessoryCatalog.delete(id);
   }
 }
 

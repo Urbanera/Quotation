@@ -28,6 +28,8 @@ import {
   appSettingsFormSchema,
   insertCompanySettingsSchema,
   insertAppSettingsSchema,
+  accessoryCatalogFormSchema,
+  insertAccessoryCatalogSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -726,6 +728,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch installation charges" });
+    }
+  });
+
+  // Accessory Catalog routes
+  app.get("/api/accessory-catalog", async (req, res) => {
+    try {
+      const category = req.query.category as string | undefined;
+      
+      if (category) {
+        const items = await storage.getAccessoryCatalogByCategory(category);
+        return res.json(items);
+      }
+      
+      const items = await storage.getAccessoryCatalog();
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch accessory catalog items" });
+    }
+  });
+
+  app.get("/api/accessory-catalog/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const item = await storage.getAccessoryCatalogItem(id);
+      if (!item) {
+        return res.status(404).json({ message: "Accessory catalog item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch accessory catalog item" });
+    }
+  });
+
+  app.post("/api/accessory-catalog", validateRequest(accessoryCatalogFormSchema), async (req, res) => {
+    try {
+      const item = await storage.createAccessoryCatalogItem(req.body);
+      res.status(201).json(item);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create accessory catalog item" });
+    }
+  });
+
+  app.put("/api/accessory-catalog/:id", validateRequest(accessoryCatalogFormSchema), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const item = await storage.updateAccessoryCatalogItem(id, req.body);
+      if (!item) {
+        return res.status(404).json({ message: "Accessory catalog item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update accessory catalog item" });
+    }
+  });
+
+  app.delete("/api/accessory-catalog/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteAccessoryCatalogItem(id);
+      if (!success) {
+        return res.status(404).json({ message: "Accessory catalog item not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete accessory catalog item" });
     }
   });
 
