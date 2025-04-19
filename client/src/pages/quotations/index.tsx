@@ -87,7 +87,6 @@ export default function QuotationsList() {
       const customerName = getCustomerName(quotation.customerId);
       return (
         customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quotation.quotationNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         quotation.id.toString().includes(searchTerm)
       );
     });
@@ -98,7 +97,8 @@ export default function QuotationsList() {
       
       switch (sortField) {
         case "quotationNumber":
-          comparison = a.quotationNumber.localeCompare(b.quotationNumber);
+          // Use ID since we don't have quotationNumber property
+          comparison = a.id - b.id;
           break;
         case "createdAt":
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -126,7 +126,7 @@ export default function QuotationsList() {
         </div>
 
         <div className="mt-6 bg-white shadow overflow-hidden sm:rounded-md">
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start gap-4">
             <div className="w-full sm:max-w-xs relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
@@ -138,6 +138,40 @@ export default function QuotationsList() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Select
+                value={sortField}
+                onValueChange={(value) => setSortField(value as SortField)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="quotationNumber">Quotation Number</SelectItem>
+                  <SelectItem value="createdAt">Date Created</SelectItem>
+                  <SelectItem value="totalAmount">Amount</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setSortOrder("asc")}>
+                    <SortAsc className="mr-2 h-4 w-4" />
+                    <span>Ascending</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortOrder("desc")}>
+                    <SortDesc className="mr-2 h-4 w-4" />
+                    <span>Descending</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

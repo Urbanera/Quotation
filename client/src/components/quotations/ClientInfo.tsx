@@ -1,14 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Customer } from "@shared/schema";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 interface ClientInfoProps {
   customers: Customer[];
@@ -23,6 +31,9 @@ export default function ClientInfo({
   selectedCustomerId,
   onCustomerSelect
 }: ClientInfoProps) {
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  
   // If there's only one customer, select it by default
   useEffect(() => {
     if (customers.length === 1 && !selectedCustomerId) {
@@ -32,6 +43,19 @@ export default function ClientInfo({
 
   // Find the selected customer
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+  
+  // Filter customers based on search query
+  const filteredCustomers = searchQuery === ""
+    ? customers
+    : customers.filter((customer) => {
+        const searchLower = searchQuery.toLowerCase();
+        return (
+          customer.name.toLowerCase().includes(searchLower) ||
+          customer.email.toLowerCase().includes(searchLower) ||
+          customer.phone.toLowerCase().includes(searchLower) ||
+          customer.id.toString().includes(searchLower)
+        );
+      });
 
   return (
     <div>
@@ -40,22 +64,55 @@ export default function ClientInfo({
         <div className="sm:col-span-6">
           <div className="grid gap-1.5">
             <Label htmlFor="customer-select">Customer</Label>
-            <Select 
-              value={selectedCustomerId?.toString() || ""} 
-              onValueChange={(value) => onCustomerSelect(parseInt(value))}
-              disabled={isLoading}
-            >
-              <SelectTrigger id="customer-select">
-                <SelectValue placeholder="Select a customer" />
-              </SelectTrigger>
-              <SelectContent>
-                {customers.map((customer) => (
-                  <SelectItem key={customer.id} value={customer.id.toString()}>
-                    {customer.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  id="customer-select"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between"
+                  disabled={isLoading}
+                >
+                  {selectedCustomer
+                    ? `${selectedCustomer.name} (ID: ${selectedCustomer.id})`
+                    : "Search a customer by name or ID..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput 
+                    placeholder="Search customer..." 
+                    value={searchQuery}
+                    onValueChange={setSearchQuery}
+                  />
+                  <CommandEmpty>No customer found.</CommandEmpty>
+                  <CommandGroup className="max-h-64 overflow-auto">
+                    {filteredCustomers.map((customer) => (
+                      <CommandItem
+                        key={customer.id}
+                        value={customer.id.toString()}
+                        onSelect={(value: string) => {
+                          onCustomerSelect(parseInt(value));
+                          setOpen(false);
+                          setSearchQuery("");
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedCustomerId === customer.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {customer.name} (ID: {customer.id})
+                        <span className="ml-2 text-xs text-gray-500">{customer.phone}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
