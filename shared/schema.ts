@@ -135,6 +135,33 @@ export const insertImageSchema = createInsertSchema(images).omit({
   id: true,
 });
 
+// Accessory Catalog schema (for Lecco handles, lights, etc.)
+export const accessoryCategoryEnum = pgEnum('accessory_category', [
+  'handle',
+  'kitchen',
+  'light',
+  'wardrobe'
+]);
+
+export const accessoryCatalog = pgTable("accessory_catalog", {
+  id: serial("id").primaryKey(),
+  category: accessoryCategoryEnum("category").notNull(),
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  image: text("image"),
+  sellingPrice: doublePrecision("selling_price").notNull(),
+  kitchenPrice: doublePrecision("kitchen_price"),
+  wardrobePrice: doublePrecision("wardrobe_price"),
+  size: text("size"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAccessoryCatalogSchema = createInsertSchema(accessoryCatalog).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types for DB operations
 export type CompanySettings = typeof companySettings.$inferSelect;
 export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
@@ -159,6 +186,9 @@ export type InsertAccessory = z.infer<typeof insertAccessorySchema>;
 
 export type Image = typeof images.$inferSelect;
 export type InsertImage = z.infer<typeof insertImageSchema>;
+
+export type AccessoryCatalog = typeof accessoryCatalog.$inferSelect;
+export type InsertAccessoryCatalog = z.infer<typeof insertAccessoryCatalogSchema>;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -400,4 +430,17 @@ export const milestoneFormSchema = z.object({
   startDate: z.string().or(z.date()),
   endDate: z.string().or(z.date()),
   status: z.enum(['pending', 'in_progress', 'completed', 'delayed']).default('pending'),
+});
+
+// Accessory catalog validation schema
+export const accessoryCatalogFormSchema = z.object({
+  category: z.enum(['handle', 'kitchen', 'light', 'wardrobe']),
+  code: z.string().min(1, "Code is required"),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  image: z.string().optional(),
+  sellingPrice: z.number().min(0, "Selling price must be a positive number"),
+  kitchenPrice: z.number().optional(),
+  wardrobePrice: z.number().optional(),
+  size: z.string().optional(),
 });

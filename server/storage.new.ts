@@ -10,7 +10,8 @@ import {
   users, User, InsertUser,
   teams, Team, InsertTeam,
   teamMembers, TeamMember, InsertTeamMember,
-  followUps, FollowUp, InsertFollowUp
+  followUps, FollowUp, InsertFollowUp,
+  accessoryCatalog, AccessoryCatalog, InsertAccessoryCatalog
 } from "@shared/schema";
 
 export interface IStorage {
@@ -96,6 +97,14 @@ export interface IStorage {
   getTeamMembers(teamId: number): Promise<User[]>;
   addTeamMember(teamMember: InsertTeamMember): Promise<TeamMember>;
   removeTeamMember(teamId: number, userId: number): Promise<boolean>;
+  
+  // Accessory Catalog operations
+  getAccessoryCatalog(): Promise<AccessoryCatalog[]>;
+  getAccessoryCatalogByCategory(category: string): Promise<AccessoryCatalog[]>;
+  getAccessoryCatalogItem(id: number): Promise<AccessoryCatalog | undefined>;
+  createAccessoryCatalogItem(item: InsertAccessoryCatalog): Promise<AccessoryCatalog>;
+  updateAccessoryCatalogItem(id: number, item: Partial<InsertAccessoryCatalog>): Promise<AccessoryCatalog | undefined>;
+  deleteAccessoryCatalogItem(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -110,6 +119,7 @@ export class MemStorage implements IStorage {
   private teams: Map<number, Team>;
   private teamMembers: Map<number, TeamMember>;
   private followUps: Map<number, FollowUp>;
+  private accessoryCatalog: Map<number, AccessoryCatalog>;
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
@@ -122,6 +132,7 @@ export class MemStorage implements IStorage {
   private teamIdCounter: number;
   private teamMemberIdCounter: number;
   private followUpIdCounter: number;
+  private accessoryCatalogIdCounter: number;
   
   constructor() {
     this.customers = new Map();
@@ -135,6 +146,7 @@ export class MemStorage implements IStorage {
     this.teams = new Map();
     this.teamMembers = new Map();
     this.followUps = new Map();
+    this.accessoryCatalog = new Map();
     
     this.customerIdCounter = 1;
     this.quotationIdCounter = 1;
@@ -147,6 +159,7 @@ export class MemStorage implements IStorage {
     this.teamIdCounter = 1;
     this.teamMemberIdCounter = 1;
     this.followUpIdCounter = 1;
+    this.accessoryCatalogIdCounter = 1;
     
     // Add some initial data
     this.initializeData();
