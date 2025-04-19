@@ -1,11 +1,18 @@
 import { forwardRef } from "react";
-import { QuotationWithDetails } from "@shared/schema";
+import { CompanySettings, QuotationWithDetails } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
 
 interface BasicQuoteProps {
   quotation: QuotationWithDetails;
 }
 
 const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, ref) => {
+  // Fetch company settings
+  const { data: companySettings } = useQuery<CompanySettings>({
+    queryKey: ["/api/settings/company"],
+    retry: 1,
+  });
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -25,13 +32,21 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
     }).format(date);
   };
 
+  // Default company name if settings not loaded
+  const companyName = companySettings?.name || "DesignQuotes";
+
   return (
     <div ref={ref} className="max-w-4xl mx-auto bg-white p-8 print:p-4" id="basic-quote">
       {/* Header */}
       <div className="flex justify-between items-center mb-8 border-b pb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-indigo-600">DesignQuotes</h1>
-          <p className="text-gray-500">Interior Design Quotations</p>
+        <div className="flex items-center">
+          {companySettings?.logo && (
+            <img src={companySettings.logo} alt={companyName} className="h-10 mr-3" />
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-indigo-600">{companyName}</h1>
+            <p className="text-gray-500">Interior Design Quotations</p>
+          </div>
         </div>
         <div className="text-right">
           <h2 className="text-xl font-bold">QUOTATION</h2>
@@ -44,10 +59,10 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       <div className="mb-8 grid grid-cols-2 gap-8">
         <div>
           <h3 className="text-md font-semibold mb-2 text-gray-700">From:</h3>
-          <p className="font-semibold">DesignQuotes Interior Services</p>
-          <p>123 Design Street</p>
-          <p>Creativity District</p>
-          <p>design@example.com</p>
+          <p className="font-semibold">{companyName}</p>
+          <p>{companySettings?.address || "123 Design Street"}</p>
+          <p>{companySettings?.phone || ""}</p>
+          <p>{companySettings?.email || "design@example.com"}</p>
           <p>+91 98765 43210</p>
         </div>
         <div>
@@ -240,7 +255,9 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       {/* Footer */}
       <div className="mt-12 pt-6 border-t text-center text-sm text-gray-500">
         <p>Thank you for your business!</p>
-        <p>For any queries, please contact us at support@designquotes.com or call +91 98765 43210</p>
+        <p>For any queries, please contact us at {companySettings?.email || "support@designquotes.com"} 
+        or call {companySettings?.phone || "+91 98765 43210"}</p>
+        {companySettings?.website && <p>{companySettings.website}</p>}
       </div>
     </div>
   );

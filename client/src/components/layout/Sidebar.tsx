@@ -10,6 +10,8 @@ import {
   UserPlus,
   UserCheck
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { CompanySettings } from "@shared/schema";
 
 interface SidebarProps {
   isMobile?: boolean;
@@ -28,6 +30,14 @@ const navigation = [
 
 export default function Sidebar({ isMobile, onClose }: SidebarProps) {
   const [location] = useLocation();
+  
+  // Fetch company settings for name
+  const { data: settings } = useQuery<CompanySettings>({
+    queryKey: ["/api/settings/company"],
+    retry: 1,
+  });
+
+  const companyName = settings?.name || "DesignQuotes";
 
   const handleNavigate = () => {
     if (isMobile && onClose) {
@@ -38,21 +48,29 @@ export default function Sidebar({ isMobile, onClose }: SidebarProps) {
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">
       <div className="flex items-center h-16 flex-shrink-0 px-4 bg-indigo-600">
-        <svg
-          className="h-8 w-auto text-white"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+        {settings?.logo ? (
+          <img
+            src={settings.logo}
+            alt={companyName}
+            className="h-8 w-auto"
           />
-        </svg>
-        <h1 className="ml-2 text-white font-semibold text-lg">DesignQuotes</h1>
+        ) : (
+          <svg
+            className="h-8 w-auto text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+        )}
+        <h1 className="ml-2 text-white font-semibold text-lg">{companyName}</h1>
       </div>
       <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
         <nav className="mt-5 flex-1 px-2 space-y-1">

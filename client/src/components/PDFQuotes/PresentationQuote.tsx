@@ -1,11 +1,18 @@
 import { forwardRef } from "react";
-import { QuotationWithDetails } from "@shared/schema";
+import { CompanySettings, QuotationWithDetails } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
 
 interface PresentationQuoteProps {
   quotation: QuotationWithDetails;
 }
 
 const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ quotation }, ref) => {
+  // Fetch company settings
+  const { data: companySettings } = useQuery<CompanySettings>({
+    queryKey: ["/api/settings/company"],
+    retry: 1,
+  });
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -25,14 +32,22 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
     }).format(date);
   };
 
+  // Default company name if settings not loaded
+  const companyName = companySettings?.name || "DesignQuotes";
+
   return (
     <div ref={ref} className="max-w-5xl mx-auto bg-white" id="presentation-quote">
       {/* Header with gradient background */}
       <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-8 rounded-t-lg">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">DesignQuotes</h1>
-            <p className="text-indigo-100">Transforming Spaces, Creating Experiences</p>
+          <div className="flex items-center">
+            {companySettings?.logo && (
+              <img src={companySettings.logo} alt={companyName} className="h-12 mr-4" />
+            )}
+            <div>
+              <h1 className="text-3xl font-bold">{companyName}</h1>
+              <p className="text-indigo-100">Transforming Spaces, Creating Experiences</p>
+            </div>
           </div>
           <div className="text-right">
             <h2 className="text-2xl font-bold">DESIGN PROPOSAL</h2>
