@@ -92,9 +92,10 @@ export default function ClientInfo({
                     {filteredCustomers.map((customer) => (
                       <CommandItem
                         key={customer.id}
-                        value={customer.id.toString()}
+                        value={`${customer.id}-${customer.name}`}
                         onSelect={(value: string) => {
-                          onCustomerSelect(parseInt(value));
+                          const id = parseInt(value.split('-')[0]);
+                          onCustomerSelect(id);
                           setOpen(false);
                           setSearchQuery("");
                         }}
