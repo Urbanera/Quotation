@@ -32,6 +32,7 @@ function App() {
           <Route path="/quotations/create" component={CreateQuotation} />
           <Route path="/quotations/edit/:id" component={EditQuotation} />
           <Route path="/quotations/view/:id" component={ViewQuotation} />
+          <Route path="/accessories" component={AccessoryCatalogPage} />
           <Route path="/users" component={UsersPage} />
           <Route path="/teams" component={TeamsPage} />
           <Route path="/teams/:id" component={TeamDetailsPage} />

@@ -7,8 +7,8 @@ import {
   Package, 
   Settings,
   UserCog,
-  UserPlus,
-  UserCheck
+  UserCheck,
+  Layers
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { CompanySettings } from "@shared/schema";
@@ -23,6 +23,7 @@ const navigation = [
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Quotations", href: "/quotations", icon: FileText },
   { name: "Products", href: "/products", icon: Package },
+  { name: "Accessories", href: "/accessories", icon: Layers },
   { name: "Teams", href: "/teams", icon: UserCheck },
   { name: "Users", href: "/users", icon: UserCog },
   { name: "Settings", href: "/settings", icon: Settings },
