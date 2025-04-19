@@ -862,8 +862,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             category: row.category as "handle" | "kitchen" | "light" | "wardrobe",
             description: row.description || null,
             sellingPrice: parseFloat(row.sellingprice) || 0,
-            kitchenPrice: row.category === 'kitchen' ? parseFloat(row.kitchenprice) || null : null,
-            wardrobePrice: row.category === 'wardrobe' ? parseFloat(row.wardrobeprice) || null : null,
+            kitchenPrice: row.kitchenprice ? parseFloat(row.kitchenprice) : null,
+            wardrobePrice: row.wardrobeprice ? parseFloat(row.wardrobeprice) : null,
             size: row.size || null,
             image: row.image || null
           };

@@ -439,10 +439,19 @@ export const accessoryCatalogFormSchema = z.object({
   category: z.enum(['handle', 'kitchen', 'light', 'wardrobe']),
   code: z.string().min(1, "Code is required"),
   name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  image: z.string().optional(),
-  sellingPrice: z.number().min(0, "Selling price must be a positive number"),
-  kitchenPrice: z.number().optional(),
-  wardrobePrice: z.number().optional(),
-  size: z.string().optional(),
+  description: z.string().optional().nullable(),
+  image: z.string().optional().nullable(),
+  sellingPrice: z.union([
+    z.number().min(0, "Selling price must be a positive number"),
+    z.string().refine(val => !isNaN(Number(val)) && Number(val) >= 0, "Selling price must be a positive number")
+  ]),
+  kitchenPrice: z.union([
+    z.number().nullable().optional(),
+    z.string().refine(val => val === "" || (!isNaN(Number(val)) && Number(val) >= 0), "Kitchen price must be a positive number").nullable().optional()
+  ]),
+  wardrobePrice: z.union([
+    z.number().nullable().optional(),
+    z.string().refine(val => val === "" || (!isNaN(Number(val)) && Number(val) >= 0), "Wardrobe price must be a positive number").nullable().optional()
+  ]),
+  size: z.string().optional().nullable(),
 });
