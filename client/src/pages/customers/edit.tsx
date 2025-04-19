@@ -23,7 +23,14 @@ export default function EditCustomer() {
     if (!id) return;
     
     try {
-      await apiRequest("PUT", `/api/customers/${id}`, data);
+      const response = await apiRequest("PUT", `/api/customers/${id}`, data);
+      
+      // Check if response is ok
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update customer");
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       queryClient.invalidateQueries({ queryKey: [`/api/customers/${id}`] });
       toast({
@@ -31,10 +38,10 @@ export default function EditCustomer() {
         description: "Customer updated successfully",
       });
       navigate("/customers");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update customer",
+        description: error.message || "Failed to update customer",
         variant: "destructive",
       });
     }

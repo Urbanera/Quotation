@@ -96,6 +96,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/customers", validateRequest(customerFormSchema), async (req, res) => {
     try {
+      // Check if a customer with the same phone number already exists
+      const customers = await storage.getCustomers();
+      const existingCustomer = customers.find(c => c.phone === req.body.phone);
+      
+      if (existingCustomer) {
+        return res.status(400).json({ 
+          message: `Phone number already exists with customer "${existingCustomer.name}"`
+        });
+      }
+      
       const customer = await storage.createCustomer(req.body);
       res.status(201).json(customer);
     } catch (error) {
@@ -106,6 +116,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/customers/:id", validateRequest(customerFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const customerId = id;
+      
+      // Check if a different customer already has this phone number
+      const customers = await storage.getCustomers();
+      const existingCustomer = customers.find(c => c.phone === req.body.phone && c.id !== customerId);
+      
+      if (existingCustomer) {
+        return res.status(400).json({ 
+          message: `Phone number already exists with customer "${existingCustomer.name}"`
+        });
+      }
+      
       const customer = await storage.updateCustomer(id, req.body);
       if (!customer) {
         return res.status(404).json({ message: "Customer not found" });

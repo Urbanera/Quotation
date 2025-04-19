@@ -14,17 +14,24 @@ export default function AddCustomer() {
 
   const onSubmit = useCallback(async (data: typeof customerFormSchema._type) => {
     try {
-      await apiRequest("POST", "/api/customers", data);
+      const response = await apiRequest("POST", "/api/customers", data);
+      
+      // Check if response is ok
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create customer");
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       toast({
         title: "Success",
         description: "Customer created successfully",
       });
       navigate("/customers");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to create customer",
+        description: error.message || "Failed to create customer",
         variant: "destructive",
       });
     }
