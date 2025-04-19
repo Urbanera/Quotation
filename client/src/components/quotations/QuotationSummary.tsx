@@ -212,24 +212,13 @@ export default function QuotationSummary({
               
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Installation Charges (Sum of all rooms)
+                  Installation and Handling
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{(getTotalInstallationCharges() || 0).toLocaleString('en-IN')}
+                  ₹{((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{(getTotalInstallationCharges() || 0).toLocaleString('en-IN')}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Handling Charges
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{(installationHandling || 0).toLocaleString('en-IN')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{(installationHandling || 0).toLocaleString('en-IN')}
+                  ₹{((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN')}
                 </td>
               </tr>
               
