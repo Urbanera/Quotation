@@ -192,9 +192,7 @@ export default function QuotationSummary({
               
               <tr className="bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {globalDiscount > 0 
-                    ? `Total Of All Items (After ${globalDiscount}% Global Discount)` 
-                    : "Total Of All Items"}
+                  Total Of All Items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
                   ₹{(totals.totalSelling || 0).toLocaleString('en-IN')}
