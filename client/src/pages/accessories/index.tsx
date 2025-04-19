@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import MainLayout from "@/components/layout/MainLayout";
-import PageHeader from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
+import PageHeader from "./PageHeader";
 import { 
   Dialog,
   DialogContent,
@@ -81,7 +80,7 @@ export default function AccessoryCatalogPage() {
   });
 
   return (
-    <MainLayout>
+    <>
       <PageHeader
         title="Accessory Catalog"
         description="Manage and organize accessories by category"
@@ -160,6 +159,6 @@ export default function AccessoryCatalogPage() {
           ))}
         </div>
       )}
-    </MainLayout>
+    </>
   );
 }
