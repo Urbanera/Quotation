@@ -63,7 +63,6 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
           <p>{companySettings?.address || "123 Design Street"}</p>
           <p>{companySettings?.phone || ""}</p>
           <p>{companySettings?.email || "design@example.com"}</p>
-          <p>+91 98765 43210</p>
         </div>
         <div>
           <h3 className="text-md font-semibold mb-2 text-gray-700">To:</h3>
@@ -254,7 +253,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       <div className="mt-12 pt-6 border-t text-center text-sm text-gray-500">
         <p>Thank you for your business!</p>
         <p>For any queries, please contact us at {companySettings?.email || "support@designquotes.com"} 
-        or call {companySettings?.phone || "+91 98765 43210"}</p>
+        {companySettings?.phone && `or call ${companySettings.phone}`}</p>
         {companySettings?.website && <p>{companySettings.website}</p>}
       </div>
     </div>
