@@ -101,7 +101,10 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description"),
   sellingPrice: doublePrecision("selling_price").notNull(),
+  discount: doublePrecision("discount").notNull().default(0),
+  discountType: text("discount_type").default("percentage"),
   discountedPrice: doublePrecision("discounted_price").notNull().default(0),
+  quantity: integer("quantity").notNull().default(1),
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({
@@ -115,6 +118,8 @@ export const accessories = pgTable("accessories", {
   name: text("name").notNull(),
   description: text("description"),
   sellingPrice: doublePrecision("selling_price").notNull(),
+  discount: doublePrecision("discount").notNull().default(0),
+  discountType: text("discount_type").default("percentage"),
   discountedPrice: doublePrecision("discounted_price").notNull().default(0),
   quantity: integer("quantity").notNull().default(1),
 });

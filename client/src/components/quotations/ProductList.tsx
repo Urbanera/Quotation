@@ -101,21 +101,30 @@ export default function ProductList({ roomId, products }: ProductListProps) {
   });
 
   const handleAddProduct = (data: any) => {
+    const sellingPrice = parseFloat(data.sellingPrice);
+    // Include discount fields with default values
     addProductMutation.mutate({
       roomId,
       name: data.name,
       description: data.description || "",
-      sellingPrice: parseFloat(data.sellingPrice),
-      discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
+      sellingPrice: sellingPrice,
+      discount: 0, // Default to 0% discount
+      discountType: "percentage", // Default discount type
+      discountedPrice: sellingPrice, // Default to full selling price (no discount)
+      quantity: 1 // Default quantity
     });
   };
 
   const handleEditProduct = (data: any) => {
+    const sellingPrice = parseFloat(data.sellingPrice);
     editProductMutation.mutate({
       name: data.name,
       description: data.description || "",
-      sellingPrice: parseFloat(data.sellingPrice),
-      discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
+      sellingPrice: sellingPrice,
+      discount: selectedProduct?.discount || 0, // Preserve existing discount if any
+      discountType: selectedProduct?.discountType || "percentage", // Preserve existing discount type
+      discountedPrice: sellingPrice, // Recalculate on server
+      quantity: selectedProduct?.quantity || 1 // Preserve existing quantity
     });
   };
 
