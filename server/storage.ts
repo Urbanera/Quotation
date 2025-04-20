@@ -849,27 +849,41 @@ export class MemStorage implements IStorage {
       
       // Create products for the new room
       for (const product of roomDetails.products) {
+        // Recalculate discounted price to ensure it's correct
+        const discountedPrice = this.calculateDiscountedPrice(
+          product.sellingPrice,
+          product.discount || 0,
+          product.discountType || "percentage"
+        );
+        
         await this.createProduct({
           name: product.name,
           description: product.description,
           sellingPrice: product.sellingPrice,
-          discountedPrice: product.discountedPrice,
-          discount: product.discount,
-          discountType: product.discountType,
-          quantity: product.quantity,
+          discount: product.discount || 0,
+          discountType: product.discountType || "percentage",
+          discountedPrice: discountedPrice, // Use the recalculated price
+          quantity: product.quantity || 1,
           roomId: newRoom.id
         });
       }
       
       // Create accessories for the new room
       for (const accessory of roomDetails.accessories) {
+        // Recalculate discounted price to ensure it's correct
+        const discountedPrice = this.calculateDiscountedPrice(
+          accessory.sellingPrice,
+          accessory.discount || 0,
+          accessory.discountType || "percentage"
+        );
+        
         await this.createAccessory({
           name: accessory.name,
           description: accessory.description,
           sellingPrice: accessory.sellingPrice,
-          discountedPrice: accessory.discountedPrice,
-          discount: accessory.discount,
-          discountType: accessory.discountType,
+          discount: accessory.discount || 0,
+          discountType: accessory.discountType || "percentage",
+          discountedPrice: discountedPrice, // Use the recalculated price
           roomId: newRoom.id,
           quantity: accessory.quantity || 1
         });
@@ -1079,17 +1093,38 @@ export class MemStorage implements IStorage {
     return this.products.get(id);
   }
   
+  // Helper function to calculate discounted price
+  private calculateDiscountedPrice(sellingPrice: number, discount: number, discountType: string): number {
+    if (!discount) return sellingPrice;
+    
+    if (discountType === "percentage") {
+      return sellingPrice * (1 - discount / 100);
+    } else if (discountType === "fixed") {
+      return Math.max(0, sellingPrice - discount);
+    }
+    
+    return sellingPrice;
+  }
+
   async createProduct(product: InsertProduct): Promise<Product> {
     const id = this.productIdCounter++;
+    
+    // Calculate the discounted price based on the discount
+    const discountedPrice = this.calculateDiscountedPrice(
+      product.sellingPrice,
+      product.discount || 0,
+      product.discountType || "percentage"
+    );
+    
     const newProduct: Product = {
       id,
       name: product.name,
       description: product.description,
-      quantity: product.quantity,
+      quantity: product.quantity || 1,
       sellingPrice: product.sellingPrice,
-      discount: product.discount,
-      discountType: product.discountType,
-      discountedPrice: product.discountedPrice,
+      discount: product.discount || 0,
+      discountType: product.discountType || "percentage",
+      discountedPrice: discountedPrice,
       roomId: product.roomId
     };
     this.products.set(id, newProduct);
@@ -1104,10 +1139,22 @@ export class MemStorage implements IStorage {
     const existingProduct = this.products.get(id);
     if (!existingProduct) return undefined;
     
+    // If selling price, discount or discount type is being updated, recalculate discounted price
+    let discountedPrice = existingProduct.discountedPrice;
+    if (product.sellingPrice !== undefined || product.discount !== undefined || product.discountType !== undefined) {
+      const sellingPrice = product.sellingPrice !== undefined ? product.sellingPrice : existingProduct.sellingPrice;
+      const discount = product.discount !== undefined ? product.discount : (existingProduct.discount || 0);
+      const discountType = product.discountType !== undefined ? product.discountType : (existingProduct.discountType || "percentage");
+      
+      discountedPrice = this.calculateDiscountedPrice(sellingPrice, discount, discountType);
+    }
+    
     const updatedProduct: Product = {
       ...existingProduct,
       ...product,
+      discountedPrice: discountedPrice
     };
+    
     this.products.set(id, updatedProduct);
     
     // Update room price after updating a product
@@ -1140,15 +1187,23 @@ export class MemStorage implements IStorage {
   
   async createAccessory(accessory: InsertAccessory): Promise<Accessory> {
     const id = this.accessoryIdCounter++;
+    
+    // Calculate the discounted price based on the discount
+    const discountedPrice = this.calculateDiscountedPrice(
+      accessory.sellingPrice,
+      accessory.discount || 0,
+      accessory.discountType || "percentage"
+    );
+    
     const newAccessory: Accessory = {
       id,
       name: accessory.name,
       description: accessory.description,
-      quantity: accessory.quantity,
+      quantity: accessory.quantity || 1,
       sellingPrice: accessory.sellingPrice,
-      discount: accessory.discount,
-      discountType: accessory.discountType,
-      discountedPrice: accessory.discountedPrice,
+      discount: accessory.discount || 0,
+      discountType: accessory.discountType || "percentage",
+      discountedPrice: discountedPrice,
       roomId: accessory.roomId
     };
     this.accessories.set(id, newAccessory);
@@ -1163,10 +1218,22 @@ export class MemStorage implements IStorage {
     const existingAccessory = this.accessories.get(id);
     if (!existingAccessory) return undefined;
     
+    // If selling price, discount or discount type is being updated, recalculate discounted price
+    let discountedPrice = existingAccessory.discountedPrice;
+    if (accessory.sellingPrice !== undefined || accessory.discount !== undefined || accessory.discountType !== undefined) {
+      const sellingPrice = accessory.sellingPrice !== undefined ? accessory.sellingPrice : existingAccessory.sellingPrice;
+      const discount = accessory.discount !== undefined ? accessory.discount : (existingAccessory.discount || 0);
+      const discountType = accessory.discountType !== undefined ? accessory.discountType : (existingAccessory.discountType || "percentage");
+      
+      discountedPrice = this.calculateDiscountedPrice(sellingPrice, discount, discountType);
+    }
+    
     const updatedAccessory: Accessory = {
       ...existingAccessory,
       ...accessory,
+      discountedPrice: discountedPrice
     };
+    
     this.accessories.set(id, updatedAccessory);
     
     // Update room price after updating an accessory
