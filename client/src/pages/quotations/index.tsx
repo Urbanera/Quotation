@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, Edit, Trash2, ArrowUpDown, SortAsc, SortDesc } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, ArrowUpDown, SortAsc, SortDesc, Copy } from "lucide-react";
 import { Quotation, Customer } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -31,6 +31,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 type SortField = "quotationNumber" | "createdAt" | "totalAmount";
 type SortOrder = "asc" | "desc";
@@ -38,6 +48,9 @@ type SortOrder = "asc" | "desc";
 export default function QuotationsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
+  const [quotationToDuplicate, setQuotationToDuplicate] = useState<Quotation | null>(null);
+  const [duplicateForSameCustomer, setDuplicateForSameCustomer] = useState(true);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc"); // Newest first by default
   const { toast } = useToast();
@@ -70,6 +83,45 @@ export default function QuotationsList() {
         variant: "destructive",
       });
     }
+  };
+  
+  const duplicateMutation = useMutation({
+    mutationFn: async ({ id, customerId }: { id: number, customerId?: number }) => {
+      const res = await apiRequest("POST", `/api/quotations/${id}/duplicate`, { 
+        customerId: customerId 
+      });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      toast({
+        title: "Quotation duplicated",
+        description: `Quotation has been duplicated successfully.`,
+      });
+      setQuotationToDuplicate(null);
+      setSelectedCustomerId(null);
+      setDuplicateForSameCustomer(true);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to duplicate quotation.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const handleDuplicateQuotation = () => {
+    if (!quotationToDuplicate) return;
+    
+    const targetCustomerId = duplicateForSameCustomer 
+      ? quotationToDuplicate.customerId 
+      : selectedCustomerId;
+      
+    duplicateMutation.mutate({ 
+      id: quotationToDuplicate.id,
+      customerId: duplicateForSameCustomer ? undefined : (targetCustomerId || undefined)
+    });
   };
   
   // Get customer name by ID
@@ -225,6 +277,15 @@ export default function QuotationsList() {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => setQuotationToDuplicate(quotation)}
+                        className="text-blue-600 hover:text-blue-800 border-blue-200 hover:border-blue-300"
+                      >
+                        <Copy className="h-4 w-4" />
+                        <span className="sr-only">Duplicate</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => setQuotationToDelete(quotation)}
                         className="text-red-600 hover:text-red-800 border-red-200 hover:border-red-300"
                       >
@@ -263,6 +324,85 @@ export default function QuotationsList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      <Dialog 
+        open={!!quotationToDuplicate}
+        onOpenChange={(open) => !open && setQuotationToDuplicate(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Duplicate Quotation</DialogTitle>
+            <DialogDescription>
+              Create a copy of Quotation #{quotationToDuplicate?.id} with all its rooms, products, accessories, and images.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <RadioGroup 
+              value={duplicateForSameCustomer ? "same" : "different"} 
+              onValueChange={(value) => setDuplicateForSameCustomer(value === "same")}
+              className="space-y-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="same" id="same-customer" />
+                <Label htmlFor="same-customer" className="font-normal">
+                  Create for same customer ({getCustomerName(quotationToDuplicate?.customerId || 0)})
+                </Label>
+              </div>
+              
+              <div className="flex items-start space-x-2">
+                <RadioGroupItem value="different" id="different-customer" />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="different-customer" className="font-normal">
+                    Create for different customer
+                  </Label>
+                  {!duplicateForSameCustomer && (
+                    <Select 
+                      value={selectedCustomerId?.toString() || ""} 
+                      onValueChange={(value) => setSelectedCustomerId(parseInt(value))}
+                      disabled={duplicateForSameCustomer}
+                    >
+                      <SelectTrigger className="w-full mt-2">
+                        <SelectValue placeholder="Select customer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customers?.map((customer) => (
+                          <SelectItem key={customer.id} value={customer.id.toString()}>
+                            {customer.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <DialogFooter className="sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setQuotationToDuplicate(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDuplicateQuotation}
+              disabled={!duplicateForSameCustomer && !selectedCustomerId}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {duplicateMutation.isPending ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+                  Duplicating...
+                </>
+              ) : (
+                "Duplicate Quotation"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
