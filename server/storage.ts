@@ -48,6 +48,7 @@ export interface IStorage {
   createQuotation(quotation: InsertQuotation): Promise<Quotation>;
   updateQuotation(id: number, quotation: Partial<InsertQuotation>): Promise<Quotation | undefined>;
   deleteQuotation(id: number): Promise<boolean>;
+  duplicateQuotation(id: number, customerId?: number): Promise<Quotation>;
   
   // Room operations
   getRooms(quotationId: number): Promise<Room[]>;
@@ -795,6 +796,119 @@ export class MemStorage implements IStorage {
     }
     
     return this.quotations.delete(id);
+  }
+  
+  async duplicateQuotation(id: number, newCustomerId?: number): Promise<Quotation> {
+    // Get the original quotation
+    const originalQuotation = await this.getQuotation(id);
+    if (!originalQuotation) {
+      throw new Error("Original quotation not found");
+    }
+    
+    // Get all rooms, products, accessories, images, and installation charges for original quotation
+    const originalRooms = await this.getRooms(originalQuotation.id);
+    
+    // Create a new quotation with the same details but a new ID
+    const now = new Date();
+    const quotationNumber = `Q-${now.getFullYear()}-${String(this.quotationIdCounter).padStart(3, '0')}`;
+    
+    const newQuotation: Quotation = {
+      id: this.quotationIdCounter++,
+      customerId: newCustomerId || originalQuotation.customerId,
+      quotationNumber: quotationNumber,
+      status: "draft",
+      title: `${originalQuotation.title} (Copy)`,
+      description: originalQuotation.description,
+      gstPercentage: originalQuotation.gstPercentage,
+      globalDiscount: originalQuotation.globalDiscount,
+      installationHandling: originalQuotation.installationHandling,
+      totalSellingPrice: originalQuotation.totalSellingPrice,
+      totalDiscountedPrice: originalQuotation.totalDiscountedPrice,
+      gstAmount: originalQuotation.gstAmount,
+      finalPrice: originalQuotation.finalPrice,
+      validUntil: originalQuotation.validUntil,
+      terms: originalQuotation.terms,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.quotations.set(newQuotation.id, newQuotation);
+    
+    // Create rooms for the new quotation
+    for (const originalRoom of originalRooms) {
+      const roomDetails = await this.getRoomWithItems(originalRoom.id);
+      if (!roomDetails) continue;
+      
+      // Create the new room
+      const newRoom = await this.createRoom({
+        quotationId: newQuotation.id,
+        name: roomDetails.name,
+        description: roomDetails.description,
+        order: roomDetails.order
+      });
+      
+      // Create products for the new room
+      for (const product of roomDetails.products) {
+        await this.createProduct({
+          name: product.name,
+          description: product.description,
+          sellingPrice: product.sellingPrice,
+          discountedPrice: product.discountedPrice,
+          roomId: newRoom.id
+        });
+      }
+      
+      // Create accessories for the new room
+      for (const accessory of roomDetails.accessories) {
+        await this.createAccessory({
+          name: accessory.name,
+          description: accessory.description,
+          sellingPrice: accessory.sellingPrice,
+          discountedPrice: accessory.discountedPrice,
+          roomId: newRoom.id,
+          quantity: accessory.quantity || 1
+        });
+      }
+      
+      // Create images for the new room
+      for (const image of roomDetails.images) {
+        await this.createImage({
+          roomId: newRoom.id,
+          path: image.path,
+          caption: image.caption,
+          order: image.order
+        });
+      }
+      
+      // Create installation charges for the new room
+      for (const charge of roomDetails.installationCharges) {
+        await this.createInstallationCharge({
+          id: this.installationChargeIdCounter++,
+          roomId: newRoom.id,
+          description: charge.description,
+          amount: charge.amount
+        });
+      }
+    }
+    
+    // Create milestones for the new quotation
+    const originalMilestones = await this.getMilestones(originalQuotation.id);
+    for (const milestone of originalMilestones) {
+      await this.createMilestone({
+        quotationId: newQuotation.id,
+        title: milestone.title,
+        description: milestone.description,
+        startDate: milestone.startDate,
+        endDate: milestone.endDate,
+        status: 'pending',
+        order: milestone.order
+      });
+    }
+    
+    // Update the prices
+    await this.updateQuotationPrices(newQuotation.id);
+    
+    return this.getQuotation(newQuotation.id) as Promise<Quotation>;
   }
   
   // Room operations

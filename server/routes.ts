@@ -334,6 +334,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete quotation" });
     }
   });
+  
+  // Duplicate quotation with all its content
+  app.post("/api/quotations/:id/duplicate", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customerId = req.body.customerId ? parseInt(req.body.customerId) : undefined;
+      
+      const duplicatedQuotation = await storage.duplicateQuotation(id, customerId);
+      res.status(201).json(duplicatedQuotation);
+    } catch (error) {
+      console.error("Failed to duplicate quotation:", error);
+      res.status(500).json({ message: "Failed to duplicate quotation", error: error.message });
+    }
+  });
 
   // Room routes
   app.get("/api/quotations/:quotationId/rooms", async (req, res) => {
