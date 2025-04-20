@@ -102,22 +102,29 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
   });
 
   const handleAddAccessory = (data: any) => {
+    const sellingPrice = parseFloat(data.sellingPrice);
+    // Include discount fields with default values
     addAccessoryMutation.mutate({
       roomId,
       name: data.name,
       description: data.description || "",
-      sellingPrice: parseFloat(data.sellingPrice),
-      discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
+      sellingPrice: sellingPrice,
+      discount: 0, // Default to 0% discount
+      discountType: "percentage", // Default discount type
+      discountedPrice: sellingPrice, // Default to full selling price (no discount)
       quantity: parseInt(data.quantity) || 1,
     });
   };
 
   const handleEditAccessory = (data: any) => {
+    const sellingPrice = parseFloat(data.sellingPrice);
     editAccessoryMutation.mutate({
       name: data.name,
       description: data.description || "",
-      sellingPrice: parseFloat(data.sellingPrice),
-      discountedPrice: parseFloat(data.sellingPrice), // Set discounted price equal to selling price
+      sellingPrice: sellingPrice,
+      discount: selectedAccessory?.discount || 0, // Preserve existing discount if any
+      discountType: selectedAccessory?.discountType || "percentage", // Preserve existing discount type
+      discountedPrice: sellingPrice, // Recalculate on server
       quantity: parseInt(data.quantity) || 1,
     });
   };
@@ -218,7 +225,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
                   </Button>
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-3 gap-4">
+              <div className="mt-4 grid grid-cols-4 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-500">Unit Price</label>
                   <div className="mt-1 relative rounded-md shadow-sm">
@@ -230,6 +237,26 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
                       value={accessory.sellingPrice.toLocaleString('en-IN')}
                       readOnly
                       className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-3 sm:text-sm border-gray-300 rounded-md bg-gray-50"
+                    />
+                  </div>
+                  {accessory.discount > 0 && (
+                    <div className="mt-1 text-xs text-green-600">
+                      {accessory.discountType === "percentage" ? `${accessory.discount}% off` : `₹${accessory.discount} off`}
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-500">Discounted Price</label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">₹</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={accessory.discountedPrice.toLocaleString('en-IN')}
+                      readOnly
+                      className={`focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-3 sm:text-sm border-gray-300 rounded-md bg-gray-50 ${accessory.discount > 0 ? 'text-green-600 font-medium' : ''}`}
                     />
                   </div>
                 </div>
@@ -254,7 +281,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
                     </div>
                     <input
                       type="text"
-                      value={((accessory.quantity || 1) * accessory.sellingPrice).toLocaleString('en-IN')}
+                      value={((accessory.quantity || 1) * accessory.discountedPrice).toLocaleString('en-IN')}
                       readOnly
                       className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-3 sm:text-sm border-gray-300 rounded-md bg-gray-50 font-medium"
                     />

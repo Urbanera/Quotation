@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Accessory } from "@shared/schema";
 import { Loader2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 // Define schema for accessory form
 const accessoryFormSchema = z.object({
@@ -26,7 +28,12 @@ const accessoryFormSchema = z.object({
   quantity: z.string().refine(
     (val) => !isNaN(parseInt(val)) && parseInt(val) >= 1,
     { message: "Quantity must be at least 1" }
-  ).default("1")
+  ).default("1"),
+  discount: z.string().refine(
+    (val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0,
+    { message: "Discount must be a positive number" }
+  ).default("0"),
+  discountType: z.enum(["percentage", "fixed"]).default("percentage")
 });
 
 interface AccessoryFormProps {
@@ -42,6 +49,12 @@ export default function AccessoryForm({
   defaultValues,
   isEdit = false 
 }: AccessoryFormProps) {
+  // Get the discount type with type safety
+  const getDiscountType = (): "percentage" | "fixed" => {
+    if (defaultValues?.discountType === "fixed") return "fixed";
+    return "percentage"; // Default
+  };
+
   // Initialize form with default values
   const form = useForm<z.infer<typeof accessoryFormSchema>>({
     resolver: zodResolver(accessoryFormSchema),
@@ -50,6 +63,8 @@ export default function AccessoryForm({
       description: defaultValues?.description || "",
       sellingPrice: defaultValues?.sellingPrice?.toString() || "",
       quantity: defaultValues?.quantity?.toString() || "1",
+      discount: defaultValues?.discount?.toString() || "0",
+      discountType: getDiscountType(),
     },
   });
 
@@ -127,6 +142,64 @@ export default function AccessoryForm({
                     type="number"
                     min="1"
                     step="1"
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        {/* Discount Fields */}
+        <div className="border rounded-md p-4 bg-gray-50">
+          <h3 className="text-sm font-medium mb-3">Discount Settings</h3>
+          
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <FormField
+              control={form.control}
+              name="discountType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Discount Type</FormLabel>
+                  <FormControl>
+                    <RadioGroup 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      className="flex space-x-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="percentage" id="percentage" />
+                        <Label htmlFor="percentage">Percentage (%)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="fixed" id="fixed" />
+                        <Label htmlFor="fixed">Fixed Amount (₹)</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="discount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  {form.watch("discountType") === "percentage" 
+                    ? "Discount Percentage (%)" 
+                    : "Discount Amount (₹)"}
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="0"
+                    type="number"
+                    step="0.01"
+                    min="0"
                     {...field} 
                   />
                 </FormControl>
