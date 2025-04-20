@@ -854,6 +854,9 @@ export class MemStorage implements IStorage {
           description: product.description,
           sellingPrice: product.sellingPrice,
           discountedPrice: product.discountedPrice,
+          discount: product.discount,
+          discountType: product.discountType,
+          quantity: product.quantity,
           roomId: newRoom.id
         });
       }
@@ -865,6 +868,8 @@ export class MemStorage implements IStorage {
           description: accessory.description,
           sellingPrice: accessory.sellingPrice,
           discountedPrice: accessory.discountedPrice,
+          discount: accessory.discount,
+          discountType: accessory.discountType,
           roomId: newRoom.id,
           quantity: accessory.quantity || 1
         });
