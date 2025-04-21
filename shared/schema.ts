@@ -362,6 +362,14 @@ export const paymentMethodEnum = pgEnum('payment_method', [
   'other'
 ]);
 
+// Payment type enum for categorizing payment purposes
+export const paymentTypeEnum = pgEnum('payment_type', [
+  'token_advance',
+  'starting_production',
+  'final_payment',
+  'other'
+]);
+
 export const productAccessoryFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
@@ -577,6 +585,7 @@ export const customerPayments = pgTable("customer_payments", {
   transactionId: text("transaction_id").notNull().unique(),
   amount: doublePrecision("amount").notNull(),
   paymentMethod: paymentMethodEnum("payment_method").notNull(),
+  paymentType: paymentTypeEnum("payment_type").notNull().default('other'),
   paymentDate: timestamp("payment_date").defaultNow().notNull(),
   description: text("description"),
   receiptNumber: text("receipt_number").notNull().unique(),
@@ -598,6 +607,8 @@ export const customerPaymentFormSchema = z.object({
   customerId: z.number().min(1, "Customer is required"),
   amount: z.number().min(0.01, "Amount must be greater than zero"),
   paymentMethod: z.enum(['cash', 'bank_transfer', 'check', 'card', 'upi', 'other']),
+  paymentType: z.enum(['token_advance', 'starting_production', 'final_payment', 'other']),
   paymentDate: z.string().or(z.date()),
+  transactionId: z.string().min(1, "Transaction ID is required"),
   description: z.string().optional().nullable(),
 });
