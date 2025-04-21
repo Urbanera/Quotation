@@ -22,12 +22,13 @@ export default function SalesOrdersPage() {
 
   const { data: salesOrders, isLoading } = useQuery<SalesOrder[]>({
     queryKey: ["/api/sales-orders"],
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to load sales orders",
         variant: "destructive",
       });
+      console.error("Failed to load sales orders:", error);
     },
   });
 

@@ -22,12 +22,13 @@ export default function PaymentsPage() {
   // Fetch all orders to get payment information
   const { data: salesOrders, isLoading: isLoadingOrders } = useQuery<SalesOrder[]>({
     queryKey: ["/api/sales-orders"],
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to load sales orders",
         variant: "destructive",
       });
+      console.error("Failed to load sales orders:", error);
     },
   });
 
