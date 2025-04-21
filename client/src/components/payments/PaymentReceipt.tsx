@@ -208,11 +208,11 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) =>
     </View>
   ) : null;
 
-  // Set up terms and conditions for the receipt
-  const termsAndConditions = appSettings?.defaultTermsAndConditions ? (
+  // Set up terms and conditions for the receipt using receipt-specific terms if available
+  const termsAndConditions = appSettings?.receiptTermsAndConditions ? (
     <View style={{ marginTop: 15, padding: 10, borderTop: 1, borderTopColor: '#e5e7eb' }}>
       <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 5 }}>Terms & Conditions</Text>
-      <Text style={{ fontSize: 8, color: '#4b5563' }}>{appSettings.defaultTermsAndConditions}</Text>
+      <Text style={{ fontSize: 8, color: '#4b5563' }}>{appSettings.receiptTermsAndConditions}</Text>
     </View>
   ) : null;
 
