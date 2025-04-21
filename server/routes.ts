@@ -192,6 +192,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get customer ledger entries (combined sales orders and payments)
+  app.get("/api/customers/:id/ledger", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      // Get both sales orders and payments for this customer
+      const salesOrders = await storage.getSalesOrdersByCustomer(id);
+      const payments = await storage.getCustomerPaymentsByCustomer(id);
+      
+      // Return combined data
+      res.json({
+        salesOrders,
+        payments
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer ledger entries" });
+    }
+  });
+  
   // Get follow-ups for a customer
   app.get("/api/customers/:id/follow-ups", async (req, res) => {
     try {

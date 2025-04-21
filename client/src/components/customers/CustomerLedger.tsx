@@ -36,26 +36,28 @@ interface CustomerLedgerProps {
 }
 
 export function CustomerLedger({ customerId }: CustomerLedgerProps) {
-  // Fetch customer sales orders
-  const { data: salesOrders, isLoading: isLoadingSalesOrders } = useQuery<SalesOrder[]>({
-    queryKey: ["/api/customers", customerId, "sales-orders"],
+  // Fetch customer ledger data (combined sales orders and payments)
+  const { data: ledgerData, isLoading } = useQuery<{
+    salesOrders: SalesOrder[];
+    payments: CustomerPayment[];
+  }>({
+    queryKey: ["/api/customers", customerId, "ledger"],
   });
 
-  // Fetch customer payments
-  const { data: payments, isLoading: isLoadingPayments } = useQuery<CustomerPayment[]>({
-    queryKey: ["/api/customers", customerId, "payments"],
-  });
-
-  const isLoading = isLoadingSalesOrders || isLoadingPayments;
+  // Extract sales orders and payments from ledger data
+  const salesOrders = ledgerData?.salesOrders;
+  const payments = ledgerData?.payments;
 
   // Combine and sort ledger entries
   const ledgerEntries: LedgerEntry[] = [];
   
   if (salesOrders) {
     salesOrders.forEach(order => {
+      // Ensure the date is valid
+      const orderDate = order.orderDate ? new Date(order.orderDate) : new Date();
       ledgerEntries.push({
         id: order.id,
-        date: new Date(order.orderDate),
+        date: orderDate,
         description: `Sales Order: ${order.orderNumber}`,
         type: "debit", // Sales orders are debits (money owed to company)
         amount: order.totalAmount,
@@ -67,9 +69,11 @@ export function CustomerLedger({ customerId }: CustomerLedgerProps) {
   
   if (payments) {
     payments.forEach(payment => {
+      // Ensure the date is valid
+      const paymentDate = payment.paymentDate ? new Date(payment.paymentDate) : new Date();
       ledgerEntries.push({
         id: payment.id,
-        date: new Date(payment.paymentDate),
+        date: paymentDate,
         description: `Payment: ${payment.paymentType || 'General'} (${payment.paymentMethod})`,
         type: "credit", // Payments are credits (reducing amount owed)
         amount: payment.amount,
