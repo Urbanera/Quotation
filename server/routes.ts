@@ -170,6 +170,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get customer payments for a customer
+  app.get("/api/customers/:id/payments", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const payments = await storage.getCustomerPaymentsByCustomer(id);
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer payments" });
+    }
+  });
+  
   // Get follow-ups for a customer
   app.get("/api/customers/:id/follow-ups", async (req, res) => {
     try {
@@ -1575,6 +1586,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete payment" });
+    }
+  });
+
+  // Customer Payment routes (direct payments without sales orders)
+  app.get("/api/customer-payments", async (req, res) => {
+    try {
+      const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
+      
+      if (customerId) {
+        const payments = await storage.getCustomerPaymentsByCustomer(customerId);
+        return res.json(payments);
+      }
+      
+      const payments = await storage.getCustomerPayments();
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer payments" });
+    }
+  });
+
+  app.get("/api/customer-payments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const payment = await storage.getCustomerPayment(id);
+      if (!payment) {
+        return res.status(404).json({ message: "Customer payment not found" });
+      }
+      res.json(payment);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer payment" });
+    }
+  });
+
+  app.post("/api/customer-payments", validateRequest(customerPaymentFormSchema), async (req, res) => {
+    try {
+      const payment = await storage.createCustomerPayment({
+        ...req.body,
+        paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : new Date(),
+      });
+      res.status(201).json(payment);
+    } catch (error) {
+      console.error("Failed to create customer payment:", error);
+      res.status(500).json({ message: "Failed to create customer payment", error: error.message });
+    }
+  });
+
+  app.put("/api/customer-payments/:id", validateRequest(customerPaymentFormSchema), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const payment = await storage.updateCustomerPayment(id, {
+        ...req.body,
+        paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
+      });
+      if (!payment) {
+        return res.status(404).json({ message: "Customer payment not found" });
+      }
+      res.json(payment);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update customer payment" });
+    }
+  });
+
+  app.delete("/api/customer-payments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCustomerPayment(id);
+      if (!success) {
+        return res.status(404).json({ message: "Customer payment not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete customer payment" });
     }
   });
 
