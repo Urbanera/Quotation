@@ -314,31 +314,31 @@ export default function AddPaymentPage() {
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-500">Order Number</p>
-                  <p className="font-medium">{salesOrder.orderNumber}</p>
+                  <p className="font-medium">{salesOrder?.orderNumber || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Total Amount</p>
-                  <p className="font-medium">{formatCurrency(salesOrder.totalAmount)}</p>
+                  <p className="font-medium">{formatCurrency(salesOrder?.totalAmount || 0)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Amount Paid</p>
-                  <p className="font-medium text-green-600">{formatCurrency(salesOrder.amountPaid)}</p>
+                  <p className="font-medium text-green-600">{formatCurrency(salesOrder?.amountPaid || 0)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Amount Due</p>
-                  <p className="font-medium text-red-600">{formatCurrency(salesOrder.amountDue)}</p>
+                  <p className="font-medium text-red-600">{formatCurrency(salesOrder?.amountDue || 0)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Payment Status</p>
                   <p className="font-medium">
                     <span className={`px-2 py-1 rounded text-xs inline-block ${
-                      salesOrder.paymentStatus === 'paid' 
+                      salesOrder?.paymentStatus === 'paid' 
                         ? 'bg-green-100 text-green-800' 
-                        : salesOrder.paymentStatus === 'partially_paid'
+                        : salesOrder?.paymentStatus === 'partially_paid'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-red-100 text-red-800'
                     }`}>
-                      {salesOrder.paymentStatus.replace('_', ' ')}
+                      {salesOrder?.paymentStatus ? salesOrder.paymentStatus.replace('_', ' ') : 'unpaid'}
                     </span>
                   </p>
                 </div>
