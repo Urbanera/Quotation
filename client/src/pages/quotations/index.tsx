@@ -49,6 +49,7 @@ export default function QuotationsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
   const [quotationToDuplicate, setQuotationToDuplicate] = useState<Quotation | null>(null);
+  const [quotationToApprove, setQuotationToApprove] = useState<Quotation | null>(null);
   const [duplicateForSameCustomer, setDuplicateForSameCustomer] = useState(true);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<SortField>("createdAt");
@@ -111,6 +112,30 @@ export default function QuotationsList() {
     }
   });
   
+  const approveMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("PUT", `/api/quotations/${id}/status`, { 
+        status: "approved"
+      });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      toast({
+        title: "Quotation approved",
+        description: `Quotation #${data.id} has been approved successfully.`,
+      });
+      setQuotationToApprove(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to approve quotation.",
+        variant: "destructive",
+      });
+    }
+  });
+  
   const handleDuplicateQuotation = () => {
     if (!quotationToDuplicate) return;
     
@@ -122,6 +147,11 @@ export default function QuotationsList() {
       id: quotationToDuplicate.id,
       customerId: duplicateForSameCustomer ? undefined : (targetCustomerId || undefined)
     });
+  };
+  
+  const handleApproveQuotation = () => {
+    if (!quotationToApprove) return;
+    approveMutation.mutate(quotationToApprove.id);
   };
   
   // Get customer name by ID
@@ -251,6 +281,16 @@ export default function QuotationsList() {
                         <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           ₹{(quotation.finalPrice || 0).toLocaleString('en-IN')}
                         </span>
+                        {quotation.status && (
+                          <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                            ${quotation.status === 'approved' ? 'bg-blue-100 text-blue-800' : 
+                              quotation.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                              quotation.status === 'converted' ? 'bg-purple-100 text-purple-800' : 
+                              quotation.status === 'expired' ? 'bg-gray-100 text-gray-800' : 
+                              'bg-yellow-100 text-yellow-800'}`}>
+                            {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
+                          </span>
+                        )}
                       </div>
                       <div className="mt-2 flex">
                         <div className="flex items-center text-sm text-gray-500 mr-6">
@@ -292,6 +332,31 @@ export default function QuotationsList() {
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Delete</span>
                       </Button>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">More</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {quotation.status !== 'approved' && (
+                            <DropdownMenuItem onClick={() => setQuotationToApprove(quotation)}>
+                              <Check className="mr-2 h-4 w-4 text-green-500" />
+                              <span>Approve Quotation</span>
+                            </DropdownMenuItem>
+                          )}
+                          {quotation.status === 'approved' && (
+                            <Link href={`/sales-orders/create/${quotation.id}`}>
+                              <DropdownMenuItem>
+                                <Check className="mr-2 h-4 w-4 text-blue-500" />
+                                <span>Convert to Sales Order</span>
+                              </DropdownMenuItem>
+                            </Link>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </li>
@@ -320,6 +385,37 @@ export default function QuotationsList() {
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog
+        open={!!quotationToApprove}
+        onOpenChange={(open) => !open && setQuotationToApprove(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Approve Quotation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to approve Quotation #{quotationToApprove?.id} for {getCustomerName(quotationToApprove?.customerId || 0)}?
+              Approved quotations can be converted to sales orders.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleApproveQuotation}
+              className="bg-green-600 hover:bg-green-700 focus:ring-green-600"
+            >
+              {approveMutation.isPending ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+                  Approving...
+                </>
+              ) : (
+                "Approve"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
