@@ -339,6 +339,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update quotation status endpoint
+  app.put("/api/quotations/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!status || !['draft', 'pending', 'approved', 'rejected', 'revised', 'converted'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+      
+      const quotation = await storage.updateQuotation(id, { status });
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      res.json(quotation);
+    } catch (error) {
+      console.error("Error updating quotation status:", error);
+      res.status(500).json({ message: "Failed to update quotation status" });
+    }
+  });
+  
+  // Convert quotation to sales order
+  app.post("/api/quotations/:id/convert-to-order", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.id);
+      const { expectedDeliveryDate, notes } = req.body;
+      
+      // Get the quotation details
+      const quotation = await storage.getQuotation(quotationId);
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      
+      if (quotation.status !== "approved") {
+        return res.status(400).json({ message: "Only approved quotations can be converted to sales orders" });
+      }
+      
+      // Generate a unique order number (SO-YYYYMMDD-XXX format)
+      const today = new Date();
+      const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
+      
+      // Get the count of existing orders to determine the sequence number
+      const existingOrders = await storage.getSalesOrders();
+      const sequenceNumber = (existingOrders.length + 1).toString().padStart(3, '0');
+      const orderNumber = `SO-${dateStr}-${sequenceNumber}`;
+      
+      // Create the sales order
+      const salesOrder = await storage.createSalesOrder({
+        customerId: quotation.customerId,
+        quotationId: quotationId,
+        orderNumber,
+        orderDate: new Date(),
+        expectedDeliveryDate: new Date(expectedDeliveryDate),
+        status: "pending",
+        paymentStatus: "unpaid",
+        totalAmount: quotation.totalAmount,
+        amountPaid: 0,
+        amountDue: quotation.totalAmount,
+        notes: notes || null,
+      });
+      
+      // Update the quotation status to indicate it's been converted
+      await storage.updateQuotation(quotationId, { status: "converted" });
+      
+      res.status(201).json(salesOrder);
+    } catch (error) {
+      console.error("Error converting quotation to sales order:", error);
+      res.status(500).json({ message: "Failed to convert quotation to sales order" });
+    }
+  });
+  
   // Duplicate quotation with all its content
   app.post("/api/quotations/:id/duplicate", async (req, res) => {
     try {

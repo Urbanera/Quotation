@@ -1,19 +1,40 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange } from "lucide-react";
+import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart } from "lucide-react";
 import { QuotationWithDetails } from "@shared/schema";
 import BasicQuote from "@/components/PDFQuotes/BasicQuote";
 import PresentationQuote from "@/components/PDFQuotes/PresentationQuote";
 import { ProjectTimeline } from "@/components/quotations/timeline/ProjectTimeline";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { format, addWeeks } from "date-fns";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 export default function ViewQuotation() {
   const { id } = useParams();
@@ -21,10 +42,80 @@ export default function ViewQuotation() {
   const { toast } = useToast();
   const basicQuoteRef = useRef<any>(null);
   const presentationQuoteRef = useRef<any>(null);
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date>(
+    addWeeks(new Date(), 4)
+  );
+  const [orderNotes, setOrderNotes] = useState("");
 
   const { data: quotation, isLoading } = useQuery<QuotationWithDetails>({
     queryKey: [`/api/quotations/${id}`],
     enabled: !!id,
+  });
+  
+  // Approve quotation mutation
+  const approveQuotationMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        "PUT",
+        `/api/quotations/${id}/status`,
+        { status: "approved" }
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Quotation Approved",
+        description: "The quotation has been marked as approved.",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      setIsApproveDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to approve quotation. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Failed to approve quotation:", error);
+    },
+  });
+  
+  // Convert to sales order mutation
+  const convertToSalesOrderMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        "POST",
+        `/api/quotations/${id}/convert-to-order`,
+        { 
+          expectedDeliveryDate: expectedDeliveryDate.toISOString(),
+          notes: orderNotes 
+        }
+      );
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Sales Order Created",
+        description: "The quotation has been converted to a sales order.",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales-orders"] });
+      setIsConvertDialogOpen(false);
+      // Navigate to the new sales order
+      navigate(`/sales-orders/view/${data.id}`);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to convert quotation to sales order. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Failed to convert quotation:", error);
+    },
   });
 
   const handlePrint = () => {
@@ -108,13 +199,38 @@ export default function ViewQuotation() {
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
               </Button>
-              <Button 
-                onClick={() => navigate(`/quotations/edit/${id}`)}
-                className="bg-indigo-600 hover:bg-indigo-700"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Quotation
-              </Button>
+              
+              {/* Show these buttons only if quotation is not approved */}
+              {quotation.status !== "approved" && (
+                <>
+                  <Button 
+                    onClick={() => navigate(`/quotations/edit/${id}`)}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Quotation
+                  </Button>
+                  <Button
+                    onClick={() => setIsApproveDialogOpen(true)}
+                    variant="outline"
+                    className="bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
+                  >
+                    <CheckSquare className="mr-2 h-4 w-4" />
+                    Approve
+                  </Button>
+                </>
+              )}
+              
+              {/* Show this button only if quotation is approved */}
+              {quotation.status === "approved" && (
+                <Button
+                  onClick={() => setIsConvertDialogOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Convert to Sales Order
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -159,6 +275,107 @@ export default function ViewQuotation() {
           </Tabs>
         </div>
       </div>
+      
+      {/* Approval Dialog */}
+      <Dialog
+        open={isApproveDialogOpen}
+        onOpenChange={setIsApproveDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve Quotation</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to approve this quotation? This action will mark the quotation as approved and allow it to be converted to a sales order.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsApproveDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => approveQuotationMutation.mutate()}
+              className="bg-green-600 hover:bg-green-700"
+              disabled={approveQuotationMutation.isPending}
+            >
+              {approveQuotationMutation.isPending ? "Approving..." : "Approve Quotation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Convert to Sales Order Dialog */}
+      <Dialog
+        open={isConvertDialogOpen}
+        onOpenChange={setIsConvertDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Convert to Sales Order</DialogTitle>
+            <DialogDescription>
+              Create a sales order based on this approved quotation. You can set the expected delivery date and add any special notes.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="expected-delivery">Expected Delivery Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="expected-delivery"
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !expectedDeliveryDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarRange className="mr-2 h-4 w-4" />
+                    {expectedDeliveryDate ? format(expectedDeliveryDate, "PPP") : "Select a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={expectedDeliveryDate}
+                    onSelect={(date) => date && setExpectedDeliveryDate(date)}
+                    initialFocus
+                    disabled={(date) => date < new Date()}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="order-notes">Notes (Optional)</Label>
+              <Textarea
+                id="order-notes"
+                placeholder="Add any special instructions or notes for this order"
+                value={orderNotes}
+                onChange={(e) => setOrderNotes(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsConvertDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => convertToSalesOrderMutation.mutate()}
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={convertToSalesOrderMutation.isPending}
+            >
+              {convertToSalesOrderMutation.isPending ? "Converting..." : "Create Sales Order"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
