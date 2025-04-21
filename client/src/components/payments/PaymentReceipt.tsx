@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-import { CustomerPayment, Customer } from '@shared/schema';
+import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { CustomerPayment, Customer, AppSettings } from '@shared/schema';
 import { formatCurrency } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 // Register fonts
 Font.register({
@@ -129,7 +130,46 @@ interface PaymentReceiptProps {
   customer?: Customer | null;
 }
 
+// Helper function to fetch company settings
+const fetchCompanySettings = async () => {
+  try {
+    const response = await fetch('/api/settings/company');
+    if (!response.ok) throw new Error('Failed to fetch company settings');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching company settings:', error);
+    return null;
+  }
+};
+
+// Helper function to fetch app settings
+const fetchAppSettings = async () => {
+  try {
+    const response = await fetch('/api/settings/app');
+    if (!response.ok) throw new Error('Failed to fetch app settings');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching app settings:', error);
+    return null;
+  }
+};
+
 const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) => {
+  const [companySettings, setCompanySettings] = React.useState<any>(null);
+  const [appSettings, setAppSettings] = React.useState<any>(null);
+  
+  // Fetch settings when component mounts
+  React.useEffect(() => {
+    const getSettings = async () => {
+      const company = await fetchCompanySettings();
+      const app = await fetchAppSettings();
+      setCompanySettings(company);
+      setAppSettings(app);
+    };
+    
+    getSettings();
+  }, []);
+  
   // Format payment method for display
   const paymentMethods: Record<string, string> = {
     cash: 'Cash',
@@ -148,9 +188,39 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) =>
     other: 'Other',
   };
 
+  // Set up company info at the top of the receipt
+  const companyInfo = companySettings ? (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 }}>
+      <View>
+        <Text style={{ fontSize: 14, fontWeight: 'bold' }}>{companySettings.name}</Text>
+        <Text style={{ fontSize: 10 }}>{companySettings.address}</Text>
+        <Text style={{ fontSize: 10 }}>Phone: {companySettings.phone}</Text>
+        <Text style={{ fontSize: 10 }}>Email: {companySettings.email}</Text>
+        {companySettings.website && <Text style={{ fontSize: 10 }}>Website: {companySettings.website}</Text>}
+        {companySettings.taxId && <Text style={{ fontSize: 10 }}>Tax ID: {companySettings.taxId}</Text>}
+      </View>
+      {companySettings.logo && (
+        <Image
+          src={companySettings.logo}
+          style={{ width: 100, height: 50, objectFit: 'contain' }}
+        />
+      )}
+    </View>
+  ) : null;
+
+  // Set up terms and conditions for the receipt
+  const termsAndConditions = appSettings?.defaultTermsAndConditions ? (
+    <View style={{ marginTop: 15, padding: 10, borderTop: 1, borderTopColor: '#e5e7eb' }}>
+      <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 5 }}>Terms & Conditions</Text>
+      <Text style={{ fontSize: 8, color: '#4b5563' }}>{appSettings.defaultTermsAndConditions}</Text>
+    </View>
+  ) : null;
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {companyInfo}
+        
         <View style={styles.header}>
           <View>
             <Text style={styles.receiptTitle}>RECEIPT</Text>
@@ -254,10 +324,17 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) =>
         <View style={styles.amount}>
           <Text>Amount Paid: {formatCurrency(payment.amount)}</Text>
         </View>
+        
+        {termsAndConditions}
 
         <View style={styles.footer}>
           <Text>This is a computer-generated receipt and does not require a signature.</Text>
           <Text>Generated on {format(new Date(), 'dd MMMM yyyy, h:mm a')}</Text>
+          {companySettings && (
+            <Text style={{ marginTop: 5, fontSize: 8 }}>
+              {companySettings.name} • {companySettings.phone} • {companySettings.email}
+            </Text>
+          )}
         </View>
       </Page>
     </Document>

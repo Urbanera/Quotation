@@ -43,6 +43,7 @@ export function AppSettingsForm() {
       defaultGlobalDiscount: 0,
       defaultGstPercentage: 18,
       defaultTermsAndConditions: "",
+      receiptTermsAndConditions: "",
       quotationTemplateId: "default",
       presentationTemplateId: "default",
     },

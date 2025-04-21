@@ -35,6 +35,7 @@ export const appSettings = pgTable("app_settings", {
   defaultGlobalDiscount: doublePrecision("default_global_discount").notNull().default(0),
   defaultGstPercentage: doublePrecision("default_gst_percentage").notNull().default(18),
   defaultTermsAndConditions: text("default_terms_and_conditions"),
+  receiptTermsAndConditions: text("receipt_terms_and_conditions"),
   quotationTemplateId: text("quotation_template_id").default("default"),
   presentationTemplateId: text("presentation_template_id").default("default"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -327,6 +328,7 @@ export const appSettingsFormSchema = z.object({
   defaultGlobalDiscount: z.number().min(0, "Default discount must be a positive number"),
   defaultGstPercentage: z.number().min(0, "Default GST percentage must be a positive number"),
   defaultTermsAndConditions: z.string().optional().or(z.literal("")),
+  receiptTermsAndConditions: z.string().optional().or(z.literal("")),
   quotationTemplateId: z.string().default("default"),
   presentationTemplateId: z.string().default("default"),
 });
