@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
-import { format } from "date-fns";
 import { CustomerPayment, Customer, CompanySettings, AppSettings } from "@shared/schema";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { convertToWords } from "@/lib/utils";
+import { convertToWords, formatDate } from "@/lib/utils";
 
 // Add custom styles for printing
 const printStyles = `
@@ -226,7 +225,7 @@ export default function PrintReceiptPage() {
           <div className="w-5/12">
             <h3 className="font-semibold mb-2">Receipt Details:</h3>
             <p>Receipt Number: {payment.receiptNumber}</p>
-            <p>Date: {format(new Date(payment.paymentDate), 'dd-MM-yyyy')}</p>
+            <p>Date: {formatDate(payment.paymentDate, 'dd-MM-yyyy')}</p>
             <p>Mode: {paymentMethods[payment.paymentMethod]}</p>
           </div>
         </div>
