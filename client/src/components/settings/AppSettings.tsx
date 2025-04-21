@@ -231,8 +231,8 @@ export function AppSettingsForm() {
                 control={form.control}
                 name="receiptTermsAndConditions"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Receipt Terms & Conditions</FormLabel>
+                  <FormItem className="border p-4 rounded-md bg-muted/30">
+                    <FormLabel className="text-lg font-medium">Payment Receipt Terms & Conditions</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Enter terms and conditions for payment receipts"
@@ -241,7 +241,7 @@ export function AppSettingsForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      These terms will appear on all payment receipts
+                      These terms will appear on all payment receipts. They will be displayed in a highlighted section at the bottom of the receipt and should include important information about refund policies, payment acknowledgments, or other legal terms.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

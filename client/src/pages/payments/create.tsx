@@ -340,14 +340,17 @@ export default function CreatePaymentPage() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Payment Description (For Receipt)</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Enter additional payment details if needed"
-                          className="resize-none"
+                          placeholder="Enter payment description to be shown on the receipt"
+                          className="resize-none min-h-32"
                           {...field}
                         />
                       </FormControl>
+                      <FormDescription>
+                        This description will be displayed on the payment receipt. If left blank, the default receipt terms and conditions from settings will be used.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
