@@ -34,6 +34,8 @@ import {
   insertSalesOrderSchema,
   paymentFormSchema,
   insertPaymentSchema,
+  customerPaymentFormSchema,
+  insertCustomerPaymentSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";

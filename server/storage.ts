@@ -972,6 +972,66 @@ export class MemStorage implements IStorage {
     });
   }
 
+  // Customer Payment operations (direct payments without sales orders)
+  async getCustomerPayments(): Promise<CustomerPayment[]> {
+    return Array.from(this.customerPayments.values());
+  }
+  
+  async getCustomerPaymentsByCustomer(customerId: number): Promise<CustomerPayment[]> {
+    return Array.from(this.customerPayments.values())
+      .filter(payment => payment.customerId === customerId)
+      .sort((a, b) => b.paymentDate.getTime() - a.paymentDate.getTime()); // Most recent first
+  }
+  
+  async getCustomerPayment(id: number): Promise<CustomerPayment | undefined> {
+    return this.customerPayments.get(id);
+  }
+  
+  async getCustomerPaymentByTransactionId(transactionId: string): Promise<CustomerPayment | undefined> {
+    return Array.from(this.customerPayments.values()).find(
+      (payment) => payment.transactionId === transactionId
+    );
+  }
+  
+  async createCustomerPayment(payment: InsertCustomerPayment): Promise<CustomerPayment> {
+    const id = this.customerPaymentIdCounter++;
+    
+    // Generate a receipt number if not provided
+    const receiptNumber = payment.receiptNumber || `CP-${new Date().getFullYear()}-${id.toString().padStart(4, '0')}`;
+    
+    const newPayment: CustomerPayment = {
+      ...payment,
+      id,
+      receiptNumber,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    this.customerPayments.set(id, newPayment);
+    return newPayment;
+  }
+  
+  async updateCustomerPayment(id: number, payment: Partial<InsertCustomerPayment>): Promise<CustomerPayment | undefined> {
+    const existingPayment = this.customerPayments.get(id);
+    if (!existingPayment) return undefined;
+    
+    const updatedPayment: CustomerPayment = {
+      ...existingPayment,
+      ...payment,
+      updatedAt: new Date(),
+    };
+    
+    this.customerPayments.set(id, updatedPayment);
+    return updatedPayment;
+  }
+  
+  async deleteCustomerPayment(id: number): Promise<boolean> {
+    const payment = this.customerPayments.get(id);
+    if (!payment) return false;
+    
+    return this.customerPayments.delete(id);
+  }
+
   // Update quotation status
   async updateQuotationStatus(id: number, status: "draft" | "sent" | "approved" | "rejected" | "expired" | "converted"): Promise<Quotation | undefined> {
     const quotation = await this.getQuotation(id);
