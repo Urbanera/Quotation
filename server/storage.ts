@@ -203,6 +203,7 @@ export class MemStorage implements IStorage {
   private accessoryCatalogIdCounter: number;
   private salesOrderIdCounter: number;
   private paymentIdCounter: number;
+  private customerPaymentIdCounter: number;
   
   constructor() {
     this.customers = new Map();
@@ -220,6 +221,7 @@ export class MemStorage implements IStorage {
     this.accessoryCatalogItems = new Map();
     this.salesOrders = new Map();
     this.payments = new Map();
+    this.customerPayments = new Map();
     
     this.customerIdCounter = 1;
     this.quotationIdCounter = 1;
@@ -236,6 +238,7 @@ export class MemStorage implements IStorage {
     this.accessoryCatalogIdCounter = 1;
     this.salesOrderIdCounter = 1;
     this.paymentIdCounter = 1;
+    this.customerPaymentIdCounter = 1;
     
     // Add some initial data
     this.initializeData();
