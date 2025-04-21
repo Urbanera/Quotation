@@ -1,31 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { format } from 'date-fns';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
-import { CustomerPayment, Customer, AppSettings, CompanySettings } from '@shared/schema';
-
-// Helper function to fetch company settings
-const fetchCompanySettings = async () => {
-  try {
-    const response = await fetch('/api/settings/company');
-    if (!response.ok) throw new Error('Failed to fetch company settings');
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching company settings:', error);
-    return null;
-  }
-};
-
-// Helper function to fetch app settings
-const fetchAppSettings = async () => {
-  try {
-    const response = await fetch('/api/settings/app');
-    if (!response.ok) throw new Error('Failed to fetch app settings');
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching app settings:', error);
-    return null;
-  }
-};
+import { CustomerPayment, Customer, CompanySettings, AppSettings } from '@shared/schema';
 
 // Register fonts
 Font.register({
@@ -173,11 +149,6 @@ const convertToWords = (amount: number): string => {
   return result + ' only';
 };
 
-interface PaymentReceiptProps {
-  payment: CustomerPayment;
-  customer?: Customer | null;
-}
-
 // Format payment method for display
 const paymentMethods: Record<string, string> = {
   cash: 'CASH',
@@ -188,32 +159,20 @@ const paymentMethods: Record<string, string> = {
   other: 'OTHER',
 };
 
-const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) => {
-  const [companySettings, setCompanySettings] = React.useState<CompanySettings | null>(null);
-  const [appSettings, setAppSettings] = React.useState<AppSettings | null>(null);
-  
-  // Fetch settings when component mounts
-  React.useEffect(() => {
-    const getSettings = async () => {
-      const company = await fetchCompanySettings();
-      const app = await fetchAppSettings();
-      setCompanySettings(company);
-      setAppSettings(app);
-    };
-    
-    getSettings();
-  }, []);
-  
-  if (!customer || !companySettings) {
-    return (
-      <Document>
-        <Page size="A4" style={styles.page}>
-          <Text>Loading receipt data...</Text>
-        </Page>
-      </Document>
-    );
-  }
+interface StaticReceiptProps {
+  payment: CustomerPayment;
+  customer: Customer;
+  companySettings: CompanySettings;
+  appSettings?: AppSettings;
+}
 
+// Create a pure component version for PDF generation (no hooks)
+const StaticReceipt: React.FC<StaticReceiptProps> = ({ 
+  payment, 
+  customer, 
+  companySettings,
+  appSettings 
+}) => {
   // Company info from settings
   const companyInfo = {
     name: companySettings.name || "URBAN ERA INTERIOR STUDIO",
@@ -301,6 +260,74 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) =>
         </View>
       </Page>
     </Document>
+  );
+};
+
+export { StaticReceipt };
+
+// Helper function to fetch company settings
+const fetchCompanySettings = async () => {
+  try {
+    const response = await fetch('/api/settings/company');
+    if (!response.ok) throw new Error('Failed to fetch company settings');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching company settings:', error);
+    return null;
+  }
+};
+
+// Helper function to fetch app settings
+const fetchAppSettings = async () => {
+  try {
+    const response = await fetch('/api/settings/app');
+    if (!response.ok) throw new Error('Failed to fetch app settings');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching app settings:', error);
+    return null;
+  }
+};
+
+interface PaymentReceiptProps {
+  payment: CustomerPayment;
+  customer?: Customer | null;
+}
+
+// The main component that will be used for preview
+const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) => {
+  const [companySettings, setCompanySettings] = React.useState<CompanySettings | null>(null);
+  const [appSettings, setAppSettings] = React.useState<AppSettings | null>(null);
+  
+  // Fetch settings when component mounts
+  React.useEffect(() => {
+    const getSettings = async () => {
+      const company = await fetchCompanySettings();
+      const app = await fetchAppSettings();
+      setCompanySettings(company);
+      setAppSettings(app);
+    };
+    
+    getSettings();
+  }, []);
+  
+  if (!customer || !companySettings) {
+    return (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          <Text>Loading receipt data...</Text>
+        </Page>
+      </Document>
+    );
+  }
+
+  return (
+    <StaticReceipt 
+      payment={payment} 
+      customer={customer} 
+      companySettings={companySettings} 
+      appSettings={appSettings}
+    />
   );
 };
 

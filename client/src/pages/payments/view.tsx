@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import { CustomerPayment, Customer } from "@shared/schema";
+import { CustomerPayment, Customer, AppSettings, CompanySettings } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import PaymentReceipt from "@/components/payments/PaymentReceipt";
+import PaymentReceipt, { StaticReceipt } from "@/components/payments/PaymentReceipt";
 import { ArrowLeft, Download, Loader2, Printer } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,31 @@ export default function ViewPaymentPage() {
   const [location] = useLocation();
   const { toast } = useToast();
   const id = location.split("/").pop();
+  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
+  const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
+  
+  // Fetch company and app settings for PDF generation
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const [companyRes, appRes] = await Promise.all([
+          fetch('/api/settings/company'),
+          fetch('/api/settings/app')
+        ]);
+        
+        if (companyRes.ok && appRes.ok) {
+          const company = await companyRes.json();
+          const app = await appRes.json();
+          setCompanySettings(company);
+          setAppSettings(app);
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+    
+    fetchSettings();
+  }, []);
 
   // Fetch payment data
   const { data: payment, isLoading: isLoadingPayment, error } = useQuery<CustomerPayment>({
@@ -122,10 +147,17 @@ export default function ViewPaymentPage() {
           </Link>
           <h1 className="text-3xl font-bold">Payment Details</h1>
         </div>
-        {payment && (
+        {payment && customer && companySettings && (
           <div className="flex gap-2">
             <PDFDownloadLink 
-              document={<PaymentReceipt payment={payment} customer={customer} />}
+              document={
+                <StaticReceipt 
+                  payment={payment} 
+                  customer={customer} 
+                  companySettings={companySettings}
+                  appSettings={appSettings || undefined}
+                />
+              }
               fileName={`Receipt-${payment.receiptNumber}.pdf`}
             >
               {({ loading }) => (
@@ -143,15 +175,19 @@ export default function ViewPaymentPage() {
               variant="default" 
               onClick={() => {
                 // Instead of creating our own print view, we'll render the PDF and print it
-                // We'll create a temporary iframe to hold the PDF renderer output
                 const renderPDF = async () => {
                   try {
                     // Import react-pdf renderer
                     const { pdf } = await import('@react-pdf/renderer');
                     
-                    // Generate the PDF blob from our PaymentReceipt component
+                    // Generate the PDF blob from our StaticReceipt component
                     const blob = await pdf(
-                      <PaymentReceipt payment={payment} customer={customer} />
+                      <StaticReceipt 
+                        payment={payment} 
+                        customer={customer} 
+                        companySettings={companySettings}
+                        appSettings={appSettings || undefined}
+                      />
                     ).toBlob();
 
                     // Create a URL from the blob
