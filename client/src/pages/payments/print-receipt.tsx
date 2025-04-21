@@ -10,7 +10,7 @@ const printStyles = `
 @media print {
   @page {
     size: A4;
-    margin: 15mm;
+    margin: 20mm;
   }
   
   body {
@@ -24,6 +24,9 @@ const printStyles = `
   footer,
   nav,
   button,
+  input,
+  form,
+  .search-bar,
   .no-print {
     display: none !important;
   }
@@ -36,8 +39,24 @@ const printStyles = `
     max-width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
+    margin-top: 15mm !important;
     box-shadow: none !important;
     border: none !important;
+  }
+
+  .terms-conditions {
+    margin-top: 10mm;
+    padding: 5mm;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+  }
+
+  .payment-highlight {
+    font-weight: 600;
+    font-size: 14pt;
+    margin: 5mm 0;
+    color: #333;
   }
 }
 `;
@@ -199,11 +218,11 @@ export default function PrintReceiptPage() {
             <p className="text-sm">GSTIN: {companyInfo.gstin}</p>
             <p className="text-sm">State: {companyInfo.state}</p>
           </div>
-          <div className="w-1/4 flex justify-end">
+          <div className="w-1/4 flex justify-end items-start">
             {companyInfo.logo ? (
               <img src={companyInfo.logo} alt="Company Logo" className="h-16 object-contain" />
             ) : (
-              <div className="text-lg font-bold">LECCO CUCINA</div>
+              <div className="text-xl font-bold text-primary">LECCO CUCINA</div>
             )}
           </div>
         </div>
@@ -230,6 +249,11 @@ export default function PrintReceiptPage() {
           </div>
         </div>
 
+        {/* Payment Highlight */}
+        <div className="payment-highlight mb-5 pb-2 border-b border-gray-200">
+          <p className="text-lg">Received amount of <span className="font-bold">₹ {payment.amount.toFixed(2)}</span> from <span className="font-semibold uppercase">{customer.name}</span> as {payment.paymentType || 'advance payment'}</p>
+        </div>
+
         {/* Amount in Words */}
         <div className="mb-4">
           <p className="font-semibold">Amount in Words: {convertToWords(payment.amount)}</p>
@@ -242,11 +266,12 @@ export default function PrintReceiptPage() {
 
         {/* Amount Display */}
         <div className="flex justify-end mb-6">
-          <p className="text-lg font-bold">₹ {payment.amount.toFixed(2)}</p>
+          <p className="text-2xl font-bold">₹ {payment.amount.toFixed(2)}</p>
         </div>
 
         {/* Description/Terms */}
-        <div className="mb-16">
+        <div className="terms-conditions mb-16">
+          <h3 className="font-semibold mb-2 text-gray-700">Terms & Conditions:</h3>
           <p className="text-sm whitespace-pre-line">{termsText}</p>
         </div>
 
