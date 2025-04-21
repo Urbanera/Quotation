@@ -376,27 +376,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Only approved quotations can be converted to sales orders" });
       }
       
-      // Generate a unique order number (SO-YYYYMMDD-XXX format)
-      const today = new Date();
-      const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
+      // Order number generation will be handled by createSalesOrderFromQuotation
       
-      // Get the count of existing orders to determine the sequence number
-      const existingOrders = await storage.getSalesOrders();
-      const sequenceNumber = (existingOrders.length + 1).toString().padStart(3, '0');
-      const orderNumber = `SO-${dateStr}-${sequenceNumber}`;
-      
-      // Create the sales order
-      const salesOrder = await storage.createSalesOrder({
-        customerId: quotation.customerId,
-        quotationId: quotationId,
-        orderNumber,
-        orderDate: new Date(),
+      // Create the sales order from the quotation
+      const salesOrder = await storage.createSalesOrderFromQuotation(quotationId, {
         expectedDeliveryDate: new Date(expectedDeliveryDate),
-        status: "pending",
-        paymentStatus: "unpaid",
-        totalAmount: quotation.totalAmount,
-        amountPaid: 0,
-        amountDue: quotation.totalAmount,
         notes: notes || null,
       });
       
