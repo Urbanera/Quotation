@@ -1424,7 +1424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/sales-orders/:id", validateRequest(salesOrderFormSchema), async (req, res) => {
+  app.put("/api/sales-orders/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const salesOrder = await storage.updateSalesOrder(id, req.body);
