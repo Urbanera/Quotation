@@ -389,12 +389,10 @@ export default function QuotationsList() {
                             </DropdownMenuItem>
                           )}
                           {quotation.status === 'approved' && (
-                            <Link href={`/sales-orders/create/${quotation.id}`}>
-                              <DropdownMenuItem>
-                                <Check className="mr-2 h-4 w-4 text-blue-500" />
-                                <span>Convert to Sales Order</span>
-                              </DropdownMenuItem>
-                            </Link>
+                            <DropdownMenuItem onClick={() => setQuotationToConvert(quotation)}>
+                              <Check className="mr-2 h-4 w-4 text-blue-500" />
+                              <span>Convert to Sales Order</span>
+                            </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -540,6 +538,37 @@ export default function QuotationsList() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <AlertDialog
+        open={!!quotationToConvert}
+        onOpenChange={(open) => !open && setQuotationToConvert(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Convert to Sales Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to convert Quotation #{quotationToConvert?.id} for {getCustomerName(quotationToConvert?.customerId || 0)} to a sales order?
+              This will create a new sales order and mark the quotation as converted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConvertQuotation}
+              className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-600"
+            >
+              {convertMutation.isPending ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+                  Converting...
+                </>
+              ) : (
+                "Convert to Sales Order"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
