@@ -19,109 +19,118 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#fff',
-    padding: 30,
+    padding: 40,
     fontFamily: 'Inter',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    paddingBottom: 10,
   },
-  receiptTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 5,
+  headerLeft: {
+    width: '70%',
   },
-  receiptDate: {
-    fontSize: 12,
-    color: '#374151',
+  headerRight: {
+    width: '30%',
+    alignItems: 'flex-end',
   },
-  receiptInfo: {
-    fontSize: 12,
-    color: '#374151',
-    textAlign: 'right',
-  },
-  section: {
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#111827',
-    textTransform: 'uppercase',
-  },
-  customerInfo: {
-    marginBottom: 20,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    marginBottom: 3,
-  },
-  label: {
-    fontSize: 10,
-    color: '#4b5563',
-    width: 120,
-  },
-  value: {
-    fontSize: 10,
-    color: '#1f2937',
-    flex: 1,
-  },
-  amount: {
-    marginTop: 30,
+  companyName: {
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'right',
+    marginBottom: 4,
   },
-  table: {
-    display: 'table',
-    width: 'auto',
+  companyDetail: {
+    fontSize: 9,
+    marginBottom: 2,
+  },
+  divider: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#000000',
+    marginBottom: 20,
     marginTop: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
-  tableRow: {
+  receiptTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  customerSection: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    marginBottom: 20,
   },
-  tableHeaderRow: {
+  receiptDetailSection: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#111827',
-    backgroundColor: '#f9fafb',
+    justifyContent: 'flex-end',
+    marginBottom: 15,
   },
-  tableCol: {
-    width: '50%',
-    padding: 8,
+  receiptDetailBox: {
+    width: '40%',
+    borderWidth: 0,
+    padding: 10,
   },
-  tableCell: {
+  receiptDetail: {
     fontSize: 10,
-    color: '#374151',
+    marginBottom: 4,
   },
-  tableHeader: {
+  customerBox: {
+    width: '50%',
+  },
+  subTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  customerDetail: {
+    fontSize: 10,
+    marginBottom: 3,
+  },
+  amountSection: {
+    marginBottom: 15,
+  },
+  amountWords: {
+    fontSize: 10,
+    marginBottom: 8,
+  },
+  paymentDetail: {
+    fontSize: 10,
+    marginBottom: 4,
+  },
+  amount: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 20,
+    marginBottom: 30,
+  },
+  amountText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  description: {
+    fontSize: 10,
+    marginBottom: 40,
+    lineHeight: 1.5,
+  },
+  signatureSection: {
+    marginTop: 40,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  forCompany: {
+    fontSize: 10,
+    textAlign: 'right',
+    marginBottom: 30,
+  },
+  signature: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#111827',
+    textAlign: 'right',
   },
-  footer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 30,
-    right: 30,
-    textAlign: 'center',
-    fontSize: 8,
-    color: '#6b7280',
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+  logo: {
+    width: 100,
+    height: 60,
+    objectFit: 'contain',
   },
 });
 
@@ -154,6 +163,31 @@ const fetchAppSettings = async () => {
   }
 };
 
+// Convert number to words for Indian currency
+const convertToWords = (amount: number): string => {
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  
+  const numToWords = (num: number): string => {
+    if (num < 20) return ones[num];
+    if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? ' ' + ones[num % 10] : '');
+    if (num < 1000) return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 ? ' ' + numToWords(num % 100) : '');
+    if (num < 100000) return numToWords(Math.floor(num / 1000)) + ' Thousand' + (num % 1000 ? ' ' + numToWords(num % 1000) : '');
+    if (num < 10000000) return numToWords(Math.floor(num / 100000)) + ' Lakh' + (num % 100000 ? ' ' + numToWords(num % 100000) : '');
+    return numToWords(Math.floor(num / 10000000)) + ' Crore' + (num % 10000000 ? ' ' + numToWords(num % 10000000) : '');
+  };
+
+  // Handle decimal part
+  const rupees = Math.floor(amount);
+  const paise = Math.round((amount - rupees) * 100);
+  
+  let result = numToWords(rupees) + ' Rupees';
+  if (paise > 0) {
+    result += ' and ' + numToWords(paise) + ' Paise';
+  }
+  return result + ' only';
+};
+
 const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) => {
   const [companySettings, setCompanySettings] = React.useState<any>(null);
   const [appSettings, setAppSettings] = React.useState<any>(null);
@@ -174,7 +208,7 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) =>
   const paymentMethods: Record<string, string> = {
     cash: 'Cash',
     bank_transfer: 'Bank Transfer',
-    check: 'Check',
+    check: 'Cheque',
     card: 'Card',
     upi: 'UPI',
     other: 'Other',
@@ -188,153 +222,92 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) =>
     other: 'Other',
   };
 
-  // Set up company info at the top of the receipt
-  const companyInfo = companySettings ? (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 }}>
-      <View>
-        <Text style={{ fontSize: 14, fontWeight: 'bold' }}>{companySettings.name}</Text>
-        <Text style={{ fontSize: 10 }}>{companySettings.address}</Text>
-        <Text style={{ fontSize: 10 }}>Phone: {companySettings.phone}</Text>
-        <Text style={{ fontSize: 10 }}>Email: {companySettings.email}</Text>
-        {companySettings.website && <Text style={{ fontSize: 10 }}>Website: {companySettings.website}</Text>}
-        {companySettings.taxId && <Text style={{ fontSize: 10 }}>Tax ID: {companySettings.taxId}</Text>}
-      </View>
-      {companySettings.logo && (
-        <Image
-          src={companySettings.logo}
-          style={{ width: 100, height: 50, objectFit: 'contain' }}
-        />
-      )}
-    </View>
-  ) : null;
-
-  // Set up terms and conditions for the receipt using receipt-specific terms if available
-  const termsAndConditions = appSettings?.receiptTermsAndConditions ? (
-    <View style={{ marginTop: 15, padding: 10, borderTop: 1, borderTopColor: '#e5e7eb' }}>
-      <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 5 }}>Terms & Conditions</Text>
-      <Text style={{ fontSize: 8, color: '#4b5563' }}>{appSettings.receiptTermsAndConditions}</Text>
-    </View>
-  ) : null;
+  if (!companySettings || !customer) {
+    return (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          <Text>Loading receipt data...</Text>
+        </Page>
+      </Document>
+    );
+  }
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {companyInfo}
-        
+        {/* Header with Company Information and Logo */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.receiptTitle}>RECEIPT</Text>
-            <Text style={styles.receiptDate}>{format(new Date(payment.paymentDate), 'dd MMM yyyy')}</Text>
+          <View style={styles.headerLeft}>
+            <Text style={styles.companyName}>{companySettings.name || 'URBAN ERA INTERIOR STUDIO'}</Text>
+            <Text style={styles.companyDetail}>{companySettings.address || 'Layout, No.plot Plaza, 48-11-13/2/1, Santhoshimatha Building, Visakhapatnam'}</Text>
+            <Text style={styles.companyDetail}>Mobile: {companySettings.phone || '+91 98765 43210'}</Text>
+            <Text style={styles.companyDetail}>Email: {companySettings.email || 'sales.visakhapatnam@leccocucina.com'}</Text>
+            <Text style={styles.companyDetail}>GSTIN: {companySettings.taxId || '37AAVPG9038J2Z4'}</Text>
+            <Text style={styles.companyDetail}>State: 37-Andhra Pradesh</Text>
           </View>
-          <View>
-            <Text style={styles.receiptInfo}>Receipt #{payment.receiptNumber}</Text>
-            <Text style={styles.receiptInfo}>Transaction ID: {payment.transactionId}</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Customer Information</Text>
-          <View style={styles.customerInfo}>
-            {customer ? (
-              <>
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>Name:</Text>
-                  <Text style={styles.value}>{customer.name}</Text>
-                </View>
-                {customer.email && (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.label}>Email:</Text>
-                    <Text style={styles.value}>{customer.email}</Text>
-                  </View>
-                )}
-                {customer.phone && (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.label}>Phone:</Text>
-                    <Text style={styles.value}>{customer.phone}</Text>
-                  </View>
-                )}
-                {customer.address && (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.label}>Address:</Text>
-                    <Text style={styles.value}>{customer.address}</Text>
-                  </View>
-                )}
-              </>
+          <View style={styles.headerRight}>
+            {companySettings.logo ? (
+              <Image style={styles.logo} src={companySettings.logo} />
             ) : (
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Customer ID:</Text>
-                <Text style={styles.value}>{payment.customerId}</Text>
-              </View>
+              <Text style={{ fontSize: 14, fontWeight: 'bold' }}>LECCO CUCINA</Text>
             )}
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Details</Text>
-          <View style={styles.table}>
-            <View style={styles.tableHeaderRow}>
-              <View style={styles.tableCol}>
-                <Text style={styles.tableHeader}>Item</Text>
-              </View>
-              <View style={styles.tableCol}>
-                <Text style={styles.tableHeader}>Details</Text>
-              </View>
-            </View>
+        {/* Divider Line */}
+        <View style={styles.divider} />
 
-            <View style={styles.tableRow}>
-              <View style={styles.tableCol}>
-                <Text style={styles.tableCell}>Payment Method</Text>
-              </View>
-              <View style={styles.tableCol}>
-                <Text style={styles.tableCell}>{paymentMethods[payment.paymentMethod] || payment.paymentMethod}</Text>
-              </View>
-            </View>
-
-            <View style={styles.tableRow}>
-              <View style={styles.tableCol}>
-                <Text style={styles.tableCell}>Payment Type</Text>
-              </View>
-              <View style={styles.tableCol}>
-                <Text style={styles.tableCell}>{paymentTypes[payment.paymentType] || payment.paymentType}</Text>
-              </View>
-            </View>
-
-            <View style={styles.tableRow}>
-              <View style={styles.tableCol}>
-                <Text style={styles.tableCell}>Payment Date</Text>
-              </View>
-              <View style={styles.tableCol}>
-                <Text style={styles.tableCell}>{format(new Date(payment.paymentDate), 'dd MMMM yyyy')}</Text>
-              </View>
-            </View>
-
-            {payment.description && (
-              <View style={styles.tableRow}>
-                <View style={styles.tableCol}>
-                  <Text style={styles.tableCell}>Description</Text>
-                </View>
-                <View style={styles.tableCol}>
-                  <Text style={styles.tableCell}>{payment.description}</Text>
-                </View>
-              </View>
-            )}
+        {/* Receipt Title */}
+        <Text style={styles.receiptTitle}>RECEIPT</Text>
+        
+        {/* Receipt Information - Customer and Receipt Details Side by Side */}
+        <View style={styles.customerSection}>
+          <View style={styles.customerBox}>
+            <Text style={styles.subTitle}>Received From:</Text>
+            <Text style={styles.customerDetail}>{customer.name.toUpperCase()}</Text>
+            <Text style={styles.customerDetail}>{customer.address}</Text>
+            {customer.email && <Text style={styles.customerDetail}>Email: {customer.email}</Text>}
+            {customer.phone && <Text style={styles.customerDetail}>Phone: {customer.phone}</Text>}
           </View>
-        </View>
-
-        <View style={styles.amount}>
-          <Text>Amount Paid: {formatCurrency(payment.amount)}</Text>
+          
+          <View style={styles.receiptDetailBox}>
+            <Text style={styles.subTitle}>Receipt Details:</Text>
+            <Text style={styles.receiptDetail}>Receipt Number: {payment.receiptNumber}</Text>
+            <Text style={styles.receiptDetail}>Date: {format(new Date(payment.paymentDate), 'dd-MM-yyyy')}</Text>
+            <Text style={styles.receiptDetail}>Mode: {paymentMethods[payment.paymentMethod]}</Text>
+          </View>
         </View>
         
-        {termsAndConditions}
-
-        <View style={styles.footer}>
-          <Text>This is a computer-generated receipt and does not require a signature.</Text>
-          <Text>Generated on {format(new Date(), 'dd MMMM yyyy, h:mm a')}</Text>
-          {companySettings && (
-            <Text style={{ marginTop: 5, fontSize: 8 }}>
-              {companySettings.name} • {companySettings.phone} • {companySettings.email}
-            </Text>
-          )}
+        {/* Amount in Words */}
+        <View style={styles.amountSection}>
+          <Text style={styles.amountWords}>Amount in Words: {convertToWords(payment.amount)}</Text>
+        </View>
+        
+        {/* Payment Details */}
+        <View>
+          <Text style={styles.paymentDetail}>Payment Mode: {paymentMethods[payment.paymentMethod]}</Text>
+          {payment.transactionId && <Text style={styles.paymentDetail}>Transaction ID: {payment.transactionId}</Text>}
+        </View>
+        
+        {/* Amount */}
+        <View style={styles.amount}>
+          <Text style={styles.amountText}>₹ {payment.amount.toFixed(2)}</Text>
+        </View>
+        
+        {/* Description */}
+        <View>
+          <Text style={styles.description}>
+            {payment.description || appSettings?.receiptTermsAndConditions || 
+            "This receipt confirms the advance payment received by Lecco Cucina for starting work on your project. This advance is non-refundable and will be deducted from the total project cost upon completion. By signing, the client agrees to these terms, enabling the project with Lecco Cucina."}
+          </Text>
+        </View>
+        
+        {/* For Company and Signature */}
+        <View>
+          <Text style={styles.forCompany}>For: {companySettings.name}</Text>
+          <View style={styles.signatureSection}>
+            <Text style={styles.signature}>Authorized Signatory</Text>
+          </View>
         </View>
       </Page>
     </Document>
