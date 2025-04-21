@@ -733,6 +733,245 @@ export class MemStorage implements IStorage {
   async deleteAccessoryCatalogItem(id: number): Promise<boolean> {
     return this.accessoryCatalogItems.delete(id);
   }
+
+  // Sales Order operations
+  async getSalesOrders(): Promise<SalesOrder[]> {
+    return Array.from(this.salesOrders.values());
+  }
+
+  async getSalesOrdersByCustomer(customerId: number): Promise<SalesOrder[]> {
+    return Array.from(this.salesOrders.values())
+      .filter(order => order.customerId === customerId);
+  }
+
+  async getSalesOrder(id: number): Promise<SalesOrder | undefined> {
+    return this.salesOrders.get(id);
+  }
+
+  async getSalesOrderByQuotation(quotationId: number): Promise<SalesOrder | undefined> {
+    return Array.from(this.salesOrders.values())
+      .find(order => order.quotationId === quotationId);
+  }
+
+  async getSalesOrderWithDetails(id: number): Promise<SalesOrder & { 
+    customer: Customer, 
+    quotation: Quotation, 
+    payments: Payment[] 
+  } | undefined> {
+    const salesOrder = await this.getSalesOrder(id);
+    if (!salesOrder) return undefined;
+
+    const customer = await this.getCustomer(salesOrder.customerId);
+    if (!customer) return undefined;
+
+    const quotation = await this.getQuotation(salesOrder.quotationId);
+    if (!quotation) return undefined;
+
+    const payments = await this.getPayments(salesOrder.id);
+
+    return {
+      ...salesOrder,
+      customer,
+      quotation,
+      payments
+    };
+  }
+
+  async createSalesOrderFromQuotation(quotationId: number, data?: Partial<InsertSalesOrder>): Promise<SalesOrder> {
+    const quotation = await this.getQuotation(quotationId);
+    if (!quotation) {
+      throw new Error(`Quotation with id ${quotationId} not found`);
+    }
+
+    // Update quotation status to converted
+    await this.updateQuotationStatus(quotationId, "converted");
+
+    // Generate a new order number
+    const now = new Date();
+    const orderNumber = `SO-${now.getFullYear()}-${String(this.salesOrderIdCounter).padStart(3, '0')}`;
+
+    // Create the sales order
+    const salesOrder: SalesOrder = {
+      id: this.salesOrderIdCounter++,
+      orderNumber,
+      quotationId: quotation.id,
+      customerId: quotation.customerId,
+      totalAmount: quotation.finalPrice,
+      amountPaid: 0,
+      amountDue: quotation.finalPrice,
+      status: "pending",
+      paymentStatus: "unpaid",
+      orderDate: now,
+      expectedDeliveryDate: data?.expectedDeliveryDate || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days from now by default
+      notes: data?.notes || "",
+      createdAt: now,
+      updatedAt: now
+    };
+
+    this.salesOrders.set(salesOrder.id, salesOrder);
+    return salesOrder;
+  }
+
+  async updateSalesOrderStatus(id: number, status: "pending" | "confirmed" | "in_production" | "ready_for_delivery" | "delivered" | "completed" | "cancelled"): Promise<SalesOrder | undefined> {
+    const salesOrder = this.salesOrders.get(id);
+    if (!salesOrder) return undefined;
+
+    const updatedSalesOrder: SalesOrder = {
+      ...salesOrder,
+      status,
+      updatedAt: new Date()
+    };
+
+    this.salesOrders.set(id, updatedSalesOrder);
+    return updatedSalesOrder;
+  }
+
+  async updateSalesOrder(id: number, salesOrder: Partial<InsertSalesOrder>): Promise<SalesOrder | undefined> {
+    const existingSalesOrder = this.salesOrders.get(id);
+    if (!existingSalesOrder) return undefined;
+
+    const updatedSalesOrder: SalesOrder = {
+      ...existingSalesOrder,
+      ...salesOrder,
+      updatedAt: new Date()
+    };
+
+    this.salesOrders.set(id, updatedSalesOrder);
+    return updatedSalesOrder;
+  }
+
+  async cancelSalesOrder(id: number): Promise<SalesOrder | undefined> {
+    return this.updateSalesOrderStatus(id, "cancelled");
+  }
+
+  // Payment operations
+  async getPayments(salesOrderId: number): Promise<Payment[]> {
+    return Array.from(this.payments.values())
+      .filter(payment => payment.salesOrderId === salesOrderId);
+  }
+
+  async getPayment(id: number): Promise<Payment | undefined> {
+    return this.payments.get(id);
+  }
+
+  async getPaymentByTransactionId(transactionId: string): Promise<Payment | undefined> {
+    return Array.from(this.payments.values())
+      .find(payment => payment.transactionId === transactionId);
+  }
+
+  async getPaymentByReceiptNumber(receiptNumber: string): Promise<Payment | undefined> {
+    return Array.from(this.payments.values())
+      .find(payment => payment.receiptNumber === receiptNumber);
+  }
+
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const id = this.paymentIdCounter++;
+    const newPayment: Payment = {
+      ...payment,
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    this.payments.set(id, newPayment);
+
+    // Update sales order payment status and amount paid/due
+    await this.updateSalesOrderPaymentStatus(payment.salesOrderId);
+
+    return newPayment;
+  }
+
+  async recordPayment(
+    salesOrderId: number, 
+    amount: number, 
+    paymentMethod: "cash" | "bank_transfer" | "check" | "card" | "upi" | "other", 
+    notes?: string,
+    paymentDate?: Date,
+    createdBy?: number
+  ): Promise<Payment> {
+    const salesOrder = await this.getSalesOrder(salesOrderId);
+    if (!salesOrder) {
+      throw new Error(`Sales order with id ${salesOrderId} not found`);
+    }
+
+    // Generate unique transaction ID and receipt number
+    const now = new Date();
+    const timestamp = now.getTime().toString();
+    const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const transactionId = `TXN-${timestamp}-${randomString}`;
+    const receiptNumber = `RCPT-${now.getFullYear()}-${String(this.paymentIdCounter).padStart(3, '0')}`;
+
+    // Create the payment
+    const payment: InsertPayment = {
+      salesOrderId,
+      transactionId,
+      amount,
+      paymentMethod,
+      paymentDate: paymentDate || now,
+      notes: notes || "",
+      receiptNumber,
+      createdBy,
+    };
+
+    return this.createPayment(payment);
+  }
+
+  async deletePayment(id: number): Promise<boolean> {
+    const payment = this.payments.get(id);
+    if (!payment) return false;
+    
+    const result = this.payments.delete(id);
+    
+    // Update the sales order payment status
+    if (result) {
+      await this.updateSalesOrderPaymentStatus(payment.salesOrderId);
+    }
+    
+    return result;
+  }
+  
+  // Helper method to update sales order payment status
+  private async updateSalesOrderPaymentStatus(salesOrderId: number): Promise<void> {
+    const salesOrder = await this.getSalesOrder(salesOrderId);
+    if (!salesOrder) return;
+    
+    // Get all payments for this sales order
+    const payments = await this.getPayments(salesOrderId);
+    
+    // Calculate total amount paid
+    const amountPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    
+    // Calculate remaining amount due
+    const amountDue = Math.max(0, salesOrder.totalAmount - amountPaid);
+    
+    // Determine payment status
+    let paymentStatus: "unpaid" | "partially_paid" | "paid" = "unpaid";
+    if (amountPaid >= salesOrder.totalAmount) {
+      paymentStatus = "paid";
+    } else if (amountPaid > 0) {
+      paymentStatus = "partially_paid";
+    }
+    
+    // Update the sales order
+    await this.updateSalesOrder(salesOrderId, {
+      amountPaid,
+      amountDue,
+      paymentStatus
+    });
+  }
+
+  // Update quotation status
+  async updateQuotationStatus(id: number, status: "draft" | "sent" | "approved" | "rejected" | "expired" | "converted"): Promise<Quotation | undefined> {
+    const quotation = await this.getQuotation(id);
+    if (!quotation) return undefined;
+    
+    // Update the quotation status
+    const updatedQuotation = await this.updateQuotation(id, {
+      status
+    });
+    
+    return updatedQuotation;
+  }
   
   // Quotation operations
   async getQuotations(): Promise<Quotation[]> {

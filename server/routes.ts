@@ -30,6 +30,10 @@ import {
   insertAppSettingsSchema,
   accessoryCatalogFormSchema,
   insertAccessoryCatalogSchema,
+  salesOrderFormSchema,
+  insertSalesOrderSchema,
+  paymentFormSchema,
+  insertPaymentSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1341,6 +1345,186 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(settings);
     } catch (error) {
       res.status(500).json({ message: "Failed to update app settings" });
+    }
+  });
+
+  // Sales Order routes
+  app.get("/api/sales-orders", async (req, res) => {
+    try {
+      const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
+      
+      if (customerId) {
+        const salesOrders = await storage.getSalesOrdersByCustomer(customerId);
+        return res.json(salesOrders);
+      }
+      
+      const salesOrders = await storage.getSalesOrders();
+      res.json(salesOrders);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch sales orders" });
+    }
+  });
+
+  app.get("/api/sales-orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const salesOrder = await storage.getSalesOrderWithDetails(id);
+      if (!salesOrder) {
+        return res.status(404).json({ message: "Sales order not found" });
+      }
+      res.json(salesOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch sales order" });
+    }
+  });
+
+  app.post("/api/quotations/:id/convert-to-order", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.id);
+      
+      // Check if quotation is already converted
+      const quotation = await storage.getQuotation(quotationId);
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      
+      if (quotation.status === "converted") {
+        return res.status(400).json({ message: "Quotation is already converted to a sales order" });
+      }
+      
+      // Check if quotation is approved
+      if (quotation.status !== "approved") {
+        await storage.updateQuotationStatus(quotationId, "approved");
+      }
+      
+      const salesOrder = await storage.createSalesOrderFromQuotation(quotationId, req.body);
+      res.status(201).json(salesOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to convert quotation to sales order", error: error.message });
+    }
+  });
+
+  app.put("/api/sales-orders/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!status || !["pending", "confirmed", "in_production", "ready_for_delivery", "delivered", "completed", "cancelled"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+      
+      const salesOrder = await storage.updateSalesOrderStatus(id, status);
+      if (!salesOrder) {
+        return res.status(404).json({ message: "Sales order not found" });
+      }
+      
+      res.json(salesOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update sales order status" });
+    }
+  });
+
+  app.put("/api/sales-orders/:id", validateRequest(salesOrderFormSchema), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const salesOrder = await storage.updateSalesOrder(id, req.body);
+      if (!salesOrder) {
+        return res.status(404).json({ message: "Sales order not found" });
+      }
+      res.json(salesOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update sales order" });
+    }
+  });
+
+  app.delete("/api/sales-orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const salesOrder = await storage.cancelSalesOrder(id);
+      if (!salesOrder) {
+        return res.status(404).json({ message: "Sales order not found" });
+      }
+      res.json(salesOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to cancel sales order" });
+    }
+  });
+
+  // Payment routes
+  app.get("/api/sales-orders/:salesOrderId/payments", async (req, res) => {
+    try {
+      const salesOrderId = parseInt(req.params.salesOrderId);
+      const payments = await storage.getPayments(salesOrderId);
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch payments" });
+    }
+  });
+
+  app.get("/api/payments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const payment = await storage.getPayment(id);
+      if (!payment) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+      res.json(payment);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch payment" });
+    }
+  });
+
+  app.post("/api/sales-orders/:salesOrderId/payments", validateRequest(paymentFormSchema), async (req, res) => {
+    try {
+      const salesOrderId = parseInt(req.params.salesOrderId);
+      
+      // Record the payment
+      const payment = await storage.recordPayment(
+        salesOrderId,
+        req.body.amount,
+        req.body.paymentMethod,
+        req.body.notes,
+        req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
+        req.body.createdBy
+      );
+      
+      res.status(201).json(payment);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to record payment", error: error.message });
+    }
+  });
+
+  app.delete("/api/payments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deletePayment(id);
+      if (!success) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete payment" });
+    }
+  });
+
+  // Update quotation status route
+  app.put("/api/quotations/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!status || !["draft", "sent", "approved", "rejected", "expired", "converted"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+      
+      const quotation = await storage.updateQuotationStatus(id, status);
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      
+      res.json(quotation);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update quotation status" });
     }
   });
 
