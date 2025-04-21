@@ -19,6 +19,7 @@ import AddPaymentPage from "./pages/sales-orders/payments/add";
 import PaymentsPage from "./pages/payments";
 import CreatePaymentPage from "./pages/payments/create";
 import ViewPaymentPage from "./pages/payments/view";
+import PrintReceiptPage from "./pages/payments/print-receipt";
 import AccessoryCatalogPage from "./pages/accessories";
 import UsersPage from "./pages/users/UsersPage";
 import TeamsPage from "./pages/teams/TeamsPage";
@@ -56,6 +57,7 @@ function App() {
           <Route path="/payments" component={PaymentsPage} />
           <Route path="/payments/create" component={CreatePaymentPage} />
           <Route path="/payments/view/:id" component={ViewPaymentPage} />
+          <Route path="/payments/print-receipt/:id" component={PrintReceiptPage} />
           
           {/* Other Routes */}
           <Route path="/accessories" component={AccessoryCatalogPage} />

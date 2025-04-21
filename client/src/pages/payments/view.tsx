@@ -147,85 +147,14 @@ export default function ViewPaymentPage() {
           </Link>
           <h1 className="text-3xl font-bold">Payment Details</h1>
         </div>
-        {payment && customer && companySettings && (
+        {payment && (
           <div className="flex gap-2">
-            <PDFDownloadLink 
-              document={
-                <StaticReceipt 
-                  payment={payment} 
-                  customer={customer} 
-                  companySettings={companySettings}
-                  appSettings={appSettings || undefined}
-                />
-              }
-              fileName={`Receipt-${payment.receiptNumber}.pdf`}
-            >
-              {({ loading }) => (
-                <Button variant="outline">
-                  {loading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="mr-2 h-4 w-4" />
-                  )}
-                  Download Receipt
-                </Button>
-              )}
-            </PDFDownloadLink>
-            <Button 
-              variant="default" 
-              onClick={() => {
-                // Instead of creating our own print view, we'll render the PDF and print it
-                const renderPDF = async () => {
-                  try {
-                    // Import react-pdf renderer
-                    const { pdf } = await import('@react-pdf/renderer');
-                    
-                    // Generate the PDF blob from our StaticReceipt component
-                    const blob = await pdf(
-                      <StaticReceipt 
-                        payment={payment} 
-                        customer={customer} 
-                        companySettings={companySettings}
-                        appSettings={appSettings || undefined}
-                      />
-                    ).toBlob();
-
-                    // Create a URL from the blob
-                    const url = URL.createObjectURL(blob);
-                    
-                    // Open in a new window
-                    const printWindow = window.open(url, '_blank');
-                    
-                    if (printWindow) {
-                      // Wait for the PDF to load then print
-                      printWindow.addEventListener('load', () => {
-                        printWindow.print();
-                        URL.revokeObjectURL(url);
-                      });
-                    } else {
-                      URL.revokeObjectURL(url);
-                      toast({
-                        title: "Print Error",
-                        description: "Unable to open print window. Please check your browser settings.",
-                        variant: "destructive",
-                      });
-                    }
-                  } catch (error) {
-                    console.error("Error generating PDF for print:", error);
-                    toast({
-                      title: "Print Error",
-                      description: "Failed to generate the receipt for printing.",
-                      variant: "destructive",
-                    });
-                  }
-                };
-                
-                renderPDF();
-              }}
-            >
-              <Printer className="mr-2 h-4 w-4" />
-              Print Receipt
-            </Button>
+            <Link href={`/payments/print-receipt/${id}`}>
+              <Button variant="default">
+                <Printer className="mr-2 h-4 w-4" />
+                Print Receipt
+              </Button>
+            </Link>
           </div>
         )}
       </div>
