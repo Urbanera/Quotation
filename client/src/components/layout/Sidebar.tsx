@@ -8,7 +8,9 @@ import {
   Settings,
   UserCog,
   UserCheck,
-  Layers
+  Layers,
+  ShoppingCart,
+  CreditCard
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { CompanySettings } from "@shared/schema";
@@ -22,6 +24,8 @@ const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Quotations", href: "/quotations", icon: FileText },
+  { name: "Sales Orders", href: "/sales-orders", icon: ShoppingCart },
+  { name: "Payments", href: "/payments", icon: CreditCard },
   { name: "Products", href: "/products", icon: Package },
   { name: "Accessories", href: "/accessories", icon: Layers },
   { name: "Teams", href: "/teams", icon: UserCheck },
