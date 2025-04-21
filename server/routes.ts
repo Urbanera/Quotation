@@ -1474,7 +1474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/sales-orders/:salesOrderId/payments", validateRequest(paymentFormSchema), async (req, res) => {
+  app.post("/api/sales-orders/:salesOrderId/payments", async (req, res) => {
     try {
       const salesOrderId = parseInt(req.params.salesOrderId);
       
