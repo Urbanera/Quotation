@@ -536,6 +536,91 @@ export default function CustomerDetailPage() {
                 </div>
               )}
             </div>
+            
+            {/* Complete Follow-up Dialog */}
+            <Dialog open={showStageDialog} onOpenChange={setShowStageDialog}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Complete Follow-up</DialogTitle>
+                  <DialogDescription>
+                    Mark this follow-up as complete and optionally update the customer stage.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="py-4 space-y-4">
+                  <div className="flex items-start space-x-3 pt-2">
+                    <Checkbox 
+                      id="update-stage-checkbox"
+                      checked={updateStage} 
+                      onCheckedChange={(checked) => setUpdateStage(!!checked)} 
+                    />
+                    <div>
+                      <label 
+                        htmlFor="update-stage-checkbox" 
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Update Customer Stage
+                      </label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Change the customer's stage based on this follow-up interaction
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {updateStage && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium leading-none">
+                        New Customer Stage
+                      </label>
+                      <Select
+                        value={newStage || customer.stage}
+                        onValueChange={setNewStage}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a stage" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="new">New</SelectItem>
+                          <SelectItem value="pipeline">Pipeline</SelectItem>
+                          <SelectItem value="cold">Cold</SelectItem>
+                          <SelectItem value="warm">Warm</SelectItem>
+                          <SelectItem value="booked">Booked</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground flex items-center space-x-1 mt-1">
+                        <Tag className="h-3 w-3" />
+                        <span>Current stage: <Badge variant="outline" className="ml-1">{customer.stage}</Badge></span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                <DialogFooter className="sm:justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={cancelMarkComplete}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={confirmMarkComplete}
+                    disabled={markCompleteMutation.isPending}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    {markCompleteMutation.isPending ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Completing...
+                      </div>
+                    ) : (
+                      "Complete Follow-up"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
           
           <TabsContent value="quotations">
