@@ -42,19 +42,33 @@ export function CustomerLedger({ customerId }: CustomerLedgerProps) {
     payments: CustomerPayment[];
   }>({
     queryKey: ["/api/customers", customerId, "ledger"],
+    staleTime: 1000, // Short stale time to ensure fresh data
+    refetchOnWindowFocus: true, // Refetch when window gets focus
+    refetchOnMount: true, // Ensure data is fresh when component mounts
   });
 
   // Extract sales orders and payments from ledger data
-  const salesOrders = ledgerData?.salesOrders;
-  const payments = ledgerData?.payments;
+  const salesOrders = ledgerData?.salesOrders || [];
+  const payments = ledgerData?.payments || [];
 
   // Combine and sort ledger entries
   const ledgerEntries: LedgerEntry[] = [];
   
-  if (salesOrders) {
-    salesOrders.forEach(order => {
-      // Ensure the date is valid
-      const orderDate = order.orderDate ? new Date(order.orderDate) : new Date();
+  // Process sales orders
+  salesOrders.forEach(order => {
+    try {
+      // Ensure the date is valid - safely handle various date formats
+      let orderDate: Date;
+      if (order.orderDate) {
+        orderDate = typeof order.orderDate === 'string' 
+          ? new Date(order.orderDate) 
+          : order.orderDate instanceof Date 
+            ? order.orderDate 
+            : new Date();
+      } else {
+        orderDate = new Date();
+      }
+      
       ledgerEntries.push({
         id: order.id,
         date: orderDate,
@@ -64,13 +78,26 @@ export function CustomerLedger({ customerId }: CustomerLedgerProps) {
         referenceId: order.orderNumber,
         referenceType: "sales_order"
       });
-    });
-  }
+    } catch (err) {
+      console.error("Error processing sales order for ledger:", err);
+    }
+  });
   
-  if (payments) {
-    payments.forEach(payment => {
-      // Ensure the date is valid
-      const paymentDate = payment.paymentDate ? new Date(payment.paymentDate) : new Date();
+  // Process payments
+  payments.forEach(payment => {
+    try {
+      // Ensure the date is valid - safely handle various date formats
+      let paymentDate: Date;
+      if (payment.paymentDate) {
+        paymentDate = typeof payment.paymentDate === 'string' 
+          ? new Date(payment.paymentDate) 
+          : payment.paymentDate instanceof Date 
+            ? payment.paymentDate 
+            : new Date();
+      } else {
+        paymentDate = new Date();
+      }
+      
       ledgerEntries.push({
         id: payment.id,
         date: paymentDate,
@@ -80,8 +107,10 @@ export function CustomerLedger({ customerId }: CustomerLedgerProps) {
         referenceId: payment.receiptNumber,
         referenceType: "payment"
       });
-    });
-  }
+    } catch (err) {
+      console.error("Error processing payment for ledger:", err);
+    }
+  });
   
   // Sort entries by date (most recent first)
   ledgerEntries.sort((a, b) => b.date.getTime() - a.date.getTime());
