@@ -51,6 +51,7 @@ export interface IStorage {
   updateQuotation(id: number, quotation: Partial<InsertQuotation>): Promise<Quotation | undefined>;
   deleteQuotation(id: number): Promise<boolean>;
   duplicateQuotation(id: number, customerId?: number): Promise<Quotation>;
+  updateQuotationStatus(id: number, status: "draft" | "sent" | "approved" | "rejected" | "expired" | "converted"): Promise<Quotation | undefined>;
   
   // Room operations
   getRooms(quotationId: number): Promise<Room[]>;
@@ -126,6 +127,37 @@ export interface IStorage {
   createAccessoryCatalogItem(item: InsertAccessoryCatalog): Promise<AccessoryCatalog>;
   updateAccessoryCatalogItem(id: number, item: Partial<InsertAccessoryCatalog>): Promise<AccessoryCatalog | undefined>;
   deleteAccessoryCatalogItem(id: number): Promise<boolean>;
+
+  // Sales Order operations
+  getSalesOrders(): Promise<SalesOrder[]>;
+  getSalesOrdersByCustomer(customerId: number): Promise<SalesOrder[]>;
+  getSalesOrder(id: number): Promise<SalesOrder | undefined>;
+  getSalesOrderByQuotation(quotationId: number): Promise<SalesOrder | undefined>;
+  getSalesOrderWithDetails(id: number): Promise<SalesOrder & { 
+    customer: Customer, 
+    quotation: Quotation, 
+    payments: Payment[] 
+  } | undefined>;
+  createSalesOrderFromQuotation(quotationId: number, data?: Partial<InsertSalesOrder>): Promise<SalesOrder>;
+  updateSalesOrderStatus(id: number, status: "pending" | "confirmed" | "in_production" | "ready_for_delivery" | "delivered" | "completed" | "cancelled"): Promise<SalesOrder | undefined>;
+  updateSalesOrder(id: number, salesOrder: Partial<InsertSalesOrder>): Promise<SalesOrder | undefined>;
+  cancelSalesOrder(id: number): Promise<SalesOrder | undefined>;
+  
+  // Payment operations
+  getPayments(salesOrderId: number): Promise<Payment[]>;
+  getPayment(id: number): Promise<Payment | undefined>;
+  getPaymentByTransactionId(transactionId: string): Promise<Payment | undefined>;
+  getPaymentByReceiptNumber(receiptNumber: string): Promise<Payment | undefined>;
+  createPayment(payment: InsertPayment): Promise<Payment>;
+  recordPayment(
+    salesOrderId: number, 
+    amount: number, 
+    paymentMethod: "cash" | "bank_transfer" | "check" | "card" | "upi" | "other", 
+    notes?: string,
+    paymentDate?: Date,
+    createdBy?: number
+  ): Promise<Payment>;
+  deletePayment(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -144,6 +176,8 @@ export class MemStorage implements IStorage {
   private followUps: Map<number, FollowUp>;
   private milestones: Map<number, Milestone>;
   private accessoryCatalogItems: Map<number, AccessoryCatalog>;
+  private salesOrders: Map<number, SalesOrder>;
+  private payments: Map<number, Payment>;
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
@@ -158,6 +192,8 @@ export class MemStorage implements IStorage {
   private followUpIdCounter: number;
   private milestoneIdCounter: number;
   private accessoryCatalogIdCounter: number;
+  private salesOrderIdCounter: number;
+  private paymentIdCounter: number;
   
   constructor() {
     this.customers = new Map();
@@ -173,6 +209,8 @@ export class MemStorage implements IStorage {
     this.followUps = new Map();
     this.milestones = new Map();
     this.accessoryCatalogItems = new Map();
+    this.salesOrders = new Map();
+    this.payments = new Map();
     
     this.customerIdCounter = 1;
     this.quotationIdCounter = 1;
@@ -187,6 +225,8 @@ export class MemStorage implements IStorage {
     this.followUpIdCounter = 1;
     this.milestoneIdCounter = 1;
     this.accessoryCatalogIdCounter = 1;
+    this.salesOrderIdCounter = 1;
+    this.paymentIdCounter = 1;
     
     // Add some initial data
     this.initializeData();
