@@ -130,7 +130,7 @@ export default function SalesOrderPaymentsPage() {
                   <div className="flex justify-between">
                     <span className="text-gray-500">Order Date:</span>
                     <span className="font-medium">
-                      {format(new Date(salesOrder.orderDate), "dd MMM yyyy")}
+                      {salesOrder?.orderDate ? format(new Date(salesOrder.orderDate), "dd MMM yyyy") : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export default function SalesOrderPaymentsPage() {
                   <div className="flex justify-between">
                     <span className="text-gray-500">Expected Delivery:</span>
                     <span className="font-medium">
-                      {format(new Date(salesOrder.expectedDeliveryDate), "dd MMM yyyy")}
+                      {salesOrder?.expectedDeliveryDate ? format(new Date(salesOrder.expectedDeliveryDate), "dd MMM yyyy") : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -227,7 +227,7 @@ export default function SalesOrderPaymentsPage() {
                           {payment.receiptNumber}
                         </TableCell>
                         <TableCell>
-                          {format(new Date(payment.paymentDate), "dd MMM yyyy")}
+                          {payment.paymentDate ? format(new Date(payment.paymentDate), "dd MMM yyyy") : "N/A"}
                         </TableCell>
                         <TableCell>{formatCurrency(payment.amount)}</TableCell>
                         <TableCell>{getPaymentMethodLabel(payment.paymentMethod)}</TableCell>
