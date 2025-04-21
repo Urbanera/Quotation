@@ -242,10 +242,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/follow-ups/:id/complete", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const { updateCustomerStage, newCustomerStage } = req.body || {};
       const followUp = await storage.markFollowUpComplete(id);
+      
       if (!followUp) {
         return res.status(404).json({ message: "Follow-up not found" });
       }
+      
+      // Update the customer stage if requested
+      if (updateCustomerStage && newCustomerStage) {
+        const customer = await storage.getCustomer(followUp.customerId);
+        if (customer) {
+          await storage.updateCustomer(customer.id, {
+            ...customer,
+            stage: newCustomerStage
+          });
+        }
+      }
+      
       res.json(followUp);
     } catch (error) {
       res.status(500).json({ message: "Failed to mark follow-up as complete" });

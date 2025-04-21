@@ -10,9 +10,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -20,6 +23,7 @@ import {
 } from "@/components/ui/form";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   ClipboardList, 
   FileText, 
@@ -31,7 +35,8 @@ import {
   CheckCircle2, 
   Calendar as CalendarIcon, 
   Clock,
-  FileEdit
+  FileEdit,
+  Tag
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -52,6 +57,8 @@ const followUpFormSchema = insertFollowUpSchema.extend({
     required_error: "A follow-up date is required",
   }),
   interactionDate: z.date().default(() => new Date()),
+  updateCustomerStage: z.boolean().default(false),
+  newCustomerStage: z.enum(['new', 'pipeline', 'cold', 'warm', 'booked']).optional(),
 });
 
 export default function CustomerDetailPage() {
@@ -114,18 +121,38 @@ export default function CustomerDetailPage() {
     },
   });
 
+  const [showStageDialog, setShowStageDialog] = useState(false);
+  const [selectedFollowUpId, setSelectedFollowUpId] = useState<number | null>(null);
+  const [updateStage, setUpdateStage] = useState(false);
+  const [newStage, setNewStage] = useState<string | null>(customer?.stage || null);
+
   const markCompleteMutation = useMutation({
-    mutationFn: (followUpId: number) => {
+    mutationFn: ({ followUpId, updateCustomerStage, newCustomerStage }: { 
+      followUpId: number, 
+      updateCustomerStage?: boolean, 
+      newCustomerStage?: string 
+    }) => {
       setCompletingId(followUpId);
-      return apiRequest("PUT", `/api/follow-ups/${followUpId}/complete`);
+      return apiRequest("PUT", `/api/follow-ups/${followUpId}/complete`, {
+        updateCustomerStage,
+        newCustomerStage
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/follow-ups", customerId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers", customerId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       toast({
         title: "Follow-up completed",
-        description: "The follow-up has been marked as complete.",
+        description: updateStage 
+          ? `Follow-up has been marked as complete and customer stage updated to ${newStage}.`
+          : "Follow-up has been marked as complete.",
       });
       setCompletingId(null);
+      setShowStageDialog(false);
+      setSelectedFollowUpId(null);
+      setUpdateStage(false);
+      setNewStage(customer?.stage || null);
     },
     onError: () => {
       toast({
@@ -134,6 +161,8 @@ export default function CustomerDetailPage() {
         variant: "destructive",
       });
       setCompletingId(null);
+      setShowStageDialog(false);
+      setSelectedFollowUpId(null);
     },
   });
 
@@ -142,7 +171,25 @@ export default function CustomerDetailPage() {
   }
 
   function handleMarkComplete(followUpId: number) {
-    markCompleteMutation.mutate(followUpId);
+    setSelectedFollowUpId(followUpId);
+    setShowStageDialog(true);
+  }
+  
+  function confirmMarkComplete() {
+    if (!selectedFollowUpId) return;
+    
+    markCompleteMutation.mutate({
+      followUpId: selectedFollowUpId,
+      updateCustomerStage: updateStage,
+      newCustomerStage: updateStage ? newStage! : undefined
+    });
+  }
+  
+  function cancelMarkComplete() {
+    setShowStageDialog(false);
+    setSelectedFollowUpId(null);
+    setUpdateStage(false);
+    setNewStage(customer?.stage || null);
   }
 
   if (isLoadingCustomer) {
@@ -326,6 +373,62 @@ export default function CustomerDetailPage() {
                           </FormItem>
                         )}
                       />
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="updateCustomerStage"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>Update Customer Stage</FormLabel>
+                                <FormDescription>
+                                  Change the customer's stage based on this follow-up interaction
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        {form.watch("updateCustomerStage") && (
+                          <FormField
+                            control={form.control}
+                            name="newCustomerStage"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>New Customer Stage</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value || customer.stage}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select a stage" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="new">New</SelectItem>
+                                    <SelectItem value="pipeline">Pipeline</SelectItem>
+                                    <SelectItem value="cold">Cold</SelectItem>
+                                    <SelectItem value="warm">Warm</SelectItem>
+                                    <SelectItem value="booked">Booked</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormDescription>
+                                  Current stage: <Badge variant="outline">{customer.stage}</Badge>
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+                      
                       <Button 
                         type="submit" 
                         className="w-full bg-indigo-600 hover:bg-indigo-700"
