@@ -181,17 +181,17 @@ export default function ViewSalesOrder() {
           }`}
           variant="outline"
         >
-          {salesOrder.status.replace('_', ' ')}
+          {salesOrder?.status ? salesOrder.status.replace('_', ' ') : 'pending'}
         </Badge>
         <Badge 
           className={`${
-            salesOrder.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
-            salesOrder.paymentStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
+            salesOrder?.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+            salesOrder?.paymentStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
             'bg-red-100 text-red-800'
           }`}
           variant="outline"
         >
-          {salesOrder.paymentStatus.replace('_', ' ')}
+          {salesOrder?.paymentStatus ? salesOrder.paymentStatus.replace('_', ' ') : 'unpaid'}
         </Badge>
       </div>
 
@@ -213,13 +213,13 @@ export default function ViewSalesOrder() {
                 <h3 className="text-sm font-medium text-gray-500 flex items-center gap-1">
                   <Calendar className="h-4 w-4" /> Order Date
                 </h3>
-                <p className="mt-1">{format(new Date(salesOrder.orderDate), "dd MMM yyyy")}</p>
+                <p className="mt-1">{salesOrder?.orderDate ? format(new Date(salesOrder.orderDate), "dd MMM yyyy") : "N/A"}</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 flex items-center gap-1">
                   <TruckIcon className="h-4 w-4" /> Expected Delivery
                 </h3>
-                <p className="mt-1">{format(new Date(salesOrder.expectedDeliveryDate), "dd MMM yyyy")}</p>
+                <p className="mt-1">{salesOrder?.expectedDeliveryDate ? format(new Date(salesOrder.expectedDeliveryDate), "dd MMM yyyy") : "N/A"}</p>
               </div>
               
               <div className="col-span-2 md:col-span-3">
@@ -238,7 +238,7 @@ export default function ViewSalesOrder() {
             <div className="mt-6">
               <h3 className="text-sm font-medium text-gray-500 mb-2">Notes</h3>
               <div className="border rounded-md p-3 bg-gray-50 min-h-[60px]">
-                {salesOrder.notes || "No notes provided."}
+                {salesOrder?.notes || "No notes provided."}
               </div>
             </div>
           </CardContent>
@@ -253,21 +253,21 @@ export default function ViewSalesOrder() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Total Amount:</span>
-                <span className="font-medium">{formatCurrency(salesOrder.totalAmount)}</span>
+                <span className="font-medium">{formatCurrency(salesOrder?.totalAmount || 0)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Amount Paid:</span>
-                <span className="font-medium text-green-600">{formatCurrency(salesOrder.amountPaid)}</span>
+                <span className="font-medium text-green-600">{formatCurrency(salesOrder?.amountPaid || 0)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Amount Due:</span>
-                <span className="font-medium text-red-600">{formatCurrency(salesOrder.amountDue)}</span>
+                <span className="font-medium text-red-600">{formatCurrency(salesOrder?.amountDue || 0)}</span>
               </div>
               
               <div className="pt-4 border-t">
                 <h3 className="text-sm font-medium mb-2">Change Order Status:</h3>
                 <Select 
-                  value={salesOrder.status} 
+                  value={salesOrder?.status || "pending"} 
                   onValueChange={handleStatusChange}
                   disabled={updateStatusMutation.isPending}
                 >
