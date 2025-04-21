@@ -16,7 +16,8 @@ import {
   milestones, Milestone, InsertMilestone,
   accessoryCatalog, AccessoryCatalog, InsertAccessoryCatalog,
   salesOrders, SalesOrder, InsertSalesOrder, orderStatusEnum, paymentStatusEnum,
-  payments, Payment, InsertPayment, paymentMethodEnum
+  payments, Payment, InsertPayment, paymentMethodEnum,
+  customerPayments, CustomerPayment, InsertCustomerPayment, paymentTypeEnum
 } from "@shared/schema";
 
 export interface IStorage {
@@ -158,6 +159,13 @@ export interface IStorage {
     createdBy?: number
   ): Promise<Payment>;
   deletePayment(id: number): Promise<boolean>;
+  
+  // Customer Payment operations (direct payments without sales orders)
+  getCustomerPayments(): Promise<CustomerPayment[]>;
+  getCustomerPayment(id: number): Promise<CustomerPayment | undefined>;
+  getCustomerPaymentsByCustomer(customerId: number): Promise<CustomerPayment[]>;
+  getCustomerPaymentByTransactionId(transactionId: string): Promise<CustomerPayment | undefined>;
+  createCustomerPayment(payment: InsertCustomerPayment): Promise<CustomerPayment>;
 }
 
 export class MemStorage implements IStorage {
@@ -178,6 +186,7 @@ export class MemStorage implements IStorage {
   private accessoryCatalogItems: Map<number, AccessoryCatalog>;
   private salesOrders: Map<number, SalesOrder>;
   private payments: Map<number, Payment>;
+  private customerPayments: Map<number, CustomerPayment>;
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
