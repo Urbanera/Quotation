@@ -264,6 +264,7 @@ export class MemStorage implements IStorage {
       defaultGlobalDiscount: 5,
       defaultGstPercentage: 18,
       defaultTermsAndConditions: "1. All prices are valid for 30 days from quotation date.\n2. 50% advance payment required to start work.\n3. Balance payment due upon completion.\n4. Material colors may vary slightly from samples.\n5. Changes to design after approval may incur additional charges.",
+      receiptTermsAndConditions: "1. Receipt is valid only when payment is confirmed.\n2. All payments are non-refundable unless otherwise specified.\n3. Please retain this receipt for your records and warranty claims.\n4. For any disputes regarding payment, please contact us within 7 days of receipt.",
       quotationTemplateId: "default",
       presentationTemplateId: "default",
       updatedAt: new Date()
@@ -519,6 +520,7 @@ export class MemStorage implements IStorage {
         defaultGlobalDiscount: settings.defaultGlobalDiscount || 0,
         defaultGstPercentage: settings.defaultGstPercentage || 18,
         defaultTermsAndConditions: settings.defaultTermsAndConditions || "",
+        receiptTermsAndConditions: settings.receiptTermsAndConditions || "",
         quotationTemplateId: settings.quotationTemplateId || "default",
         presentationTemplateId: settings.presentationTemplateId || "default",
         updatedAt: new Date()

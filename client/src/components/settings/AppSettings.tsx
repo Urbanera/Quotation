@@ -205,13 +205,13 @@ export function AppSettingsForm() {
               />
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-6">
               <FormField
                 control={form.control}
                 name="defaultTermsAndConditions"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Default Terms & Conditions</FormLabel>
+                    <FormLabel>Default Quotation Terms & Conditions</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Enter default terms and conditions for all quotations"
@@ -221,6 +221,27 @@ export function AppSettingsForm() {
                     </FormControl>
                     <FormDescription>
                       These terms will be added to all new quotations automatically
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="receiptTermsAndConditions"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Receipt Terms & Conditions</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Enter terms and conditions for payment receipts"
+                        className="min-h-32"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      These terms will appear on all payment receipts
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
