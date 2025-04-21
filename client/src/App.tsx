@@ -12,6 +12,7 @@ import CreateQuotation from "./pages/quotations/create";
 import EditQuotation from "./pages/quotations/edit";
 import ViewQuotation from "./pages/quotations/view";
 import SalesOrdersPage from "./pages/sales-orders";
+import CreateSalesOrder from "./pages/sales-orders/create";
 import ViewSalesOrder from "./pages/sales-orders/view";
 import SalesOrderPaymentsPage from "./pages/sales-orders/payments";
 import AddPaymentPage from "./pages/sales-orders/payments/add";
@@ -44,6 +45,7 @@ function App() {
           
           {/* Sales Order Routes */}
           <Route path="/sales-orders" component={SalesOrdersPage} />
+          <Route path="/sales-orders/create/:quotationId" component={CreateSalesOrder} />
           <Route path="/sales-orders/view/:id" component={ViewSalesOrder} />
           <Route path="/sales-orders/:id/payments" component={SalesOrderPaymentsPage} />
           <Route path="/sales-orders/:id/payments/add" component={AddPaymentPage} />
