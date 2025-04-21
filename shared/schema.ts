@@ -2,6 +2,15 @@ import { pgTable, text, serial, integer, doublePrecision, timestamp, json, boole
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Customer stage enum
+export const customerStageEnum = pgEnum('customer_stage', [
+  'new',
+  'pipeline',
+  'cold',
+  'warm',
+  'booked'
+]);
+
 // Company Settings schema
 export const companySettings = pgTable("company_settings", {
   id: serial("id").primaryKey(),
@@ -43,6 +52,7 @@ export const customers = pgTable("customers", {
   email: text("email").notNull(),
   phone: text("phone").notNull(),
   address: text("address").notNull(),
+  stage: customerStageEnum("stage").notNull().default('new'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -342,6 +352,16 @@ export const installationFormSchema = z.object({
   ).default("130"),
 });
 
+// Payment method enum for both sales order payments and direct customer payments
+export const paymentMethodEnum = pgEnum('payment_method', [
+  'cash',
+  'bank_transfer',
+  'check',
+  'card',
+  'upi',
+  'other'
+]);
+
 export const productAccessoryFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
@@ -483,9 +503,6 @@ export const orderStatusEnum = pgEnum('order_status', ['pending', 'confirmed', '
 // Payment status enum for tracking payment status
 export const paymentStatusEnum = pgEnum('payment_status', ['unpaid', 'partially_paid', 'paid']);
 
-// Payment method enum
-export const paymentMethodEnum = pgEnum('payment_method', ['cash', 'bank_transfer', 'check', 'card', 'upi', 'other']);
-
 // Sales Orders schema - converted from approved quotations
 export const salesOrders = pgTable("sales_orders", {
   id: serial("id").primaryKey(),
@@ -550,4 +567,36 @@ export const paymentFormSchema = z.object({
   paymentMethod: z.enum(['cash', 'bank_transfer', 'check', 'card', 'upi', 'other']),
   paymentDate: z.string().or(z.date()),
   notes: z.string().optional().nullable(),
+});
+
+// Customer Payments - direct payments from customers without requiring sales orders
+export const customerPayments = pgTable("customer_payments", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull().references(() => customers.id),
+  transactionId: text("transaction_id").notNull().unique(),
+  amount: doublePrecision("amount").notNull(),
+  paymentMethod: paymentMethodEnum("payment_method").notNull(),
+  paymentDate: timestamp("payment_date").defaultNow().notNull(),
+  description: text("description"),
+  receiptNumber: text("receipt_number").notNull().unique(),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCustomerPaymentSchema = createInsertSchema(customerPayments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CustomerPayment = typeof customerPayments.$inferSelect;
+export type InsertCustomerPayment = z.infer<typeof insertCustomerPaymentSchema>;
+
+export const customerPaymentFormSchema = z.object({
+  customerId: z.number().min(1, "Customer is required"),
+  amount: z.number().min(0.01, "Amount must be greater than zero"),
+  paymentMethod: z.enum(['cash', 'bank_transfer', 'check', 'card', 'upi', 'other']),
+  paymentDate: z.string().or(z.date()),
+  description: z.string().optional().nullable(),
 });
