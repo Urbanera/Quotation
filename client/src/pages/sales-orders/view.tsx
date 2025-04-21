@@ -329,7 +329,7 @@ export default function ViewSalesOrder() {
                     {payments.map((payment) => (
                       <TableRow key={payment.id}>
                         <TableCell>
-                          {format(new Date(payment.paymentDate), "dd MMM yyyy")}
+                          {payment.paymentDate ? format(new Date(payment.paymentDate), "dd MMM yyyy") : "N/A"}
                         </TableCell>
                         <TableCell className="font-medium">
                           {payment.receiptNumber}
