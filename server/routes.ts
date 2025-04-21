@@ -200,11 +200,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const salesOrders = await storage.getSalesOrdersByCustomer(id);
       const payments = await storage.getCustomerPaymentsByCustomer(id);
       
+      // Set proper content type
+      res.setHeader('Content-Type', 'application/json');
+      
       // Return combined data
-      res.json({
+      res.send(JSON.stringify({
         salesOrders,
         payments
-      });
+      }));
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customer ledger entries" });
     }
