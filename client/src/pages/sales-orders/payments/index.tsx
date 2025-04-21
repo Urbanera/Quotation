@@ -172,24 +172,24 @@ export default function SalesOrderPaymentsPage() {
                   <div className="flex justify-between">
                     <span className="text-gray-500">Status:</span>
                     <span className={`px-2 py-1 rounded text-xs ${
-                      salesOrder.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      salesOrder.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
-                      salesOrder.status === 'in_production' ? 'bg-purple-100 text-purple-800' :
-                      salesOrder.status === 'ready_for_delivery' ? 'bg-indigo-100 text-indigo-800' :
-                      salesOrder.status === 'delivered' || salesOrder.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      salesOrder?.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      salesOrder?.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                      salesOrder?.status === 'in_production' ? 'bg-purple-100 text-purple-800' :
+                      salesOrder?.status === 'ready_for_delivery' ? 'bg-indigo-100 text-indigo-800' :
+                      salesOrder?.status === 'delivered' || salesOrder?.status === 'completed' ? 'bg-green-100 text-green-800' :
                       'bg-red-100 text-red-800'
                     }`}>
-                      {salesOrder.status.replace('_', ' ')}
+                      {salesOrder?.status ? salesOrder.status.replace('_', ' ') : 'pending'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Payment Status:</span>
                     <span className={`px-2 py-1 rounded text-xs ${
-                      salesOrder.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
-                      salesOrder.paymentStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
+                      salesOrder?.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                      salesOrder?.paymentStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-red-100 text-red-800'
                     }`}>
-                      {salesOrder.paymentStatus.replace('_', ' ')}
+                      {salesOrder?.paymentStatus ? salesOrder.paymentStatus.replace('_', ' ') : 'unpaid'}
                     </span>
                   </div>
                   <div className="flex justify-between">
