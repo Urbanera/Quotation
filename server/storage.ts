@@ -206,6 +206,55 @@ export class MemStorage implements IStorage {
   private customerPaymentIdCounter: number;
   
   constructor() {
+    // Create singleton instance of storage to persist data between server reloads
+    if ((global as any).__memStorageInstance) {
+      console.log("Using existing MemStorage instance from global");
+      const instance = (global as any).__memStorageInstance;
+      
+      // Copy all properties from existing instance
+      this.customers = instance.customers;
+      this.quotations = instance.quotations;
+      this.rooms = instance.rooms;
+      this.products = instance.products;
+      this.accessories = instance.accessories;
+      this.images = instance.images;
+      this.installationCharges = instance.installationCharges;
+      this.users = instance.users;
+      this.teams = instance.teams;
+      this.teamMembers = instance.teamMembers;
+      this.followUps = instance.followUps;
+      this.milestones = instance.milestones;
+      this.accessoryCatalogItems = instance.accessoryCatalogItems;
+      this.salesOrders = instance.salesOrders;
+      this.payments = instance.payments;
+      this.customerPayments = instance.customerPayments;
+      
+      this.companySettings = instance.companySettings;
+      this.appSettings = instance.appSettings;
+      
+      this.customerIdCounter = instance.customerIdCounter;
+      this.quotationIdCounter = instance.quotationIdCounter;
+      this.roomIdCounter = instance.roomIdCounter;
+      this.productIdCounter = instance.productIdCounter;
+      this.accessoryIdCounter = instance.accessoryIdCounter;
+      this.imageIdCounter = instance.imageIdCounter;
+      this.installationChargeIdCounter = instance.installationChargeIdCounter;
+      this.userIdCounter = instance.userIdCounter;
+      this.teamIdCounter = instance.teamIdCounter;
+      this.teamMemberIdCounter = instance.teamMemberIdCounter;
+      this.followUpIdCounter = instance.followUpIdCounter;
+      this.milestoneIdCounter = instance.milestoneIdCounter;
+      this.accessoryCatalogIdCounter = instance.accessoryCatalogIdCounter;
+      this.salesOrderIdCounter = instance.salesOrderIdCounter;
+      this.paymentIdCounter = instance.paymentIdCounter;
+      this.customerPaymentIdCounter = instance.customerPaymentIdCounter;
+      
+      console.log(`Restored data with ${this.customers.size} customers, ${this.salesOrders.size} sales orders, ${this.customerPayments.size} customer payments`);
+      
+      return;
+    }
+    
+    console.log("Creating new MemStorage instance");
     this.customers = new Map();
     this.quotations = new Map();
     this.rooms = new Map();

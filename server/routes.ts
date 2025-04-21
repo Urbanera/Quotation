@@ -196,9 +196,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customers/:id/ledger", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`Fetching ledger data for customer ID: ${id}`);
+      
       // Get both sales orders and payments for this customer
       const salesOrders = await storage.getSalesOrdersByCustomer(id);
       const payments = await storage.getCustomerPaymentsByCustomer(id);
+      
+      console.log(`Retrieved ${salesOrders.length} sales orders and ${payments.length} payments`);
+      console.log("Sales orders:", salesOrders);
+      console.log("Payments:", payments);
       
       // Set proper content type
       res.setHeader('Content-Type', 'application/json');
