@@ -222,10 +222,11 @@ export default function InstallationCalculator({
                       placeholder="Width (e.g. 500+500+300)" 
                       {...field} 
                       onChange={(e) => {
-                        // Always update the form value with the raw input
+                        // Just update the form value with the raw input without evaluating
                         field.onChange(e.target.value);
-                        
-                        // Check if the input contains any math operators
+                      }}
+                      onBlur={(e) => {
+                        // When the field loses focus, evaluate the expression if it contains operators
                         if (/[\+\-\*\/]/.test(e.target.value)) {
                           // Try to evaluate the expression
                           const result = evaluateExpression(e.target.value);
@@ -254,10 +255,11 @@ export default function InstallationCalculator({
                       placeholder="Height (e.g. 1200+400)" 
                       {...field} 
                       onChange={(e) => {
-                        // Always update the form value with the raw input
+                        // Just update the form value with the raw input without evaluating
                         field.onChange(e.target.value);
-                        
-                        // Check if the input contains any math operators
+                      }}
+                      onBlur={(e) => {
+                        // When the field loses focus, evaluate the expression if it contains operators
                         if (/[\+\-\*\/]/.test(e.target.value)) {
                           // Try to evaluate the expression
                           const result = evaluateExpression(e.target.value);
