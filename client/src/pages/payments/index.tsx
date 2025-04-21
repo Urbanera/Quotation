@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import {
@@ -12,32 +12,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { SalesOrder, Payment, Customer } from "@shared/schema";
-import { Loader2, CreditCard, FileText } from "lucide-react";
+import { CustomerPayment, Customer } from "@shared/schema";
+import { Loader2, CreditCard, Plus, FileText } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 export default function PaymentsPage() {
   const { toast } = useToast();
 
-  // Fetch all orders to get payment information
-  const { data: salesOrders, isLoading: isLoadingOrders } = useQuery<SalesOrder[]>({
-    queryKey: ["/api/sales-orders"],
+  // Fetch all customer payments
+  const { data: customerPayments, isLoading: isLoadingPayments } = useQuery<CustomerPayment[]>({
+    queryKey: ["/api/customer-payments"],
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to load sales orders",
+        description: "Failed to load customer payments",
         variant: "destructive",
       });
-      console.error("Failed to load sales orders:", error);
+      console.error("Failed to load customer payments:", error);
     },
   });
 
-  const { data: customers } = useQuery<Customer[]>({
+  const { data: customers, isLoading: isLoadingCustomers } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
   });
 
-  // We'll need to fetch each order's payments when we build the detailed view
-  const isLoading = isLoadingOrders;
+  const isLoading = isLoadingPayments || isLoadingCustomers;
 
   const getCustomerName = (customerId: number) => {
     const customer = customers?.find((c) => c.id === customerId);
@@ -60,93 +59,76 @@ export default function PaymentsPage() {
         return "Other";
     }
   };
+  
+  const getPaymentTypeLabel = (type: string) => {
+    switch (type) {
+      case "token_advance":
+        return "Token Advance";
+      case "starting_production":
+        return "Starting Production";
+      case "final_payment":
+        return "Final Payment";
+      default:
+        return "Other";
+    }
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Payment Transactions</h1>
+        <h1 className="text-3xl font-bold">Customer Payments</h1>
+        <Link href="/payments/create">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Payment
+          </Button>
+        </Link>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Payment Activity</CardTitle>
+          <CardTitle>Customer Payment Transactions</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : salesOrders && salesOrders.length > 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <CreditCard className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
-              <p>Select a sales order to view its payment details</p>
-              <Link href="/sales-orders">
-                <Button variant="outline" className="mt-4">
-                  View Sales Orders
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <CreditCard className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
-              <p>No payment transactions found</p>
-              <p className="text-sm mt-2">
-                You need to have sales orders before recording payments
-              </p>
-              <Link href="/quotations">
-                <Button variant="outline" className="mt-4">
-                  View Quotations
-                </Button>
-              </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {salesOrders && salesOrders.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Sales Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
+          ) : customerPayments && customerPayments.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order #</TableHead>
+                  <TableHead>Receipt #</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Total Amount</TableHead>
-                  <TableHead>Amount Paid</TableHead>
-                  <TableHead>Amount Due</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Payment Type</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Transaction ID</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salesOrders.map((order) => (
-                  <TableRow key={order.id}>
+                {customerPayments.map((payment) => (
+                  <TableRow key={payment.id}>
                     <TableCell className="font-medium">
-                      {order.orderNumber}
+                      {payment.receiptNumber}
                     </TableCell>
-                    <TableCell>{getCustomerName(order.customerId)}</TableCell>
-                    <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
-                    <TableCell>{formatCurrency(order.amountPaid)}</TableCell>
-                    <TableCell>{formatCurrency(order.amountDue)}</TableCell>
+                    <TableCell>{getCustomerName(payment.customerId)}</TableCell>
                     <TableCell>
-                      <div className={`px-2 py-1 rounded text-xs inline-block ${
-                        order.paymentStatus === 'paid' 
-                          ? 'bg-green-100 text-green-800' 
-                          : order.paymentStatus === 'partially_paid'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                      }`}>
-                        {order.paymentStatus.replace('_', ' ')}
-                      </div>
+                      {payment.paymentDate && format(new Date(payment.paymentDate), "dd MMM yyyy")}
+                    </TableCell>
+                    <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                    <TableCell>{getPaymentTypeLabel(payment.paymentType)}</TableCell>
+                    <TableCell>{getPaymentMethodLabel(payment.paymentMethod)}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {payment.transactionId}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/sales-orders/${order.id}/payments`}>
+                      <Link href={`/payments/view/${payment.id}`}>
                         <Button size="sm" variant="outline">
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          View Payments
+                          <FileText className="h-4 w-4 mr-2" />
+                          View Receipt
                         </Button>
                       </Link>
                     </TableCell>
@@ -154,9 +136,75 @@ export default function PaymentsPage() {
                 ))}
               </TableBody>
             </Table>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <CreditCard className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
+              <p>No customer payment transactions found</p>
+              <Link href="/payments/create">
+                <Button variant="outline" className="mt-4">
+                  Create First Payment
+                </Button>
+              </Link>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Direct Customer Payments</CardTitle>
+            <CardDescription>
+              Record payments directly from customers without requiring a sales order,
+              particularly useful for customers in the "booked" stage.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">
+              Use direct payments to track:
+            </p>
+            <ul className="list-disc pl-5 space-y-2 mb-6">
+              <li>Token advances before quotation finalization</li>
+              <li>Production start payments</li>
+              <li>Final payments upon delivery</li>
+              <li>Other miscellaneous payments</li>
+            </ul>
+            
+            <Link href="/payments/create">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create New Payment
+              </Button>
+            </Link>
           </CardContent>
         </Card>
-      )}
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Sales Order Payments</CardTitle>
+            <CardDescription>
+              Manage payments associated with specific sales orders converted from quotations.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">
+              Sales order payments are linked to specific orders and track:
+            </p>
+            <ul className="list-disc pl-5 space-y-2 mb-6">
+              <li>Payment against a specific sales order</li>
+              <li>Automatic calculation of remaining balance</li>
+              <li>Payment status updates (paid, partially paid, unpaid)</li>
+            </ul>
+            
+            <Link href="/sales-orders">
+              <Button variant="outline">
+                <CreditCard className="mr-2 h-4 w-4" />
+                View Sales Orders
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
