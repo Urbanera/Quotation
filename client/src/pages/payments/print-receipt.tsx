@@ -181,9 +181,9 @@ export default function PrintReceiptPage() {
     logo: companySettings.logo || null
   };
 
-  // Terms text from payment description or settings
-  const termsText = payment.description || 
-                   appSettings?.receiptTermsAndConditions || 
+  // Get description and terms from settings
+  const description = payment.description || "";
+  const termsAndConditions = appSettings?.receiptTermsAndConditions || 
                    "This receipt confirms the advance payment received for starting work on your project. This advance is non-refundable and will be deducted from the total project cost upon completion. By signing, the client agrees to these terms.";
 
   return (
@@ -269,10 +269,18 @@ export default function PrintReceiptPage() {
           <p className="text-2xl font-bold">₹ {payment.amount.toFixed(2)}</p>
         </div>
 
-        {/* Description/Terms */}
+        {/* Description */}
+        {description && (
+          <div className="mb-5">
+            <h3 className="font-semibold mb-2 text-gray-700">Description:</h3>
+            <p className="text-sm whitespace-pre-line">{description}</p>
+          </div>
+        )}
+
+        {/* Terms & Conditions */}
         <div className="terms-conditions mb-16">
           <h3 className="font-semibold mb-2 text-gray-700">Terms & Conditions:</h3>
-          <p className="text-sm whitespace-pre-line">{termsText}</p>
+          <p className="text-sm whitespace-pre-line">{termsAndConditions}</p>
         </div>
 
         {/* Signature Section */}
