@@ -111,140 +111,163 @@ export default function CustomersList() {
           </Link>
         </div>
 
-        <div className="mt-6 bg-white shadow overflow-hidden sm:rounded-md">
-          <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start gap-4">
-            <div className="w-full sm:max-w-xs relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+        {isLoading ? (
+          <div className="mt-6 text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="mt-2 text-gray-500">Loading customers...</p>
+          </div>
+        ) : !customers?.length ? (
+          <div className="mt-6 text-center py-8 bg-white shadow rounded-md">
+            <p className="text-gray-500 p-8">No customers yet.</p>
+          </div>
+        ) : (
+          <div className="mt-6 space-y-6">
+            {/* Customer Stage Filter View */}
+            <CustomerStageFilter customers={customers} />
+
+            {/* Traditional List View */}
+            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div className="w-full sm:max-w-xs relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <Input
+                    type="text"
+                    placeholder="Search customers..."
+                    className="pl-10 focus:ring-indigo-500 focus:border-indigo-500"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={sortField}
+                    onValueChange={(value) => setSortField(value as SortField)}
+                  >
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Name</SelectItem>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="createdAt">Date Created</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setSortOrder("asc")}>
+                        <SortAsc className="mr-2 h-4 w-4" />
+                        <span>Ascending</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSortOrder("desc")}>
+                        <SortDesc className="mr-2 h-4 w-4" />
+                        <span>Descending</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-              <Input
-                type="text"
-                placeholder="Search customers..."
-                className="pl-10 focus:ring-indigo-500 focus:border-indigo-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Select
-                value={sortField}
-                onValueChange={(value) => setSortField(value as SortField)}
-              >
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="createdAt">Date Created</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setSortOrder("asc")}>
-                    <SortAsc className="mr-2 h-4 w-4" />
-                    <span>Ascending</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortOrder("desc")}>
-                    <SortDesc className="mr-2 h-4 w-4" />
-                    <span>Descending</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+
+              {!filteredCustomers?.length ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No matching customers found.</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-200">
+                  {filteredCustomers.map((customer) => (
+                    <li key={customer.id}>
+                      <div className="px-4 py-4 flex items-center sm:px-6">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center">
+                            <h3 className="text-sm font-medium text-indigo-600 truncate mr-2">{customer.name}</h3>
+                            {customer.stage && (
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                customer.stage === 'new' ? 'bg-blue-100 text-blue-800' :
+                                customer.stage === 'pipeline' ? 'bg-purple-100 text-purple-800' :
+                                customer.stage === 'cold' ? 'bg-gray-100 text-gray-800' :
+                                customer.stage === 'warm' ? 'bg-orange-100 text-orange-800' :
+                                customer.stage === 'booked' ? 'bg-green-100 text-green-800' : ''
+                              }`}>
+                                {customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-2 flex">
+                            <div className="flex items-center text-sm text-gray-500 mr-6">
+                              <span className="truncate">{customer.email}</span>
+                            </div>
+                            <div className="flex items-center text-sm text-gray-500">
+                              <span>{customer.phone}</span>
+                            </div>
+                          </div>
+                          <div className="mt-1 text-sm text-gray-500">
+                            <span>{customer.address}</span>
+                          </div>
+                        </div>
+                        <div className="ml-5 flex-shrink-0 flex space-x-2">
+                          <Link href={`/customers/view/${customer.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">View</span>
+                            </Button>
+                          </Link>
+                          <Link href={`/customers/edit/${customer.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCustomerToDelete(customer)}
+                            className="text-red-600 hover:text-red-800 border-red-200 hover:border-red-300"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
+        )}
 
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-              <p className="mt-2 text-gray-500">Loading customers...</p>
-            </div>
-          ) : !filteredCustomers?.length ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">
-                {customers?.length ? "No matching customers found." : "No customers yet."}
-              </p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-gray-200">
-              {filteredCustomers.map((customer) => (
-                <li key={customer.id}>
-                  <div className="px-4 py-4 flex items-center sm:px-6">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-medium text-indigo-600 truncate">{customer.name}</h3>
-                      <div className="mt-2 flex">
-                        <div className="flex items-center text-sm text-gray-500 mr-6">
-                          <span className="truncate">{customer.email}</span>
-                        </div>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <span>{customer.phone}</span>
-                        </div>
-                      </div>
-                      <div className="mt-1 text-sm text-gray-500">
-                        <span>{customer.address}</span>
-                      </div>
-                    </div>
-                    <div className="ml-5 flex-shrink-0 flex space-x-2">
-                      <Link href={`/customers/view/${customer.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4" />
-                          <span className="sr-only">View</span>
-                        </Button>
-                      </Link>
-                      <Link href={`/customers/edit/${customer.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCustomerToDelete(customer)}
-                        className="text-red-600 hover:text-red-800 border-red-200 hover:border-red-300"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
-                      </Button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <AlertDialog
+          open={!!customerToDelete}
+          onOpenChange={(open) => !open && setCustomerToDelete(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete {customerToDelete?.name} and all associated data.
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteCustomer}
+                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-
-      <AlertDialog
-        open={!!customerToDelete}
-        onOpenChange={(open) => !open && setCustomerToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete {customerToDelete?.name} and all associated data.
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteCustomer}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

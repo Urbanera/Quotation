@@ -104,7 +104,7 @@ export default function CustomerStageFilter({ customers }: CustomerStageFilterPr
                         {formatDate(customer.createdAt)}
                       </div>
                       <div className="pt-3 flex justify-end">
-                        <Link href={`/customers/${customer.id}`}>
+                        <Link href={`/customers/view/${customer.id}`}>
                           <Button size="sm" variant="outline">View Details</Button>
                         </Link>
                       </div>
