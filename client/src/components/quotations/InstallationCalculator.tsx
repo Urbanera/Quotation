@@ -19,6 +19,29 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
+// Function to evaluate a mathematical expression string (e.g. "500+500+300")
+function evaluateExpression(expression: string): number | null {
+  try {
+    // Clean the input - remove all characters except numbers, +, -, *, /, ., and ()
+    const cleanedExpression = expression.replace(/[^0-9+\-*/().]/g, '');
+    
+    // If the expression is empty after cleaning, return null
+    if (!cleanedExpression) return null;
+    
+    // Use Function constructor to evaluate the expression
+    // This is generally safe for user input that's been sanitized to only include valid math symbols
+    const result = new Function(`return ${cleanedExpression}`)();
+    
+    // Check if the result is a valid number
+    if (isNaN(result) || !isFinite(result)) return null;
+    
+    return result;
+  } catch (error) {
+    // If there's any error in evaluation, return null
+    return null;
+  }
+}
+
 interface InstallationCalculatorProps {
   roomId: number;
   charge?: InstallationCharge | null;
@@ -121,6 +144,27 @@ export default function InstallationCalculator({
   }, [form.watch("widthMm"), form.watch("heightMm"), form.watch("pricePerSqft")]);
 
   const onSubmit = (data: z.infer<typeof installationFormSchema>) => {
+    // Evaluate expressions in width and height if they contain math operators
+    let widthValue = data.widthMm;
+    let heightValue = data.heightMm;
+    
+    // Process width if it contains math operators
+    if (typeof widthValue === 'string' && /[\+\-\*\/]/.test(widthValue)) {
+      const evaluatedWidth = evaluateExpression(widthValue);
+      if (evaluatedWidth !== null) {
+        widthValue = evaluatedWidth.toString();
+      }
+    }
+    
+    // Process height if it contains math operators
+    if (typeof heightValue === 'string' && /[\+\-\*\/]/.test(heightValue)) {
+      const evaluatedHeight = evaluateExpression(heightValue);
+      if (evaluatedHeight !== null) {
+        heightValue = evaluatedHeight.toString();
+      }
+    }
+    
+    // Check if we have valid calculated area and amount
     if (!calculatedArea || !calculatedAmount) {
       toast({
         title: "Error",
@@ -134,8 +178,8 @@ export default function InstallationCalculator({
       id: charge?.id,
       roomId: roomId,
       cabinetType: data.cabinetType,
-      widthMm: parseFloat(data.widthMm),
-      heightMm: parseFloat(data.heightMm),
+      widthMm: parseFloat(widthValue),
+      heightMm: parseFloat(heightValue),
       areaSqft: calculatedArea,
       pricePerSqft: parseFloat(data.pricePerSqft),
       amount: calculatedAmount
@@ -174,9 +218,23 @@ export default function InstallationCalculator({
                   <FormLabel>Width (mm)</FormLabel>
                   <FormControl>
                     <Input 
-                      type="number" 
-                      placeholder="Width" 
+                      type="text" 
+                      placeholder="Width (e.g. 500+500+300)" 
                       {...field} 
+                      onChange={(e) => {
+                        // Always update the form value with the raw input
+                        field.onChange(e.target.value);
+                        
+                        // Check if the input contains any math operators
+                        if (/[\+\-\*\/]/.test(e.target.value)) {
+                          // Try to evaluate the expression
+                          const result = evaluateExpression(e.target.value);
+                          if (result !== null) {
+                            // If evaluation succeeds, update the form value with the result
+                            field.onChange(result.toString());
+                          }
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -192,9 +250,23 @@ export default function InstallationCalculator({
                   <FormLabel>Height (mm)</FormLabel>
                   <FormControl>
                     <Input 
-                      type="number" 
-                      placeholder="Height" 
+                      type="text" 
+                      placeholder="Height (e.g. 1200+400)" 
                       {...field} 
+                      onChange={(e) => {
+                        // Always update the form value with the raw input
+                        field.onChange(e.target.value);
+                        
+                        // Check if the input contains any math operators
+                        if (/[\+\-\*\/]/.test(e.target.value)) {
+                          // Try to evaluate the expression
+                          const result = evaluateExpression(e.target.value);
+                          if (result !== null) {
+                            // If evaluation succeeds, update the form value with the result
+                            field.onChange(result.toString());
+                          }
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
