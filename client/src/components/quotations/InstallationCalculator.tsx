@@ -148,7 +148,7 @@ export default function InstallationCalculator({
     <div className="bg-white shadow rounded-lg p-4 mb-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="cabinetType"
@@ -157,7 +157,7 @@ export default function InstallationCalculator({
                   <FormLabel>Type of cabinets</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter type of cabinets (e.g., Kitchen, Wardrobe)"
+                      placeholder="Cabinet type"
                       {...field}
                     />
                   </FormControl>
@@ -165,9 +165,7 @@ export default function InstallationCalculator({
                 </FormItem>
               )}
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+            
             <FormField
               control={form.control}
               name="widthMm"
@@ -177,7 +175,7 @@ export default function InstallationCalculator({
                   <FormControl>
                     <Input 
                       type="number" 
-                      placeholder="Width in mm" 
+                      placeholder="Width" 
                       {...field} 
                     />
                   </FormControl>
@@ -195,7 +193,7 @@ export default function InstallationCalculator({
                   <FormControl>
                     <Input 
                       type="number" 
-                      placeholder="Height in mm" 
+                      placeholder="Height" 
                       {...field} 
                     />
                   </FormControl>
