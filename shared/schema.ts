@@ -386,6 +386,7 @@ export const customerFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(8, "Phone number must be at least 8 digits"),
   address: z.string().min(1, "Address is required"),
+  stage: z.enum(['new', 'pipeline', 'cold', 'warm', 'booked']).default('new'),
 });
 
 // User role management validation schemas

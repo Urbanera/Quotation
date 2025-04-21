@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Customer, customerFormSchema } from "@shared/schema";
 import { Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CustomerFormProps {
   onSubmit: (data: any) => void;
@@ -33,6 +34,7 @@ export default function CustomerForm({
       email: defaultValues?.email || "",
       phone: defaultValues?.phone || "",
       address: defaultValues?.address || "",
+      stage: defaultValues?.stage || "new",
     },
   });
 
@@ -93,9 +95,37 @@ export default function CustomerForm({
           
           <FormField
             control={form.control}
-            name="address"
+            name="stage"
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Customer Stage</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select customer stage" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="pipeline">Pipeline</SelectItem>
+                    <SelectItem value="cold">Cold</SelectItem>
+                    <SelectItem value="warm">Warm</SelectItem>
+                    <SelectItem value="booked">Booked</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem className="sm:col-span-2">
                 <FormLabel>Address</FormLabel>
                 <FormControl>
                   <Textarea 

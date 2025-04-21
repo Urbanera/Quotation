@@ -13,3 +13,15 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 2
   }).format(amount);
 }
+
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return 'N/A';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  return Intl.DateTimeFormat('en-US', {
+    day: 'numeric',
+    month: 'short', 
+    year: 'numeric'
+  }).format(dateObj);
+}

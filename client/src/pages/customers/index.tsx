@@ -8,6 +8,7 @@ import { Customer } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import CustomerStageFilter from "@/components/customers/CustomerStageFilter";
 import { 
   AlertDialog,
   AlertDialogAction,
