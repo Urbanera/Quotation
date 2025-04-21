@@ -287,14 +287,6 @@ export default function ViewSalesOrder() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-center">
-            <Link href={`/sales-orders/${orderId}/payments/add`}>
-              <Button className="w-full">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Record Payment
-              </Button>
-            </Link>
-          </CardFooter>
         </Card>
       </div>
 
@@ -348,11 +340,7 @@ export default function ViewSalesOrder() {
                 <div className="text-center py-8 text-muted-foreground">
                   <CreditCard className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
                   <p>No payment transactions found</p>
-                  <Link href={`/sales-orders/${orderId}/payments/add`}>
-                    <Button variant="outline" className="mt-4">
-                      Record First Payment
-                    </Button>
-                  </Link>
+                  <p className="text-sm mt-2">Payments are managed separately from sales orders.</p>
                 </div>
               )}
             </CardContent>

@@ -181,6 +181,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get sales orders for a customer
+  app.get("/api/customers/:id/sales-orders", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const salesOrders = await storage.getSalesOrdersByCustomer(id);
+      res.json(salesOrders);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer sales orders" });
+    }
+  });
+  
   // Get follow-ups for a customer
   app.get("/api/customers/:id/follow-ups", async (req, res) => {
     try {
