@@ -50,6 +50,7 @@ export default function QuotationsList() {
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
   const [quotationToDuplicate, setQuotationToDuplicate] = useState<Quotation | null>(null);
   const [quotationToApprove, setQuotationToApprove] = useState<Quotation | null>(null);
+  const [quotationToConvert, setQuotationToConvert] = useState<Quotation | null>(null);
   const [duplicateForSameCustomer, setDuplicateForSameCustomer] = useState(true);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<SortField>("createdAt");
@@ -136,6 +137,41 @@ export default function QuotationsList() {
     }
   });
   
+  // Mutation to convert quotation to sales order
+  const convertMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/quotations/${id}/convert-to-order`, {
+        expectedDeliveryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        notes: ""
+      });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales-orders"] });
+      
+      // Also invalidate customer ledger data
+      if (quotationToConvert?.customerId) {
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/customers", quotationToConvert.customerId, "ledger"] 
+        });
+      }
+      
+      toast({
+        title: "Sales order created",
+        description: `Quotation #${quotationToConvert?.id} has been converted to sales order #${data.id}.`,
+      });
+      setQuotationToConvert(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to convert quotation to sales order.",
+        variant: "destructive",
+      });
+    }
+  });
+  
   const handleDuplicateQuotation = () => {
     if (!quotationToDuplicate) return;
     
@@ -152,6 +188,11 @@ export default function QuotationsList() {
   const handleApproveQuotation = () => {
     if (!quotationToApprove) return;
     approveMutation.mutate(quotationToApprove.id);
+  };
+  
+  const handleConvertQuotation = () => {
+    if (!quotationToConvert) return;
+    convertMutation.mutate(quotationToConvert.id);
   };
   
   // Get customer name by ID
