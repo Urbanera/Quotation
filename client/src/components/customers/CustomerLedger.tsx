@@ -28,6 +28,7 @@ interface LedgerEntry {
   amount: number;
   referenceId: string;
   referenceType: "sales_order" | "payment";
+  balance?: number; // Running balance
 }
 
 interface CustomerLedgerProps {

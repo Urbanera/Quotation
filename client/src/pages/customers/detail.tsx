@@ -36,8 +36,10 @@ import {
   Calendar as CalendarIcon, 
   Clock,
   FileEdit,
-  Tag
+  Tag,
+  CreditCard
 } from "lucide-react";
+import { CustomerLedger } from "@/components/customers/CustomerLedger";
 import { Badge } from "@/components/ui/badge";
 import { 
   Table, 
@@ -308,6 +310,10 @@ export default function CustomerDetailPage() {
             <TabsTrigger value="quotations" className="flex items-center">
               <FileText className="h-4 w-4 mr-2" />
               Quotations
+            </TabsTrigger>
+            <TabsTrigger value="ledger" className="flex items-center">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Ledger
             </TabsTrigger>
           </TabsList>
           
@@ -623,6 +629,10 @@ export default function CustomerDetailPage() {
             </Dialog>
           </TabsContent>
           
+          <TabsContent value="ledger">
+            <CustomerLedger customerId={customer.id} />
+          </TabsContent>
+
           <TabsContent value="quotations">
             <div className="bg-white shadow overflow-hidden sm:rounded-lg">
               <div className="px-4 py-5 sm:p-6">
