@@ -2,7 +2,7 @@ import {
   companySettings, CompanySettings, InsertCompanySettings,
   appSettings, AppSettings, InsertAppSettings,
   customers, Customer, InsertCustomer,
-  quotations, Quotation, InsertQuotation,
+  quotations, Quotation, InsertQuotation, quotationStatusEnum,
   rooms, Room, InsertRoom,
   products, Product, InsertProduct,
   accessories, Accessory, InsertAccessory,
@@ -14,7 +14,9 @@ import {
   teamMembers, TeamMember, InsertTeamMember,
   followUps, FollowUp, InsertFollowUp,
   milestones, Milestone, InsertMilestone,
-  accessoryCatalog, AccessoryCatalog, InsertAccessoryCatalog
+  accessoryCatalog, AccessoryCatalog, InsertAccessoryCatalog,
+  salesOrders, SalesOrder, InsertSalesOrder, orderStatusEnum, paymentStatusEnum,
+  payments, Payment, InsertPayment, paymentMethodEnum
 } from "@shared/schema";
 
 export interface IStorage {

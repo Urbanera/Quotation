@@ -51,9 +51,13 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({
   createdAt: true,
 });
 
+// Quotation status enum
+export const quotationStatusEnum = pgEnum('quotation_status', ['draft', 'sent', 'approved', 'rejected', 'expired', 'converted']);
+
 // Quotation schema
 export const quotations = pgTable("quotations", {
   id: serial("id").primaryKey(),
+  quotationNumber: text("quotation_number").notNull().unique(),
   customerId: integer("customer_id").notNull(),
   totalSellingPrice: doublePrecision("total_selling_price").notNull(),
   totalDiscountedPrice: doublePrecision("total_discounted_price").notNull(),
@@ -62,6 +66,11 @@ export const quotations = pgTable("quotations", {
   gstPercentage: doublePrecision("gst_percentage").notNull().default(18),
   gstAmount: doublePrecision("gst_amount").notNull(),
   finalPrice: doublePrecision("final_price").notNull(),
+  status: quotationStatusEnum("status").notNull().default('draft'),
+  title: text("title").default(""),
+  description: text("description"),
+  validUntil: timestamp("valid_until"),
+  terms: text("terms"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -342,9 +351,14 @@ export const productAccessoryFormSchema = z.object({
 
 export const quotationFormSchema = z.object({
   customerId: z.number().min(1, "Customer is required"),
+  title: z.string().optional().default(""),
+  description: z.string().optional(),
   installationHandling: z.number().min(0, "Installation & handling must be a positive number"),
   globalDiscount: z.number().min(0, "Global discount must be a positive number"),
   gstPercentage: z.number().min(0, "GST percentage must be a positive number"),
+  status: z.enum(['draft', 'sent', 'approved', 'rejected', 'expired', 'converted']).default('draft'),
+  validUntil: z.string().or(z.date()).optional().nullable(),
+  terms: z.string().optional(),
 });
 
 export const customerFormSchema = z.object({
@@ -459,4 +473,81 @@ export const accessoryCatalogFormSchema = z.object({
     z.string().refine(val => val === "" || (!isNaN(Number(val)) && Number(val) >= 0), "Wardrobe price must be a positive number").nullable().optional()
   ]),
   size: z.string().optional().nullable(),
+});
+
+// Sales Order Management and Payment Tracking
+
+// Order status enum for tracking sales order lifecycle
+export const orderStatusEnum = pgEnum('order_status', ['pending', 'confirmed', 'in_production', 'ready_for_delivery', 'delivered', 'completed', 'cancelled']);
+
+// Payment status enum for tracking payment status
+export const paymentStatusEnum = pgEnum('payment_status', ['unpaid', 'partially_paid', 'paid']);
+
+// Payment method enum
+export const paymentMethodEnum = pgEnum('payment_method', ['cash', 'bank_transfer', 'check', 'card', 'upi', 'other']);
+
+// Sales Orders schema - converted from approved quotations
+export const salesOrders = pgTable("sales_orders", {
+  id: serial("id").primaryKey(),
+  orderNumber: text("order_number").notNull().unique(),
+  quotationId: integer("quotation_id").notNull().references(() => quotations.id),
+  customerId: integer("customer_id").notNull().references(() => customers.id),
+  totalAmount: doublePrecision("total_amount").notNull(),
+  amountPaid: doublePrecision("amount_paid").notNull().default(0),
+  amountDue: doublePrecision("amount_due").notNull(),
+  status: orderStatusEnum("status").notNull().default('pending'),
+  paymentStatus: paymentStatusEnum("payment_status").notNull().default('unpaid'),
+  orderDate: timestamp("order_date").defaultNow().notNull(),
+  expectedDeliveryDate: timestamp("expected_delivery_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSalesOrderSchema = createInsertSchema(salesOrders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type SalesOrder = typeof salesOrders.$inferSelect;
+export type InsertSalesOrder = z.infer<typeof insertSalesOrderSchema>;
+
+// Payments schema - to track payments against sales orders
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  salesOrderId: integer("sales_order_id").notNull().references(() => salesOrders.id),
+  transactionId: text("transaction_id").notNull().unique(),
+  amount: doublePrecision("amount").notNull(),
+  paymentMethod: paymentMethodEnum("payment_method").notNull(),
+  paymentDate: timestamp("payment_date").defaultNow().notNull(),
+  notes: text("notes"),
+  receiptNumber: text("receipt_number").notNull().unique(),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+
+// Form validation schemas
+export const salesOrderFormSchema = z.object({
+  quotationId: z.number().min(1, "Quotation is required"),
+  expectedDeliveryDate: z.string().or(z.date()).optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
+export const paymentFormSchema = z.object({
+  salesOrderId: z.number().min(1, "Sales order is required"),
+  amount: z.number().min(0.01, "Amount must be greater than zero"),
+  paymentMethod: z.enum(['cash', 'bank_transfer', 'check', 'card', 'upi', 'other']),
+  paymentDate: z.string().or(z.date()),
+  notes: z.string().optional().nullable(),
 });
