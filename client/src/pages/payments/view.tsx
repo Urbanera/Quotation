@@ -142,81 +142,49 @@ export default function ViewPaymentPage() {
             <Button 
               variant="default" 
               onClick={() => {
-                // Open a new window for printing
-                const printWindow = window.open('', '_blank');
-                if (printWindow) {
-                  printWindow.document.write(`
-                    <html>
-                      <head>
-                        <title>Receipt ${payment.receiptNumber}</title>
-                        <style>
-                          body { font-family: Arial, sans-serif; padding: 20px; }
-                          .receipt { max-width: 800px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; }
-                          .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-                          .receipt-number { font-size: 24px; font-weight: bold; }
-                          .customer { margin-bottom: 20px; }
-                          .details { margin-bottom: 20px; }
-                          table { width: 100%; border-collapse: collapse; }
-                          th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-                          .amount { font-size: 20px; font-weight: bold; margin-top: 20px; }
-                          @media print {
-                            body { padding: 0; }
-                            button { display: none; }
-                          }
-                        </style>
-                      </head>
-                      <body>
-                        <div class="receipt">
-                          <div class="header">
-                            <div>
-                              <div class="receipt-number">Receipt #${payment.receiptNumber}</div>
-                              <div>Date: ${format(new Date(payment.paymentDate), 'dd MMM yyyy')}</div>
-                            </div>
-                            <div>
-                              <button onclick="window.print()">Print Receipt</button>
-                            </div>
-                          </div>
-                          <div class="customer">
-                            <h3>Customer</h3>
-                            <div>${customer?.name || 'Customer'}</div>
-                            <div>${customer?.email || ''}</div>
-                            <div>${customer?.phone || ''}</div>
-                            <div>${customer?.address || ''}</div>
-                          </div>
-                          <div class="details">
-                            <h3>Payment Details</h3>
-                            <table>
-                              <tr>
-                                <th>Transaction ID</th>
-                                <td>${payment.transactionId}</td>
-                              </tr>
-                              <tr>
-                                <th>Payment Method</th>
-                                <td>${payment.paymentMethod}</td>
-                              </tr>
-                              <tr>
-                                <th>Payment Type</th>
-                                <td>${payment.paymentType}</td>
-                              </tr>
-                              <tr>
-                                <th>Description</th>
-                                <td>${payment.description || '-'}</td>
-                              </tr>
-                            </table>
-                          </div>
-                          <div class="amount">
-                            Amount Paid: ${formatCurrency(payment.amount)}
-                          </div>
-                        </div>
-                      </body>
-                    </html>
-                  `);
-                  printWindow.document.close();
-                  // Trigger print dialog
-                  setTimeout(() => {
-                    printWindow.print();
-                  }, 500);
-                }
+                // Instead of creating our own print view, we'll render the PDF and print it
+                // We'll create a temporary iframe to hold the PDF renderer output
+                const renderPDF = async () => {
+                  try {
+                    // Import react-pdf renderer
+                    const { pdf } = await import('@react-pdf/renderer');
+                    
+                    // Generate the PDF blob from our PaymentReceipt component
+                    const blob = await pdf(
+                      <PaymentReceipt payment={payment} customer={customer} />
+                    ).toBlob();
+
+                    // Create a URL from the blob
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Open in a new window
+                    const printWindow = window.open(url, '_blank');
+                    
+                    if (printWindow) {
+                      // Wait for the PDF to load then print
+                      printWindow.addEventListener('load', () => {
+                        printWindow.print();
+                        URL.revokeObjectURL(url);
+                      });
+                    } else {
+                      URL.revokeObjectURL(url);
+                      toast({
+                        title: "Print Error",
+                        description: "Unable to open print window. Please check your browser settings.",
+                        variant: "destructive",
+                      });
+                    }
+                  } catch (error) {
+                    console.error("Error generating PDF for print:", error);
+                    toast({
+                      title: "Print Error",
+                      description: "Failed to generate the receipt for printing.",
+                      variant: "destructive",
+                    });
+                  }
+                };
+                
+                renderPDF();
               }}
             >
               <Printer className="mr-2 h-4 w-4" />
