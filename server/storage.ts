@@ -1072,12 +1072,64 @@ export class MemStorage implements IStorage {
     };
     
     this.customerPayments.set(id, newPayment);
+    
+    // Find any sales orders for this customer and update their payment status
+    await this.updateSalesOrdersForCustomerPayment(payment.customerId, payment.amount);
+    
     return newPayment;
+  }
+  
+  // Helper method to update sales orders when a customer payment is made
+  private async updateSalesOrdersForCustomerPayment(customerId: number, paymentAmount: number): Promise<void> {
+    // Get all sales orders for this customer that aren't fully paid
+    const salesOrders = Array.from(this.salesOrders.values())
+      .filter(order => 
+        order.customerId === customerId && 
+        order.paymentStatus !== 'paid'
+      )
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()); // Oldest first
+    
+    console.log(`Updating ${salesOrders.length} sales orders for customer ${customerId} with payment amount ${paymentAmount}`);
+    
+    // If no sales orders, nothing to update
+    if (salesOrders.length === 0) return;
+    
+    // Use the first sales order that isn't fully paid
+    const salesOrder = salesOrders[0];
+    console.log(`Applying payment to sales order ${salesOrder.id} (${salesOrder.orderNumber})`);
+    
+    // Get current payment amount
+    const currentAmountPaid = salesOrder.amountPaid || 0;
+    const totalAmount = salesOrder.totalAmount;
+    
+    // Calculate new payment amount
+    const newAmountPaid = Math.min(currentAmountPaid + paymentAmount, totalAmount);
+    const newAmountDue = Math.max(0, totalAmount - newAmountPaid);
+    
+    // Determine payment status
+    let paymentStatus: "unpaid" | "partially_paid" | "paid" = "unpaid";
+    if (newAmountPaid >= totalAmount) {
+      paymentStatus = "paid";
+    } else if (newAmountPaid > 0) {
+      paymentStatus = "partially_paid";
+    }
+    
+    console.log(`Updating payment amounts - Previous: ${currentAmountPaid}, New: ${newAmountPaid}, Due: ${newAmountDue}, Status: ${paymentStatus}`);
+    
+    // Update the sales order
+    await this.updateSalesOrder(salesOrder.id, {
+      amountPaid: newAmountPaid,
+      amountDue: newAmountDue,
+      paymentStatus
+    });
   }
   
   async updateCustomerPayment(id: number, payment: Partial<InsertCustomerPayment>): Promise<CustomerPayment | undefined> {
     const existingPayment = this.customerPayments.get(id);
     if (!existingPayment) return undefined;
+    
+    // Save the old amount for comparison
+    const oldAmount = existingPayment.amount;
     
     const updatedPayment: CustomerPayment = {
       ...existingPayment,
@@ -1086,6 +1138,53 @@ export class MemStorage implements IStorage {
     };
     
     this.customerPayments.set(id, updatedPayment);
+    
+    // If amount was changed, update associated sales orders
+    if (payment.amount !== undefined && payment.amount !== oldAmount) {
+      try {
+        const amountDifference = payment.amount - oldAmount;
+        
+        // Find any sales orders for this customer that aren't fully paid
+        const salesOrders = Array.from(this.salesOrders.values())
+          .filter(order => 
+            order.customerId === existingPayment.customerId && 
+            order.paymentStatus !== 'paid'
+          )
+          .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()); // Oldest first
+        
+        // If no sales orders, nothing to update
+        if (salesOrders.length > 0) {
+          const salesOrder = salesOrders[0];
+          console.log(`Updating sales order ${salesOrder.id} due to payment change. Old amount: ${oldAmount}, New amount: ${payment.amount}`);
+          
+          // Get current payment amount
+          const currentAmountPaid = salesOrder.amountPaid || 0;
+          const totalAmount = salesOrder.totalAmount;
+          
+          // Calculate new payment amount
+          const newAmountPaid = Math.max(0, currentAmountPaid + amountDifference);
+          const newAmountDue = Math.max(0, totalAmount - newAmountPaid);
+          
+          // Determine payment status
+          let paymentStatus: "unpaid" | "partially_paid" | "paid" = "unpaid";
+          if (newAmountPaid >= totalAmount) {
+            paymentStatus = "paid";
+          } else if (newAmountPaid > 0) {
+            paymentStatus = "partially_paid";
+          }
+          
+          // Update the sales order
+          await this.updateSalesOrder(salesOrder.id, {
+            amountPaid: newAmountPaid,
+            amountDue: newAmountDue,
+            paymentStatus
+          });
+        }
+      } catch (error) {
+        console.error("Error updating sales order after payment modification:", error);
+      }
+    }
+    
     return updatedPayment;
   }
   
@@ -1093,7 +1192,47 @@ export class MemStorage implements IStorage {
     const payment = this.customerPayments.get(id);
     if (!payment) return false;
     
-    return this.customerPayments.delete(id);
+    const result = this.customerPayments.delete(id);
+    
+    // Reverse the payment effect on sales orders if payment is deleted
+    if (result) {
+      try {
+        // Find the sales order for this customer
+        const salesOrders = Array.from(this.salesOrders.values())
+          .filter(order => order.customerId === payment.customerId)
+          .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        
+        if (salesOrders.length > 0) {
+          const salesOrder = salesOrders[0];
+          const currentAmountPaid = salesOrder.amountPaid || 0;
+          
+          // Only subtract if there's enough paid already
+          if (currentAmountPaid >= payment.amount) {
+            const newAmountPaid = currentAmountPaid - payment.amount;
+            const newAmountDue = salesOrder.totalAmount - newAmountPaid;
+            
+            // Determine payment status
+            let paymentStatus: "unpaid" | "partially_paid" | "paid" = "unpaid";
+            if (newAmountPaid >= salesOrder.totalAmount) {
+              paymentStatus = "paid";
+            } else if (newAmountPaid > 0) {
+              paymentStatus = "partially_paid";
+            }
+            
+            // Update the sales order
+            await this.updateSalesOrder(salesOrder.id, {
+              amountPaid: newAmountPaid,
+              amountDue: newAmountDue,
+              paymentStatus
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error updating sales order after payment deletion:", error);
+      }
+    }
+    
+    return result;
   }
 
   // Update quotation status
