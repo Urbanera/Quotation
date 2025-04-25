@@ -65,10 +65,27 @@ export default function ViewSalesOrder() {
   // Fetch the sales order with details
   const { 
     data: salesOrder, 
-    isLoading: isLoadingSalesOrder 
+    isLoading: isLoadingSalesOrder,
+    error
   } = useQuery<SalesOrderWithDetails>({
     queryKey: ["/api/sales-orders", orderId],
     enabled: !isNaN(orderId) && orderId > 0,
+    onError: (err) => {
+      console.error("Error fetching sales order:", err);
+    }
+  });
+
+  if (error) {
+    console.error("Error data:", error);
+  }
+  
+  // Separately fetch the customer data to ensure we have it
+  const { 
+    data: customer,
+    isLoading: isLoadingCustomer
+  } = useQuery<Customer>({
+    queryKey: ["/api/customers", salesOrder?.customerId],
+    enabled: !!salesOrder?.customerId
   });
 
   // Fetch customer payments separately (direct payments by customer, not tied to sales order)
@@ -78,14 +95,18 @@ export default function ViewSalesOrder() {
   } = useQuery<CustomerPayment[]>({
     queryKey: ["/api/customer-payments"],
     queryFn: async () => {
-      if (!salesOrder?.customer) return [];
-      const response = await fetch(`/api/customer-payments?customerId=${salesOrder.customer.id}`);
+      if (!salesOrder?.customerId) return [];
+      const response = await fetch(`/api/customer-payments?customerId=${salesOrder.customerId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch customer payments');
+      }
       return response.json();
     },
-    enabled: !!salesOrder?.customer?.id
+    enabled: !!salesOrder?.customerId
   });
 
   console.log("Sales Order:", salesOrder);
+  console.log("Customer Data:", customer);
   console.log("Customer Payments:", customerPayments);
 
   // Update order status mutation
@@ -130,7 +151,7 @@ export default function ViewSalesOrder() {
     }
   };
 
-  const isLoading = isLoadingSalesOrder || isLoadingCustomerPayments || updateStatusMutation.isPending;
+  const isLoading = isLoadingSalesOrder || isLoadingCustomer || isLoadingCustomerPayments || updateStatusMutation.isPending;
 
   if (isLoading) {
     return (
@@ -157,6 +178,16 @@ export default function ViewSalesOrder() {
       </div>
     );
   }
+
+  // Calculate financial values
+  const totalAmount = salesOrder.totalAmount || 0;
+  const amountPaid = salesOrder.amountPaid || 0;
+  const amountDue = totalAmount - amountPaid;
+
+  // Filter customer payments to only show those for this customer
+  const filteredCustomerPayments = customerPayments?.filter(
+    payment => payment.customerId === salesOrder.customerId
+  ) || [];
 
   return (
     <div className="container mx-auto py-6 space-y-8">
@@ -226,12 +257,12 @@ export default function ViewSalesOrder() {
                 </h3>
                 <div className="border rounded-md p-3 bg-gray-50">
                   {/* Display customer information */}
-                  {salesOrder.customer ? (
+                  {customer ? (
                     <>
-                      <p className="font-medium">{salesOrder.customer.name}</p>
-                      <p className="text-sm text-gray-500">{salesOrder.customer.email}</p>
-                      <p className="text-sm text-gray-500">{salesOrder.customer.phone}</p>
-                      <p className="text-sm text-gray-500 mt-1">{salesOrder.customer.address}</p>
+                      <p className="font-medium">{customer.name}</p>
+                      <p className="text-sm text-gray-500">{customer.email}</p>
+                      <p className="text-sm text-gray-500">{customer.phone}</p>
+                      <p className="text-sm text-gray-500 mt-1">{customer.address}</p>
                     </>
                   ) : (
                     <p className="text-muted-foreground">No customer information available</p>
@@ -258,15 +289,15 @@ export default function ViewSalesOrder() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Total Amount:</span>
-                <span className="font-medium">{formatCurrency(salesOrder.totalAmount || 0)}</span>
+                <span className="font-medium">{formatCurrency(totalAmount)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Amount Paid:</span>
-                <span className="font-medium text-green-600">{formatCurrency(salesOrder.amountPaid || 0)}</span>
+                <span className="font-medium text-green-600">{formatCurrency(amountPaid)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Amount Due:</span>
-                <span className="font-medium text-red-600">{formatCurrency((salesOrder.totalAmount || 0) - (salesOrder.amountPaid || 0))}</span>
+                <span className="font-medium text-red-600">{formatCurrency(amountDue)}</span>
               </div>
               
               <div className="pt-4 border-t">
@@ -305,13 +336,13 @@ export default function ViewSalesOrder() {
           <Card>
             <CardHeader>
               <CardTitle>Payment History</CardTitle>
-              {(!salesOrder.payments || salesOrder.payments.length === 0) && (!customerPayments || customerPayments.length === 0) && (
+              {(!salesOrder.payments || salesOrder.payments.length === 0) && (!filteredCustomerPayments || filteredCustomerPayments.length === 0) && (
                 <CardDescription>No payments recorded yet</CardDescription>
               )}
             </CardHeader>
             <CardContent>
               {/* Combine both payment types for display */}
-              {((salesOrder.payments && salesOrder.payments.length > 0) || (customerPayments && customerPayments.length > 0)) ? (
+              {((salesOrder.payments && salesOrder.payments.length > 0) || (filteredCustomerPayments && filteredCustomerPayments.length > 0)) ? (
                 <div className="space-y-8">
                   {/* Sales Order Payments */}
                   {salesOrder.payments && salesOrder.payments.length > 0 && (
@@ -350,8 +381,8 @@ export default function ViewSalesOrder() {
                     </div>
                   )}
                   
-                  {/* Customer Direct Payments */}
-                  {customerPayments && customerPayments.length > 0 && (
+                  {/* Customer Direct Payments - only show for this customer */}
+                  {filteredCustomerPayments && filteredCustomerPayments.length > 0 && (
                     <div>
                       <h3 className="text-lg font-medium mb-4">Customer Payments</h3>
                       <Table>
@@ -366,7 +397,7 @@ export default function ViewSalesOrder() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {customerPayments.map((payment) => (
+                          {filteredCustomerPayments.map((payment) => (
                             <TableRow key={payment.id}>
                               <TableCell>
                                 {payment.paymentDate ? format(new Date(payment.paymentDate), "dd MMM yyyy") : "N/A"}
