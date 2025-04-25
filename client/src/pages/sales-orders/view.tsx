@@ -76,6 +76,7 @@ export default function ViewSalesOrder() {
   const { data: customer, isLoading: isLoadingCustomer } = useQuery<Customer>({
     queryKey: ["/api/customers", salesOrder?.customerId],
     enabled: !!salesOrder?.customerId,
+    staleTime: 60000, // Ensure we don't refetch too often
   });
 
   // Fetch the quotation
@@ -84,10 +85,16 @@ export default function ViewSalesOrder() {
     enabled: !!salesOrder?.quotationId,
   });
 
-  // Fetch payments
-  const { data: payments, isLoading: isLoadingPayments } = useQuery<Payment[]>({
+  // Fetch sales order payments
+  const { data: orderPayments, isLoading: isLoadingOrderPayments } = useQuery<Payment[]>({
     queryKey: ["/api/sales-orders", orderId, "payments"],
     enabled: !isNaN(orderId),
+  });
+  
+  // Fetch customer payments (by customer ID)
+  const { data: customerPayments, isLoading: isLoadingCustomerPayments } = useQuery<Payment[]>({
+    queryKey: ["/api/customers", salesOrder?.customerId, "payments"],
+    enabled: !!salesOrder?.customerId,
   });
 
   // Update order status mutation
@@ -132,7 +139,7 @@ export default function ViewSalesOrder() {
     }
   };
 
-  const isLoading = isLoadingOrder || isLoadingCustomer || isLoadingQuotation || isLoadingPayments;
+  const isLoading = isLoadingOrder || isLoadingCustomer || isLoadingQuotation || isLoadingOrderPayments || isLoadingCustomerPayments;
 
   if (isLoading) {
     return (
@@ -300,42 +307,88 @@ export default function ViewSalesOrder() {
           <Card>
             <CardHeader>
               <CardTitle>Payment History</CardTitle>
-              {payments && payments.length === 0 && (
+              {(!orderPayments || orderPayments.length === 0) && (!customerPayments || customerPayments.length === 0) && (
                 <CardDescription>No payments recorded yet</CardDescription>
               )}
             </CardHeader>
             <CardContent>
-              {payments && payments.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Receipt Number</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Transaction ID</TableHead>
-                      <TableHead>Notes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {payments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>
-                          {payment.paymentDate ? format(new Date(payment.paymentDate), "dd MMM yyyy") : "N/A"}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {payment.receiptNumber}
-                        </TableCell>
-                        <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                        <TableCell>{getPaymentMethodLabel(payment.paymentMethod)}</TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {payment.transactionId}
-                        </TableCell>
-                        <TableCell>{payment.notes}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              {/* Combine both payment types for display */}
+              {((orderPayments && orderPayments.length > 0) || (customerPayments && customerPayments.length > 0)) ? (
+                <div className="space-y-8">
+                  {/* Sales Order Payments */}
+                  {orderPayments && orderPayments.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Sales Order Payments</h3>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Receipt Number</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Method</TableHead>
+                            <TableHead>Transaction ID</TableHead>
+                            <TableHead>Notes</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {orderPayments.map((payment) => (
+                            <TableRow key={payment.id}>
+                              <TableCell>
+                                {payment.paymentDate ? format(new Date(payment.paymentDate), "dd MMM yyyy") : "N/A"}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {payment.receiptNumber}
+                              </TableCell>
+                              <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                              <TableCell>{getPaymentMethodLabel(payment.paymentMethod)}</TableCell>
+                              <TableCell className="font-mono text-xs">
+                                {payment.transactionId}
+                              </TableCell>
+                              <TableCell>{payment.notes}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                  
+                  {/* Customer Direct Payments */}
+                  {customerPayments && customerPayments.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Customer Payments</h3>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Receipt Number</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Method</TableHead>
+                            <TableHead>Transaction ID</TableHead>
+                            <TableHead>Description</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {customerPayments.map((payment) => (
+                            <TableRow key={payment.id}>
+                              <TableCell>
+                                {payment.paymentDate ? format(new Date(payment.paymentDate), "dd MMM yyyy") : "N/A"}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {payment.receiptNumber}
+                              </TableCell>
+                              <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                              <TableCell>{getPaymentMethodLabel(payment.paymentMethod)}</TableCell>
+                              <TableCell className="font-mono text-xs">
+                                {payment.transactionId}
+                              </TableCell>
+                              <TableCell>{payment.description || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <CreditCard className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
