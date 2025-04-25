@@ -33,6 +33,16 @@ export default function QuotationSummary({
     queryKey: [`/api/quotations/${quotationId}`],
     enabled: !!quotationId,
   });
+  
+  // Log for debugging
+  useEffect(() => {
+    if (quotation) {
+      console.log('Quotation data:', quotation);
+      console.log('Rooms data:', quotation.rooms);
+      console.log('Rooms with installation charges:', 
+        quotation.rooms?.filter(room => room.installationCharges && room.installationCharges.length > 0));
+    }
+  }, [quotation]);
 
   // Input change handlers
   const handleInstallationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,10 +67,18 @@ export default function QuotationSummary({
   };
 
   // Fetch installation charges for all rooms in the quotation
-  const { data: roomInstallationCharges = [], refetch: refetchInstallationCharges } = useQuery<{roomId: number, charges: InstallationCharge[]}[]>({
+  const { data: roomInstallationCharges = [], refetch: refetchInstallationCharges, isError, error } = useQuery<{roomId: number, charges: InstallationCharge[]}[]>({
     queryKey: [`/api/quotations/${quotationId}/installation-charges`],
     enabled: !!quotationId && !!quotation?.rooms?.length,
   });
+  
+  // Log for debugging
+  useEffect(() => {
+    console.log('Room installation charges data:', roomInstallationCharges);
+    if (isError) {
+      console.error('Error fetching installation charges:', error);
+    }
+  }, [roomInstallationCharges, isError, error]);
   
   // Refetch installation charges whenever quotation data changes
   useEffect(() => {
@@ -70,6 +88,26 @@ export default function QuotationSummary({
   }, [quotationId, quotation, refetchInstallationCharges]);
 
   const getTotalInstallationCharges = () => {
+    // First try to use the installation charges from the room data directly
+    if (quotation?.rooms && quotation.rooms.length > 0) {
+      let totalAmount = 0;
+      
+      for (const room of quotation.rooms) {
+        if (room.installationCharges && room.installationCharges.length > 0) {
+          for (const charge of room.installationCharges) {
+            const amount = typeof charge.amount === 'number' 
+              ? charge.amount 
+              : parseFloat(String(charge.amount));
+            totalAmount += amount;
+          }
+        }
+      }
+      
+      console.log('Total installation charges from room data:', totalAmount);
+      return totalAmount;
+    }
+    
+    // Fall back to the installation charges from the API endpoint
     if (!roomInstallationCharges.length) return 0;
     
     // Get all charges from all rooms
@@ -85,6 +123,7 @@ export default function QuotationSummary({
       }
     }
     
+    console.log('Total installation charges from API endpoint:', totalAmount);
     return totalAmount;
   };
 
