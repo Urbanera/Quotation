@@ -78,7 +78,10 @@ export default function QuotationSummary({
     for (const roomData of roomInstallationCharges) {
       // Sum up all charges for this room
       for (const charge of roomData.charges) {
-        totalAmount += charge.amount;
+        const amount = typeof charge.amount === 'number' 
+          ? charge.amount 
+          : parseFloat(String(charge.amount));
+        totalAmount += amount;
       }
     }
     

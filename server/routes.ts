@@ -672,6 +672,31 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  // Get all installation charges for a quotation
+  app.get("/api/quotations/:quotationId/installation-charges", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.quotationId);
+      
+      // First, get all rooms for this quotation
+      const rooms = await storage.getRooms(quotationId);
+      
+      // For each room, get its installation charges
+      const roomsWithCharges = await Promise.all(
+        rooms.map(async (room) => {
+          const charges = await storage.getInstallationCharges(room.id);
+          return {
+            roomId: room.id,
+            charges
+          };
+        })
+      );
+      
+      res.json(roomsWithCharges);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch installation charges" });
+    }
+  });
+
   // Image routes
   app.get("/api/rooms/:roomId/images", async (req, res) => {
     try {
