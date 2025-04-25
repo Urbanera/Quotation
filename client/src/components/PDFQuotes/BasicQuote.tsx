@@ -14,7 +14,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
   });
 
   // Format currency
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number = 0) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
@@ -24,13 +24,54 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
 
   // Format date
   const formatDate = (dateString: string | Date) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-IN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date);
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }).format(date);
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
+
+  // Safe access to quotation fields
+  const safeQuotation = {
+    id: quotation?.id || 0,
+    createdAt: quotation?.createdAt || new Date(),
+    totalSellingPrice: quotation?.totalSellingPrice || 0,
+    globalDiscount: quotation?.globalDiscount || 0,
+    installationHandling: quotation?.installationHandling || 0,
+    gstPercentage: quotation?.gstPercentage || 0,
+    customer: quotation?.customer || null,
+    rooms: quotation?.rooms || []
+  };
+
+  // Calculate total installation charges safely
+  const calculateInstallationCharges = () => {
+    let totalInstallCharges = 0;
+    
+    if (Array.isArray(safeQuotation.rooms)) {
+      for (const room of safeQuotation.rooms) {
+        if (room?.installationCharges && Array.isArray(room.installationCharges)) {
+          for (const charge of room.installationCharges) {
+            totalInstallCharges += charge?.amount || 0;
+          }
+        }
+      }
+    }
+    
+    return totalInstallCharges + safeQuotation.installationHandling;
+  };
+
+  // Calculations
+  const totalWithHandling = calculateInstallationCharges();
+  const discountedTotal = safeQuotation.globalDiscount > 0
+    ? Math.round(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))
+    : safeQuotation.totalSellingPrice;
+  const gstAmount = Math.round((discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100));
+  const finalPrice = discountedTotal + totalWithHandling + gstAmount;
 
   // Default company name if settings not loaded
   const companyName = companySettings?.name || "DesignQuotes";
@@ -50,8 +91,8 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
         </div>
         <div className="text-right">
           <h2 className="text-xl font-bold">QUOTATION</h2>
-          <p className="text-gray-600">#{quotation.id}</p>
-          <p className="text-gray-600">Date: {formatDate(quotation.createdAt)}</p>
+          <p className="text-gray-600">#{safeQuotation.id}</p>
+          <p className="text-gray-600">Date: {formatDate(safeQuotation.createdAt)}</p>
         </div>
       </div>
 
@@ -66,12 +107,12 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
         </div>
         <div>
           <h3 className="text-md font-semibold mb-2 text-gray-700">To:</h3>
-          {quotation.customer ? (
+          {safeQuotation.customer ? (
             <>
-              <p className="font-semibold">{quotation.customer.name || 'N/A'}</p>
-              <p>{quotation.customer.address || 'N/A'}</p>
-              <p>{quotation.customer.email || 'N/A'}</p>
-              <p>{quotation.customer.phone || 'N/A'}</p>
+              <p className="font-semibold">{safeQuotation.customer.name || 'N/A'}</p>
+              <p>{safeQuotation.customer.address || 'N/A'}</p>
+              <p>{safeQuotation.customer.email || 'N/A'}</p>
+              <p>{safeQuotation.customer.phone || 'N/A'}</p>
             </>
           ) : (
             <p className="italic text-gray-500">No customer information available</p>
@@ -93,150 +134,106 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                   Selling Price
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {quotation.globalDiscount > 0 
-                    ? `Discounted Price (Incl. ${quotation.globalDiscount}% Discount)` 
+                  {safeQuotation.globalDiscount > 0 
+                    ? `Discounted Price (Incl. ${safeQuotation.globalDiscount}% Discount)` 
                     : "Discounted Price"}
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {quotation.rooms?.map((room) => {
-                // Calculate the discounted price with global discount applied
-                const calculatedDiscountedPrice = quotation.globalDiscount > 0
-                  ? room.sellingPrice - (room.sellingPrice * quotation.globalDiscount / 100)
-                  : room.sellingPrice;
-                
-                return (
-                  <tr key={room.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {room.name.toUpperCase()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                      {formatCurrency(room.sellingPrice)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {quotation.globalDiscount > 0 ? (
-                        <span className="text-indigo-600 font-medium">
-                          {formatCurrency(Math.round(calculatedDiscountedPrice))}
-                        </span>
-                      ) : (
-                        <>{formatCurrency(room.sellingPrice)}</>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {Array.isArray(safeQuotation.rooms) && safeQuotation.rooms.length > 0 ? (
+                safeQuotation.rooms.map((room) => {
+                  if (!room) return null;
+                  
+                  // Calculate the discounted price with global discount applied
+                  const roomSellingPrice = room.sellingPrice || 0;
+                  const calculatedDiscountedPrice = safeQuotation.globalDiscount > 0
+                    ? roomSellingPrice - (roomSellingPrice * safeQuotation.globalDiscount / 100)
+                    : roomSellingPrice;
+                  
+                  return (
+                    <tr key={room.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {(room.name || 'Unnamed Room').toUpperCase()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                        {formatCurrency(roomSellingPrice)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {safeQuotation.globalDiscount > 0 ? (
+                          <span className="text-indigo-600 font-medium">
+                            {formatCurrency(Math.round(calculatedDiscountedPrice))}
+                          </span>
+                        ) : (
+                          <>{formatCurrency(roomSellingPrice)}</>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
+                    No rooms available for this quotation
+                  </td>
+                </tr>
+              )}
               
               <tr className="bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   Total Of All Items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                  {formatCurrency(quotation.totalSellingPrice)}
+                  {formatCurrency(safeQuotation.totalSellingPrice)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
-                  {quotation.globalDiscount > 0 ? (
+                  {safeQuotation.globalDiscount > 0 ? (
                     <span className="text-indigo-600 font-medium">
-                      {formatCurrency(Math.round(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100)))}
+                      {formatCurrency(Math.round(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100)))}
                     </span>
                   ) : (
-                    <>{formatCurrency(quotation.totalSellingPrice)}</>
+                    <>{formatCurrency(safeQuotation.totalSellingPrice)}</>
                   )}
                 </td>
               </tr>
               
-
-              
               {/* Installation and handling charges */}
-              {(() => {
-                // Get total installation charges from all rooms - make sure to handle undefined
-                let totalInstallCharges = 0;
-                
-                // Loop through each room
-                for (const room of quotation.rooms) {
-                  // If room has installation charges, add them all up
-                  if (room.installationCharges && room.installationCharges.length > 0) {
-                    for (const charge of room.installationCharges) {
-                      totalInstallCharges += charge.amount;
-                    }
-                  }
-                }
-                
-                // Add handling charges
-                const totalWithHandling = totalInstallCharges + quotation.installationHandling;
-                
-                return (
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      Installation and Handling
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatCurrency(totalWithHandling)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatCurrency(totalWithHandling)}
-                    </td>
-                  </tr>
-                );
-              })()}
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  Installation and Handling
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  {formatCurrency(totalWithHandling)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  {formatCurrency(totalWithHandling)}
+                </td>
+              </tr>
               
-              {(() => {
-                // Calculate the discounted total
-                const discountedTotal = quotation.globalDiscount > 0
-                  ? Math.round(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))
-                  : quotation.totalSellingPrice;
-                
-                // Calculate installation charges the same way as above
-                let totalInstallCharges = 0;
-                
-                // Loop through each room
-                for (const room of quotation.rooms) {
-                  // If room has installation charges, add them all up
-                  if (room.installationCharges && room.installationCharges.length > 0) {
-                    for (const charge of room.installationCharges) {
-                      totalInstallCharges += charge.amount;
-                    }
-                  }
-                }
-                
-                // Add handling charges
-                const totalWithHandling = totalInstallCharges + quotation.installationHandling;
-                
-                // Calculate GST based on discounted total + installation/handling
-                const gstAmount = Math.round((discountedTotal + totalWithHandling) * (quotation.gstPercentage / 100));
-                
-                // Calculate final price
-                const finalPrice = discountedTotal + totalWithHandling + gstAmount;
-                
-                return (
-                  <>
-                    <tr>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        GST {quotation.gstPercentage}%
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {formatCurrency(Math.round((quotation.totalSellingPrice + totalWithHandling) * (quotation.gstPercentage / 100)))}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {formatCurrency(gstAmount)}
-                      </td>
-                    </tr>
-                    
-                    <tr className="bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        Final Price
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                        {formatCurrency(quotation.totalSellingPrice + totalWithHandling + 
-                          Math.round((quotation.totalSellingPrice + totalWithHandling) * (quotation.gstPercentage / 100)))}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
-                        {formatCurrency(finalPrice)}
-                      </td>
-                    </tr>
-                  </>
-                );
-              })()}
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  GST {safeQuotation.gstPercentage}%
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  {formatCurrency(Math.round((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  {formatCurrency(gstAmount)}
+                </td>
+              </tr>
+                  
+              <tr className="bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                  Final Price
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
+                  {formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + 
+                    Math.round((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
+                  {formatCurrency(finalPrice)}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -259,7 +256,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       <div className="mt-12 pt-6 border-t text-center text-sm text-gray-500">
         <p>Thank you for your business!</p>
         <p>For any queries, please contact us at {companySettings?.email || "support@designquotes.com"} 
-        {companySettings?.phone && `or call ${companySettings.phone}`}</p>
+        {companySettings?.phone && ` or call ${companySettings.phone}`}</p>
         {companySettings?.website && <p>{companySettings.website}</p>}
       </div>
     </div>
