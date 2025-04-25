@@ -2034,11 +2034,12 @@ export class MemStorage implements IStorage {
     const gstAmount = subtotal * (quotation.gstPercentage / 100);
     const finalPrice = subtotal + gstAmount;
     
-    // Update quotation
+    // Update quotation with the totalInstallationCharges
     this.quotations.set(quotationId, {
       ...quotation,
       totalSellingPrice,
       totalDiscountedPrice,
+      totalInstallationCharges, // Store the total installation charges
       gstAmount,
       finalPrice,
       updatedAt: new Date()
