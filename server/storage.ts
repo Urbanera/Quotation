@@ -136,7 +136,7 @@ export interface IStorage {
   getSalesOrderByQuotation(quotationId: number): Promise<SalesOrder | undefined>;
   getSalesOrderWithDetails(id: number): Promise<SalesOrder & { 
     customer: Customer, 
-    quotation: Quotation, 
+    quotation: QuotationWithDetails, 
     payments: Payment[] 
   } | undefined>;
   createSalesOrderFromQuotation(quotationId: number, data?: Partial<InsertSalesOrder>): Promise<SalesOrder>;

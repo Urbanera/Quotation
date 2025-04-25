@@ -51,6 +51,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// Define RoomWithItems for the QuotationWithDetails
+interface RoomWithItems {
+  id: number;
+  name: string;
+  quotationId: number;
+  products: Product[];
+  accessories: Accessory[];
+  images: Image[];
+  installationCharges: InstallationCharge[];
+  order: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Define QuotationWithDetails to match server response
+interface QuotationWithDetails extends Quotation {
+  customer: Customer;
+  rooms: RoomWithItems[];
+}
+
+// Define SalesOrderResponse type to match the server response
 interface SalesOrderResponse {
   id: number;
   orderNumber: string;
@@ -65,7 +86,7 @@ interface SalesOrderResponse {
   expectedDeliveryDate: string;
   notes: string;
   customer: Customer;
-  quotation: Quotation;
+  quotation: QuotationWithDetails;
   payments: Payment[];
 }
 

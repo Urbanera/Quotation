@@ -51,23 +51,56 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type SalesOrderWithDetails = SalesOrder & {
+// Define RoomWithItems for the QuotationWithDetails
+interface RoomWithItems {
+  id: number;
+  name: string;
+  quotationId: number;
+  products: Product[];
+  accessories: Accessory[];
+  images: Image[];
+  installationCharges: InstallationCharge[];
+  order: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Define QuotationWithDetails to match server response
+interface QuotationWithDetails extends Quotation {
   customer: Customer;
-  quotation: Quotation;
+  rooms: RoomWithItems[];
+}
+
+// Define SalesOrderResponse type to match the server response
+interface SalesOrderResponse {
+  id: number;
+  orderNumber: string;
+  customerId: number;
+  quotationId: number;
+  totalAmount: number;
+  amountPaid: number;
+  amountDue: number;
+  status: string;
+  paymentStatus: string;
+  orderDate: string;
+  expectedDeliveryDate: string;
+  notes: string;
+  customer: Customer;
+  quotation: QuotationWithDetails;
   payments: Payment[];
-};
+}
 
 export default function ViewSalesOrder() {
   const { id } = useParams();
   const orderId = parseInt(id || "0");
   const { toast } = useToast();
 
-  // Direct fetch approach to debug issues
+  // Fetch the sales order with all details
   const { 
     data: salesOrder, 
-    isLoading: isLoadingSalesOrder,
-    error
-  } = useQuery({
+    isLoading: isLoadingSalesOrder, 
+    error 
+  } = useQuery<SalesOrderResponse>({
     queryKey: ["/api/sales-orders", orderId],
     queryFn: async () => {
       console.log("Fetching sales order data for ID:", orderId);
@@ -84,11 +117,11 @@ export default function ViewSalesOrder() {
     enabled: !isNaN(orderId) && orderId > 0,
   });
 
-  // Fetch customer payments separately (direct payments by customer, not tied to sales order)
+  // Fetch direct customer payments for this customer
   const { 
     data: customerPayments = [], 
     isLoading: isLoadingCustomerPayments 
-  } = useQuery({
+  } = useQuery<CustomerPayment[]>({
     queryKey: ["/api/customer-payments"],
     queryFn: async () => {
       if (!salesOrder?.customerId) return [];
@@ -98,14 +131,11 @@ export default function ViewSalesOrder() {
         throw new Error('Failed to fetch customer payments');
       }
       const data = await response.json();
-      console.log("Customer payments:", data);
+      console.log("Customer payments data:", data);
       return data;
     },
     enabled: !!salesOrder?.customerId
   });
-
-  console.log("Sales Order in component:", salesOrder);
-  console.log("Customer Payments in component:", customerPayments);
 
   // Update order status mutation
   const updateStatusMutation = useMutation({
@@ -125,10 +155,10 @@ export default function ViewSalesOrder() {
       queryClient.invalidateQueries({ queryKey: ["/api/sales-orders", orderId] });
       queryClient.invalidateQueries({ queryKey: ["/api/sales-orders"] });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to update order status",
+        description: "Failed to update order status: " + error.message,
         variant: "destructive",
       });
     },
@@ -160,13 +190,12 @@ export default function ViewSalesOrder() {
   }
 
   if (error) {
-    console.error("Error loading sales order:", error);
     return (
       <div className="container mx-auto py-8">
         <div className="text-center">
           <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Error Loading Sales Order</h2>
-          <p className="mb-4">There was an error loading the sales order data: {error.message}</p>
+          <p className="mb-4">There was an error loading the sales order data: {String(error)}</p>
           <Link href="/sales-orders">
             <Button>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -196,17 +225,10 @@ export default function ViewSalesOrder() {
     );
   }
 
-  // Calculate financial values
-  const totalAmount = salesOrder.totalAmount || 0;
-  const amountPaid = salesOrder.amountPaid || 0;
-  const amountDue = salesOrder.amountDue || (totalAmount - amountPaid);
-
-  // Filter customer payments to only show those for this customer
+  // Filter customer payments to show only those for this customer
   const filteredCustomerPayments = customerPayments?.filter(
     payment => payment.customerId === salesOrder.customerId
   ) || [];
-
-  const customer = salesOrder.customer;
 
   return (
     <div className="container mx-auto py-6 space-y-8">
@@ -255,19 +277,27 @@ export default function ViewSalesOrder() {
                 <h3 className="text-sm font-medium text-gray-500 flex items-center gap-1">
                   <FileText className="h-4 w-4" /> Quotation
                 </h3>
-                <p className="mt-1">{salesOrder.quotation?.quotationNumber || salesOrder.quotationId || "N/A"}</p>
+                <p className="mt-1">
+                  {salesOrder.quotation?.quotationNumber || `#${salesOrder.quotationId}` || "N/A"}
+                </p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 flex items-center gap-1">
                   <Calendar className="h-4 w-4" /> Order Date
                 </h3>
-                <p className="mt-1">{salesOrder.orderDate ? format(new Date(salesOrder.orderDate), "dd MMM yyyy") : "N/A"}</p>
+                <p className="mt-1">
+                  {salesOrder.orderDate ? format(new Date(salesOrder.orderDate), "dd MMM yyyy") : "N/A"}
+                </p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 flex items-center gap-1">
                   <TruckIcon className="h-4 w-4" /> Expected Delivery
                 </h3>
-                <p className="mt-1">{salesOrder.expectedDeliveryDate ? format(new Date(salesOrder.expectedDeliveryDate), "dd MMM yyyy") : "N/A"}</p>
+                <p className="mt-1">
+                  {salesOrder.expectedDeliveryDate 
+                    ? format(new Date(salesOrder.expectedDeliveryDate), "dd MMM yyyy") 
+                    : "N/A"}
+                </p>
               </div>
               
               <div className="col-span-2 md:col-span-3">
@@ -276,12 +306,12 @@ export default function ViewSalesOrder() {
                 </h3>
                 <div className="border rounded-md p-3 bg-gray-50">
                   {/* Display customer information */}
-                  {customer ? (
+                  {salesOrder.customer ? (
                     <>
-                      <p className="font-medium">{customer.name}</p>
-                      <p className="text-sm text-gray-500">{customer.email}</p>
-                      <p className="text-sm text-gray-500">{customer.phone}</p>
-                      <p className="text-sm text-gray-500 mt-1">{customer.address}</p>
+                      <p className="font-medium">{salesOrder.customer.name}</p>
+                      <p className="text-sm text-gray-500">{salesOrder.customer.email}</p>
+                      <p className="text-sm text-gray-500">{salesOrder.customer.phone}</p>
+                      <p className="text-sm text-gray-500 mt-1">{salesOrder.customer.address}</p>
                     </>
                   ) : (
                     <p className="text-muted-foreground">No customer information available</p>
@@ -308,15 +338,15 @@ export default function ViewSalesOrder() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Total Amount:</span>
-                <span className="font-medium">{formatCurrency(totalAmount)}</span>
+                <span className="font-medium">{formatCurrency(salesOrder.totalAmount || 0)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Amount Paid:</span>
-                <span className="font-medium text-green-600">{formatCurrency(amountPaid)}</span>
+                <span className="font-medium text-green-600">{formatCurrency(salesOrder.amountPaid || 0)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Amount Due:</span>
-                <span className="font-medium text-red-600">{formatCurrency(amountDue)}</span>
+                <span className="font-medium text-red-600">{formatCurrency(salesOrder.amountDue || 0)}</span>
               </div>
               
               <div className="pt-4 border-t">
@@ -355,13 +385,15 @@ export default function ViewSalesOrder() {
           <Card>
             <CardHeader>
               <CardTitle>Payment History</CardTitle>
-              {(!salesOrder.payments || salesOrder.payments.length === 0) && (!filteredCustomerPayments || filteredCustomerPayments.length === 0) && (
+              {(!salesOrder.payments || salesOrder.payments.length === 0) && 
+               (!filteredCustomerPayments || filteredCustomerPayments.length === 0) && (
                 <CardDescription>No payments recorded yet</CardDescription>
               )}
             </CardHeader>
             <CardContent>
               {/* Combine both payment types for display */}
-              {((salesOrder.payments && salesOrder.payments.length > 0) || (filteredCustomerPayments && filteredCustomerPayments.length > 0)) ? (
+              {((salesOrder.payments && salesOrder.payments.length > 0) || 
+                (filteredCustomerPayments && filteredCustomerPayments.length > 0)) ? (
                 <div className="space-y-8">
                   {/* Sales Order Payments */}
                   {salesOrder.payments && salesOrder.payments.length > 0 && (
@@ -382,7 +414,9 @@ export default function ViewSalesOrder() {
                           {salesOrder.payments.map((payment) => (
                             <TableRow key={payment.id}>
                               <TableCell>
-                                {payment.paymentDate ? format(new Date(payment.paymentDate), "dd MMM yyyy") : "N/A"}
+                                {payment.paymentDate 
+                                  ? format(new Date(payment.paymentDate), "dd MMM yyyy") 
+                                  : "N/A"}
                               </TableCell>
                               <TableCell className="font-medium">
                                 {payment.receiptNumber}
@@ -419,7 +453,9 @@ export default function ViewSalesOrder() {
                           {filteredCustomerPayments.map((payment) => (
                             <TableRow key={payment.id}>
                               <TableCell>
-                                {payment.paymentDate ? format(new Date(payment.paymentDate), "dd MMM yyyy") : "N/A"}
+                                {payment.paymentDate 
+                                  ? format(new Date(payment.paymentDate), "dd MMM yyyy") 
+                                  : "N/A"}
                               </TableCell>
                               <TableCell className="font-medium">
                                 {payment.receiptNumber}
@@ -452,7 +488,9 @@ export default function ViewSalesOrder() {
           <Card>
             <CardHeader>
               <CardTitle>Order Items</CardTitle>
-              <CardDescription>Items from Quotation {salesOrder.quotation?.quotationNumber || "N/A"}</CardDescription>
+              <CardDescription>
+                Items from Quotation {salesOrder.quotation?.quotationNumber || "N/A"}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {salesOrder.quotation?.rooms && salesOrder.quotation.rooms.length > 0 ? (
