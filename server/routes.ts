@@ -1489,6 +1489,18 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status value" });
       }
       
+      // Check if quotation is already converted - don't allow status changes for converted quotations
+      const existingQuotation = await storage.getQuotation(id);
+      if (!existingQuotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      
+      if (existingQuotation.status === "converted") {
+        return res.status(400).json({ 
+          message: "Cannot update status of a quotation that has already been converted to a sales order or invoice" 
+        });
+      }
+      
       const quotation = await storage.updateQuotationStatus(id, status);
       if (!quotation) {
         return res.status(404).json({ message: "Quotation not found" });
@@ -1512,7 +1524,26 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       }
       
       if (quotation.status === "converted") {
-        return res.status(400).json({ message: "Quotation is already converted to a sales order" });
+        // Check if it's been converted to an invoice
+        const existingInvoice = await storage.getInvoiceByQuotation(quotationId);
+        if (existingInvoice) {
+          return res.status(400).json({ 
+            message: "Quotation has already been converted to an invoice",
+            invoiceId: existingInvoice.id
+          });
+        }
+        
+        // Check if it's been converted to a sales order
+        const salesOrders = await storage.getSalesOrders();
+        const existingSalesOrder = salesOrders.find(so => so.quotationId === quotationId);
+        if (existingSalesOrder) {
+          return res.status(400).json({ 
+            message: "Quotation has already been converted to a sales order",
+            salesOrderId: existingSalesOrder.id
+          });
+        }
+        
+        return res.status(400).json({ message: "Quotation has already been converted" });
       }
       
       // Check if quotation is approved
@@ -1585,7 +1616,22 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       // Check if quotation is already converted to an invoice
       const existingInvoice = await storage.getInvoiceByQuotation(quotationId);
       if (existingInvoice) {
-        return res.status(400).json({ message: "Quotation is already converted to an invoice" });
+        return res.status(400).json({ 
+          message: "Quotation is already converted to an invoice", 
+          invoiceId: existingInvoice.id 
+        });
+      }
+      
+      // Check if quotation has been converted to a sales order
+      if (quotation.status === "converted") {
+        const salesOrders = await storage.getSalesOrders();
+        const existingSalesOrder = salesOrders.find(so => so.quotationId === quotationId);
+        if (existingSalesOrder) {
+          return res.status(400).json({ 
+            message: "Quotation has already been converted to a sales order",
+            salesOrderId: existingSalesOrder.id 
+          });
+        }
       }
       
       // Check if quotation is approved
