@@ -565,6 +565,41 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 
+// Invoice status enum
+export const invoiceStatusEnum = pgEnum('invoice_status', ['pending', 'paid', 'partially_paid', 'overdue', 'cancelled']);
+
+// Invoices schema - converted from approved quotations
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  quotationId: integer("quotation_id").notNull().references(() => quotations.id),
+  customerId: integer("customer_id").notNull().references(() => customers.id),
+  totalAmount: doublePrecision("total_amount").notNull(),
+  amountPaid: doublePrecision("amount_paid").notNull().default(0),
+  amountDue: doublePrecision("amount_due").notNull(),
+  status: invoiceStatusEnum("status").notNull().default('pending'),
+  dueDate: timestamp("due_date").notNull(),
+  invoiceDate: timestamp("invoice_date").defaultNow().notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+
+export const invoiceFormSchema = z.object({
+  quotationId: z.number().min(1, "Quotation is required"),
+  dueDate: z.string().or(z.date()),
+  notes: z.string().optional().nullable(),
+});
+
 // Form validation schemas
 export const salesOrderFormSchema = z.object({
   quotationId: z.number().min(1, "Quotation is required"),
