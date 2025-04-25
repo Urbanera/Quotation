@@ -245,6 +245,7 @@ export class MemStorage implements IStorage {
       this.salesOrders = instance.salesOrders;
       this.payments = instance.payments;
       this.customerPayments = instance.customerPayments;
+      this.invoices = instance.invoices;
       
       this.companySettings = instance.companySettings;
       this.appSettings = instance.appSettings;
@@ -265,8 +266,9 @@ export class MemStorage implements IStorage {
       this.salesOrderIdCounter = instance.salesOrderIdCounter;
       this.paymentIdCounter = instance.paymentIdCounter;
       this.customerPaymentIdCounter = instance.customerPaymentIdCounter;
+      this.invoiceIdCounter = instance.invoiceIdCounter;
       
-      console.log(`Restored data with ${this.customers.size} customers, ${this.salesOrders.size} sales orders, ${this.customerPayments.size} customer payments`);
+      console.log(`Restored data with ${this.customers.size} customers, ${this.salesOrders.size} sales orders, ${this.customerPayments.size} customer payments, ${this.invoices.size} invoices`);
       
       return;
     }
@@ -2353,6 +2355,125 @@ export class MemStorage implements IStorage {
     
     this.milestones.set(id, updatedMilestone);
     return updatedMilestone;
+  }
+
+  // Invoice operations
+  async getInvoices(): Promise<Invoice[]> {
+    return Array.from(this.invoices.values());
+  }
+
+  async getInvoicesByCustomer(customerId: number): Promise<Invoice[]> {
+    return Array.from(this.invoices.values())
+      .filter(invoice => invoice.customerId === customerId);
+  }
+
+  async getInvoice(id: number): Promise<Invoice | undefined> {
+    return this.invoices.get(id);
+  }
+
+  async getInvoiceByQuotation(quotationId: number): Promise<Invoice | undefined> {
+    return Array.from(this.invoices.values())
+      .find(invoice => invoice.quotationId === quotationId);
+  }
+
+  async getInvoiceWithDetails(id: number): Promise<Invoice & { 
+    customer: Customer, 
+    quotation: QuotationWithDetails 
+  } | undefined> {
+    const invoice = this.invoices.get(id);
+    if (!invoice) return undefined;
+    
+    const customer = await this.getCustomer(invoice.customerId);
+    if (!customer) return undefined;
+    
+    const quotation = await this.getQuotationWithDetails(invoice.quotationId);
+    if (!quotation) return undefined;
+    
+    return {
+      ...invoice,
+      customer,
+      quotation
+    };
+  }
+
+  async createInvoiceFromQuotation(quotationId: number, data?: Partial<InsertInvoice>): Promise<Invoice> {
+    const quotation = await this.getQuotationWithDetails(quotationId);
+    if (!quotation) {
+      throw new Error(`Quotation with ID ${quotationId} not found`);
+    }
+    
+    if (quotation.status !== 'approved') {
+      throw new Error(`Quotation with ID ${quotationId} is not approved. Current status: ${quotation.status}`);
+    }
+    
+    // Check if quotation is already converted to an invoice
+    const existingInvoice = await this.getInvoiceByQuotation(quotationId);
+    if (existingInvoice) {
+      throw new Error(`Quotation with ID ${quotationId} is already converted to Invoice #${existingInvoice.id}`);
+    }
+    
+    // Generate invoice number
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(this.invoiceIdCounter).padStart(3, '0')}`;
+    
+    // Create invoice with 30 days due date by default
+    const dueDate = data?.dueDate ? new Date(data.dueDate) : new Date();
+    dueDate.setDate(dueDate.getDate() + 30); // Default due date is 30 days from now
+    
+    const invoice: Invoice = {
+      id: this.invoiceIdCounter++,
+      invoiceNumber,
+      quotationId,
+      customerId: quotation.customerId,
+      totalAmount: quotation.finalPrice,
+      amountPaid: 0,
+      amountDue: quotation.finalPrice,
+      status: 'pending',
+      dueDate,
+      invoiceDate: new Date(),
+      notes: data?.notes || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    // Save the invoice
+    this.invoices.set(invoice.id, invoice);
+    
+    // Mark quotation as converted
+    await this.updateQuotationStatus(quotationId, 'converted');
+    
+    return invoice;
+  }
+
+  async updateInvoiceStatus(id: number, status: "pending" | "paid" | "partially_paid" | "overdue" | "cancelled"): Promise<Invoice | undefined> {
+    const invoice = this.invoices.get(id);
+    if (!invoice) return undefined;
+    
+    const updatedInvoice: Invoice = {
+      ...invoice,
+      status,
+      updatedAt: new Date()
+    };
+    
+    this.invoices.set(id, updatedInvoice);
+    return updatedInvoice;
+  }
+
+  async updateInvoice(id: number, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
+    const existingInvoice = this.invoices.get(id);
+    if (!existingInvoice) return undefined;
+    
+    const updatedInvoice: Invoice = {
+      ...existingInvoice,
+      ...invoice,
+      updatedAt: new Date()
+    };
+    
+    this.invoices.set(id, updatedInvoice);
+    return updatedInvoice;
+  }
+
+  async cancelInvoice(id: number): Promise<Invoice | undefined> {
+    return this.updateInvoiceStatus(id, 'cancelled');
   }
 }
 
