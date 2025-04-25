@@ -18,6 +18,7 @@ import {
   roomFormSchema as productFormSchema,
   installationFormSchema as installationChargeFormSchema,
   productAccessoryFormSchema as accessoryFormSchema,
+  InsertInvoice,
 } from "@shared/schema";
 
 // Create search filters schema

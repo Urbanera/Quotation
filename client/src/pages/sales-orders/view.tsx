@@ -163,6 +163,46 @@ export default function ViewSalesOrder() {
       });
     },
   });
+  
+  // Convert to invoice mutation
+  const convertToInvoiceMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        "POST", 
+        `/api/sales-orders/${orderId}/convert-to-invoice`, 
+        {}
+      );
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Conversion successful",
+        description: `Sales order #${orderId} has been converted to invoice #${data.id}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales-orders", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+    },
+    onError: (error: any) => {
+      // Extract detailed error message if available
+      let errorMessage = "Failed to convert sales order to invoice.";
+      try {
+        if (error.response && error.response.data) {
+          errorMessage = error.response.data.message || errorMessage;
+        } else if (typeof error === 'object' && 'message' in error) {
+          errorMessage = error.message;
+        }
+      } catch (e) {
+        // Fallback to default message if we can't parse the error
+      }
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleStatusChange = (status: string) => {
     updateStatusMutation.mutate(status);
@@ -179,7 +219,8 @@ export default function ViewSalesOrder() {
     }
   };
 
-  const isLoading = isLoadingSalesOrder || isLoadingCustomerPayments || updateStatusMutation.isPending;
+  const isLoading = isLoadingSalesOrder || isLoadingCustomerPayments || 
+                 updateStatusMutation.isPending || convertToInvoiceMutation.isPending;
 
   if (isLoading) {
     return (
@@ -369,6 +410,22 @@ export default function ViewSalesOrder() {
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              
+              <div className="pt-4 border-t">
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => convertToInvoiceMutation.mutate()}
+                  disabled={convertToInvoiceMutation.isPending || salesOrder.status === 'cancelled'}
+                >
+                  {convertToInvoiceMutation.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileText className="mr-2 h-4 w-4" />
+                  )}
+                  Convert to Invoice
+                </Button>
               </div>
             </div>
           </CardContent>
