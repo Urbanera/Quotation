@@ -49,8 +49,8 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
     enabled: !!invoiceId,
   });
 
-  const { data: quotation, isLoading: isQuotationLoading } = useQuery<Quotation>({
-    queryKey: [`/api/quotations/${invoice?.quotationId}`],
+  const { data: quotation, isLoading: isQuotationLoading } = useQuery<QuotationWithDetails>({
+    queryKey: [`/api/quotations/${invoice?.quotationId}/details`],
     enabled: !!invoice?.quotationId,
   });
 
@@ -234,11 +234,11 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Subtotal</span>
-                    <span>{formatCurrency(quotation?.subtotal || 0)}</span>
+                    <span>{formatCurrency(quotation?.totalSellingPrice || 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Discount</span>
-                    <span>-{formatCurrency(quotation?.discount || 0)}</span>
+                    <span>-{formatCurrency((quotation?.globalDiscount || 0) * (quotation?.totalSellingPrice || 0) / 100)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">GST ({quotation?.gstPercentage || 0}%)</span>
@@ -247,7 +247,7 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
                   <Separator className="my-2" />
                   <div className="flex justify-between font-semibold">
                     <span>Total Amount</span>
-                    <span>{formatCurrency(quotation?.totalAmount || 0)}</span>
+                    <span>{formatCurrency(invoice.totalAmount || 0)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Amount Paid</span>
@@ -256,7 +256,7 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
                   <div className="flex justify-between font-medium mt-1">
                     <span className="text-gray-900">Amount Due</span>
                     <span className="text-gray-900">
-                      {formatCurrency((quotation?.totalAmount || 0) - (invoice.amountPaid || 0))}
+                      {formatCurrency((invoice.totalAmount || 0) - (invoice.amountPaid || 0))}
                     </span>
                   </div>
                 </div>

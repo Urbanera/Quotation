@@ -1,50 +1,27 @@
-import React from 'react';
-import { useParams } from 'wouter';
-import { Card } from '@/components/ui/card';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { FileInvoice, ChevronRight, Home } from 'lucide-react';
-import InvoiceDetails from '@/components/invoices/InvoiceDetails';
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
+import { useLocation, useParams } from "wouter";
+import InvoiceDetails from "@/components/invoices/InvoiceDetails";
 
-export default function InvoiceDetailsPage() {
-  const params = useParams<{ id: string }>();
-  const invoiceId = parseInt(params.id);
-
-  if (isNaN(invoiceId)) {
-    return <div className="container mx-auto py-6">Invalid invoice ID</div>;
-  }
+export default function InvoiceDetailPage() {
+  const { id } = useParams();
+  const [, navigate] = useLocation();
 
   return (
     <div className="container mx-auto py-6">
-      <Breadcrumb className="mb-6">
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/">
-            <Home className="h-4 w-4 mr-1" />
-            Home
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator>
-          <ChevronRight className="h-4 w-4" />
-        </BreadcrumbSeparator>
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/invoices">
-            <FileInvoice className="h-4 w-4 mr-1" />
-            Invoices
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator>
-          <ChevronRight className="h-4 w-4" />
-        </BreadcrumbSeparator>
-        <BreadcrumbItem isCurrentPage>
-          <BreadcrumbLink>Invoice Details</BreadcrumbLink>
-        </BreadcrumbItem>
-      </Breadcrumb>
-
-      <div className="mb-6">
+      <div className="flex items-center mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate("/invoices")}
+          className="mr-4"
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Back to Invoices
+        </Button>
         <h1 className="text-3xl font-bold">Invoice Details</h1>
-        <p className="text-gray-500">View and manage invoice information</p>
       </div>
 
-      <InvoiceDetails invoiceId={invoiceId} />
+      <InvoiceDetails invoiceId={parseInt(id || "0")} />
     </div>
   );
 }
