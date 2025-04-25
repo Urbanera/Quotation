@@ -368,13 +368,27 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.delete("/api/quotations/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Check if quotation is approved or already converted
+      const quotation = await storage.getQuotation(id);
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      
+      // Prevent deletion of approved, converted or any non-draft quotations
+      if (quotation.status !== 'draft') {
+        return res.status(400).json({ 
+          message: `Cannot delete a quotation with status '${quotation.status}'. Only draft quotations can be deleted.` 
+        });
+      }
+      
       const success = await storage.deleteQuotation(id);
       if (!success) {
         return res.status(404).json({ message: "Quotation not found" });
       }
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete quotation" });
+      res.status(500).json({ message: "Failed to delete quotation", error: (error as Error).message });
     }
   });
 
@@ -1693,6 +1707,38 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.json(invoice);
     } catch (error) {
       res.status(500).json({ message: "Failed to cancel invoice" });
+    }
+  });
+  
+  // Convert Sales Order to Invoice
+  app.post("/api/sales-orders/:id/convert-to-invoice", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const salesOrder = await storage.getSalesOrder(id);
+      
+      if (!salesOrder) {
+        return res.status(404).json({ message: "Sales Order not found" });
+      }
+      
+      // Check if the quotation is already converted to an invoice
+      const existingInvoice = await storage.getInvoiceByQuotation(salesOrder.quotationId);
+      if (existingInvoice) {
+        return res.status(400).json({ 
+          message: "This sales order's quotation is already converted to an invoice", 
+          invoiceId: existingInvoice.id 
+        });
+      }
+      
+      // Convert to invoice
+      const formData = req.body as Partial<InsertInvoice>;
+      const invoice = await storage.createInvoiceFromSalesOrder(id, formData);
+      
+      res.status(201).json(invoice);
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to convert sales order to invoice", 
+        error: (error as Error).message 
+      });
     }
   });
 
