@@ -116,8 +116,8 @@ export default function TeamDetailsPage() {
         </Link>
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">{teamWithMembers.name}</h1>
-            {teamWithMembers.description && (
+            <h1 className="text-2xl font-bold">{teamWithMembers?.name || 'Team'}</h1>
+            {teamWithMembers?.description && (
               <p className="text-muted-foreground mt-1">{teamWithMembers.description}</p>
             )}
           </div>
@@ -132,12 +132,12 @@ export default function TeamDetailsPage() {
               <DialogHeader>
                 <DialogTitle>Add Team Member</DialogTitle>
                 <DialogDescription>
-                  Add a user to the "{teamWithMembers.name}" team.
+                  Add a user to the "{teamWithMembers?.name || 'this'}" team.
                 </DialogDescription>
               </DialogHeader>
               <TeamMemberForm 
                 teamId={teamId!}
-                existingMemberIds={teamWithMembers.members.map(m => m.id)}
+                existingMemberIds={teamWithMembers?.members?.map(m => m.id) || []}
                 onSubmitSuccess={() => {
                   setIsAddMemberDialogOpen(false);
                   queryClient.invalidateQueries({ queryKey: ['/api/teams', teamId, 'members'] });
@@ -156,7 +156,7 @@ export default function TeamDetailsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {teamWithMembers.members.length > 0 ? (
+          {teamWithMembers?.members?.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -169,7 +169,7 @@ export default function TeamDetailsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {teamWithMembers.members.map((member) => (
+                {teamWithMembers?.members?.map((member) => (
                   <TableRow key={member.id}>
                     <TableCell className="font-medium">{member.fullName}</TableCell>
                     <TableCell>{member.username}</TableCell>
