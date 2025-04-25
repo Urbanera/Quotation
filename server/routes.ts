@@ -1503,6 +1503,128 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  // Invoice routes
+  app.get("/api/invoices", async (req, res) => {
+    try {
+      const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
+      
+      if (customerId) {
+        const invoices = await storage.getInvoicesByCustomer(customerId);
+        return res.json(invoices);
+      }
+      
+      const invoices = await storage.getInvoices();
+      res.json(invoices);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  app.get("/api/invoices/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const invoice = await storage.getInvoice(id);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      res.json(invoice);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch invoice" });
+    }
+  });
+  
+  app.get("/api/invoices/:id/details", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const invoice = await storage.getInvoiceWithDetails(id);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      res.json(invoice);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch invoice details" });
+    }
+  });
+
+  // Convert quotation to invoice
+  app.post("/api/quotations/:id/convert-to-invoice", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.id);
+      
+      // Check if quotation exists
+      const quotation = await storage.getQuotation(quotationId);
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      
+      // Check if quotation is already converted to an invoice
+      const existingInvoice = await storage.getInvoiceByQuotation(quotationId);
+      if (existingInvoice) {
+        return res.status(400).json({ message: "Quotation is already converted to an invoice" });
+      }
+      
+      // Check if quotation is approved
+      if (quotation.status !== "approved") {
+        return res.status(400).json({ message: "Quotation must be approved before converting to invoice" });
+      }
+      
+      const invoice = await storage.createInvoiceFromQuotation(quotationId, req.body);
+      console.log("Created new invoice:", invoice);
+      res.status(201).json(invoice);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to convert quotation to invoice", error: error.message });
+    }
+  });
+  
+  // Update invoice status
+  app.patch("/api/invoices/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!status || !["pending", "paid", "partially_paid", "overdue", "cancelled"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+      
+      const invoice = await storage.updateInvoiceStatus(id, status);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      res.json(invoice);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update invoice status" });
+    }
+  });
+
+  // Update invoice
+  app.patch("/api/invoices/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const invoice = await storage.updateInvoice(id, req.body);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      res.json(invoice);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update invoice" });
+    }
+  });
+  
+  // Cancel invoice
+  app.delete("/api/invoices/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const invoice = await storage.cancelInvoice(id);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      res.json(invoice);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to cancel invoice" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
