@@ -53,46 +53,20 @@ import {
 
 export default function ViewSalesOrder() {
   const { id } = useParams();
-  const orderId = parseInt(id);
+  const orderId = parseInt(id || "0");  // Default to 0 if undefined
   const { toast } = useToast();
 
   // Fetch the sales order
   const { 
     data: salesOrder, 
     isLoading: isLoadingOrder 
-  } = useQuery<SalesOrder>({
+  } = useQuery({
     queryKey: ["/api/sales-orders", orderId],
-    enabled: !isNaN(orderId),
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to load sales order",
-        variant: "destructive",
-      });
-    },
+    enabled: !isNaN(orderId) && orderId > 0,
   });
 
-  // Fetch the customer
-  const { data: customer, isLoading: isLoadingCustomer } = useQuery<Customer>({
-    queryKey: ["/api/customers", salesOrder?.customerId],
-    enabled: !!salesOrder?.customerId,
-    staleTime: 60000, // Ensure we don't refetch too often
-  });
-
-  // Fetch the quotation
-  const { data: quotation, isLoading: isLoadingQuotation } = useQuery<QuotationWithDetails>({
-    queryKey: ["/api/quotations", salesOrder?.quotationId],
-    enabled: !!salesOrder?.quotationId,
-  });
-
-  // Fetch sales order payments
-  const { data: orderPayments, isLoading: isLoadingOrderPayments } = useQuery<Payment[]>({
-    queryKey: ["/api/sales-orders", orderId, "payments"],
-    enabled: !isNaN(orderId),
-  });
-  
   // Fetch customer payments (by customer ID)
-  const { data: customerPayments, isLoading: isLoadingCustomerPayments } = useQuery<Payment[]>({
+  const { data: customerPayments = [], isLoading: isLoadingCustomerPayments } = useQuery({
     queryKey: ["/api/customers", salesOrder?.customerId, "payments"],
     enabled: !!salesOrder?.customerId,
   });
@@ -139,7 +113,7 @@ export default function ViewSalesOrder() {
     }
   };
 
-  const isLoading = isLoadingOrder || isLoadingCustomer || isLoadingQuotation || isLoadingOrderPayments || isLoadingCustomerPayments;
+  const isLoading = isLoadingOrder || isLoadingCustomerPayments || updateStatusMutation.isPending;
 
   if (isLoading) {
     return (
@@ -188,17 +162,17 @@ export default function ViewSalesOrder() {
           }`}
           variant="outline"
         >
-          {salesOrder?.status ? salesOrder.status.replace('_', ' ') : 'pending'}
+          {salesOrder.status ? salesOrder.status.replace('_', ' ') : 'pending'}
         </Badge>
         <Badge 
           className={`${
-            salesOrder?.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
-            salesOrder?.paymentStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
+            salesOrder.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+            salesOrder.paymentStatus === 'partially_paid' ? 'bg-yellow-100 text-yellow-800' :
             'bg-red-100 text-red-800'
           }`}
           variant="outline"
         >
-          {salesOrder?.paymentStatus ? salesOrder.paymentStatus.replace('_', ' ') : 'unpaid'}
+          {salesOrder.paymentStatus ? salesOrder.paymentStatus.replace('_', ' ') : 'unpaid'}
         </Badge>
       </div>
 
@@ -214,19 +188,19 @@ export default function ViewSalesOrder() {
                 <h3 className="text-sm font-medium text-gray-500 flex items-center gap-1">
                   <FileText className="h-4 w-4" /> Quotation
                 </h3>
-                <p className="mt-1">{quotation?.quotationNumber}</p>
+                <p className="mt-1">{salesOrder.quotationId}</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 flex items-center gap-1">
                   <Calendar className="h-4 w-4" /> Order Date
                 </h3>
-                <p className="mt-1">{salesOrder?.orderDate ? format(new Date(salesOrder.orderDate), "dd MMM yyyy") : "N/A"}</p>
+                <p className="mt-1">{salesOrder.orderDate ? format(new Date(salesOrder.orderDate), "dd MMM yyyy") : "N/A"}</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 flex items-center gap-1">
                   <TruckIcon className="h-4 w-4" /> Expected Delivery
                 </h3>
-                <p className="mt-1">{salesOrder?.expectedDeliveryDate ? format(new Date(salesOrder.expectedDeliveryDate), "dd MMM yyyy") : "N/A"}</p>
+                <p className="mt-1">{salesOrder.expectedDeliveryDate ? format(new Date(salesOrder.expectedDeliveryDate), "dd MMM yyyy") : "N/A"}</p>
               </div>
               
               <div className="col-span-2 md:col-span-3">
@@ -234,10 +208,12 @@ export default function ViewSalesOrder() {
                   <User className="h-4 w-4" /> Customer
                 </h3>
                 <div className="border rounded-md p-3 bg-gray-50">
-                  <p className="font-medium">{customer?.name}</p>
-                  <p className="text-sm text-gray-500">{customer?.email}</p>
-                  <p className="text-sm text-gray-500">{customer?.phone}</p>
-                  <p className="text-sm text-gray-500 mt-1">{customer?.address}</p>
+                  {/* Display customer information if available */}
+                  {salesOrder.customerId ? (
+                    <CustomerInfo customerId={salesOrder.customerId} />
+                  ) : (
+                    <p className="text-muted-foreground">No customer information available</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -245,7 +221,7 @@ export default function ViewSalesOrder() {
             <div className="mt-6">
               <h3 className="text-sm font-medium text-gray-500 mb-2">Notes</h3>
               <div className="border rounded-md p-3 bg-gray-50 min-h-[60px]">
-                {salesOrder?.notes || "No notes provided."}
+                {salesOrder.notes || "No notes provided."}
               </div>
             </div>
           </CardContent>
@@ -260,21 +236,21 @@ export default function ViewSalesOrder() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Total Amount:</span>
-                <span className="font-medium">{formatCurrency(salesOrder?.totalAmount || 0)}</span>
+                <span className="font-medium">{formatCurrency(salesOrder.totalAmount || 0)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Amount Paid:</span>
-                <span className="font-medium text-green-600">{formatCurrency(salesOrder?.amountPaid || 0)}</span>
+                <span className="font-medium text-green-600">{formatCurrency(salesOrder.amountPaid || 0)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Amount Due:</span>
-                <span className="font-medium text-red-600">{formatCurrency(salesOrder?.amountDue || 0)}</span>
+                <span className="font-medium text-red-600">{formatCurrency(salesOrder.amountDue || 0)}</span>
               </div>
               
               <div className="pt-4 border-t">
                 <h3 className="text-sm font-medium mb-2">Change Order Status:</h3>
                 <Select 
-                  value={salesOrder?.status || "pending"} 
+                  value={salesOrder.status || "pending"} 
                   onValueChange={handleStatusChange}
                   disabled={updateStatusMutation.isPending}
                 >
@@ -307,16 +283,16 @@ export default function ViewSalesOrder() {
           <Card>
             <CardHeader>
               <CardTitle>Payment History</CardTitle>
-              {(!orderPayments || orderPayments.length === 0) && (!customerPayments || customerPayments.length === 0) && (
+              {(!salesOrder.payments || salesOrder.payments?.length === 0) && (!customerPayments || customerPayments.length === 0) && (
                 <CardDescription>No payments recorded yet</CardDescription>
               )}
             </CardHeader>
             <CardContent>
               {/* Combine both payment types for display */}
-              {((orderPayments && orderPayments.length > 0) || (customerPayments && customerPayments.length > 0)) ? (
+              {((salesOrder.payments && salesOrder.payments.length > 0) || (customerPayments && customerPayments.length > 0)) ? (
                 <div className="space-y-8">
                   {/* Sales Order Payments */}
-                  {orderPayments && orderPayments.length > 0 && (
+                  {salesOrder.payments && salesOrder.payments.length > 0 && (
                     <div>
                       <h3 className="text-lg font-medium mb-4">Sales Order Payments</h3>
                       <Table>
@@ -331,7 +307,7 @@ export default function ViewSalesOrder() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {orderPayments.map((payment) => (
+                          {salesOrder.payments.map((payment) => (
                             <TableRow key={payment.id}>
                               <TableCell>
                                 {payment.paymentDate ? format(new Date(payment.paymentDate), "dd MMM yyyy") : "N/A"}
@@ -401,84 +377,132 @@ export default function ViewSalesOrder() {
         </TabsContent>
         
         <TabsContent value="items" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Items</CardTitle>
-              <CardDescription>Items from Quotation {quotation?.quotationNumber}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {quotation?.rooms && quotation.rooms.length > 0 ? (
-                <div className="space-y-6">
-                  {quotation.rooms.map((room) => (
-                    <div key={room.id} className="border rounded-md p-4">
-                      <h3 className="text-lg font-medium mb-2">{room.name}</h3>
-                      
-                      {room.products && room.products.length > 0 && (
-                        <div className="mb-4">
-                          <h4 className="text-sm font-medium text-gray-500 mb-2">Products</h4>
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Item</TableHead>
-                                <TableHead>Dimensions</TableHead>
-                                <TableHead>Quantity</TableHead>
-                                <TableHead>Unit Price</TableHead>
-                                <TableHead>Total</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {room.products.map((product) => (
-                                <TableRow key={product.id}>
-                                  <TableCell>{product.name}</TableCell>
-                                  <TableCell>{product.width}x{product.height}x{product.depth}</TableCell>
-                                  <TableCell>{product.quantity}</TableCell>
-                                  <TableCell>{formatCurrency(product.unitPrice)}</TableCell>
-                                  <TableCell>{formatCurrency(product.quantity * product.unitPrice)}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      )}
-                      
-                      {room.accessories && room.accessories.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-500 mb-2">Accessories</h4>
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Item</TableHead>
-                                <TableHead>Quantity</TableHead>
-                                <TableHead>Unit Price</TableHead>
-                                <TableHead>Total</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {room.accessories.map((accessory) => (
-                                <TableRow key={accessory.id}>
-                                  <TableCell>{accessory.name}</TableCell>
-                                  <TableCell>{accessory.quantity}</TableCell>
-                                  <TableCell>{formatCurrency(accessory.unitPrice)}</TableCell>
-                                  <TableCell>{formatCurrency(accessory.quantity * accessory.unitPrice)}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <ShoppingBag className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
-                  <p>No items found in this order</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ItemsSection salesOrderId={orderId} />
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// Customer Info Component
+function CustomerInfo({ customerId }: { customerId: number }) {
+  const { data: customer } = useQuery({
+    queryKey: ["/api/customers", customerId],
+    enabled: customerId > 0,
+  });
+
+  if (!customer) {
+    return <p className="text-sm text-gray-500">Loading customer information...</p>;
+  }
+
+  return (
+    <>
+      <p className="font-medium">{customer.name}</p>
+      <p className="text-sm text-gray-500">{customer.email}</p>
+      <p className="text-sm text-gray-500">{customer.phone}</p>
+      <p className="text-sm text-gray-500 mt-1">{customer.address}</p>
+    </>
+  );
+}
+
+// Items Section Component
+function ItemsSection({ salesOrderId }: { salesOrderId: number }) {
+  const { data: salesOrder } = useQuery({
+    queryKey: ["/api/sales-orders", salesOrderId],
+  });
+
+  const { data: quotation } = useQuery({
+    queryKey: ["/api/quotations", salesOrder?.quotationId, "details"],
+    enabled: !!salesOrder?.quotationId,
+  });
+
+  if (!quotation) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="text-center py-8 text-muted-foreground">
+            <ShoppingBag className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
+            <p>Loading order items...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Order Items</CardTitle>
+        <CardDescription>Items from Quotation {quotation.quotationNumber}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {quotation.rooms && quotation.rooms.length > 0 ? (
+          <div className="space-y-6">
+            {quotation.rooms.map((room) => (
+              <div key={room.id} className="border rounded-md p-4">
+                <h3 className="text-lg font-medium mb-2">{room.name}</h3>
+                
+                {room.products && room.products.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500 mb-2">Products</h4>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Item</TableHead>
+                          <TableHead>Quantity</TableHead>
+                          <TableHead>Unit Price</TableHead>
+                          <TableHead>Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {room.products.map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell>{product.name}</TableCell>
+                            <TableCell>{product.quantity}</TableCell>
+                            <TableCell>{formatCurrency(product.sellingPrice)}</TableCell>
+                            <TableCell>{formatCurrency(product.quantity * product.sellingPrice)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+                
+                {room.accessories && room.accessories.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500 mb-2">Accessories</h4>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Item</TableHead>
+                          <TableHead>Quantity</TableHead>
+                          <TableHead>Unit Price</TableHead>
+                          <TableHead>Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {room.accessories.map((accessory) => (
+                          <TableRow key={accessory.id}>
+                            <TableCell>{accessory.name}</TableCell>
+                            <TableCell>{accessory.quantity}</TableCell>
+                            <TableCell>{formatCurrency(accessory.sellingPrice)}</TableCell>
+                            <TableCell>{formatCurrency(accessory.quantity * accessory.sellingPrice)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <ShoppingBag className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
+            <p>No items found in this order</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
