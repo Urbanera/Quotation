@@ -100,7 +100,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {quotation.rooms.map((room) => {
+              {quotation.rooms?.map((room) => {
                 // Calculate the discounted price with global discount applied
                 const calculatedDiscountedPrice = quotation.globalDiscount > 0
                   ? room.sellingPrice - (room.sellingPrice * quotation.globalDiscount / 100)
