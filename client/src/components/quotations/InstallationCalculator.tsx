@@ -80,7 +80,7 @@ export default function InstallationCalculator({
         // API endpoint will differ depending on whether we're creating or updating
         const endpoint = charge?.id 
           ? `/api/installation-charges/${charge.id}` 
-          : `/api/installation-charges`;
+          : `/api/rooms/${roomId}/installation-charges`;
         
         const method = charge?.id ? "PUT" : "POST";
         
