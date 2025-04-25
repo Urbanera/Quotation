@@ -164,10 +164,24 @@ export default function QuotationsList() {
       });
       setQuotationToConvert(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      const errorMessage = error.message || "Failed to convert quotation to sales order.";
+      
+      // Check if the error contains more specific information
+      let description = "Failed to convert quotation to sales order.";
+      try {
+        if (error.response && error.response.data) {
+          description = error.response.data.message || description;
+        } else if (typeof error === 'object' && 'message' in error) {
+          description = error.message;
+        }
+      } catch (e) {
+        // Fallback to default message if we can't parse the error
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to convert quotation to sales order.",
+        description,
         variant: "destructive",
       });
     }
@@ -199,10 +213,24 @@ export default function QuotationsList() {
       });
       setQuotationToConvertToInvoice(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      const errorMessage = error.message || "Failed to convert quotation to invoice.";
+      
+      // Check if the error contains more specific information
+      let description = "Failed to convert quotation to invoice.";
+      try {
+        if (error.response && error.response.data) {
+          description = error.response.data.message || description;
+        } else if (typeof error === 'object' && 'message' in error) {
+          description = error.message;
+        }
+      } catch (e) {
+        // Fallback to default message if we can't parse the error
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to convert quotation to invoice.",
+        description,
         variant: "destructive",
       });
     }
@@ -440,6 +468,11 @@ export default function QuotationsList() {
                                 <span>Convert to Invoice</span>
                               </DropdownMenuItem>
                             </>
+                          )}
+                          {quotation.status === 'converted' && (
+                            <DropdownMenuItem disabled>
+                              <span className="text-gray-400">Quotation Already Converted</span>
+                            </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
