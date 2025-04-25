@@ -1327,7 +1327,7 @@ export class MemStorage implements IStorage {
   async createQuotation(quotation: InsertQuotation): Promise<Quotation> {
     const id = this.quotationIdCounter++;
     const now = new Date();
-    const newQuotation: Quotation = {
+    const newQuotation: any = {
       id,
       customerId: quotation.customerId,
       quotationNumber: quotation.quotationNumber || `Q-${now.getFullYear()}-${id.toString().padStart(3, '0')}`,
@@ -1336,6 +1336,7 @@ export class MemStorage implements IStorage {
       description: quotation.description || null,
       totalSellingPrice: quotation.totalSellingPrice || 0,
       totalDiscountedPrice: quotation.totalDiscountedPrice || 0,
+      totalInstallationCharges: 0, // Initialize with 0
       installationHandling: quotation.installationHandling || 0,
       globalDiscount: quotation.globalDiscount || 0,
       gstPercentage: quotation.gstPercentage || 0,
@@ -1354,11 +1355,19 @@ export class MemStorage implements IStorage {
     const existingQuotation = this.quotations.get(id);
     if (!existingQuotation) return undefined;
     
-    const updatedQuotation: Quotation = {
+    // Preserve the totalInstallationCharges from the existing quotation
+    const totalInstallationCharges = 
+      ('totalInstallationCharges' in existingQuotation) 
+        ? existingQuotation.totalInstallationCharges 
+        : 0;
+    
+    const updatedQuotation: any = {
       ...existingQuotation,
       ...quotation,
+      totalInstallationCharges, // Make sure we keep this field
       updatedAt: new Date(),
     };
+    
     this.quotations.set(id, updatedQuotation);
     return updatedQuotation;
   }
@@ -1389,7 +1398,7 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const quotationNumber = `Q-${now.getFullYear()}-${String(this.quotationIdCounter).padStart(3, '0')}`;
     
-    const newQuotation: Quotation = {
+    const newQuotation: any = {
       id: this.quotationIdCounter++,
       customerId: newCustomerId || originalQuotation.customerId,
       quotationNumber: quotationNumber,
@@ -1401,6 +1410,7 @@ export class MemStorage implements IStorage {
       installationHandling: originalQuotation.installationHandling,
       totalSellingPrice: originalQuotation.totalSellingPrice,
       totalDiscountedPrice: originalQuotation.totalDiscountedPrice,
+      totalInstallationCharges: 0, // Initialize with 0, will be updated later
       gstAmount: originalQuotation.gstAmount,
       finalPrice: originalQuotation.finalPrice,
       validUntil: originalQuotation.validUntil,
