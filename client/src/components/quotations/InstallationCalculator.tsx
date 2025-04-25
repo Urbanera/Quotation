@@ -75,7 +75,7 @@ export default function InstallationCalculator({
 
   // Create or update installation charge mutation
   const installationMutation = useMutation({
-    mutationFn: async (data: InstallationCharge) => {
+    mutationFn: async (data: any) => {
       try {
         // API endpoint will differ depending on whether we're creating or updating
         const endpoint = charge?.id 
@@ -174,18 +174,21 @@ export default function InstallationCalculator({
       return;
     }
 
-    const installationChargeData: InstallationCharge = {
-      id: charge?.id,
-      roomId: roomId,
+    // For the API request to pass validation, we need to keep the format as expected by the server
+    // The server expects data matching installationFormSchema, so we send strings for widthMm, heightMm, pricePerSqft
+    const formattedData: any = {
       cabinetType: data.cabinetType,
-      widthMm: parseFloat(widthValue),
-      heightMm: parseFloat(heightValue),
-      areaSqft: calculatedArea,
-      pricePerSqft: parseFloat(data.pricePerSqft),
-      amount: calculatedAmount
+      widthMm: widthValue,          // Send as string to match schema
+      heightMm: heightValue,        // Send as string to match schema
+      pricePerSqft: data.pricePerSqft  // Send as string to match schema
     };
+    
+    // Include the ID if we're updating
+    if (charge?.id) {
+      formattedData.id = charge.id;
+    }
 
-    installationMutation.mutate(installationChargeData);
+    installationMutation.mutate(formattedData);
   };
 
   return (
