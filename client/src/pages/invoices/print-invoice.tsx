@@ -87,7 +87,11 @@ const printStyles = `
 }
 `;
 
-export default function PrintInvoicePage() {
+interface PrintInvoicePageProps {
+  id?: string;
+}
+
+export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) {
   const [location] = useLocation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,8 +101,8 @@ export default function PrintInvoicePage() {
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
   const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
 
-  // Extract invoice ID from URL
-  const id = location.split("/").pop();
+  // Extract invoice ID from props or URL
+  const id = propId || location.split("/").pop();
 
   // Inject print styles
   useEffect(() => {
