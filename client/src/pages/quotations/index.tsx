@@ -51,6 +51,7 @@ export default function QuotationsList() {
   const [quotationToDuplicate, setQuotationToDuplicate] = useState<Quotation | null>(null);
   const [quotationToApprove, setQuotationToApprove] = useState<Quotation | null>(null);
   const [quotationToConvert, setQuotationToConvert] = useState<Quotation | null>(null);
+  const [quotationToConvertToInvoice, setQuotationToConvertToInvoice] = useState<Quotation | null>(null);
   const [duplicateForSameCustomer, setDuplicateForSameCustomer] = useState(true);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<SortField>("createdAt");
@@ -172,6 +173,41 @@ export default function QuotationsList() {
     }
   });
   
+  // Mutation to convert quotation to invoice
+  const convertToInvoiceMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/quotations/${id}/convert-to-invoice`, {
+        dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
+        notes: ""
+      });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      
+      // Also invalidate customer ledger data
+      if (quotationToConvertToInvoice?.customerId) {
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/customers", quotationToConvertToInvoice.customerId, "ledger"] 
+        });
+      }
+      
+      toast({
+        title: "Invoice created",
+        description: `Quotation #${quotationToConvertToInvoice?.id} has been converted to invoice #${data.id}.`,
+      });
+      setQuotationToConvertToInvoice(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to convert quotation to invoice.",
+        variant: "destructive",
+      });
+    }
+  });
+  
   const handleDuplicateQuotation = () => {
     if (!quotationToDuplicate) return;
     
@@ -193,6 +229,11 @@ export default function QuotationsList() {
   const handleConvertQuotation = () => {
     if (!quotationToConvert) return;
     convertMutation.mutate(quotationToConvert.id);
+  };
+  
+  const handleConvertToInvoice = () => {
+    if (!quotationToConvertToInvoice) return;
+    convertToInvoiceMutation.mutate(quotationToConvertToInvoice.id);
   };
   
   // Get customer name by ID
@@ -382,17 +423,23 @@ export default function QuotationsList() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {quotation.status !== 'approved' && (
+                          {quotation.status !== 'approved' && quotation.status !== 'converted' && (
                             <DropdownMenuItem onClick={() => setQuotationToApprove(quotation)}>
                               <Check className="mr-2 h-4 w-4 text-green-500" />
                               <span>Approve Quotation</span>
                             </DropdownMenuItem>
                           )}
                           {quotation.status === 'approved' && (
-                            <DropdownMenuItem onClick={() => setQuotationToConvert(quotation)}>
-                              <Check className="mr-2 h-4 w-4 text-blue-500" />
-                              <span>Convert to Sales Order</span>
-                            </DropdownMenuItem>
+                            <>
+                              <DropdownMenuItem onClick={() => setQuotationToConvert(quotation)}>
+                                <Check className="mr-2 h-4 w-4 text-blue-500" />
+                                <span>Convert to Sales Order</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setQuotationToConvertToInvoice(quotation)}>
+                                <Check className="mr-2 h-4 w-4 text-indigo-500" />
+                                <span>Convert to Invoice</span>
+                              </DropdownMenuItem>
+                            </>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -564,6 +611,37 @@ export default function QuotationsList() {
                 </>
               ) : (
                 "Convert to Sales Order"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog
+        open={!!quotationToConvertToInvoice}
+        onOpenChange={(open) => !open && setQuotationToConvertToInvoice(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Convert to Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to convert Quotation #{quotationToConvertToInvoice?.id} for {getCustomerName(quotationToConvertToInvoice?.customerId || 0)} to an invoice?
+              This will create a new invoice and mark the quotation as converted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConvertToInvoice}
+              className="bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-600"
+            >
+              {convertToInvoiceMutation.isPending ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
+                  Converting...
+                </>
+              ) : (
+                "Convert to Invoice"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
