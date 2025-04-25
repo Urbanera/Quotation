@@ -17,7 +17,8 @@ import {
   CalendarClock,
   MapPin,
   Phone,
-  Mail
+  Mail,
+  Printer
 } from 'lucide-react';
 import { Invoice, QuotationWithDetails } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
@@ -301,6 +302,13 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
                   >
                     <CreditCard className="h-4 w-4 mr-2" />
                     Record Payment
+                  </Button>
+                  <Button 
+                    className="w-full"
+                    onClick={() => navigate(`/invoices/print-invoice/${invoiceId}`)}
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    Print Invoice
                   </Button>
                 </div>
               </div>

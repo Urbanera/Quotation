@@ -64,6 +64,7 @@ function App() {
           {/* Invoice Routes */}
           <Route path="/invoices" component={InvoicesPage} />
           <Route path="/invoices/:id" component={InvoiceDetailPage} />
+          <Route path="/invoices/print-invoice/:id" component={() => import("./pages/invoices/print-invoice").then(module => ({ default: module.default }))} />
           
           {/* Other Routes */}
           <Route path="/accessories" component={AccessoryCatalogPage} />
