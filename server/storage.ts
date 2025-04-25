@@ -173,11 +173,13 @@ export interface IStorage {
   getInvoicesByCustomer(customerId: number): Promise<Invoice[]>;
   getInvoice(id: number): Promise<Invoice | undefined>;
   getInvoiceByQuotation(quotationId: number): Promise<Invoice | undefined>;
+  getInvoiceBySalesOrder(salesOrderId: number): Promise<Invoice | undefined>;
   getInvoiceWithDetails(id: number): Promise<Invoice & { 
     customer: Customer, 
     quotation: QuotationWithDetails
   } | undefined>;
   createInvoiceFromQuotation(quotationId: number, data?: Partial<InsertInvoice>): Promise<Invoice>;
+  createInvoiceFromSalesOrder(salesOrderId: number, data?: Partial<InsertInvoice>): Promise<Invoice>;
   updateInvoiceStatus(id: number, status: "pending" | "paid" | "partially_paid" | "overdue" | "cancelled"): Promise<Invoice | undefined>;
   updateInvoice(id: number, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
   cancelInvoice(id: number): Promise<Invoice | undefined>;
