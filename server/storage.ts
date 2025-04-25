@@ -2396,6 +2396,17 @@ export class MemStorage implements IStorage {
     return Array.from(this.invoices.values())
       .find(invoice => invoice.quotationId === quotationId);
   }
+  
+  async getInvoiceBySalesOrder(salesOrderId: number): Promise<Invoice | undefined> {
+    // First get the sales order to find its quotation ID
+    const salesOrder = await this.getSalesOrder(salesOrderId);
+    if (!salesOrder) {
+      return undefined;
+    }
+    
+    // Then use the quotation ID to find the invoice
+    return this.getInvoiceByQuotation(salesOrder.quotationId);
+  }
 
   async getInvoiceWithDetails(id: number): Promise<Invoice & { 
     customer: Customer, 
@@ -2495,6 +2506,56 @@ export class MemStorage implements IStorage {
 
   async cancelInvoice(id: number): Promise<Invoice | undefined> {
     return this.updateInvoiceStatus(id, 'cancelled');
+  }
+  
+  async createInvoiceFromSalesOrder(salesOrderId: number, data?: Partial<InsertInvoice>): Promise<Invoice> {
+    // Get the sales order with details
+    const salesOrder = await this.getSalesOrder(salesOrderId);
+    if (!salesOrder) {
+      throw new Error(`Sales Order with ID ${salesOrderId} not found`);
+    }
+    
+    // Get the quotation
+    const quotation = await this.getQuotationWithDetails(salesOrder.quotationId);
+    if (!quotation) {
+      throw new Error(`Quotation with ID ${salesOrder.quotationId} not found`);
+    }
+    
+    // Check if the original quotation is already converted to an invoice
+    const existingInvoice = await this.getInvoiceByQuotation(quotation.id);
+    if (existingInvoice) {
+      throw new Error(`Quotation with ID ${quotation.id} is already converted to Invoice #${existingInvoice.id}`);
+    }
+    
+    // Generate invoice number
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(this.invoiceIdCounter).padStart(3, '0')}`;
+    
+    // Create invoice with 30 days due date by default
+    const dueDate = data?.dueDate ? new Date(data.dueDate) : new Date();
+    dueDate.setDate(dueDate.getDate() + 30); // Default due date is 30 days from now
+    
+    const invoice: Invoice = {
+      id: this.invoiceIdCounter++,
+      invoiceNumber,
+      quotationId: quotation.id,
+      customerId: quotation.customerId,
+      totalAmount: salesOrder.totalAmount,
+      amountPaid: salesOrder.amountPaid,
+      amountDue: salesOrder.amountDue,
+      status: salesOrder.paymentStatus === 'paid' ? 'paid' : (salesOrder.paymentStatus === 'partially_paid' ? 'partially_paid' : 'pending'),
+      dueDate,
+      invoiceDate: new Date(),
+      notes: data?.notes || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    // Save the invoice
+    this.invoices.set(invoice.id, invoice);
+    
+    // We don't update the status of the quotation as it's already marked as converted when the sales order was created
+    
+    return invoice;
   }
 }
 
