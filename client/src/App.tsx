@@ -22,6 +22,7 @@ import ViewPaymentPage from "./pages/payments/view";
 import PrintReceiptPage from "./pages/payments/print-receipt";
 import InvoicesPage from "./pages/invoices";
 import InvoiceDetailPage from "./pages/invoices/[id]";
+import PrintInvoiceContainer from "./pages/invoices/print-invoice-container";
 import AccessoryCatalogPage from "./pages/accessories";
 import UsersPage from "./pages/users/UsersPage";
 import TeamsPage from "./pages/teams/TeamsPage";
@@ -63,8 +64,8 @@ function App() {
           
           {/* Invoice Routes */}
           <Route path="/invoices" component={InvoicesPage} />
+          <Route path="/invoices/print-invoice/:id" component={PrintInvoiceContainer} />
           <Route path="/invoices/:id" component={InvoiceDetailPage} />
-          <Route path="/invoices/print-invoice/:id" component={() => import("./pages/invoices/print-invoice").then(module => ({ default: module.default }))} />
           
           {/* Other Routes */}
           <Route path="/accessories" component={AccessoryCatalogPage} />
