@@ -26,6 +26,7 @@ const navigation = [
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Quotations", href: "/quotations", icon: FileText },
   { name: "Sales Orders", href: "/sales-orders", icon: ShoppingCart },
+  { name: "Invoices", href: "/invoices", icon: Receipt },
   { name: "Payments", href: "/payments", icon: CreditCard },
   { name: "Products", href: "/products", icon: Package },
   { name: "Accessories", href: "/accessories", icon: Layers },
