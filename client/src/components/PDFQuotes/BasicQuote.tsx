@@ -66,10 +66,16 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
         </div>
         <div>
           <h3 className="text-md font-semibold mb-2 text-gray-700">To:</h3>
-          <p className="font-semibold">{quotation.customer.name}</p>
-          <p>{quotation.customer.address}</p>
-          <p>{quotation.customer.email}</p>
-          <p>{quotation.customer.phone}</p>
+          {quotation.customer ? (
+            <>
+              <p className="font-semibold">{quotation.customer.name || 'N/A'}</p>
+              <p>{quotation.customer.address || 'N/A'}</p>
+              <p>{quotation.customer.email || 'N/A'}</p>
+              <p>{quotation.customer.phone || 'N/A'}</p>
+            </>
+          ) : (
+            <p className="italic text-gray-500">No customer information available</p>
+          )}
         </div>
       </div>
 
