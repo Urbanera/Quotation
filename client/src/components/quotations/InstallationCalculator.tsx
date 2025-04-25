@@ -174,13 +174,15 @@ export default function InstallationCalculator({
       return;
     }
 
-    // For the API request to pass validation, we need to keep the format as expected by the server
-    // The server expects data matching installationFormSchema, so we send strings for widthMm, heightMm, pricePerSqft
+    // After the validation passes, the Storage layer will convert strings to numbers
+    // So we only need to ensure all required fields are present
     const formattedData: any = {
       cabinetType: data.cabinetType,
-      widthMm: widthValue,          // Send as string to match schema
-      heightMm: heightValue,        // Send as string to match schema
-      pricePerSqft: data.pricePerSqft  // Send as string to match schema
+      widthMm: widthValue,          // String for validation
+      heightMm: heightValue,        // String for validation
+      pricePerSqft: data.pricePerSqft,  // String for validation
+      areaSqft: calculatedArea,      // Number for storage
+      amount: calculatedAmount       // Number for storage
     };
     
     // Include the ID if we're updating
