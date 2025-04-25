@@ -17,7 +17,8 @@ import {
   accessoryCatalog, AccessoryCatalog, InsertAccessoryCatalog,
   salesOrders, SalesOrder, InsertSalesOrder, orderStatusEnum, paymentStatusEnum,
   payments, Payment, InsertPayment, paymentMethodEnum,
-  customerPayments, CustomerPayment, InsertCustomerPayment, paymentTypeEnum
+  customerPayments, CustomerPayment, InsertCustomerPayment, paymentTypeEnum,
+  invoices, Invoice, InsertInvoice, invoiceStatusEnum
 } from "@shared/schema";
 
 export interface IStorage {
@@ -166,6 +167,20 @@ export interface IStorage {
   getCustomerPaymentsByCustomer(customerId: number): Promise<CustomerPayment[]>;
   getCustomerPaymentByTransactionId(transactionId: string): Promise<CustomerPayment | undefined>;
   createCustomerPayment(payment: InsertCustomerPayment): Promise<CustomerPayment>;
+  
+  // Invoice operations
+  getInvoices(): Promise<Invoice[]>;
+  getInvoicesByCustomer(customerId: number): Promise<Invoice[]>;
+  getInvoice(id: number): Promise<Invoice | undefined>;
+  getInvoiceByQuotation(quotationId: number): Promise<Invoice | undefined>;
+  getInvoiceWithDetails(id: number): Promise<Invoice & { 
+    customer: Customer, 
+    quotation: QuotationWithDetails
+  } | undefined>;
+  createInvoiceFromQuotation(quotationId: number, data?: Partial<InsertInvoice>): Promise<Invoice>;
+  updateInvoiceStatus(id: number, status: "pending" | "paid" | "partially_paid" | "overdue" | "cancelled"): Promise<Invoice | undefined>;
+  updateInvoice(id: number, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
+  cancelInvoice(id: number): Promise<Invoice | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -187,6 +202,7 @@ export class MemStorage implements IStorage {
   private salesOrders: Map<number, SalesOrder>;
   private payments: Map<number, Payment>;
   private customerPayments: Map<number, CustomerPayment>;
+  private invoices: Map<number, Invoice>;
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
@@ -204,6 +220,7 @@ export class MemStorage implements IStorage {
   private salesOrderIdCounter: number;
   private paymentIdCounter: number;
   private customerPaymentIdCounter: number;
+  private invoiceIdCounter: number;
   
   constructor() {
     // Create singleton instance of storage to persist data between server reloads
@@ -271,6 +288,7 @@ export class MemStorage implements IStorage {
     this.salesOrders = new Map();
     this.payments = new Map();
     this.customerPayments = new Map();
+    this.invoices = new Map();
     
     this.customerIdCounter = 1;
     this.quotationIdCounter = 1;
@@ -288,6 +306,7 @@ export class MemStorage implements IStorage {
     this.salesOrderIdCounter = 1;
     this.paymentIdCounter = 1;
     this.customerPaymentIdCounter = 1;
+    this.invoiceIdCounter = 1;
     
     // Add some initial data
     this.initializeData();
