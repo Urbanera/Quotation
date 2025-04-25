@@ -203,14 +203,22 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                         <div className="text-right">
                           <div className="text-sm text-gray-500">
                             {charge.widthMm && charge.heightMm ? 
-                              `${charge.widthMm} mm × ${charge.heightMm} mm (${charge.areaSqft.toFixed(2)} sq.ft)` : 
+                              `${charge.widthMm} mm × ${charge.heightMm} mm (${
+                                typeof charge.areaSqft === 'number' 
+                                  ? charge.areaSqft.toFixed(2) 
+                                  : parseFloat(String(charge.areaSqft)).toFixed(2)
+                              } sq.ft)` : 
                               "Dimensions not set"}
                           </div>
                           <div className="text-sm text-gray-500">
-                            Price per sq.ft: ₹{charge.pricePerSqft.toFixed(2)}
+                            Price per sq.ft: ₹{typeof charge.pricePerSqft === 'number' 
+                              ? charge.pricePerSqft.toFixed(2) 
+                              : parseFloat(String(charge.pricePerSqft)).toFixed(2)}
                           </div>
                           <div className="font-medium text-indigo-600">
-                            Total: ₹{charge.amount.toFixed(2)}
+                            Total: ₹{typeof charge.amount === 'number' 
+                              ? charge.amount.toFixed(2) 
+                              : parseFloat(String(charge.amount)).toFixed(2)}
                           </div>
                         </div>
                       </div>
@@ -269,7 +277,12 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                   <div className="text-right">
                     <div className="text-sm text-gray-500">Installation Charges Total</div>
                     <div className="font-bold text-lg text-indigo-600">
-                      ₹{activeRoom.installationCharges.reduce((sum, charge) => sum + charge.amount, 0).toFixed(2)}
+                      ₹{activeRoom.installationCharges.reduce((sum, charge) => {
+                        const amount = typeof charge.amount === 'number' 
+                          ? charge.amount 
+                          : parseFloat(String(charge.amount));
+                        return sum + amount;
+                      }, 0).toFixed(2)}
                     </div>
                   </div>
                 </div>
