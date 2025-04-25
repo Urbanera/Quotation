@@ -818,7 +818,7 @@ export class MemStorage implements IStorage {
 
   async getSalesOrderWithDetails(id: number): Promise<SalesOrder & { 
     customer: Customer, 
-    quotation: Quotation, 
+    quotation: QuotationWithDetails, 
     payments: Payment[] 
   } | undefined> {
     const salesOrder = await this.getSalesOrder(id);
@@ -827,10 +827,23 @@ export class MemStorage implements IStorage {
     const customer = await this.getCustomer(salesOrder.customerId);
     if (!customer) return undefined;
 
-    const quotation = await this.getQuotation(salesOrder.quotationId);
+    // Get the quotation with all details (rooms, products, accessories)
+    const quotation = await this.getQuotationWithDetails(salesOrder.quotationId);
     if (!quotation) return undefined;
 
     const payments = await this.getPayments(salesOrder.id);
+
+    // Debug logging to help troubleshoot
+    console.log(`Sales order data:`, {
+      id: salesOrder.id,
+      orderNumber: salesOrder.orderNumber,
+      customerId: salesOrder.customerId,
+      quotationId: salesOrder.quotationId,
+      totalAmount: salesOrder.totalAmount,
+      amountPaid: salesOrder.amountPaid,
+      amountDue: salesOrder.amountDue,
+      customerName: customer.name
+    });
 
     return {
       ...salesOrder,
