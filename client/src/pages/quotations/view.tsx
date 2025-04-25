@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart } from "lucide-react";
+import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart, FileText as FileInvoice } from "lucide-react";
 import { QuotationWithDetails } from "@shared/schema";
 import BasicQuote from "@/components/PDFQuotes/BasicQuote";
 import PresentationQuote from "@/components/PDFQuotes/PresentationQuote";
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import ConvertToInvoiceForm from "@/components/invoices/ConvertToInvoiceForm";
 
 export default function ViewQuotation() {
   const { id } = useParams();
@@ -44,6 +45,7 @@ export default function ViewQuotation() {
   const presentationQuoteRef = useRef<any>(null);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
+  const [isConvertToInvoiceDialogOpen, setIsConvertToInvoiceDialogOpen] = useState(false);
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date>(
     addWeeks(new Date(), 4)
   );
@@ -221,15 +223,24 @@ export default function ViewQuotation() {
                 </>
               )}
               
-              {/* Show this button only if quotation is approved */}
+              {/* Show these buttons only if quotation is approved */}
               {quotation.status === "approved" && (
-                <Button
-                  onClick={() => setIsConvertDialogOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <ShoppingCart className="mr-2 h-4 w-4" />
-                  Convert to Sales Order
-                </Button>
+                <>
+                  <Button
+                    onClick={() => setIsConvertDialogOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Convert to Sales Order
+                  </Button>
+                  <Button
+                    onClick={() => setIsConvertToInvoiceDialogOpen(true)}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    <FileInvoice className="mr-2 h-4 w-4" />
+                    Convert to Invoice
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -374,6 +385,26 @@ export default function ViewQuotation() {
               {convertToSalesOrderMutation.isPending ? "Converting..." : "Create Sales Order"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Convert to Invoice Dialog */}
+      <Dialog
+        open={isConvertToInvoiceDialogOpen}
+        onOpenChange={setIsConvertToInvoiceDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Convert to Invoice</DialogTitle>
+            <DialogDescription>
+              Create an invoice based on this approved quotation. You can set the due date and add any special notes.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ConvertToInvoiceForm 
+            quotationId={parseInt(id || "0")} 
+            onClose={() => setIsConvertToInvoiceDialogOpen(false)} 
+          />
         </DialogContent>
       </Dialog>
     </div>

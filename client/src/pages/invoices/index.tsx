@@ -1,145 +1,219 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'wouter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { format } from 'date-fns';
-import { FilePlus, Search, FileText, IndianRupee, Ban, Clock, CheckCircle, RefreshCw } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { FileInvoice, Search, Eye, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Invoice } from '@shared/schema';
+import { format } from 'date-fns';
+import { formatCurrency } from '@/lib/utils';
 
 export default function InvoicesPage() {
+  const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const { data: invoices, isLoading, error } = useQuery<Invoice[]>({
+  const { data: invoices, isLoading } = useQuery<Invoice[]>({
     queryKey: ['/api/invoices'],
-    queryFn: async () => {
-      const response = await fetch('/api/invoices');
-      if (!response.ok) {
-        throw new Error('Failed to fetch invoices');
-      }
-      return response.json();
-    }
   });
 
-  // Filter invoices based on search term
-  const filteredInvoices = invoices?.filter(invoice => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      invoice.invoiceNumber.toLowerCase().includes(searchLower) ||
-      invoice.status.toLowerCase().includes(searchLower)
-    );
-  });
+  // Filter invoices based on search term and status
+  const filteredInvoices = invoices
+    ? invoices.filter((invoice) => {
+        const matchesSearch =
+          invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (invoice.notes && invoice.notes.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
+        
+        return matchesSearch && matchesStatus;
+      })
+    : [];
+
+  // Pagination
+  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
+  const paginatedInvoices = filteredInvoices.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success', label: string, icon: React.ReactNode }> = {
-      pending: { variant: 'outline', label: 'Pending', icon: <Clock className="h-4 w-4 mr-1" /> },
-      paid: { variant: 'success', label: 'Paid', icon: <CheckCircle className="h-4 w-4 mr-1" /> },
-      partially_paid: { variant: 'secondary', label: 'Partially Paid', icon: <IndianRupee className="h-4 w-4 mr-1" /> },
-      overdue: { variant: 'destructive', label: 'Overdue', icon: <RefreshCw className="h-4 w-4 mr-1" /> },
-      cancelled: { variant: 'destructive', label: 'Cancelled', icon: <Ban className="h-4 w-4 mr-1" /> }
-    };
-
-    const statusInfo = statusMap[status] || statusMap.pending;
-    
-    return (
-      <Badge variant={statusInfo.variant as any} className="flex items-center">
-        {statusInfo.icon} {statusInfo.label}
-      </Badge>
-    );
+    switch (status) {
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Pending</Badge>;
+      case 'paid':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Paid</Badge>;
+      case 'partially_paid':
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Partially Paid</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">{status}</Badge>;
+    }
   };
 
   return (
     <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Invoices</h1>
-          <p className="text-gray-500">Manage all customer invoices</p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Invoices</h1>
+        <p className="text-gray-500">Manage and track all customer invoices</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>All Invoices</CardTitle>
-              <CardDescription>View and manage customer invoices</CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  type="text"
-                  placeholder="Search invoices..."
-                  className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle>Filter Invoices</CardTitle>
+          <CardDescription>Use the filters below to find specific invoices</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading && (
-            <div className="flex justify-center p-4">Loading invoices...</div>
-          )}
-
-          {error && (
-            <div className="flex justify-center p-4 text-red-500">
-              Error loading invoices
+          <div className="flex flex-col gap-4 md:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Search by invoice number or notes..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page on new search
+                }}
+              />
             </div>
-          )}
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1); // Reset to first page on filter change
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="partially_paid">Partially Paid</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
-          {!isLoading && !error && filteredInvoices && filteredInvoices.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-8">
-              <FileText className="h-12 w-12 text-gray-300 mb-2" />
-              <h3 className="text-lg font-medium">No invoices found</h3>
-              <p className="text-sm text-gray-500">{searchTerm ? 'Try a different search term' : 'Approved quotations can be converted to invoices'}</p>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>Invoice List</CardTitle>
+          <CardDescription>
+            {filteredInvoices.length} invoice{filteredInvoices.length !== 1 ? 's' : ''} found
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
             </div>
-          )}
-
-          {!isLoading && !error && filteredInvoices && filteredInvoices.length > 0 && (
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredInvoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
-                      <TableCell>{format(new Date(invoice.invoiceDate), 'dd/MM/yyyy')}</TableCell>
-                      <TableCell>{format(new Date(invoice.dueDate), 'dd/MM/yyyy')}</TableCell>
-                      <TableCell>₹{invoice.totalAmount.toLocaleString('en-IN')}</TableCell>
-                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <Link href={`/invoices/${invoice.id}`}>
-                          <Button variant="outline" size="sm">
-                            <FileText className="h-4 w-4 mr-1" /> View
-                          </Button>
-                        </Link>
-                      </TableCell>
+          ) : filteredInvoices.length === 0 ? (
+            <div className="text-center py-8">
+              <FileInvoice className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-gray-900">No invoices found</h3>
+              <p className="mt-1 text-gray-500">
+                {searchTerm || statusFilter !== 'all'
+                  ? 'Try adjusting your search or filter to find what you\'re looking for.'
+                  : 'Create an invoice by converting an approved quotation.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice Number</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedInvoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                        <TableCell>{format(new Date(invoice.createdAt), 'MMM dd, yyyy')}</TableCell>
+                        <TableCell>
+                          {invoice.dueDate
+                            ? format(new Date(invoice.dueDate), 'MMM dd, yyyy')
+                            : 'Not set'}
+                        </TableCell>
+                        <TableCell>{formatCurrency(invoice.amount)}</TableCell>
+                        <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/invoices/${invoice.id}`)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between space-x-2 py-4">
+                  <div className="text-sm text-gray-500">
+                    Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+                    {Math.min(currentPage * itemsPerPage, filteredInvoices.length)} of{' '}
+                    {filteredInvoices.length} results
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="sr-only">Previous</span>
+                    </Button>
+                    <div className="text-sm">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      <span className="sr-only">Next</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
