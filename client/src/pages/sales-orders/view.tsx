@@ -17,8 +17,8 @@ import {
   SalesOrder, 
   Customer, 
   Payment, 
-  Quotation, 
-  QuotationWithDetails
+  CustomerPayment,
+  Quotation
 } from "@shared/schema";
 import { 
   ArrowLeft, 
@@ -51,25 +51,42 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+type SalesOrderWithDetails = SalesOrder & {
+  customer: Customer;
+  quotation: Quotation;
+  payments: Payment[];
+};
+
 export default function ViewSalesOrder() {
   const { id } = useParams();
-  const orderId = parseInt(id || "0");  // Default to 0 if undefined
+  const orderId = parseInt(id || "0");
   const { toast } = useToast();
 
-  // Fetch the sales order
+  // Fetch the sales order with details
   const { 
     data: salesOrder, 
-    isLoading: isLoadingOrder 
-  } = useQuery({
+    isLoading: isLoadingSalesOrder 
+  } = useQuery<SalesOrderWithDetails>({
     queryKey: ["/api/sales-orders", orderId],
     enabled: !isNaN(orderId) && orderId > 0,
   });
 
-  // Fetch customer payments (by customer ID)
-  const { data: customerPayments = [], isLoading: isLoadingCustomerPayments } = useQuery({
-    queryKey: ["/api/customers", salesOrder?.customerId, "payments"],
-    enabled: !!salesOrder?.customerId,
+  // Fetch customer payments separately (direct payments by customer, not tied to sales order)
+  const { 
+    data: customerPayments = [], 
+    isLoading: isLoadingCustomerPayments 
+  } = useQuery<CustomerPayment[]>({
+    queryKey: ["/api/customer-payments"],
+    queryFn: async () => {
+      if (!salesOrder?.customer) return [];
+      const response = await fetch(`/api/customer-payments?customerId=${salesOrder.customer.id}`);
+      return response.json();
+    },
+    enabled: !!salesOrder?.customer?.id
   });
+
+  console.log("Sales Order:", salesOrder);
+  console.log("Customer Payments:", customerPayments);
 
   // Update order status mutation
   const updateStatusMutation = useMutation({
@@ -113,7 +130,7 @@ export default function ViewSalesOrder() {
     }
   };
 
-  const isLoading = isLoadingOrder || isLoadingCustomerPayments || updateStatusMutation.isPending;
+  const isLoading = isLoadingSalesOrder || isLoadingCustomerPayments || updateStatusMutation.isPending;
 
   if (isLoading) {
     return (
@@ -188,7 +205,7 @@ export default function ViewSalesOrder() {
                 <h3 className="text-sm font-medium text-gray-500 flex items-center gap-1">
                   <FileText className="h-4 w-4" /> Quotation
                 </h3>
-                <p className="mt-1">{salesOrder.quotationId}</p>
+                <p className="mt-1">{salesOrder.quotation?.quotationNumber || salesOrder.quotationId || "N/A"}</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 flex items-center gap-1">
@@ -208,9 +225,14 @@ export default function ViewSalesOrder() {
                   <User className="h-4 w-4" /> Customer
                 </h3>
                 <div className="border rounded-md p-3 bg-gray-50">
-                  {/* Display customer information if available */}
-                  {salesOrder.customerId ? (
-                    <CustomerInfo customerId={salesOrder.customerId} />
+                  {/* Display customer information */}
+                  {salesOrder.customer ? (
+                    <>
+                      <p className="font-medium">{salesOrder.customer.name}</p>
+                      <p className="text-sm text-gray-500">{salesOrder.customer.email}</p>
+                      <p className="text-sm text-gray-500">{salesOrder.customer.phone}</p>
+                      <p className="text-sm text-gray-500 mt-1">{salesOrder.customer.address}</p>
+                    </>
                   ) : (
                     <p className="text-muted-foreground">No customer information available</p>
                   )}
@@ -244,7 +266,7 @@ export default function ViewSalesOrder() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Amount Due:</span>
-                <span className="font-medium text-red-600">{formatCurrency(salesOrder.amountDue || 0)}</span>
+                <span className="font-medium text-red-600">{formatCurrency((salesOrder.totalAmount || 0) - (salesOrder.amountPaid || 0))}</span>
               </div>
               
               <div className="pt-4 border-t">
@@ -283,7 +305,7 @@ export default function ViewSalesOrder() {
           <Card>
             <CardHeader>
               <CardTitle>Payment History</CardTitle>
-              {(!salesOrder.payments || salesOrder.payments?.length === 0) && (!customerPayments || customerPayments.length === 0) && (
+              {(!salesOrder.payments || salesOrder.payments.length === 0) && (!customerPayments || customerPayments.length === 0) && (
                 <CardDescription>No payments recorded yet</CardDescription>
               )}
             </CardHeader>
@@ -377,132 +399,82 @@ export default function ViewSalesOrder() {
         </TabsContent>
         
         <TabsContent value="items" className="mt-6">
-          <ItemsSection salesOrderId={orderId} />
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Items</CardTitle>
+              <CardDescription>Items from Quotation {salesOrder.quotation?.quotationNumber || "N/A"}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {salesOrder.quotation?.rooms && salesOrder.quotation.rooms.length > 0 ? (
+                <div className="space-y-6">
+                  {salesOrder.quotation.rooms.map((room) => (
+                    <div key={room.id} className="border rounded-md p-4">
+                      <h3 className="text-lg font-medium mb-2">{room.name}</h3>
+                      
+                      {room.products && room.products.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-500 mb-2">Products</h4>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Item</TableHead>
+                                <TableHead>Quantity</TableHead>
+                                <TableHead>Unit Price</TableHead>
+                                <TableHead>Total</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {room.products.map((product) => (
+                                <TableRow key={product.id}>
+                                  <TableCell>{product.name}</TableCell>
+                                  <TableCell>{product.quantity}</TableCell>
+                                  <TableCell>{formatCurrency(product.sellingPrice)}</TableCell>
+                                  <TableCell>{formatCurrency(product.quantity * product.sellingPrice)}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                      
+                      {room.accessories && room.accessories.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-500 mb-2">Accessories</h4>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Item</TableHead>
+                                <TableHead>Quantity</TableHead>
+                                <TableHead>Unit Price</TableHead>
+                                <TableHead>Total</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {room.accessories.map((accessory) => (
+                                <TableRow key={accessory.id}>
+                                  <TableCell>{accessory.name}</TableCell>
+                                  <TableCell>{accessory.quantity}</TableCell>
+                                  <TableCell>{formatCurrency(accessory.sellingPrice)}</TableCell>
+                                  <TableCell>{formatCurrency(accessory.quantity * accessory.sellingPrice)}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <ShoppingBag className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
+                  <p>No items found in this order</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
-// Customer Info Component
-function CustomerInfo({ customerId }: { customerId: number }) {
-  const { data: customer } = useQuery({
-    queryKey: ["/api/customers", customerId],
-    enabled: customerId > 0,
-  });
-
-  if (!customer) {
-    return <p className="text-sm text-gray-500">Loading customer information...</p>;
-  }
-
-  return (
-    <>
-      <p className="font-medium">{customer.name}</p>
-      <p className="text-sm text-gray-500">{customer.email}</p>
-      <p className="text-sm text-gray-500">{customer.phone}</p>
-      <p className="text-sm text-gray-500 mt-1">{customer.address}</p>
-    </>
-  );
-}
-
-// Items Section Component
-function ItemsSection({ salesOrderId }: { salesOrderId: number }) {
-  const { data: salesOrder } = useQuery({
-    queryKey: ["/api/sales-orders", salesOrderId],
-  });
-
-  const { data: quotation } = useQuery({
-    queryKey: ["/api/quotations", salesOrder?.quotationId, "details"],
-    enabled: !!salesOrder?.quotationId,
-  });
-
-  if (!quotation) {
-    return (
-      <Card>
-        <CardContent className="py-8">
-          <div className="text-center py-8 text-muted-foreground">
-            <ShoppingBag className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
-            <p>Loading order items...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Order Items</CardTitle>
-        <CardDescription>Items from Quotation {quotation.quotationNumber}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {quotation.rooms && quotation.rooms.length > 0 ? (
-          <div className="space-y-6">
-            {quotation.rooms.map((room) => (
-              <div key={room.id} className="border rounded-md p-4">
-                <h3 className="text-lg font-medium mb-2">{room.name}</h3>
-                
-                {room.products && room.products.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">Products</h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Item</TableHead>
-                          <TableHead>Quantity</TableHead>
-                          <TableHead>Unit Price</TableHead>
-                          <TableHead>Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {room.products.map((product) => (
-                          <TableRow key={product.id}>
-                            <TableCell>{product.name}</TableCell>
-                            <TableCell>{product.quantity}</TableCell>
-                            <TableCell>{formatCurrency(product.sellingPrice)}</TableCell>
-                            <TableCell>{formatCurrency(product.quantity * product.sellingPrice)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-                
-                {room.accessories && room.accessories.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">Accessories</h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Item</TableHead>
-                          <TableHead>Quantity</TableHead>
-                          <TableHead>Unit Price</TableHead>
-                          <TableHead>Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {room.accessories.map((accessory) => (
-                          <TableRow key={accessory.id}>
-                            <TableCell>{accessory.name}</TableCell>
-                            <TableCell>{accessory.quantity}</TableCell>
-                            <TableCell>{formatCurrency(accessory.sellingPrice)}</TableCell>
-                            <TableCell>{formatCurrency(accessory.quantity * accessory.sellingPrice)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <ShoppingBag className="mx-auto h-12 w-12 mb-4 text-muted-foreground/80" />
-            <p>No items found in this order</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
   );
 }
