@@ -1,88 +1,95 @@
-import express, { type Express, Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+
+import { storage } from "./storage";
 import {
-  insertCustomerSchema,
-  insertQuotationSchema,
-  insertRoomSchema,
-  insertProductSchema,
-  insertAccessorySchema,
-  insertImageSchema,
-  roomFormSchema,
-  productAccessoryFormSchema,
-  quotationFormSchema,
   customerFormSchema,
+  quotationFormSchema,
+  followUpFormSchema,
   userFormSchema,
   teamFormSchema,
-  teamMemberFormSchema,
-  followUpFormSchema,
-  insertUserSchema,
-  insertTeamSchema,
-  insertTeamMemberSchema,
-  milestoneFormSchema,
-  insertMilestoneSchema,
-  companySettingsFormSchema,
-  appSettingsFormSchema,
-  insertCompanySettingsSchema,
-  insertAppSettingsSchema,
   accessoryCatalogFormSchema,
-  insertAccessoryCatalogSchema,
-  salesOrderFormSchema,
-  insertSalesOrderSchema,
-  paymentFormSchema,
-  insertPaymentSchema,
+  milestoneFormSchema,
   customerPaymentFormSchema,
-  insertCustomerPaymentSchema,
+  roomFormSchema as productFormSchema,
+  installationFormSchema as installationChargeFormSchema,
+  productAccessoryFormSchema as accessoryFormSchema,
 } from "@shared/schema";
-import { z } from "zod";
-import { fromZodError } from "zod-validation-error";
 
-// Set up multer storage for image uploads
-const uploadsDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// Create search filters schema
+const searchFiltersSchema = z.object({});
+
+// Function to validate request body against a schema
+function validateRequest(schema: z.ZodSchema<any>) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      res.status(400).json({ errors: error.errors });
+    }
+  };
 }
 
-const storage2 = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadsDir);
+// Configure multer for image uploads
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage_config = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + "-" + uniqueSuffix + ext);
-  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
 });
 
-const upload = multer({ storage: storage2 });
+const upload = multer({ 
+  storage: storage_config,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Middleware to handle validation errors
-  const validateRequest = (schema: z.ZodSchema<any>) => {
-    return (req: Request, res: Response, next: Function) => {
-      try {
-        schema.parse(req.body);
-        next();
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          res.status(400).json({ message: fromZodError(error).toString() });
-        } else {
-          res.status(400).json({ message: "Invalid request data" });
-        }
-      }
-    };
-  };
+export async function registerRoutes(app: express.Express): Promise<Server> {
+  // Set up CORS headers
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(200);
+    } else {
+      next();
+    }
+  });
 
-  // Serve uploaded files
-  app.use("/uploads", express.static(uploadsDir));
+  // Serve static files from the uploads directory
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Customer routes
   app.get("/api/customers", async (req, res) => {
     try {
-      const customers = await storage.getCustomers();
+      const stage = req.query.stage as string | undefined;
+      const customers = stage 
+        ? await storage.getCustomersByStage(stage)
+        : await storage.getCustomers();
       res.json(customers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customers" });
@@ -104,16 +111,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/customers", validateRequest(customerFormSchema), async (req, res) => {
     try {
-      // Check if a customer with the same phone number already exists
-      const customers = await storage.getCustomers();
-      const existingCustomer = customers.find(c => c.phone === req.body.phone);
-      
-      if (existingCustomer) {
-        return res.status(400).json({ 
-          message: `Phone number already exists with customer "${existingCustomer.name}"`
-        });
-      }
-      
       const customer = await storage.createCustomer(req.body);
       res.status(201).json(customer);
     } catch (error) {
@@ -124,18 +121,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/customers/:id", validateRequest(customerFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const customerId = id;
-      
-      // Check if a different customer already has this phone number
-      const customers = await storage.getCustomers();
-      const existingCustomer = customers.find(c => c.phone === req.body.phone && c.id !== customerId);
-      
-      if (existingCustomer) {
-        return res.status(400).json({ 
-          message: `Phone number already exists with customer "${existingCustomer.name}"`
-        });
-      }
-      
       const customer = await storage.updateCustomer(id, req.body);
       if (!customer) {
         return res.status(404).json({ message: "Customer not found" });
@@ -143,6 +128,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(customer);
     } catch (error) {
       res.status(500).json({ message: "Failed to update customer" });
+    }
+  });
+
+  app.put("/api/customers/:id/stage", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { stage } = req.body;
+      
+      if (!stage || !["new", "pipeline", "cold", "warm", "booked"].includes(stage)) {
+        return res.status(400).json({ message: "Invalid stage value" });
+      }
+      
+      const customer = await storage.updateCustomerStage(id, stage);
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update customer stage" });
     }
   });
 
@@ -158,45 +163,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete customer" });
     }
   });
-
-  // Get quotations for a customer
-  app.get("/api/customers/:id/quotations", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const quotations = await storage.getQuotationsByCustomer(id);
-      res.json(quotations);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch quotations" });
-    }
-  });
   
-  // Get customer payments for a customer
-  app.get("/api/customers/:id/payments", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const payments = await storage.getCustomerPaymentsByCustomer(id);
-      res.json(payments);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch customer payments" });
-    }
-  });
-  
-  // Get sales orders for a customer
-  app.get("/api/customers/:id/sales-orders", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const salesOrders = await storage.getSalesOrdersByCustomer(id);
-      res.json(salesOrders);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch customer sales orders" });
-    }
-  });
-  
-  // Get customer ledger entries (combined sales orders and payments)
+  // Customer ledger - combined sales orders and payments
   app.get("/api/customers/:id/ledger", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      console.log(`Fetching ledger data for customer ID: ${id}`);
       
       // Get both sales orders and payments for this customer
       const salesOrders = await storage.getSalesOrdersByCustomer(id);
@@ -300,20 +271,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Follow-up not found" });
       }
       
-      // Update the customer stage if requested
+      // If requested, also update the customer stage
       if (updateCustomerStage && newCustomerStage) {
-        const customer = await storage.getCustomer(followUp.customerId);
-        if (customer) {
-          await storage.updateCustomer(customer.id, {
-            ...customer,
-            stage: newCustomerStage
-          });
+        const validStages = ["new", "pipeline", "cold", "warm", "booked"];
+        if (!validStages.includes(newCustomerStage)) {
+          return res.status(400).json({ message: "Invalid customer stage" });
         }
+        
+        await storage.updateCustomerStage(followUp.customerId, newCustomerStage);
       }
       
       res.json(followUp);
     } catch (error) {
-      res.status(500).json({ message: "Failed to mark follow-up as complete" });
+      res.status(500).json({ message: "Failed to complete follow-up" });
     }
   });
   
@@ -350,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/quotations/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const quotation = await storage.getQuotationWithDetails(id);
+      const quotation = await storage.getQuotation(id);
       if (!quotation) {
         return res.status(404).json({ message: "Quotation not found" });
       }
@@ -359,19 +329,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch quotation" });
     }
   });
+  
+  app.get("/api/quotations/:id/details", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const quotation = await storage.getQuotationWithDetails(id);
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      res.json(quotation);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch quotation details" });
+    }
+  });
 
   app.post("/api/quotations", validateRequest(quotationFormSchema), async (req, res) => {
     try {
-      // Set initial values for a new quotation
-      const quotationData = {
-        ...req.body,
-        totalSellingPrice: 0,
-        totalDiscountedPrice: 0,
-        gstAmount: 0,
-        finalPrice: 0,
-      };
-      
-      const quotation = await storage.createQuotation(quotationData);
+      const quotation = await storage.createQuotation(req.body);
       res.status(201).json(quotation);
     } catch (error) {
       res.status(500).json({ message: "Failed to create quotation" });
@@ -403,76 +377,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete quotation" });
     }
   });
-  
-  // Update quotation status endpoint
-  app.put("/api/quotations/:id/status", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const { status } = req.body;
-      
-      if (!status || !['draft', 'pending', 'approved', 'rejected', 'revised', 'converted'].includes(status)) {
-        return res.status(400).json({ message: "Invalid status value" });
-      }
-      
-      const quotation = await storage.updateQuotation(id, { status });
-      if (!quotation) {
-        return res.status(404).json({ message: "Quotation not found" });
-      }
-      res.json(quotation);
-    } catch (error) {
-      console.error("Error updating quotation status:", error);
-      res.status(500).json({ message: "Failed to update quotation status" });
-    }
-  });
-  
-  // Convert quotation to sales order
-  app.post("/api/quotations/:id/convert-to-order", async (req, res) => {
+
+  // Get installation charges summary for a quotation
+  app.get("/api/quotations/:id/installation-charges", async (req, res) => {
     try {
       const quotationId = parseInt(req.params.id);
-      const { expectedDeliveryDate, notes } = req.body;
       
-      // Get the quotation details
-      const quotation = await storage.getQuotation(quotationId);
-      if (!quotation) {
-        return res.status(404).json({ message: "Quotation not found" });
+      // Get all rooms for this quotation
+      const rooms = await storage.getRooms(quotationId);
+      const result = [];
+      
+      // For each room, get the installation charges
+      for (const room of rooms) {
+        const charges = await storage.getInstallationCharges(room.id);
+        const totalCharges = charges.reduce((sum, charge) => sum + charge.amount, 0);
+        
+        result.push({
+          roomId: room.id,
+          roomName: room.name,
+          charges: charges,
+          totalCharges: totalCharges
+        });
       }
       
-      if (quotation.status !== "approved") {
-        return res.status(400).json({ message: "Only approved quotations can be converted to sales orders" });
-      }
-      
-      // Order number generation will be handled by createSalesOrderFromQuotation
-      
-      // Create the sales order from the quotation
-      const salesOrder = await storage.createSalesOrderFromQuotation(quotationId, {
-        expectedDeliveryDate: new Date(expectedDeliveryDate),
-        notes: notes || null,
-      });
-      
-      // Update the quotation status to indicate it's been converted
-      await storage.updateQuotation(quotationId, { status: "converted" });
-      
-      res.status(201).json(salesOrder);
+      res.json(result);
     } catch (error) {
-      console.error("Error converting quotation to sales order:", error);
-      res.status(500).json({ message: "Failed to convert quotation to sales order" });
+      res.status(500).json({ message: "Failed to fetch installation charges" });
     }
   });
   
-  // Duplicate quotation with all its content
-  app.post("/api/quotations/:id/duplicate", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const customerId = req.body.customerId ? parseInt(req.body.customerId) : undefined;
-      
-      const duplicatedQuotation = await storage.duplicateQuotation(id, customerId);
-      res.status(201).json(duplicatedQuotation);
-    } catch (error) {
-      console.error("Failed to duplicate quotation:", error);
-      res.status(500).json({ message: "Failed to duplicate quotation", error: error.message });
-    }
-  });
-
   // Room routes
   app.get("/api/quotations/:quotationId/rooms", async (req, res) => {
     try {
@@ -481,6 +414,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(rooms);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch rooms" });
+    }
+  });
+
+  app.post("/api/quotations/:quotationId/rooms", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.quotationId);
+      const room = await storage.createRoom({
+        ...req.body,
+        quotationId
+      });
+      res.status(201).json(room);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create room" });
     }
   });
 
@@ -497,59 +443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/rooms/:id/installation", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const installationData = req.body;
-      
-      // Ensure we're getting valid data
-      if (!id || isNaN(id)) {
-        return res.status(400).json({ message: "Invalid room ID" });
-      }
-      
-      // Check if the room exists first
-      const existingRoom = await storage.getRoom(id);
-      if (!existingRoom) {
-        return res.status(404).json({ message: "Room not found" });
-      }
-      
-      // Ensure content type is set to JSON
-      res.setHeader('Content-Type', 'application/json');
-      
-      const room = await storage.updateRoom(id, {
-        installDescription: installationData.installDescription,
-        widthMm: installationData.widthMm,
-        heightMm: installationData.heightMm,
-        areaSqft: installationData.areaSqft,
-        pricePerSqft: installationData.pricePerSqft,
-        installAmount: installationData.installAmount
-      });
-      
-      return res.status(200).json(room);
-    } catch (error) {
-      console.error("Installation update error:", error);
-      return res.status(500).json({ message: "Failed to update installation charges" });
-    }
-  });
-
-  app.post("/api/quotations/:quotationId/rooms", validateRequest(roomFormSchema), async (req, res) => {
-    try {
-      const quotationId = parseInt(req.params.quotationId);
-      const roomData = {
-        ...req.body,
-        quotationId,
-        sellingPrice: 0,
-        discountedPrice: 0,
-      };
-      
-      const room = await storage.createRoom(roomData);
-      res.status(201).json(room);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create room" });
-    }
-  });
-
-  app.put("/api/rooms/:id", validateRequest(roomFormSchema), async (req, res) => {
+  app.put("/api/rooms/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const room = await storage.updateRoom(id, req.body);
@@ -579,15 +473,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { roomIds } = req.body;
       if (!Array.isArray(roomIds)) {
-        return res.status(400).json({ message: "Invalid room IDs" });
+        return res.status(400).json({ message: "Room IDs must be an array" });
       }
       
       const success = await storage.reorderRooms(roomIds);
-      if (!success) {
-        return res.status(400).json({ message: "Failed to reorder rooms" });
-      }
-      
-      res.json({ success: true });
+      res.json({ success });
     } catch (error) {
       res.status(500).json({ message: "Failed to reorder rooms" });
     }
@@ -604,22 +494,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/rooms/:roomId/products", validateRequest(productAccessoryFormSchema), async (req, res) => {
+  app.post("/api/rooms/:roomId/products", validateRequest(productFormSchema), async (req, res) => {
     try {
       const roomId = parseInt(req.params.roomId);
-      const productData = {
+      const product = await storage.createProduct({
         ...req.body,
-        roomId,
-      };
-      
-      const product = await storage.createProduct(productData);
+        roomId
+      });
       res.status(201).json(product);
     } catch (error) {
       res.status(500).json({ message: "Failed to create product" });
     }
   });
 
-  app.put("/api/products/:id", validateRequest(productAccessoryFormSchema), async (req, res) => {
+  app.get("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(product);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch product" });
+    }
+  });
+
+  app.put("/api/products/:id", validateRequest(productFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const product = await storage.updateProduct(id, req.body);
@@ -656,22 +557,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/rooms/:roomId/accessories", validateRequest(productAccessoryFormSchema), async (req, res) => {
+  app.post("/api/rooms/:roomId/accessories", validateRequest(accessoryFormSchema), async (req, res) => {
     try {
       const roomId = parseInt(req.params.roomId);
-      const accessoryData = {
+      const accessory = await storage.createAccessory({
         ...req.body,
-        roomId,
-      };
-      
-      const accessory = await storage.createAccessory(accessoryData);
+        roomId
+      });
       res.status(201).json(accessory);
     } catch (error) {
       res.status(500).json({ message: "Failed to create accessory" });
     }
   });
 
-  app.put("/api/accessories/:id", validateRequest(productAccessoryFormSchema), async (req, res) => {
+  app.get("/api/accessories/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const accessory = await storage.getAccessory(id);
+      if (!accessory) {
+        return res.status(404).json({ message: "Accessory not found" });
+      }
+      res.json(accessory);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch accessory" });
+    }
+  });
+
+  app.put("/api/accessories/:id", validateRequest(accessoryFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const accessory = await storage.updateAccessory(id, req.body);
@@ -697,6 +609,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Installation Charge routes
+  app.get("/api/rooms/:roomId/installation-charges", async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const charges = await storage.getInstallationCharges(roomId);
+      res.json(charges);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch installation charges" });
+    }
+  });
+
+  app.post("/api/rooms/:roomId/installation-charges", validateRequest(installationChargeFormSchema), async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const charge = await storage.createInstallationCharge({
+        ...req.body,
+        roomId
+      });
+      res.status(201).json(charge);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create installation charge" });
+    }
+  });
+
+  app.get("/api/installation-charges/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const charge = await storage.getInstallationCharge(id);
+      if (!charge) {
+        return res.status(404).json({ message: "Installation charge not found" });
+      }
+      res.json(charge);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch installation charge" });
+    }
+  });
+
+  app.put("/api/installation-charges/:id", validateRequest(installationChargeFormSchema), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const charge = await storage.updateInstallationCharge(id, req.body);
+      if (!charge) {
+        return res.status(404).json({ message: "Installation charge not found" });
+      }
+      res.json(charge);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update installation charge" });
+    }
+  });
+
+  app.delete("/api/installation-charges/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteInstallationCharge(id);
+      if (!success) {
+        return res.status(404).json({ message: "Installation charge not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete installation charge" });
+    }
+  });
+
   // Image routes
   app.get("/api/rooms/:roomId/images", async (req, res) => {
     try {
@@ -708,45 +683,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/rooms/:roomId/images", upload.single("image"), async (req, res) => {
+  app.post("/api/rooms/:roomId/images", upload.single('image'), async (req, res) => {
     try {
+      const roomId = parseInt(req.params.roomId);
+      
       if (!req.file) {
-        return res.status(400).json({ message: "No image provided" });
+        return res.status(400).json({ message: "No image file provided" });
       }
       
-      const roomId = parseInt(req.params.roomId);
-      const imageData = {
+      const image = await storage.createImage({
         roomId,
-        filename: req.file.filename,
-        path: `/uploads/${req.file.filename}`,
-        order: 0, // Will be set automatically in the storage method
-      };
+        url: `/uploads/${req.file.filename}`,
+        description: req.body.description || "",
+        order: parseInt(req.body.order) || 0
+      });
       
-      const image = await storage.createImage(imageData);
       res.status(201).json(image);
     } catch (error) {
       res.status(500).json({ message: "Failed to upload image" });
     }
   });
 
-  app.delete("/api/images/:id", async (req, res) => {
+  app.get("/api/images/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const image = await storage.getImage(id);
+      if (!image) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+      res.json(image);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch image" });
+    }
+  });
+
+  app.delete("/api/images/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
       
+      // Get the image first to find file path
+      const image = await storage.getImage(id);
       if (!image) {
         return res.status(404).json({ message: "Image not found" });
       }
       
+      // Delete from storage
       const success = await storage.deleteImage(id);
       if (!success) {
-        return res.status(500).json({ message: "Failed to delete image record" });
+        return res.status(500).json({ message: "Failed to delete image from database" });
       }
       
-      // Delete the file
-      const filePath = path.join(process.cwd(), image.path.replace(/^\/uploads/, "uploads"));
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      // Try to delete the file if it's a local file
+      if (image.url.startsWith('/uploads/')) {
+        const filename = image.url.replace('/uploads/', '');
+        const filePath = path.join(uploadDir, filename);
+        
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (fileError) {
+          console.error("Failed to delete image file:", fileError);
+          // We still return success even if the file deletion fails
+        }
       }
       
       res.json({ success: true });
@@ -759,341 +758,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { imageIds } = req.body;
       if (!Array.isArray(imageIds)) {
-        return res.status(400).json({ message: "Invalid image IDs" });
+        return res.status(400).json({ message: "Image IDs must be an array" });
       }
       
       const success = await storage.reorderImages(imageIds);
-      if (!success) {
-        return res.status(400).json({ message: "Failed to reorder images" });
-      }
-      
-      res.json({ success: true });
+      res.json({ success });
     } catch (error) {
       res.status(500).json({ message: "Failed to reorder images" });
-    }
-  });
-  
-  // Installation Charge routes
-  app.get("/api/rooms/:roomId/installation-charges", async (req, res) => {
-    try {
-      const roomId = parseInt(req.params.roomId);
-      const charges = await storage.getInstallationCharges(roomId);
-      res.json(charges);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch installation charges" });
-    }
-  });
-  
-  app.get("/api/installation-charges/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const charge = await storage.getInstallationCharge(id);
-      
-      if (!charge) {
-        return res.status(404).json({ message: "Installation charge not found" });
-      }
-      
-      res.json(charge);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch installation charge" });
-    }
-  });
-  
-  app.post("/api/installation-charges", async (req, res) => {
-    try {
-      const charge = req.body;
-      
-      if (!charge.roomId || !charge.cabinetType || !charge.widthMm || 
-          !charge.heightMm || !charge.areaSqft || !charge.pricePerSqft || !charge.amount) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
-      
-      const newCharge = await storage.createInstallationCharge(charge);
-      res.status(201).json(newCharge);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create installation charge" });
-    }
-  });
-  
-  app.put("/api/installation-charges/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const charge = req.body;
-      
-      const updatedCharge = await storage.updateInstallationCharge(id, charge);
-      if (!updatedCharge) {
-        return res.status(404).json({ message: "Installation charge not found" });
-      }
-      
-      res.json(updatedCharge);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update installation charge" });
-    }
-  });
-  
-  app.delete("/api/installation-charges/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const success = await storage.deleteInstallationCharge(id);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Installation charge not found" });
-      }
-      
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete installation charge" });
-    }
-  });
-  
-  // Get all installation charges for all rooms in a quotation
-  app.get("/api/quotations/:quotationId/installation-charges", async (req, res) => {
-    try {
-      const quotationId = parseInt(req.params.quotationId);
-      
-      // Get all rooms for the quotation
-      const rooms = await storage.getRooms(quotationId);
-      
-      // For each room, get the installation charges
-      const result = await Promise.all(rooms.map(async (room) => {
-        const charges = await storage.getInstallationCharges(room.id);
-        return {
-          roomId: room.id,
-          charges
-        };
-      }));
-      
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch installation charges" });
-    }
-  });
-
-  // Accessory Catalog routes
-  app.get("/api/accessory-catalog", async (req, res) => {
-    try {
-      const category = req.query.category as string | undefined;
-      
-      if (category) {
-        const items = await storage.getAccessoryCatalogByCategory(category);
-        return res.json(items);
-      }
-      
-      const items = await storage.getAccessoryCatalog();
-      res.json(items);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch accessory catalog items" });
-    }
-  });
-
-  app.get("/api/accessory-catalog/category/:category", async (req, res) => {
-    try {
-      const category = req.params.category;
-      // Validate category
-      if (!["handle", "kitchen", "light", "wardrobe"].includes(category)) {
-        return res.status(400).json({ message: "Invalid category. Must be one of: handle, kitchen, light, wardrobe" });
-      }
-      
-      const items = await storage.getAccessoryCatalogByCategory(category as "handle" | "kitchen" | "light" | "wardrobe");
-      res.json(items);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch accessory catalog items by category" });
-    }
-  });
-  
-  // CSV export route for accessory catalog
-  app.get("/api/accessory-catalog/export", async (req, res) => {
-    try {
-      const items = await storage.getAccessoryCatalog();
-      
-      // Create CSV header
-      let csv = "code,name,category,description,sellingPrice,kitchenPrice,wardrobePrice,size,image\n";
-      
-      // Add each item as a row
-      items.forEach(item => {
-        const row = [
-          item.code,
-          `"${item.name.replace(/"/g, '""')}"`, // Escape double quotes in fields
-          item.category,
-          item.description ? `"${item.description.replace(/"/g, '""')}"` : '',
-          item.sellingPrice,
-          item.kitchenPrice || '',
-          item.wardrobePrice || '',
-          item.size || '',
-          item.image || ''
-        ].join(',');
-        
-        csv += row + "\n";
-      });
-      
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename=accessory-catalog.csv');
-      res.send(csv);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to export accessory catalog" });
-    }
-  });
-  
-  // CSV import route for accessory catalog
-  const csvUpload = multer({ 
-    dest: path.join(process.cwd(), "uploads", "temp"), 
-    limits: { fileSize: 10 * 1024 * 1024 } 
-  });
-  
-  app.post("/api/accessory-catalog/import", csvUpload.single('file'), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-      
-      // Read the uploaded CSV file
-      const csvData = fs.readFileSync(req.file.path, 'utf8');
-      const lines = csvData.split('\n');
-      
-      // Skip header row, process each line
-      const header = lines[0].toLowerCase();
-      if (!header.includes('code') || !header.includes('name') || !header.includes('category')) {
-        return res.status(400).json({ 
-          message: "Invalid CSV format. The file must include code, name, and category columns." 
-        });
-      }
-      
-      const results = {
-        totalRows: lines.length - 1, // Exclude header
-        successCount: 0,
-        errorCount: 0,
-        errors: []
-      };
-      
-      // Process each line (skipping header)
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue; // Skip empty lines
-        
-        const columns = lines[i].split(',');
-        const row = header.split(',').reduce((obj, header, index) => {
-          let value = columns[index] || '';
-          
-          // Remove quotes if present
-          if (value.startsWith('"') && value.endsWith('"')) {
-            value = value.substring(1, value.length - 1).replace(/""/g, '"');
-          }
-          
-          obj[header.trim()] = value.trim();
-          return obj;
-        }, {});
-        
-        try {
-          // Validate required fields
-          if (!row.code || !row.name || !row.category) {
-            throw new Error(`Row ${i}: Missing required fields (code, name, or category)`);
-          }
-          
-          // Validate category
-          if (!['handle', 'kitchen', 'light', 'wardrobe'].includes(row.category)) {
-            throw new Error(`Row ${i}: Invalid category. Must be one of: handle, kitchen, light, wardrobe`);
-          }
-          
-          // Prepare item for insertion
-          const accessoryItem = {
-            code: row.code,
-            name: row.name,
-            category: row.category as "handle" | "kitchen" | "light" | "wardrobe",
-            description: row.description || null,
-            sellingPrice: parseFloat(row.sellingprice) || 0,
-            kitchenPrice: row.kitchenprice ? parseFloat(row.kitchenprice) : null,
-            wardrobePrice: row.wardrobeprice ? parseFloat(row.wardrobeprice) : null,
-            size: row.size || null,
-            image: row.image || null
-          };
-          
-          // Validate with schema
-          accessoryCatalogFormSchema.parse(accessoryItem);
-          
-          // Check for existing item with same code
-          const existingItems = await storage.getAccessoryCatalog();
-          const existingItem = existingItems.find(item => item.code === accessoryItem.code);
-          
-          if (existingItem) {
-            // Update existing item
-            await storage.updateAccessoryCatalogItem(existingItem.id, accessoryItem);
-          } else {
-            // Create new item
-            await storage.createAccessoryCatalogItem(accessoryItem);
-          }
-          
-          results.successCount++;
-        } catch (error) {
-          results.errorCount++;
-          if (error instanceof Error) {
-            results.errors.push(error.message);
-          } else {
-            results.errors.push(`Row ${i}: Unknown error`);
-          }
-        }
-      }
-      
-      // Clean up temporary file
-      fs.unlinkSync(req.file.path);
-      
-      res.status(200).json(results);
-    } catch (error) {
-      // Clean up temporary file if it exists
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-      
-      res.status(500).json({ 
-        message: "Failed to import accessory catalog",
-        error: error instanceof Error ? error.message : "Unknown error" 
-      });
-    }
-  });
-
-  app.get("/api/accessory-catalog/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const item = await storage.getAccessoryCatalogItem(id);
-      if (!item) {
-        return res.status(404).json({ message: "Accessory catalog item not found" });
-      }
-      res.json(item);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch accessory catalog item" });
-    }
-  });
-
-  app.post("/api/accessory-catalog", validateRequest(accessoryCatalogFormSchema), async (req, res) => {
-    try {
-      const item = await storage.createAccessoryCatalogItem(req.body);
-      res.status(201).json(item);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create accessory catalog item" });
-    }
-  });
-
-  app.put("/api/accessory-catalog/:id", validateRequest(accessoryCatalogFormSchema), async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const item = await storage.updateAccessoryCatalogItem(id, req.body);
-      if (!item) {
-        return res.status(404).json({ message: "Accessory catalog item not found" });
-      }
-      res.json(item);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update accessory catalog item" });
-    }
-  });
-
-  app.delete("/api/accessory-catalog/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const success = await storage.deleteAccessoryCatalogItem(id);
-      if (!success) {
-        return res.status(404).json({ message: "Accessory catalog item not found" });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete accessory catalog item" });
     }
   });
 
@@ -1101,14 +772,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", async (req, res) => {
     try {
       const users = await storage.getUsers();
-      // Don't return password field in the response
-      const usersWithoutPasswords = users.map(({ password, ...user }) => user);
-      res.json(usersWithoutPasswords);
+      res.json(users);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch users" });
     }
   });
-  
+
   app.get("/api/users/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -1116,55 +785,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      // Don't return password field in the response
-      const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      res.json(user);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
-  
+
   app.post("/api/users", validateRequest(userFormSchema), async (req, res) => {
     try {
+      // Check if the username is already taken
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
       
       const user = await storage.createUser(req.body);
-      // Don't return password field in the response
-      const { password, ...userWithoutPassword } = user;
-      res.status(201).json(userWithoutPassword);
+      res.status(201).json(user);
     } catch (error) {
       res.status(500).json({ message: "Failed to create user" });
     }
   });
-  
+
   app.put("/api/users/:id", validateRequest(userFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
-      // Check if username is being changed and if it's already taken
-      if (req.body.username) {
-        const existingUser = await storage.getUserByUsername(req.body.username);
-        if (existingUser && existingUser.id !== id) {
-          return res.status(400).json({ message: "Username already exists" });
-        }
+      // Check if the username is already taken by another user
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser && existingUser.id !== id) {
+        return res.status(400).json({ message: "Username already exists" });
       }
       
       const user = await storage.updateUser(id, req.body);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
-      // Don't return password field in the response
-      const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      res.json(user);
     } catch (error) {
       res.status(500).json({ message: "Failed to update user" });
     }
   });
-  
+
   app.delete("/api/users/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -1177,7 +838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete user" });
     }
   });
-  
+
   // Team routes
   app.get("/api/teams", async (req, res) => {
     try {
@@ -1187,11 +848,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch teams" });
     }
   });
-  
+
   app.get("/api/teams/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const team = await storage.getTeam(id);
+      const team = await storage.getTeamWithMembers(id);
       if (!team) {
         return res.status(404).json({ message: "Team not found" });
       }
@@ -1200,22 +861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch team" });
     }
   });
-  
-  app.get("/api/teams/:id/members", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const team = await storage.getTeamWithMembers(id);
-      if (!team) {
-        return res.status(404).json({ message: "Team not found" });
-      }
-      // Don't return password field in the response
-      const membersWithoutPasswords = team.members.map(({ password, ...member }) => member);
-      res.json({ ...team, members: membersWithoutPasswords });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch team members" });
-    }
-  });
-  
+
   app.post("/api/teams", validateRequest(teamFormSchema), async (req, res) => {
     try {
       const team = await storage.createTeam(req.body);
@@ -1224,7 +870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to create team" });
     }
   });
-  
+
   app.put("/api/teams/:id", validateRequest(teamFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -1237,7 +883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update team" });
     }
   });
-  
+
   app.delete("/api/teams/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -1250,42 +896,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete team" });
     }
   });
-  
-  // Team Member routes
-  app.post("/api/teams/:teamId/members", validateRequest(teamMemberFormSchema), async (req, res) => {
+
+  // Team member routes
+  app.get("/api/teams/:teamId/members", async (req, res) => {
     try {
       const teamId = parseInt(req.params.teamId);
-      const userId = req.body.userId;
+      const members = await storage.getTeamMembers(teamId);
+      res.json(members);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch team members" });
+    }
+  });
+
+  app.post("/api/teams/:teamId/members", async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      const { userId } = req.body;
       
-      // Check if the team exists
-      const team = await storage.getTeam(teamId);
-      if (!team) {
-        return res.status(404).json({ message: "Team not found" });
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
       }
       
-      // Check if the user exists
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      // Check if user is already in the team
-      const teamMembers = await storage.getTeamMembers(teamId);
-      if (teamMembers.some(member => member.id === userId)) {
-        return res.status(400).json({ message: "User is already a member of this team" });
-      }
-      
-      const teamMember = await storage.addTeamMember({
+      const member = await storage.addTeamMember({
         teamId,
-        userId,
+        userId: parseInt(userId),
       });
       
-      res.status(201).json(teamMember);
+      res.status(201).json(member);
     } catch (error) {
       res.status(500).json({ message: "Failed to add team member" });
     }
   });
-  
+
   app.delete("/api/teams/:teamId/members/:userId", async (req, res) => {
     try {
       const teamId = parseInt(req.params.teamId);
@@ -1401,31 +1043,174 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { milestoneIds } = req.body;
       if (!Array.isArray(milestoneIds)) {
-        return res.status(400).json({ message: "Invalid milestone IDs" });
+        return res.status(400).json({ message: "Milestone IDs must be an array" });
       }
       
       const success = await storage.reorderMilestones(milestoneIds);
-      if (!success) {
-        return res.status(400).json({ message: "Failed to reorder milestones" });
-      }
-      
-      res.json({ success: true });
+      res.json({ success });
     } catch (error) {
       res.status(500).json({ message: "Failed to reorder milestones" });
     }
   });
 
-  // Company Settings routes
+  // Accessory Catalog routes
+  app.get("/api/accessory-catalog", async (req, res) => {
+    try {
+      const category = req.query.category as string | undefined;
+      
+      const accessories = category 
+        ? await storage.getAccessoryCatalogByCategory(category)
+        : await storage.getAccessoryCatalog();
+      
+      res.json(accessories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch accessory catalog" });
+    }
+  });
+
+  app.get("/api/accessory-catalog/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const accessory = await storage.getAccessoryCatalogItem(id);
+      if (!accessory) {
+        return res.status(404).json({ message: "Accessory catalog item not found" });
+      }
+      res.json(accessory);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch accessory catalog item" });
+    }
+  });
+
+  app.post("/api/accessory-catalog", validateRequest(accessoryCatalogFormSchema), async (req, res) => {
+    try {
+      const accessory = await storage.createAccessoryCatalogItem(req.body);
+      res.status(201).json(accessory);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create accessory catalog item" });
+    }
+  });
+
+  app.post("/api/accessory-catalog/bulk-import", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file provided" });
+      }
+      
+      // Read the CSV file
+      const fileContent = fs.readFileSync(req.file.path, 'utf8');
+      const lines = fileContent.split('\n');
+      
+      // Skip header row
+      const dataRows = lines.slice(1);
+      
+      const results = {
+        success: 0,
+        failed: 0,
+        errors: [] as string[]
+      };
+      
+      for (const row of dataRows) {
+        try {
+          if (!row.trim()) continue; // Skip empty rows
+          
+          const columns = row.split(',');
+          if (columns.length < 5) {
+            results.failed++;
+            results.errors.push(`Invalid row format: ${row}`);
+            continue;
+          }
+          
+          const [category, code, name, mrpStr, priceStr, descriptionStr = ""] = columns;
+          const mrp = parseFloat(mrpStr);
+          const price = parseFloat(priceStr);
+          
+          if (isNaN(mrp) || isNaN(price)) {
+            results.failed++;
+            results.errors.push(`Invalid price values in row: ${row}`);
+            continue;
+          }
+          
+          await storage.createAccessoryCatalogItem({
+            category,
+            code,
+            name,
+            mrp,
+            price,
+            description: descriptionStr
+          });
+          
+          results.success++;
+        } catch (error) {
+          results.failed++;
+          results.errors.push(`Error processing row: ${row}. ${error.message}`);
+        }
+      }
+      
+      // Clean up the uploaded file
+      fs.unlinkSync(req.file.path);
+      
+      res.status(201).json(results);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to import accessory catalog items", error: error.message });
+    }
+  });
+
+  app.put("/api/accessory-catalog/:id", validateRequest(accessoryCatalogFormSchema), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const accessory = await storage.updateAccessoryCatalogItem(id, req.body);
+      if (!accessory) {
+        return res.status(404).json({ message: "Accessory catalog item not found" });
+      }
+      res.json(accessory);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update accessory catalog item" });
+    }
+  });
+
+  app.delete("/api/accessory-catalog/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteAccessoryCatalogItem(id);
+      if (!success) {
+        return res.status(404).json({ message: "Accessory catalog item not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete accessory catalog item" });
+    }
+  });
+
+  // Application settings routes
+  app.get("/api/settings/app", async (req, res) => {
+    try {
+      const settings = await storage.getAppSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch application settings" });
+    }
+  });
+
+  app.put("/api/settings/app", async (req, res) => {
+    try {
+      const settings = await storage.updateAppSettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update application settings" });
+    }
+  });
+
+  // Company settings routes
   app.get("/api/settings/company", async (req, res) => {
     try {
       const settings = await storage.getCompanySettings();
-      res.json(settings || {});
+      res.json(settings);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch company settings" });
     }
   });
 
-  app.put("/api/settings/company", validateRequest(companySettingsFormSchema), async (req, res) => {
+  app.put("/api/settings/company", async (req, res) => {
     try {
       const settings = await storage.updateCompanySettings(req.body);
       res.json(settings);
@@ -1434,37 +1219,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Handle company logo upload
-  app.post("/api/settings/company/logo", upload.single("logo"), async (req, res) => {
+  // Logo upload route
+  app.post("/api/settings/company/logo", upload.single('logo'), async (req, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
+        return res.status(400).json({ message: "No logo file provided" });
       }
       
-      const logoPath = `/uploads/${req.file.filename}`;
-      const settings = await storage.updateCompanySettings({ logo: logoPath });
+      const logoUrl = `/uploads/${req.file.filename}`;
+      const settings = await storage.updateCompanyLogo(logoUrl);
+      
       res.json(settings);
     } catch (error) {
-      res.status(500).json({ message: "Failed to upload logo" });
-    }
-  });
-
-  // App Settings routes
-  app.get("/api/settings/app", async (req, res) => {
-    try {
-      const settings = await storage.getAppSettings();
-      res.json(settings || {});
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch app settings" });
-    }
-  });
-
-  app.put("/api/settings/app", validateRequest(appSettingsFormSchema), async (req, res) => {
-    try {
-      const settings = await storage.updateAppSettings(req.body);
-      res.json(settings);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update app settings" });
+      res.status(500).json({ message: "Failed to upload company logo" });
     }
   });
 
@@ -1488,39 +1255,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sales-orders/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`Fetching sales order with ID: ${id}`);
+      
       const salesOrder = await storage.getSalesOrderWithDetails(id);
+      console.log(`Sales order fetch result:`, JSON.stringify(salesOrder, null, 2));
+      
       if (!salesOrder) {
+        console.log(`Sales order with ID ${id} not found`);
         return res.status(404).json({ message: "Sales order not found" });
       }
+      
+      console.log(`Returning sales order data with customer:`, salesOrder.customer);
       res.json(salesOrder);
     } catch (error) {
+      console.error(`Error fetching sales order:`, error);
       res.status(500).json({ message: "Failed to fetch sales order" });
-    }
-  });
-
-  app.post("/api/quotations/:id/convert-to-order", async (req, res) => {
-    try {
-      const quotationId = parseInt(req.params.id);
-      
-      // Check if quotation is already converted
-      const quotation = await storage.getQuotation(quotationId);
-      if (!quotation) {
-        return res.status(404).json({ message: "Quotation not found" });
-      }
-      
-      if (quotation.status === "converted") {
-        return res.status(400).json({ message: "Quotation is already converted to a sales order" });
-      }
-      
-      // Check if quotation is approved
-      if (quotation.status !== "approved") {
-        await storage.updateQuotationStatus(quotationId, "approved");
-      }
-      
-      const salesOrder = await storage.createSalesOrderFromQuotation(quotationId, req.body);
-      res.status(201).json(salesOrder);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to convert quotation to sales order", error: error.message });
     }
   });
 
@@ -1597,20 +1346,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/sales-orders/:salesOrderId/payments", async (req, res) => {
     try {
       const salesOrderId = parseInt(req.params.salesOrderId);
+      const { amount, paymentMethod, notes, paymentDate } = req.body;
       
-      // Record the payment
+      const parsedAmount = parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        return res.status(400).json({ message: "Amount must be a positive number" });
+      }
+      
+      const parsedDate = paymentDate ? new Date(paymentDate) : new Date();
+      
       const payment = await storage.recordPayment(
         salesOrderId,
-        req.body.amount,
-        req.body.paymentMethod,
-        req.body.notes,
-        req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
-        req.body.createdBy
+        parsedAmount,
+        paymentMethod,
+        notes,
+        parsedDate
       );
       
       res.status(201).json(payment);
     } catch (error) {
-      res.status(500).json({ message: "Failed to record payment", error: error.message });
+      res.status(500).json({ message: "Failed to record payment" });
     }
   });
 
@@ -1717,6 +1472,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(quotation);
     } catch (error) {
       res.status(500).json({ message: "Failed to update quotation status" });
+    }
+  });
+
+  // Convert quotation to sales order
+  app.post("/api/quotations/:id/convert-to-order", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.id);
+      
+      // Check if quotation is already converted
+      const quotation = await storage.getQuotation(quotationId);
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      
+      if (quotation.status === "converted") {
+        return res.status(400).json({ message: "Quotation is already converted to a sales order" });
+      }
+      
+      // Check if quotation is approved
+      if (quotation.status !== "approved") {
+        await storage.updateQuotationStatus(quotationId, "approved");
+      }
+      
+      const salesOrder = await storage.createSalesOrderFromQuotation(quotationId, req.body);
+      console.log("Created new sales order:", salesOrder);
+      res.status(201).json(salesOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to convert quotation to sales order", error: error.message });
     }
   });
 
