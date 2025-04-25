@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileInvoice, Search, Eye, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Search, Eye, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Invoice } from '@shared/schema';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
@@ -130,7 +130,7 @@ export default function InvoicesPage() {
             </div>
           ) : filteredInvoices.length === 0 ? (
             <div className="text-center py-8">
-              <FileInvoice className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
               <h3 className="text-lg font-medium text-gray-900">No invoices found</h3>
               <p className="mt-1 text-gray-500">
                 {searchTerm || statusFilter !== 'all'
@@ -162,7 +162,7 @@ export default function InvoicesPage() {
                             ? format(new Date(invoice.dueDate), 'MMM dd, yyyy')
                             : 'Not set'}
                         </TableCell>
-                        <TableCell>{formatCurrency(invoice.amount)}</TableCell>
+                        <TableCell>{formatCurrency(invoice.totalAmount)}</TableCell>
                         <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                         <TableCell className="text-right">
                           <Button

@@ -10,7 +10,8 @@ import {
   UserCheck,
   Layers,
   ShoppingCart,
-  CreditCard
+  CreditCard,
+  Receipt
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { CompanySettings } from "@shared/schema";
