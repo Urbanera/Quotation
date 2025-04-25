@@ -89,9 +89,9 @@ export default function QuotationSummary({
 
   const getTotalInstallationCharges = () => {
     // First check if totalInstallationCharges is available in the quotation
-    if (quotation && 'totalInstallationCharges' in quotation) {
+    if (quotation?.totalInstallationCharges !== undefined) {
       console.log('Using totalInstallationCharges from quotation:', quotation.totalInstallationCharges);
-      return quotation.totalInstallationCharges;
+      return Number(quotation.totalInstallationCharges);
     }
     
     // Then try to use the installation charges from the room data directly

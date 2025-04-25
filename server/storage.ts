@@ -1327,7 +1327,7 @@ export class MemStorage implements IStorage {
   async createQuotation(quotation: InsertQuotation): Promise<Quotation> {
     const id = this.quotationIdCounter++;
     const now = new Date();
-    const newQuotation: any = {
+    const newQuotation: Quotation = {
       id,
       customerId: quotation.customerId,
       quotationNumber: quotation.quotationNumber || `Q-${now.getFullYear()}-${id.toString().padStart(3, '0')}`,
@@ -1336,7 +1336,7 @@ export class MemStorage implements IStorage {
       description: quotation.description || null,
       totalSellingPrice: quotation.totalSellingPrice || 0,
       totalDiscountedPrice: quotation.totalDiscountedPrice || 0,
-      totalInstallationCharges: 0, // Initialize with 0
+      totalInstallationCharges: 0,
       installationHandling: quotation.installationHandling || 0,
       globalDiscount: quotation.globalDiscount || 0,
       gstPercentage: quotation.gstPercentage || 0,
@@ -2035,25 +2035,33 @@ export class MemStorage implements IStorage {
     for (const room of rooms) {
       const charges = await this.getInstallationCharges(room.id);
       for (const charge of charges) {
-        totalInstallationCharges += charge.amount;
+        const amount = typeof charge.amount === 'number' 
+          ? charge.amount 
+          : parseFloat(String(charge.amount));
+        totalInstallationCharges += amount;
       }
     }
+    
+    console.log(`Updating quotation ${quotationId} with totalInstallationCharges: ${totalInstallationCharges}`);
     
     // Apply GST
     const subtotal = priceAfterGlobalDiscount + totalInstallationCharges + quotation.installationHandling;
     const gstAmount = subtotal * (quotation.gstPercentage / 100);
     const finalPrice = subtotal + gstAmount;
     
-    // Update quotation with the totalInstallationCharges
-    this.quotations.set(quotationId, {
+    // Create a new quotation object with all the updated fields
+    const updatedQuotation = {
       ...quotation,
       totalSellingPrice,
       totalDiscountedPrice,
-      totalInstallationCharges, // Store the total installation charges
+      totalInstallationCharges,
       gstAmount,
       finalPrice,
       updatedAt: new Date()
-    });
+    };
+    
+    // Update the quotation in the storage
+    this.quotations.set(quotationId, updatedQuotation);
   }
   
   // User operations

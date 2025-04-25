@@ -72,6 +72,7 @@ export const quotations = pgTable("quotations", {
   customerId: integer("customer_id").notNull(),
   totalSellingPrice: doublePrecision("total_selling_price").notNull(),
   totalDiscountedPrice: doublePrecision("total_discounted_price").notNull(),
+  totalInstallationCharges: doublePrecision("total_installation_charges").notNull().default(0),
   installationHandling: doublePrecision("installation_handling").notNull(),
   globalDiscount: doublePrecision("global_discount").notNull().default(0),
   gstPercentage: doublePrecision("gst_percentage").notNull().default(18),
