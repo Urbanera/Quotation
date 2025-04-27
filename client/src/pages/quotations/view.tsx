@@ -103,7 +103,7 @@ export default function ViewQuotation() {
         title: "Sales Order Created",
         description: "The quotation has been converted to a sales order.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}/details`] });
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/sales-orders"] });
       setIsConvertDialogOpen(false);
