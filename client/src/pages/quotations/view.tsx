@@ -52,7 +52,7 @@ export default function ViewQuotation() {
   const [orderNotes, setOrderNotes] = useState("");
 
   const { data: quotation, isLoading } = useQuery<QuotationWithDetails>({
-    queryKey: [`/api/quotations/${id}`],
+    queryKey: [`/api/quotations/${id}/details`],
     enabled: !!id,
   });
   
@@ -71,7 +71,7 @@ export default function ViewQuotation() {
         title: "Quotation Approved",
         description: "The quotation has been marked as approved.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}/details`] });
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
       setIsApproveDialogOpen(false);
     },
