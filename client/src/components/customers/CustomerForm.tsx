@@ -34,6 +34,7 @@ export default function CustomerForm({
       email: defaultValues?.email || "",
       phone: defaultValues?.phone || "",
       address: defaultValues?.address || "",
+      gstNumber: defaultValues?.gstNumber || "",
       stage: defaultValues?.stage || "new",
     },
   });
@@ -85,6 +86,23 @@ export default function CustomerForm({
                 <FormControl>
                   <Input 
                     placeholder="Phone number" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="gstNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>GST Number (Optional)</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Enter GST Number" 
                     {...field} 
                   />
                 </FormControl>

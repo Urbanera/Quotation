@@ -53,6 +53,7 @@ export const customers = pgTable("customers", {
   email: text("email").notNull(),
   phone: text("phone").notNull(),
   address: text("address").notNull(),
+  gstNumber: text("gst_number"),
   stage: customerStageEnum("stage").notNull().default('new'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -397,6 +398,7 @@ export const customerFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(8, "Phone number must be at least 8 digits"),
   address: z.string().min(1, "Address is required"),
+  gstNumber: z.string().optional(),
   stage: z.enum(['new', 'pipeline', 'cold', 'warm', 'booked']).default('new'),
 });
 
