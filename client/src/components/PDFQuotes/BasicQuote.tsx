@@ -154,7 +154,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                   return (
                     <tr key={room.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {(room.name || 'Unnamed Room').toUpperCase()}
+                        {room.name ? room.name.toUpperCase() : 'UNNAMED ROOM'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                         {formatCurrency(roomSellingPrice)}

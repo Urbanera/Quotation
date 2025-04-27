@@ -32,6 +32,23 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
     }).format(date);
   };
 
+  // Safe access to quotation fields
+  const safeQuotation = {
+    id: quotation?.id || 0,
+    createdAt: quotation?.createdAt || new Date(),
+    totalSellingPrice: quotation?.totalSellingPrice || 0,
+    globalDiscount: quotation?.globalDiscount || 0,
+    installationHandling: quotation?.installationHandling || 0,
+    gstPercentage: quotation?.gstPercentage || 0,
+    customer: quotation?.customer || { 
+      name: 'Customer',
+      address: 'No address provided',
+      email: 'No email provided',
+      phone: 'No phone provided' 
+    },
+    rooms: quotation?.rooms || []
+  };
+
   // Default company name if settings not loaded
   const companyName = companySettings?.name || "DesignQuotes";
 
@@ -51,8 +68,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           </div>
           <div className="text-right">
             <h2 className="text-2xl font-bold">DESIGN PROPOSAL</h2>
-            <p>Reference: #{quotation.id}</p>
-            <p>Date: {formatDate(quotation.createdAt)}</p>
+            <p>Reference: #{safeQuotation.id}</p>
+            <p>Date: {formatDate(safeQuotation.createdAt)}</p>
           </div>
         </div>
       </div>
@@ -61,12 +78,12 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       <div className="p-8 bg-gray-50">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Interior Design Proposal for</h2>
-          <h3 className="text-3xl font-bold text-indigo-600 mb-6">{quotation.customer.name}</h3>
-          <p className="text-gray-600 mb-4">{quotation.customer.address}</p>
+          <h3 className="text-3xl font-bold text-indigo-600 mb-6">{safeQuotation.customer.name}</h3>
+          <p className="text-gray-600 mb-4">{safeQuotation.customer.address}</p>
           <div className="flex justify-center items-center gap-4 text-gray-600">
-            <span>{quotation.customer.email}</span>
+            <span>{safeQuotation.customer.email}</span>
             <span>•</span>
-            <span>{quotation.customer.phone}</span>
+            <span>{safeQuotation.customer.phone}</span>
           </div>
         </div>
       </div>
@@ -75,22 +92,22 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       <div className="p-8">
         <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Scope of Work</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          {quotation.rooms.map((room) => (
+          {safeQuotation.rooms.map((room) => (
             <div key={room.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
               <div className="bg-indigo-50 p-4 border-b">
-                <h4 className="text-lg font-semibold text-indigo-700">{room.name}</h4>
+                <h4 className="text-lg font-semibold text-indigo-700">{room.name || 'Unnamed Room'}</h4>
                 {room.description && <p className="text-gray-600 mt-1">{room.description}</p>}
               </div>
               <div className="p-4">
                 <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
                 <ul className="list-disc list-inside text-gray-600 space-y-1">
-                  {room.products.map((product) => (
+                  {room.products && room.products.map((product) => (
                     <li key={product.id}>
                       {product.name}
                       {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
                     </li>
                   ))}
-                  {room.accessories.map((accessory) => (
+                  {room.accessories && room.accessories.map((accessory) => (
                     <li key={accessory.id}>
                       {accessory.name}
                       {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
@@ -98,13 +115,13 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   ))}
                 </ul>
                 
-                {room.images.length > 0 && (
+                {room.images && room.images.length > 0 && (
                   <div className="mt-4">
                     <h5 className="font-medium text-gray-800 mb-2">Design References:</h5>
                     <div className="grid grid-cols-2 gap-2">
                       {room.images.slice(0, 2).map((image) => (
                         <div key={image.id} className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
-                          <img src={image.path} alt={`Design for ${room.name}`} className="object-cover w-full h-full" />
+                          <img src={image.path} alt={`Design for ${room.name || 'Room'}`} className="object-cover w-full h-full" />
                         </div>
                       ))}
                     </div>
@@ -130,34 +147,35 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   Selling Price
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-indigo-800 uppercase tracking-wider">
-                  {quotation.globalDiscount > 0 
-                    ? `Discounted Price (Incl. ${quotation.globalDiscount}% Discount)` 
+                  {safeQuotation.globalDiscount > 0 
+                    ? `Discounted Price (Incl. ${safeQuotation.globalDiscount}% Discount)` 
                     : "Discounted Price"}
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {quotation.rooms.map((room) => {
+              {safeQuotation.rooms.map((room) => {
                 // Calculate the discounted price with global discount applied
-                const calculatedDiscountedPrice = quotation.globalDiscount > 0
-                  ? room.sellingPrice - (room.sellingPrice * quotation.globalDiscount / 100)
-                  : room.sellingPrice;
+                const roomSellingPrice = room.sellingPrice || 0;
+                const calculatedDiscountedPrice = safeQuotation.globalDiscount > 0
+                  ? roomSellingPrice - (roomSellingPrice * safeQuotation.globalDiscount / 100)
+                  : roomSellingPrice;
                 
                 return (
                   <tr key={room.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {room.name.toUpperCase()}
+                      {(room.name || 'Unnamed Room').toUpperCase()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                      {formatCurrency(room.sellingPrice)}
+                      {formatCurrency(roomSellingPrice)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {quotation.globalDiscount > 0 ? (
+                      {safeQuotation.globalDiscount > 0 ? (
                         <span className="text-indigo-600 font-medium">
                           {formatCurrency(Math.round(calculatedDiscountedPrice))}
                         </span>
                       ) : (
-                        <>{formatCurrency(room.sellingPrice)}</>
+                        <>{formatCurrency(roomSellingPrice)}</>
                       )}
                     </td>
                   </tr>
@@ -168,15 +186,15 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   Total Of All Items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                  {formatCurrency(quotation.totalSellingPrice)}
+                  {formatCurrency(safeQuotation.totalSellingPrice)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
-                  {quotation.globalDiscount > 0 ? (
+                  {safeQuotation.globalDiscount > 0 ? (
                     <span className="text-indigo-600 font-medium">
-                      {formatCurrency(Math.round(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100)))}
+                      {formatCurrency(Math.round(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100)))}
                     </span>
                   ) : (
-                    <>{formatCurrency(quotation.totalSellingPrice)}</>
+                    <>{formatCurrency(safeQuotation.totalSellingPrice)}</>
                   )}
                 </td>
               </tr>
@@ -189,17 +207,17 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 let totalInstallCharges = 0;
                 
                 // Loop through each room
-                for (const room of quotation.rooms) {
+                for (const room of safeQuotation.rooms) {
                   // If room has installation charges, add them all up
                   if (room.installationCharges && room.installationCharges.length > 0) {
                     for (const charge of room.installationCharges) {
-                      totalInstallCharges += charge.amount;
+                      totalInstallCharges += charge.amount || 0;
                     }
                   }
                 }
                 
                 // Add handling charges
-                const totalWithHandling = totalInstallCharges + quotation.installationHandling;
+                const totalWithHandling = totalInstallCharges + safeQuotation.installationHandling;
                 
                 return (
                   <tr>
@@ -218,28 +236,28 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               
               {(() => {
                 // Calculate the discounted total
-                const discountedTotal = quotation.globalDiscount > 0
-                  ? Math.round(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))
-                  : quotation.totalSellingPrice;
+                const discountedTotal = safeQuotation.globalDiscount > 0
+                  ? Math.round(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))
+                  : safeQuotation.totalSellingPrice;
                 
                 // Calculate installation charges the same way as above
                 let totalInstallCharges = 0;
                 
                 // Loop through each room
-                for (const room of quotation.rooms) {
+                for (const room of safeQuotation.rooms) {
                   // If room has installation charges, add them all up
                   if (room.installationCharges && room.installationCharges.length > 0) {
                     for (const charge of room.installationCharges) {
-                      totalInstallCharges += charge.amount;
+                      totalInstallCharges += charge.amount || 0;
                     }
                   }
                 }
                 
                 // Add handling charges
-                const totalWithHandling = totalInstallCharges + quotation.installationHandling;
+                const totalWithHandling = totalInstallCharges + safeQuotation.installationHandling;
                 
                 // Calculate GST based on discounted total + installation/handling
-                const gstAmount = Math.round((discountedTotal + totalWithHandling) * (quotation.gstPercentage / 100));
+                const gstAmount = Math.round((discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100));
                 
                 // Calculate final price
                 const finalPrice = discountedTotal + totalWithHandling + gstAmount;
@@ -248,10 +266,10 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   <>
                     <tr>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        GST {quotation.gstPercentage}%
+                        GST {safeQuotation.gstPercentage}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                        {formatCurrency(Math.round((quotation.totalSellingPrice + totalWithHandling) * (quotation.gstPercentage / 100)))}
+                        {formatCurrency(Math.round((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                         {formatCurrency(gstAmount)}
@@ -263,8 +281,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                         Final Price
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                        {formatCurrency(quotation.totalSellingPrice + totalWithHandling + 
-                          Math.round((quotation.totalSellingPrice + totalWithHandling) * (quotation.gstPercentage / 100)))}
+                        {formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + 
+                          Math.round((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-lg font-bold text-indigo-700 text-right">
                         {formatCurrency(finalPrice)}
