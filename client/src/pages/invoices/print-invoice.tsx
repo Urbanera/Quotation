@@ -286,6 +286,7 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
               <p>{customer.address}</p>
               <p>Phone: {customer.phone}</p>
               <p>Email: {customer.email}</p>
+              {customer.gstNumber && <p>GST No: {customer.gstNumber}</p>}
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-2">Ship To:</h3>

@@ -176,6 +176,12 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
                           <Mail className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
                           <span>{quotation?.customer.email}</span>
                         </div>
+                        {quotation?.customer.gstNumber && (
+                          <div className="flex items-center">
+                            <FileText className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+                            <span>GST: {quotation.customer.gstNumber}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
