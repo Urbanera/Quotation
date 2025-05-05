@@ -135,7 +135,7 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
         )}
       </div>
 
-      {images.length > 0 && (
+      {images && images.length > 0 && (
         <div className="mt-4">
           <div className="grid grid-cols-3 gap-4">
             {images.map((image) => (

@@ -594,6 +594,121 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to delete accessory catalog item' });
     }
   });
+  
+  // Image endpoints
+  app.get('/api/rooms/:roomId/images', async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const images = await storage.getImages(roomId);
+      res.json(images);
+    } catch (error) {
+      console.error('Error fetching images:', error);
+      res.status(500).json({ message: 'Failed to fetch images' });
+    }
+  });
+  
+  // Configure multer storage for image uploads
+  const imageStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      const dir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      cb(null, uniqueSuffix + '-' + file.originalname);
+    }
+  });
+  
+  const imageUpload = multer({ 
+    storage: imageStorage,
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB file size limit
+    }
+  });
+  
+  app.post('/api/rooms/:roomId/images', imageUpload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No image file provided' });
+      }
+      
+      const roomId = parseInt(req.params.roomId);
+      
+      const uploadedFile = req.file;
+      const filepath = '/uploads/' + path.basename(uploadedFile.path);
+      
+      const image = await storage.createImage({
+        roomId,
+        path: filepath,
+        filename: uploadedFile.originalname
+      });
+      
+      res.status(201).json(image);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      res.status(500).json({ message: 'Failed to upload image' });
+    }
+  });
+  
+  app.delete('/api/images/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const image = await storage.getImage(id);
+      
+      if (!image) {
+        return res.status(404).json({ message: 'Image not found' });
+      }
+      
+      // Get the file path and delete the file
+      const filepath = path.join(process.cwd(), image.path.replace(/^\//, ''));
+      
+      // Delete from database first
+      const deleted = await storage.deleteImage(id);
+      
+      if (!deleted) {
+        return res.status(500).json({ message: 'Failed to delete image from database' });
+      }
+      
+      // Then try to delete file (but don't fail if file deletion fails)
+      try {
+        if (fs.existsSync(filepath)) {
+          fs.unlinkSync(filepath);
+        }
+      } catch (fileError) {
+        console.error('Error deleting image file:', fileError);
+        // Continue anyway - the database record is gone
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      res.status(500).json({ message: 'Failed to delete image' });
+    }
+  });
+  
+  app.post('/api/rooms/:roomId/images/reorder', async (req, res) => {
+    try {
+      const imageIds = req.body.imageIds;
+      
+      if (!Array.isArray(imageIds)) {
+        return res.status(400).json({ message: 'Image IDs must be an array' });
+      }
+      
+      const success = await storage.reorderImages(imageIds);
+      
+      if (!success) {
+        return res.status(400).json({ message: 'Failed to reorder images' });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error reordering images:', error);
+      res.status(500).json({ message: 'Failed to reorder images' });
+    }
+  });
   // PDF Generation utility function
   const generatePDF = async (documentType: string, data: any, isQuotation: boolean = true): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
