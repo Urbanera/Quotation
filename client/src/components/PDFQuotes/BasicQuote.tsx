@@ -47,6 +47,8 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
     customer: quotation?.customer || null,
     rooms: quotation?.rooms || []
   };
+  
+  console.log("BasicQuote - rooms data:", safeQuotation.rooms);
 
   // Calculate total installation charges safely
   const calculateInstallationCharges = () => {

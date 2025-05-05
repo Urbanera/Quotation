@@ -54,6 +54,12 @@ export default function ViewQuotation() {
   const { data: quotation, isLoading } = useQuery<QuotationWithDetails>({
     queryKey: [`/api/quotations/${id}/details`],
     enabled: !!id,
+    onSuccess: (data) => {
+      console.log("Quotation details loaded successfully:", data);
+    },
+    onError: (error) => {
+      console.error("Error loading quotation details:", error);
+    }
   });
   
   // Approve quotation mutation
