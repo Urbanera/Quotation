@@ -281,7 +281,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.get('/api/rooms/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const room = await storage.getRoom(id);
+      // Use getRoomWithItems instead of getRoom to include products, accessories, etc.
+      const room = await storage.getRoomWithItems(id);
       
       if (!room) {
         return res.status(404).json({ message: 'Room not found' });
