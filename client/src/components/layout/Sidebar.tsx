@@ -90,26 +90,23 @@ export default function Sidebar({ isMobile, onClose }: SidebarProps) {
                 key={item.name} 
                 href={item.href}
                 onClick={handleNavigate}
+                className={cn(
+                  isActive
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                  "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
+                )}
               >
-                <a
+                <item.icon
                   className={cn(
                     isActive
-                      ? "bg-indigo-50 text-indigo-600"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
+                      ? "text-indigo-600"
+                      : "text-gray-400 group-hover:text-gray-500",
+                    "mr-3 h-6 w-6"
                   )}
-                >
-                  <item.icon
-                    className={cn(
-                      isActive
-                        ? "text-indigo-600"
-                        : "text-gray-400 group-hover:text-gray-500",
-                      "mr-3 h-6 w-6"
-                    )}
-                    aria-hidden="true"
-                  />
-                  {item.name}
-                </a>
+                  aria-hidden="true"
+                />
+                {item.name}
               </Link>
             );
           })}
