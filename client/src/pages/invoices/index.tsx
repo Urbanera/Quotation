@@ -28,10 +28,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Invoice } from '@shared/schema';
+import { Invoice, QuotationWithDetails } from '@shared/schema';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { generatePDF } from '@/lib/pdfUtils';
+import ReactDOM from 'react-dom/client';
+import InvoiceDetails from '@/components/invoices/InvoiceDetails';
 
 type SortField = "invoiceNumber" | "createdAt" | "dueDate" | "totalAmount" | "status";
 type SortOrder = "asc" | "desc";
@@ -234,12 +238,67 @@ export default function InvoicesPage() {
                         variant="ghost"
                         size="sm"
                         className="text-indigo-600 hover:text-indigo-900"
-                        onClick={() => {
+                        onClick={async () => {
                           toast({
                             title: "Preparing PDF",
                             description: "Your PDF is being generated...",
                           });
-                          window.open(`/invoices/print/${invoice.id}`, '_blank');
+                          
+                          try {
+                            // Fetch invoice details
+                            const res = await apiRequest("GET", `/api/invoices/${invoice.id}`);
+                            const invoiceData = await res.json();
+                            
+                            // Fetch quotation details related to this invoice
+                            let quotationDetails = null;
+                            if (invoiceData.quotationId) {
+                              const quotationRes = await apiRequest("GET", `/api/quotations/${invoiceData.quotationId}/details`);
+                              quotationDetails = await quotationRes.json();
+                            }
+                            
+                            // Create a temporary div to render the PDF content
+                            const tempDiv = document.createElement('div');
+                            tempDiv.style.position = 'absolute';
+                            tempDiv.style.left = '-9999px';
+                            tempDiv.id = 'temp-pdf-container';
+                            document.body.appendChild(tempDiv);
+                            
+                            // Render the PDF content
+                            const root = ReactDOM.createRoot(tempDiv);
+                            root.render(
+                              <InvoiceDetails invoice={invoiceData} quotation={quotationDetails} printMode={true} />
+                            );
+                            
+                            // Let the content render and then generate PDF
+                            setTimeout(async () => {
+                              try {
+                                await generatePDF('temp-pdf-container', `Invoice-${invoice.invoiceNumber}.pdf`);
+                                
+                                toast({
+                                  title: "PDF Generated",
+                                  description: "Your PDF has been downloaded successfully.",
+                                });
+                              } catch (error) {
+                                console.error("PDF generation error", error);
+                                toast({
+                                  title: "PDF Generation Failed",
+                                  description: "There was an error generating your PDF.",
+                                  variant: "destructive"
+                                });
+                              }
+                              
+                              // Clean up
+                              root.unmount();
+                              document.body.removeChild(tempDiv);
+                            }, 500);
+                          } catch (error) {
+                            console.error("Error fetching invoice details", error);
+                            toast({
+                              title: "Error",
+                              description: "Could not fetch invoice details.",
+                              variant: "destructive"
+                            });
+                          }
                         }}
                       >
                         <Download className="h-4 w-4 mr-2" />

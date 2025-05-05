@@ -35,6 +35,9 @@ import {
   Download
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
+import { generatePDF } from "@/lib/pdfUtils";
+import ReactDOM from "react-dom/client";
 
 type SortField = "receiptNumber" | "paymentDate" | "amount" | "paymentType" | "paymentMethod" | "customer";
 type SortOrder = "asc" | "desc";
@@ -341,12 +344,152 @@ export default function PaymentsPage() {
                         variant="ghost"
                         size="sm"
                         className="text-indigo-600 hover:text-indigo-900"
-                        onClick={() => {
+                        onClick={async () => {
                           toast({
                             title: "Preparing PDF",
                             description: "Your payment receipt PDF is being generated...",
                           });
-                          window.open(`/payments/print/${payment.id}`, '_blank');
+                          
+                          try {
+                            // Fetch payment details
+                            const res = await apiRequest("GET", `/api/customer-payments/${payment.id}`);
+                            const paymentData = await res.json();
+                            
+                            // Fetch company settings
+                            const settingsRes = await apiRequest("GET", `/api/settings/company`);
+                            const companySettings = await settingsRes.json();
+                            
+                            // Fetch customer details
+                            const customerRes = await apiRequest("GET", `/api/customers/${payment.customerId}`);
+                            const customerData = await customerRes.json();
+                            
+                            // Create a temporary div to render the PDF content
+                            const tempDiv = document.createElement('div');
+                            tempDiv.style.position = 'absolute';
+                            tempDiv.style.left = '-9999px';
+                            tempDiv.id = 'temp-pdf-container';
+                            document.body.appendChild(tempDiv);
+                            
+                            // Render the PDF content
+                            const root = ReactDOM.createRoot(tempDiv);
+                            root.render(
+                              <div className="bg-white p-8 max-w-4xl mx-auto">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h1 className="text-2xl font-bold text-gray-900">RECEIPT</h1>
+                                    <p className="text-gray-700 mt-1">Receipt No: {paymentData.receiptNumber}</p>
+                                    <p className="text-gray-700">Date: {new Date(paymentData.paymentDate).toLocaleDateString()}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <h2 className="text-xl font-bold text-gray-900">{companySettings.name}</h2>
+                                    <p className="text-gray-700 whitespace-pre-line">{companySettings.address}</p>
+                                    <p className="text-gray-700">Phone: {companySettings.phone}</p>
+                                    <p className="text-gray-700">Email: {companySettings.email}</p>
+                                    {companySettings.gstNumber && (
+                                      <p className="text-gray-700">GST No: {companySettings.gstNumber}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="mt-8">
+                                  <h3 className="text-gray-800 font-semibold">Received From:</h3>
+                                  <p className="text-gray-700 font-medium">{customerData.name}</p>
+                                  <p className="text-gray-700 whitespace-pre-line">{customerData.address}</p>
+                                  <p className="text-gray-700">Phone: {customerData.phone}</p>
+                                  {customerData.email && <p className="text-gray-700">Email: {customerData.email}</p>}
+                                  {customerData.gstNumber && <p className="text-gray-700">GST No: {customerData.gstNumber}</p>}
+                                </div>
+                                
+                                <div className="mt-8">
+                                  <h3 className="text-gray-800 font-semibold">Payment Details:</h3>
+                                  <div className="mt-2 border border-gray-300 rounded-md">
+                                    <table className="min-w-full divide-y divide-gray-300">
+                                      <thead>
+                                        <tr className="bg-gray-50">
+                                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Description
+                                          </th>
+                                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Amount
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="bg-white divide-y divide-gray-300">
+                                        <tr>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                            {paymentData.description || `Payment (${paymentData.paymentType.replace('_', ' ')})`}
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-700">
+                                            {formatCurrency(paymentData.amount)}
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                      <tfoot>
+                                        <tr className="bg-gray-50">
+                                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Total
+                                          </th>
+                                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-900 uppercase tracking-wider">
+                                            {formatCurrency(paymentData.amount)}
+                                          </th>
+                                        </tr>
+                                      </tfoot>
+                                    </table>
+                                  </div>
+                                </div>
+                                
+                                <div className="mt-8">
+                                  <h3 className="text-gray-800 font-semibold">Payment Method:</h3>
+                                  <p className="text-gray-700">
+                                    {paymentData.paymentMethod.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                    {paymentData.transactionId && ` (Ref: ${paymentData.transactionId})`}
+                                  </p>
+                                </div>
+                                
+                                <div className="mt-8 flex justify-between items-end">
+                                  <div>
+                                    <p className="text-gray-700 mt-8">Customer Signature</p>
+                                    <div className="mt-2 border-t border-gray-300 w-48"></div>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-gray-700 mt-8">For {companySettings.name}</p>
+                                    <div className="mt-2 border-t border-gray-300 w-48 ml-auto"></div>
+                                    <p className="text-gray-700 mt-2">Authorized Signatory</p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                            
+                            // Let the content render and then generate PDF
+                            setTimeout(async () => {
+                              try {
+                                await generatePDF('temp-pdf-container', `Receipt-${paymentData.receiptNumber}.pdf`);
+                                
+                                toast({
+                                  title: "PDF Generated",
+                                  description: "Your PDF has been downloaded successfully.",
+                                });
+                              } catch (error) {
+                                console.error("PDF generation error", error);
+                                toast({
+                                  title: "PDF Generation Failed",
+                                  description: "There was an error generating your PDF.",
+                                  variant: "destructive"
+                                });
+                              }
+                              
+                              // Clean up
+                              root.unmount();
+                              document.body.removeChild(tempDiv);
+                            }, 500);
+                          } catch (error) {
+                            console.error("Error fetching payment details", error);
+                            toast({
+                              title: "Error",
+                              description: "Could not fetch payment details.",
+                              variant: "destructive"
+                            });
+                          }
                         }}
                       >
                         <Download className="h-4 w-4 mr-2" />

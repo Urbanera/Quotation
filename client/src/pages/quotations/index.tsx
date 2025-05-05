@@ -4,11 +4,13 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Eye, Edit, Trash2, ArrowUpDown, SortAsc, SortDesc, Copy, Check, MoreVertical, Download } from "lucide-react";
-import { Quotation, Customer } from "@shared/schema";
+import { Quotation, Customer, QuotationWithDetails } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { downloadPDF } from "@/lib/pdfUtils";
+import { generatePDF } from "@/lib/pdfUtils";
+import ReactDOM from "react-dom/client";
+import BasicQuote from "@/components/PDFQuotes/BasicQuote";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -428,12 +430,60 @@ export default function QuotationsList() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
+                        onClick={async () => {
                           toast({
                             title: "Preparing PDF",
                             description: "Your PDF is being generated...",
                           });
-                          window.open(`/quotations/print/${quotation.id}`, '_blank');
+                          
+                          try {
+                            // Fetch quotation details
+                            const res = await apiRequest("GET", `/api/quotations/${quotation.id}/details`);
+                            const quotationDetails = await res.json();
+                            
+                            // Create a temporary div to render the PDF content
+                            const tempDiv = document.createElement('div');
+                            tempDiv.style.position = 'absolute';
+                            tempDiv.style.left = '-9999px';
+                            tempDiv.id = 'temp-pdf-container';
+                            document.body.appendChild(tempDiv);
+                            
+                            // Render the PDF content
+                            const root = ReactDOM.createRoot(tempDiv);
+                            root.render(
+                              <BasicQuote quotation={quotationDetails} />
+                            );
+                            
+                            // Let the content render and then generate PDF
+                            setTimeout(async () => {
+                              try {
+                                await generatePDF('temp-pdf-container', `Quotation-${quotation.quotationNumber || quotation.id}.pdf`);
+                                
+                                toast({
+                                  title: "PDF Generated",
+                                  description: "Your PDF has been downloaded successfully.",
+                                });
+                              } catch (error) {
+                                console.error("PDF generation error", error);
+                                toast({
+                                  title: "PDF Generation Failed",
+                                  description: "There was an error generating your PDF.",
+                                  variant: "destructive"
+                                });
+                              }
+                              
+                              // Clean up
+                              root.unmount();
+                              document.body.removeChild(tempDiv);
+                            }, 500);
+                          } catch (error) {
+                            console.error("Error fetching quotation details", error);
+                            toast({
+                              title: "Error",
+                              description: "Could not fetch quotation details.",
+                              variant: "destructive"
+                            });
+                          }
                         }}
                       >
                         <Download className="h-4 w-4" />
