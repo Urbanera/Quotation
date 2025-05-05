@@ -9,6 +9,9 @@ import PDFDocument from 'pdfkit';
 import { Readable } from 'stream';
 
 export async function registerRoutes(app: express.Express): Promise<Server> {
+  // Serve static files from uploads directory
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  
   // Validation middleware
   function validateRequest(schema: z.ZodSchema<any>) {
     return (req: Request, res: Response, next: NextFunction) => {
