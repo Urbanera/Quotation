@@ -19,7 +19,8 @@ import {
   Calendar, 
   SortAsc, 
   SortDesc, 
-  MoreVertical 
+  MoreVertical,
+  Download
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ import {
 import { Invoice } from '@shared/schema';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 type SortField = "invoiceNumber" | "createdAt" | "dueDate" | "totalAmount" | "status";
 type SortOrder = "asc" | "desc";
@@ -40,6 +42,7 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const { toast } = useToast();
 
   const { data: invoices, isLoading } = useQuery<Invoice[]>({
     queryKey: ['/api/invoices'],

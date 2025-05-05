@@ -3,11 +3,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, Edit, Trash2, ArrowUpDown, SortAsc, SortDesc, Copy, Check, MoreVertical } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, ArrowUpDown, SortAsc, SortDesc, Copy, Check, MoreVertical, Download } from "lucide-react";
 import { Quotation, Customer } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { downloadPDF } from "@/lib/pdfUtils";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -424,6 +425,20 @@ export default function QuotationsList() {
                           <span className="sr-only">Edit</span>
                         </Button>
                       </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          toast({
+                            title: "Preparing PDF",
+                            description: "Your PDF is being generated...",
+                          });
+                          window.open(`/quotations/print/${quotation.id}`, '_blank');
+                        }}
+                      >
+                        <Download className="h-4 w-4" />
+                        <span className="sr-only">Download PDF</span>
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
