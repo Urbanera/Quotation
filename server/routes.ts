@@ -378,6 +378,82 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to reorder rooms' });
     }
   });
+  
+  // Product endpoints
+  app.get('/api/rooms/:roomId/products', async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const products = await storage.getProducts(roomId);
+      res.json(products);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      res.status(500).json({ message: 'Failed to fetch products' });
+    }
+  });
+  
+  app.post('/api/rooms/:roomId/products', async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const productData = {
+        ...req.body,
+        roomId
+      };
+      
+      const product = await storage.createProduct(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      res.status(500).json({ message: 'Failed to create product' });
+    }
+  });
+  
+  app.get('/api/products/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      res.status(500).json({ message: 'Failed to fetch product' });
+    }
+  });
+  
+  app.put('/api/products/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.updateProduct(id, req.body);
+      
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      console.error('Error updating product:', error);
+      res.status(500).json({ message: 'Failed to update product' });
+    }
+  });
+  
+  app.delete('/api/products/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteProduct(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      res.status(500).json({ message: 'Failed to delete product' });
+    }
+  });
   // PDF Generation utility function
   const generatePDF = async (documentType: string, data: any, isQuotation: boolean = true): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
