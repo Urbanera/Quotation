@@ -95,8 +95,178 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to delete customer' });
     }
   });
-  // PDF Generation utility function that creates a well-formatted PDF
-  async function generatePDF(documentType: string, data: any, isQuotation: boolean = true): Promise<Buffer> {
+
+  // Quotation endpoints
+  app.get('/api/quotations', async (_req, res) => {
+    try {
+      const quotations = await storage.getQuotations();
+      res.json(quotations);
+    } catch (error) {
+      console.error('Error fetching quotations:', error);
+      res.status(500).json({ message: 'Failed to fetch quotations' });
+    }
+  });
+
+  app.get('/api/quotations/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const quotation = await storage.getQuotation(id);
+      
+      if (!quotation) {
+        return res.status(404).json({ message: 'Quotation not found' });
+      }
+      
+      res.json(quotation);
+    } catch (error) {
+      console.error('Error fetching quotation:', error);
+      res.status(500).json({ message: 'Failed to fetch quotation' });
+    }
+  });
+
+  app.get('/api/quotations/:id/details', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const quotation = await storage.getQuotationWithDetails(id);
+      
+      if (!quotation) {
+        return res.status(404).json({ message: 'Quotation not found' });
+      }
+      
+      res.json(quotation);
+    } catch (error) {
+      console.error('Error fetching quotation details:', error);
+      res.status(500).json({ message: 'Failed to fetch quotation details' });
+    }
+  });
+
+  app.post('/api/quotations', async (req, res) => {
+    try {
+      // Generate a unique quotation number
+      const date = new Date();
+      const quotationNumber = `QT-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+      
+      // Fetch app settings for default values
+      const appSettings = await storage.getAppSettings();
+      const defaultGlobalDiscount = appSettings?.defaultGlobalDiscount || 0;
+      const defaultGstPercentage = appSettings?.defaultGstPercentage || 18;
+      const terms = appSettings?.defaultTermsAndConditions || '';
+      
+      // Calculate initial prices (0 as there are no rooms yet)
+      const totalSellingPrice = 0;
+      const totalDiscountedPrice = 0;
+      const installationHandling = req.body.installationHandling || 0;
+      const globalDiscount = req.body.globalDiscount !== undefined ? req.body.globalDiscount : defaultGlobalDiscount;
+      const gstPercentage = req.body.gstPercentage !== undefined ? req.body.gstPercentage : defaultGstPercentage;
+      
+      // Calculate GST amount and final price
+      const gstAmount = (totalDiscountedPrice + installationHandling) * (gstPercentage / 100);
+      const finalPrice = totalDiscountedPrice + installationHandling + gstAmount;
+      
+      // Create a quotation
+      const quotation = await storage.createQuotation({
+        quotationNumber,
+        customerId: req.body.customerId,
+        totalSellingPrice,
+        totalDiscountedPrice,
+        totalInstallationCharges: 0,
+        installationHandling,
+        globalDiscount,
+        gstPercentage,
+        gstAmount,
+        finalPrice,
+        status: req.body.status || 'draft',
+        title: req.body.title || '',
+        description: req.body.description || null,
+        validUntil: req.body.validUntil || null,
+        terms: req.body.terms || terms,
+      });
+      
+      res.status(201).json(quotation);
+    } catch (error) {
+      console.error('Error creating quotation:', error);
+      res.status(500).json({ message: 'Failed to create quotation' });
+    }
+  });
+
+  app.put('/api/quotations/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const quotation = await storage.updateQuotation(id, req.body);
+      
+      if (!quotation) {
+        return res.status(404).json({ message: 'Quotation not found' });
+      }
+      
+      res.json(quotation);
+    } catch (error) {
+      console.error('Error updating quotation:', error);
+      res.status(500).json({ message: 'Failed to update quotation' });
+    }
+  });
+
+  app.patch('/api/quotations/:id/status', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!status || !['draft', 'sent', 'approved', 'rejected', 'expired', 'converted'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid status value' });
+      }
+      
+      const quotation = await storage.updateQuotationStatus(id, status);
+      
+      if (!quotation) {
+        return res.status(404).json({ message: 'Quotation not found' });
+      }
+      
+      res.json(quotation);
+    } catch (error) {
+      console.error('Error updating quotation status:', error);
+      res.status(500).json({ message: 'Failed to update quotation status' });
+    }
+  });
+
+  app.delete('/api/quotations/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Check if the quotation is in 'approved' status
+      const quotation = await storage.getQuotation(id);
+      if (quotation && quotation.status === 'approved') {
+        return res.status(400).json({ message: 'Cannot delete an approved quotation' });
+      }
+      
+      const deleted = await storage.deleteQuotation(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Quotation not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting quotation:', error);
+      res.status(500).json({ message: 'Failed to delete quotation' });
+    }
+  });
+
+  // Duplicate quotation
+  app.post('/api/quotations/:id/duplicate', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const duplicatedQuotation = await storage.duplicateQuotation(id);
+      
+      if (!duplicatedQuotation) {
+        return res.status(404).json({ message: 'Quotation not found' });
+      }
+      
+      res.status(201).json(duplicatedQuotation);
+    } catch (error) {
+      console.error('Error duplicating quotation:', error);
+      res.status(500).json({ message: 'Failed to duplicate quotation' });
+    }
+  });
+  // PDF Generation utility function
+  const generatePDF = async (documentType: string, data: any, isQuotation: boolean = true): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
       try {
         // Create a PDF document with A4 size
