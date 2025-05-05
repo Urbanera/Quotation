@@ -9,6 +9,92 @@ import PDFDocument from 'pdfkit';
 import { Readable } from 'stream';
 
 export async function registerRoutes(app: express.Express): Promise<Server> {
+  // Validation middleware
+  function validateRequest(schema: z.ZodSchema<any>) {
+    return (req: Request, res: Response, next: NextFunction) => {
+      try {
+        req.body = schema.parse(req.body);
+        next();
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ 
+            message: `Validation error: ${error.errors.map(e => e.message).join(', ')}`,
+            errors: error.format() 
+          });
+        }
+        next(error);
+      }
+    };
+  }
+  
+  // Customer endpoints
+  app.get('/api/customers', async (_req, res) => {
+    try {
+      const customers = await storage.getCustomers();
+      res.json(customers);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      res.status(500).json({ message: 'Failed to fetch customers' });
+    }
+  });
+
+  app.get('/api/customers/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customer = await storage.getCustomer(id);
+      
+      if (!customer) {
+        return res.status(404).json({ message: 'Customer not found' });
+      }
+      
+      res.json(customer);
+    } catch (error) {
+      console.error('Error fetching customer:', error);
+      res.status(500).json({ message: 'Failed to fetch customer' });
+    }
+  });
+
+  app.post('/api/customers', async (req, res) => {
+    try {
+      const customer = await storage.createCustomer(req.body);
+      res.status(201).json(customer);
+    } catch (error) {
+      console.error('Error creating customer:', error);
+      res.status(500).json({ message: 'Failed to create customer' });
+    }
+  });
+
+  app.put('/api/customers/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customer = await storage.updateCustomer(id, req.body);
+      
+      if (!customer) {
+        return res.status(404).json({ message: 'Customer not found' });
+      }
+      
+      res.json(customer);
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      res.status(500).json({ message: 'Failed to update customer' });
+    }
+  });
+
+  app.delete('/api/customers/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteCustomer(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Customer not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      res.status(500).json({ message: 'Failed to delete customer' });
+    }
+  });
   // PDF Generation utility function that creates a well-formatted PDF
   async function generatePDF(documentType: string, data: any, isQuotation: boolean = true): Promise<Buffer> {
     return new Promise((resolve, reject) => {
