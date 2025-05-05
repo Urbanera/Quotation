@@ -201,10 +201,28 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
     );
   }
 
-  // Calculate total
-  const discountedTotal = quotation.globalDiscount > 0
-    ? Math.round(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))
-    : quotation.totalSellingPrice;
+  // Calculate product and accessory total (excluding installation)
+  let productAccessoryTotal = 0;
+  
+  // Loop through each room to get only product and accessory prices
+  for (const room of quotation.rooms) {
+    // Add product prices
+    for (const product of room.products) {
+      productAccessoryTotal += product.quantity * product.sellingPrice;
+    }
+    
+    // Add accessory prices
+    for (const accessory of room.accessories) {
+      productAccessoryTotal += accessory.quantity * accessory.sellingPrice;
+    }
+  }
+  
+  // Calculate discount only on product and accessory prices
+  const discountAmount = quotation.globalDiscount > 0
+    ? Math.round(productAccessoryTotal * (quotation.globalDiscount / 100))
+    : 0;
+  
+  const discountedProductAccessoryTotal = productAccessoryTotal - discountAmount;
   
   // Calculate installation charges
   let totalInstallCharges = 0;
@@ -222,8 +240,8 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
   // Add handling charges
   const totalWithHandling = totalInstallCharges + quotation.installationHandling;
   
-  // Calculate taxable amount
-  const taxableAmount = discountedTotal + totalWithHandling;
+  // Calculate taxable amount (discounted products/accessories + installation charges)
+  const taxableAmount = discountedProductAccessoryTotal + totalWithHandling;
   
   // Calculate CGST and SGST (assuming equal split of GST)
   const gstRate = quotation.gstPercentage || 0;
@@ -383,10 +401,10 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
                 {quotation.globalDiscount > 0 && (
                   <tr>
                     <td colSpan={4} className="border py-2 px-3 text-right">
-                      Discount ({quotation.globalDiscount}%)
+                      Discount ({quotation.globalDiscount}%) on Products & Accessories
                     </td>
                     <td className="border py-2 px-3 text-right">
-                      -{formatCurrency(quotation.totalSellingPrice - discountedTotal)}
+                      -{formatCurrency(discountAmount)}
                     </td>
                   </tr>
                 )}
