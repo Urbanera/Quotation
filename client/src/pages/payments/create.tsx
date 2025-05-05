@@ -236,7 +236,7 @@ export default function CreatePaymentPage() {
                           <SelectContent>
                             <SelectItem value="cash">Cash</SelectItem>
                             <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                            <SelectItem value="check">Check</SelectItem>
+                            <SelectItem value="cheque">cheque</SelectItem>
                             <SelectItem value="card">Card</SelectItem>
                             <SelectItem value="upi">UPI</SelectItem>
                             <SelectItem value="other">Other</SelectItem>

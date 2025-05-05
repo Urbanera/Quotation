@@ -308,79 +308,61 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
                 </tr>
               </thead>
               <tbody>
-                {quotation.rooms.map((room, roomIndex) => (
-                  <>
-                    <tr key={`room-header-${room.id}`} className="bg-gray-50">
-                      <td colSpan={5} className="border py-2 px-3 font-medium">
+                {quotation.rooms.map((room, roomIndex) => {
+                  // Calculate total for this room (products + accessories)
+                  let roomTotal = 0;
+                  
+                  // Add up all product values
+                  room.products.forEach(product => {
+                    roomTotal += product.quantity * product.sellingPrice;
+                  });
+                  
+                  // Add up all accessory values
+                  room.accessories.forEach(accessory => {
+                    roomTotal += accessory.quantity * accessory.sellingPrice;
+                  });
+                  
+                  return (
+                    <tr key={`room-${room.id}`}>
+                      <td className="border py-2 px-3">
+                        {roomIndex + 1}
+                      </td>
+                      <td className="border py-2 px-3 font-medium">
                         {room.name.toUpperCase()}
                       </td>
+                      <td className="border py-2 px-3 text-right">1</td>
+                      <td className="border py-2 px-3 text-right">{formatCurrency(roomTotal)}</td>
+                      <td className="border py-2 px-3 text-right">{formatCurrency(roomTotal)}</td>
                     </tr>
-                    
-                    {/* Products for this room */}
-                    {room.products.map((product, productIndex) => (
-                      <tr key={`product-${product.id}`}>
-                        <td className="border py-2 px-3">
-                          {roomIndex + 1}.{productIndex + 1}
-                        </td>
-                        <td className="border py-2 px-3">
-                          {product.name}
-                          {product.description && (
-                            <span className="text-gray-500 block text-sm">
-                              {product.description}
-                            </span>
-                          )}
-                        </td>
-                        <td className="border py-2 px-3 text-right">{product.quantity}</td>
-                        <td className="border py-2 px-3 text-right">{formatCurrency(product.sellingPrice)}</td>
-                        <td className="border py-2 px-3 text-right">
-                          {formatCurrency(product.quantity * product.sellingPrice)}
-                        </td>
-                      </tr>
-                    ))}
-                    
-                    {/* Accessories for this room */}
-                    {room.accessories.map((accessory, accessoryIndex) => (
-                      <tr key={`accessory-${accessory.id}`}>
-                        <td className="border py-2 px-3">
-                          {roomIndex + 1}.{room.products.length + accessoryIndex + 1}
-                        </td>
-                        <td className="border py-2 px-3">
-                          {accessory.name}
-                          {accessory.description && (
-                            <span className="text-gray-500 block text-sm">
-                              {accessory.description}
-                            </span>
-                          )}
-                        </td>
-                        <td className="border py-2 px-3 text-right">{accessory.quantity}</td>
-                        <td className="border py-2 px-3 text-right">{formatCurrency(accessory.sellingPrice)}</td>
-                        <td className="border py-2 px-3 text-right">
-                          {formatCurrency(accessory.quantity * accessory.sellingPrice)}
-                        </td>
-                      </tr>
-                    ))}
-                    
-                    {/* Installation charges for this room */}
-                    {room.installationCharges && room.installationCharges.map((charge, chargeIndex) => (
-                      <tr key={`charge-${charge.id}`}>
-                        <td className="border py-2 px-3">
-                          {roomIndex + 1}.{room.products.length + room.accessories.length + chargeIndex + 1}
-                        </td>
-                        <td className="border py-2 px-3">
-                          Installation: {charge.name || 'Installation Service'}
-                        </td>
-                        <td className="border py-2 px-3 text-right">1</td>
-                        <td className="border py-2 px-3 text-right">{formatCurrency(charge.amount)}</td>
-                        <td className="border py-2 px-3 text-right">{formatCurrency(charge.amount)}</td>
-                      </tr>
-                    ))}
-                  </>
+                  );
+                })}
+                
+                {/* Display all installation charges after rooms */}
+                {quotation.rooms.map((room, roomIndex) => (
+                  room.installationCharges && room.installationCharges.length > 0 && 
+                  room.installationCharges.map((charge, chargeIndex) => (
+                    <tr key={`charge-${charge.id || chargeIndex}`}>
+                      <td className="border py-2 px-3">
+                        {quotation.rooms.length + chargeIndex + 1}
+                      </td>
+                      <td className="border py-2 px-3">
+                        Installation: {room.name} {charge.cabinetType || ''}
+                      </td>
+                      <td className="border py-2 px-3 text-right">1</td>
+                      <td className="border py-2 px-3 text-right">{formatCurrency(charge.amount)}</td>
+                      <td className="border py-2 px-3 text-right">{formatCurrency(charge.amount)}</td>
+                    </tr>
+                  ))
                 ))}
                 
                 {/* Installation handling if any */}
                 {quotation.installationHandling > 0 && (
                   <tr>
-                    <td className="border py-2 px-3"></td>
+                    <td className="border py-2 px-3">
+                      {quotation.rooms.length + 
+                        quotation.rooms.reduce((total, room) => 
+                          total + (room.installationCharges ? room.installationCharges.length : 0), 0) + 1}
+                    </td>
                     <td className="border py-2 px-3">Installation Handling</td>
                     <td className="border py-2 px-3 text-right">1</td>
                     <td className="border py-2 px-3 text-right">{formatCurrency(quotation.installationHandling)}</td>
