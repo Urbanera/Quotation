@@ -246,7 +246,7 @@ export default function InvoicesPage() {
                           
                           try {
                             // Use the download URL method instead of client-side rendering
-                            window.location.href = `/invoices/print/${invoice.id}`;
+                            window.location.href = `/invoices/print-invoice/${invoice.id}`;
                             
                             toast({
                               title: "PDF Generated",

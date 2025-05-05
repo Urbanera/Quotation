@@ -352,7 +352,7 @@ export default function PaymentsPage() {
                           
                           try {
                             // Use the download URL method instead of client-side rendering
-                            window.location.href = `/payments/print/${payment.id}`;
+                            window.location.href = `/payments/print-receipt/${payment.id}`;
                             
                             toast({
                               title: "PDF Generated",

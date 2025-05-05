@@ -11,6 +11,7 @@ import QuotationsList from "./pages/quotations";
 import CreateQuotation from "./pages/quotations/create";
 import EditQuotation from "./pages/quotations/edit";
 import ViewQuotation from "./pages/quotations/view";
+import PrintQuotation from "./pages/quotations/print";
 import SalesOrdersPage from "./pages/sales-orders";
 import CreateSalesOrder from "./pages/sales-orders/create";
 import ViewSalesOrder from "./pages/sales-orders/view";
@@ -48,6 +49,7 @@ function App() {
           <Route path="/quotations/create" component={CreateQuotation} />
           <Route path="/quotations/edit/:id" component={EditQuotation} />
           <Route path="/quotations/view/:id" component={ViewQuotation} />
+          <Route path="/quotations/print/:id" component={PrintQuotation} />
           
           {/* Sales Order Routes */}
           <Route path="/sales-orders" component={SalesOrdersPage} />
