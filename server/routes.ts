@@ -709,6 +709,82 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to reorder images' });
     }
   });
+  
+  // Installation charge endpoints
+  app.get('/api/rooms/:roomId/installation-charges', async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const charges = await storage.getInstallationCharges(roomId);
+      res.json(charges);
+    } catch (error) {
+      console.error('Error fetching installation charges:', error);
+      res.status(500).json({ message: 'Failed to fetch installation charges' });
+    }
+  });
+  
+  app.post('/api/rooms/:roomId/installation-charges', async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const chargeData = {
+        ...req.body,
+        roomId
+      };
+      
+      const charge = await storage.createInstallationCharge(chargeData);
+      res.status(201).json(charge);
+    } catch (error) {
+      console.error('Error creating installation charge:', error);
+      res.status(500).json({ message: 'Failed to create installation charge' });
+    }
+  });
+  
+  app.get('/api/installation-charges/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const charge = await storage.getInstallationCharge(id);
+      
+      if (!charge) {
+        return res.status(404).json({ message: 'Installation charge not found' });
+      }
+      
+      res.json(charge);
+    } catch (error) {
+      console.error('Error fetching installation charge:', error);
+      res.status(500).json({ message: 'Failed to fetch installation charge' });
+    }
+  });
+  
+  app.put('/api/installation-charges/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const charge = await storage.updateInstallationCharge(id, req.body);
+      
+      if (!charge) {
+        return res.status(404).json({ message: 'Installation charge not found' });
+      }
+      
+      res.json(charge);
+    } catch (error) {
+      console.error('Error updating installation charge:', error);
+      res.status(500).json({ message: 'Failed to update installation charge' });
+    }
+  });
+  
+  app.delete('/api/installation-charges/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteInstallationCharge(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Installation charge not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting installation charge:', error);
+      res.status(500).json({ message: 'Failed to delete installation charge' });
+    }
+  });
   // PDF Generation utility function
   const generatePDF = async (documentType: string, data: any, isQuotation: boolean = true): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
