@@ -187,13 +187,13 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
                       <tbody>
                         ${room.products.map(product => `
                           <tr>
-                            <td>${product.description}</td>
+                            <td>${product.description || product.name}</td>
                             <td>${product.dimensions || '-'}</td>
                             <td>${product.material || '-'}</td>
                             <td>${product.finishing || '-'}</td>
-                            <td>₹${product.unitPrice.toFixed(2)}</td>
+                            <td>₹${(product.discountedPrice / product.quantity).toFixed(2)}</td>
                             <td>${product.quantity}</td>
-                            <td>₹${(product.quantity * product.unitPrice).toFixed(2)}</td>
+                            <td>₹${product.discountedPrice.toFixed(2)}</td>
                           </tr>
                         `).join('')}
                       </tbody>
@@ -213,10 +213,10 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
                       <tbody>
                         ${room.accessories.map(accessory => `
                           <tr>
-                            <td>${accessory.description}</td>
-                            <td>₹${accessory.unitPrice.toFixed(2)}</td>
+                            <td>${accessory.description || accessory.name}</td>
+                            <td>₹${(accessory.discountedPrice / accessory.quantity).toFixed(2)}</td>
                             <td>${accessory.quantity}</td>
-                            <td>₹${(accessory.quantity * accessory.unitPrice).toFixed(2)}</td>
+                            <td>₹${accessory.discountedPrice.toFixed(2)}</td>
                           </tr>
                         `).join('')}
                       </tbody>
@@ -366,8 +366,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
                     <tr>
                       <td>${room.name}</td>
                       <td>1</td>
-                      <td>₹${room.totalPrice.toFixed(2)}</td>
-                      <td>₹${room.totalPrice.toFixed(2)}</td>
+                      <td>₹${(room.totalDiscountedPrice || 0).toFixed(2)}</td>
+                      <td>₹${(room.totalDiscountedPrice || 0).toFixed(2)}</td>
                     </tr>
                   `).join('') : ''}
                 ${(quotation && quotation.installationHandling) ? 
