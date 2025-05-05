@@ -265,6 +265,119 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to duplicate quotation' });
     }
   });
+  
+  // Room endpoints
+  app.get('/api/quotations/:quotationId/rooms', async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.quotationId);
+      const rooms = await storage.getRooms(quotationId);
+      res.json(rooms);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+      res.status(500).json({ message: 'Failed to fetch rooms' });
+    }
+  });
+  
+  app.get('/api/rooms/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const room = await storage.getRoom(id);
+      
+      if (!room) {
+        return res.status(404).json({ message: 'Room not found' });
+      }
+      
+      res.json(room);
+    } catch (error) {
+      console.error('Error fetching room:', error);
+      res.status(500).json({ message: 'Failed to fetch room' });
+    }
+  });
+  
+  app.get('/api/rooms/:id/details', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const room = await storage.getRoomWithItems(id);
+      
+      if (!room) {
+        return res.status(404).json({ message: 'Room not found' });
+      }
+      
+      res.json(room);
+    } catch (error) {
+      console.error('Error fetching room details:', error);
+      res.status(500).json({ message: 'Failed to fetch room details' });
+    }
+  });
+  
+  app.post('/api/quotations/:quotationId/rooms', async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.quotationId);
+      const roomData = { 
+        ...req.body, 
+        quotationId 
+      };
+      
+      const room = await storage.createRoom(roomData);
+      res.status(201).json(room);
+    } catch (error) {
+      console.error('Error creating room:', error);
+      res.status(500).json({ message: 'Failed to create room' });
+    }
+  });
+  
+  app.put('/api/rooms/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const room = await storage.updateRoom(id, req.body);
+      
+      if (!room) {
+        return res.status(404).json({ message: 'Room not found' });
+      }
+      
+      res.json(room);
+    } catch (error) {
+      console.error('Error updating room:', error);
+      res.status(500).json({ message: 'Failed to update room' });
+    }
+  });
+  
+  app.delete('/api/rooms/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteRoom(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Room not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting room:', error);
+      res.status(500).json({ message: 'Failed to delete room' });
+    }
+  });
+  
+  app.post('/api/quotations/:quotationId/rooms/reorder', async (req, res) => {
+    try {
+      const roomIds = req.body.roomIds;
+      
+      if (!Array.isArray(roomIds)) {
+        return res.status(400).json({ message: 'Room IDs must be an array' });
+      }
+      
+      const success = await storage.reorderRooms(roomIds);
+      
+      if (!success) {
+        return res.status(400).json({ message: 'Failed to reorder rooms' });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error reordering rooms:', error);
+      res.status(500).json({ message: 'Failed to reorder rooms' });
+    }
+  });
   // PDF Generation utility function
   const generatePDF = async (documentType: string, data: any, isQuotation: boolean = true): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
@@ -818,18 +931,6 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: 'Error generating PDF' });
     }
   });
-
-  function validateRequest(schema: z.ZodSchema<any>) {
-    return (req: Request, res: Response, next: NextFunction) => {
-      try {
-        req.body = schema.parse(req.body);
-        next();
-      } catch (error) {
-        // If validation fails, respond with a 400 status and the validation error
-        res.status(400).json({ error: 'Validation failed', details: error });
-      }
-    };
-  }
 
   // Configure multer storage for file uploads
   const storage_config = multer.diskStorage({
