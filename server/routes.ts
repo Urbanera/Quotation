@@ -67,7 +67,501 @@ const upload = multer({
   }
 });
 
+// Import puppeteer for PDF generation
+import puppeteer from 'puppeteer';
+
 export async function registerRoutes(app: express.Express): Promise<Server> {
+  // PDF Generation utility function
+  async function generatePDF(html: string): Promise<Buffer> {
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      headless: true
+    });
+    
+    try {
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      // Set PDF options (A4 paper)
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '1cm',
+          bottom: '1cm',
+          left: '1cm',
+          right: '1cm'
+        }
+      });
+      
+      return pdfBuffer;
+    } finally {
+      await browser.close();
+    }
+  }
+  
+  // PDF Endpoint for Quotations
+  app.get('/api/pdf/quotation/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const quotation = await storage.getQuotationWithDetails(id);
+      
+      if (!quotation) {
+        return res.status(404).json({ message: 'Quotation not found' });
+      }
+      
+      const companySettings = await storage.getCompanySettings();
+      
+      // Generate simple HTML for the quotation
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Quotation #${quotation.quotationNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #333; margin: 0; padding: 20px; }
+            .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+            .company-details, .customer-details { margin-bottom: 20px; }
+            h1 { font-size: 24px; margin: 0 0 10px; color: #333; }
+            h2 { font-size:
+18px; margin: 0 0 10px; color: #333; }
+            h3 { font-size: 16px; margin: 0 0 10px; color: #555; }
+            p { margin: 0 0 5px; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            .summary { margin-top: 20px; }
+            .footer { margin-top: 40px; font-size: 12px; }
+            .text-right { text-align: right; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <h1>QUOTATION</h1>
+              <p>Quotation #: ${quotation.quotationNumber || quotation.id}</p>
+              <p>Date: ${new Date(quotation.createdAt).toLocaleDateString()}</p>
+              ${quotation.validUntil ? 
+                `<p>Valid Until: ${new Date(quotation.validUntil).toLocaleDateString()}</p>` : ''}
+            </div>
+            <div>
+              <h2>${companySettings?.name || 'Company Name'}</h2>
+              <p>${companySettings?.address || 'Company Address'}</p>
+              <p>Phone: ${companySettings?.phone || 'Phone Number'}</p>
+              <p>Email: ${companySettings?.email || 'Email Address'}</p>
+              ${companySettings?.gstNumber ? 
+                `<p>GST No: ${companySettings.gstNumber}</p>` : ''}
+            </div>
+          </div>
+          
+          <div class="customer-details">
+            <h3>Client Details:</h3>
+            <p><strong>${quotation.customer?.name || 'Customer Name'}</strong></p>
+            <p>${quotation.customer?.address || 'Customer Address'}</p>
+            <p>Phone: ${quotation.customer?.phone || 'Phone Number'}</p>
+            ${quotation.customer?.email ? 
+              `<p>Email: ${quotation.customer.email}</p>` : ''}
+          </div>
+          
+          ${quotation.rooms && quotation.rooms.length > 0 ? 
+            `<div>
+              <h3>Quotation Details:</h3>
+              ${quotation.rooms.map(room => `
+                <div style="margin-bottom: 20px;">
+                  <h4>${room.name}</h4>
+                  
+                  ${room.products && room.products.length > 0 ? 
+                    `<table>
+                      <thead>
+                        <tr>
+                          <th>Description</th>
+                          <th>Dimensions</th>
+                          <th>Material</th>
+                          <th>Finishing</th>
+                          <th>Rate</th>
+                          <th>Quantity</th>
+                          <th>Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${room.products.map(product => `
+                          <tr>
+                            <td>${product.description}</td>
+                            <td>${product.dimensions || '-'}</td>
+                            <td>${product.material || '-'}</td>
+                            <td>${product.finishing || '-'}</td>
+                            <td>₹${product.unitPrice.toFixed(2)}</td>
+                            <td>${product.quantity}</td>
+                            <td>₹${(product.quantity * product.unitPrice).toFixed(2)}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>` : ''}
+                  
+                  ${room.accessories && room.accessories.length > 0 ? 
+                    `<h4>Accessories</h4>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Description</th>
+                          <th>Rate</th>
+                          <th>Quantity</th>
+                          <th>Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${room.accessories.map(accessory => `
+                          <tr>
+                            <td>${accessory.description}</td>
+                            <td>₹${accessory.unitPrice.toFixed(2)}</td>
+                            <td>${accessory.quantity}</td>
+                            <td>₹${(accessory.quantity * accessory.unitPrice).toFixed(2)}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>` : ''}
+                </div>
+              `).join('')}
+            </div>` : ''}
+          
+          <div class="summary">
+            <table>
+              <tr>
+                <td colspan="4"><strong>Sub Total:</strong></td>
+                <td class="text-right">₹${quotation.totalSellingPrice.toFixed(2)}</td>
+              </tr>
+              ${quotation.globalDiscount ? 
+                `<tr>
+                  <td colspan="4"><strong>Discount (${quotation.globalDiscount}%):</strong></td>
+                  <td class="text-right">₹${((quotation.totalSellingPrice * quotation.globalDiscount) / 100).toFixed(2)}</td>
+                </tr>` : ''}
+              ${quotation.installationHandling ? 
+                `<tr>
+                  <td colspan="4"><strong>Installation & Handling:</strong></td>
+                  <td class="text-right">₹${quotation.installationHandling.toFixed(2)}</td>
+                </tr>` : ''}
+              ${quotation.gstPercentage ? 
+                `<tr>
+                  <td colspan="4"><strong>GST (${quotation.gstPercentage}%):</strong></td>
+                  <td class="text-right">₹${quotation.gstAmount.toFixed(2)}</td>
+                </tr>` : ''}
+              <tr>
+                <td colspan="4"><strong>Grand Total:</strong></td>
+                <td class="text-right"><strong>₹${quotation.finalPrice.toFixed(2)}</strong></td>
+              </tr>
+            </table>
+          </div>
+          
+          ${quotation.terms ? 
+            `<div class="footer">
+              <h3>Terms and Conditions:</h3>
+              <p>${quotation.terms}</p>
+            </div>` : ''}
+        </body>
+        </html>
+      `;
+      
+      const pdfBuffer = await generatePDF(html);
+      
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=Quotation-${quotation.quotationNumber || quotation.id}.pdf`);
+      
+      // Send the PDF
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      res.status(500).json({ message: 'Error generating PDF' });
+    }
+  });
+  
+  // PDF Endpoint for Invoices
+  app.get('/api/pdf/invoice/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const invoice = await storage.getInvoice(id);
+      
+      if (!invoice) {
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+      
+      let quotation = null;
+      if (invoice.quotationId) {
+        quotation = await storage.getQuotationWithDetails(invoice.quotationId);
+      }
+      
+      const customer = await storage.getCustomer(invoice.customerId);
+      const companySettings = await storage.getCompanySettings();
+      
+      if (!customer) {
+        return res.status(404).json({ message: 'Customer not found for this invoice' });
+      }
+      
+      // Generate simple HTML for the invoice
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Invoice #${invoice.invoiceNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #333; margin: 0; padding: 20px; }
+            .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+            .company-details, .customer-details { margin-bottom: 20px; }
+            h1 { font-size: 24px; margin: 0 0 10px; color: #333; }
+            h2 { font-size: 18px; margin: 0 0 10px; color: #333; }
+            h3 { font-size: 16px; margin: 0 0 10px; color: #555; }
+            p { margin: 0 0 5px; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            .summary { margin-top: 20px; }
+            .footer { margin-top: 40px; font-size: 12px; }
+            .text-right { text-align: right; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <h1>TAX INVOICE</h1>
+              <p>Invoice #: ${invoice.invoiceNumber}</p>
+              <p>Date: ${new Date(invoice.createdAt).toLocaleDateString()}</p>
+              ${invoice.paymentDueDate ? 
+                `<p>Due Date: ${new Date(invoice.paymentDueDate).toLocaleDateString()}</p>` : ''}
+            </div>
+            <div>
+              <h2>${companySettings?.name || 'Company Name'}</h2>
+              <p>${companySettings?.address || 'Company Address'}</p>
+              <p>Phone: ${companySettings?.phone || 'Phone Number'}</p>
+              <p>Email: ${companySettings?.email || 'Email Address'}</p>
+              ${companySettings?.gstNumber ? 
+                `<p>GST No: ${companySettings.gstNumber}</p>` : ''}
+            </div>
+          </div>
+          
+          <div class="customer-details">
+            <h3>Bill To:</h3>
+            <p><strong>${customer.name}</strong></p>
+            <p>${customer.address || '-'}</p>
+            <p>Phone: ${customer.phone || '-'}</p>
+            ${customer.email ? `<p>Email: ${customer.email}</p>` : ''}
+            ${customer.gstNumber ? `<p>GST No: ${customer.gstNumber}</p>` : ''}
+          </div>
+          
+          <div>
+            <h3>Invoice Details:</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${quotation && quotation.rooms && quotation.rooms.length > 0 ? 
+                  quotation.rooms.map(room => `
+                    <tr>
+                      <td>${room.name}</td>
+                      <td>1</td>
+                      <td>₹${room.totalPrice.toFixed(2)}</td>
+                      <td>₹${room.totalPrice.toFixed(2)}</td>
+                    </tr>
+                  `).join('') : ''}
+                ${(quotation && quotation.installationHandling) ? 
+                  `<tr>
+                    <td>Installation and Handling</td>
+                    <td>1</td>
+                    <td>₹${quotation.installationHandling.toFixed(2)}</td>
+                    <td>₹${quotation.installationHandling.toFixed(2)}</td>
+                  </tr>` : ''}
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="summary">
+            <table>
+              <tr>
+                <td colspan="4"><strong>Sub Total:</strong></td>
+                <td class="text-right">₹${invoice.subtotal.toFixed(2)}</td>
+              </tr>
+              ${invoice.discount ? 
+                `<tr>
+                  <td colspan="4"><strong>Discount:</strong></td>
+                  <td class="text-right">₹${invoice.discount.toFixed(2)}</td>
+                </tr>` : ''}
+              ${invoice.gstAmount ? 
+                `<tr>
+                  <td colspan="4"><strong>GST (${invoice.gstPercentage}%):</strong></td>
+                  <td class="text-right">₹${invoice.gstAmount.toFixed(2)}</td>
+                </tr>` : ''}
+              <tr>
+                <td colspan="4"><strong>Grand Total:</strong></td>
+                <td class="text-right"><strong>₹${invoice.totalAmount.toFixed(2)}</strong></td>
+              </tr>
+            </table>
+          </div>
+          
+          ${invoice.notes ? 
+            `<div class="footer">
+              <h3>Notes:</h3>
+              <p>${invoice.notes}</p>
+            </div>` : ''}
+        </body>
+        </html>
+      `;
+      
+      const pdfBuffer = await generatePDF(html);
+      
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=Invoice-${invoice.invoiceNumber}.pdf`);
+      
+      // Send the PDF
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      res.status(500).json({ message: 'Error generating PDF' });
+    }
+  });
+  
+  // PDF Endpoint for Payment Receipts
+  app.get('/api/pdf/receipt/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const payment = await storage.getCustomerPayment(id);
+      
+      if (!payment) {
+        return res.status(404).json({ message: 'Payment not found' });
+      }
+      
+      const customer = await storage.getCustomer(payment.customerId);
+      const companySettings = await storage.getCompanySettings();
+      
+      if (!customer) {
+        return res.status(404).json({ message: 'Customer not found for this payment' });
+      }
+      
+      // Format the payment method for display
+      const formatPaymentMethod = (method: string) => {
+        return method
+          .replace('_', ' ')
+          .replace(/\b\w/g, l => l.toUpperCase());
+      };
+      
+      // Generate simple HTML for the receipt
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Receipt #${payment.receiptNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #333; margin: 0; padding: 20px; }
+            .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+            .company-details, .customer-details { margin-bottom: 20px; }
+            h1 { font-size: 24px; margin: 0 0 10px; color: #333; }
+            h2 { font-size: 18px; margin: 0 0 10px; color: #333; }
+            h3 { font-size: 16px; margin: 0 0 10px; color: #555; }
+            p { margin: 0 0 5px; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            .summary { margin-top: 20px; }
+            .footer { margin-top: 40px; font-size: 12px; }
+            .text-right { text-align: right; }
+            .signatures { display: flex; justify-content: space-between; margin-top: 50px; }
+            .signature-line { border-top: 1px solid #333; width: 200px; margin-top: 40px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <h1>RECEIPT</h1>
+              <p>Receipt #: ${payment.receiptNumber}</p>
+              <p>Date: ${new Date(payment.paymentDate).toLocaleDateString()}</p>
+            </div>
+            <div>
+              <h2>${companySettings?.name || 'Company Name'}</h2>
+              <p>${companySettings?.address || 'Company Address'}</p>
+              <p>Phone: ${companySettings?.phone || 'Phone Number'}</p>
+              <p>Email: ${companySettings?.email || 'Email Address'}</p>
+              ${companySettings?.gstNumber ? 
+                `<p>GST No: ${companySettings.gstNumber}</p>` : ''}
+            </div>
+          </div>
+          
+          <div class="customer-details">
+            <h3>Received From:</h3>
+            <p><strong>${customer.name}</strong></p>
+            <p>${customer.address || '-'}</p>
+            <p>Phone: ${customer.phone || '-'}</p>
+            ${customer.email ? `<p>Email: ${customer.email}</p>` : ''}
+            ${customer.gstNumber ? `<p>GST No: ${customer.gstNumber}</p>` : ''}
+          </div>
+          
+          <div>
+            <h3>Payment Details:</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>${payment.description || `Payment (${payment.paymentType.replace('_', ' ')})`}</td>
+                  <td class="text-right">₹${payment.amount.toFixed(2)}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th>Total</th>
+                  <th class="text-right">₹${payment.amount.toFixed(2)}</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          
+          <div>
+            <h3>Payment Method:</h3>
+            <p>${formatPaymentMethod(payment.paymentMethod)}
+              ${payment.transactionId ? ` (Ref: ${payment.transactionId})` : ''}
+            </p>
+          </div>
+          
+          <div class="signatures">
+            <div>
+              <p>Customer Signature</p>
+              <div class="signature-line"></div>
+            </div>
+            
+            <div style="text-align: right;">
+              <p>For ${companySettings?.name || 'Company Name'}</p>
+              <div class="signature-line"></div>
+              <p>Authorized Signatory</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      const pdfBuffer = await generatePDF(html);
+      
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=Receipt-${payment.receiptNumber}.pdf`);
+      
+      // Send the PDF
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      res.status(500).json({ message: 'Error generating PDF' });
+    }
+  });
   // Set up CORS headers
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');

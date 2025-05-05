@@ -22,6 +22,11 @@ import {
 } from "@shared/schema";
 
 export interface IStorage {
+  // Company Settings
+  getCompanySettings(): Promise<any>;
+  
+  // Invoice operations
+  getInvoice(id: number): Promise<any>;
   // Settings operations
   getCompanySettings(): Promise<CompanySettings | undefined>;
   updateCompanySettings(settings: Partial<InsertCompanySettings>): Promise<CompanySettings>;
