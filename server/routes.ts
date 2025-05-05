@@ -67,37 +67,66 @@ const upload = multer({
   }
 });
 
-// Import puppeteer for PDF generation
-import puppeteer from 'puppeteer';
+// Import PDFKit for PDF generation
+import PDFDocument from 'pdfkit';
+import { Readable } from 'stream';
 
 export async function registerRoutes(app: express.Express): Promise<Server> {
-  // PDF Generation utility function
-  async function generatePDF(html: string): Promise<Buffer> {
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      headless: true
-    });
-    
-    try {
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      
-      // Set PDF options (A4 paper)
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '1cm',
-          bottom: '1cm',
-          left: '1cm',
-          right: '1cm'
+  // PDF Generation utility function that creates a simple PDF directly
+  async function generatePDF(title: string, content: any): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      try {
+        // Create a PDF document
+        const doc = new PDFDocument({ margin: 50 });
+        const chunks: Buffer[] = [];
+        
+        // Collect data chunks
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
+        
+        // Add content to PDF
+        doc.fontSize(20).text(title, { align: 'center' });
+        doc.moveDown();
+        
+        // If content is a string, add it as text
+        if (typeof content === 'string') {
+          doc.fontSize(12).text(content);
+        } 
+        // If content is an object with sections, handle each section
+        else if (content && typeof content === 'object') {
+          Object.entries(content).forEach(([key, value]) => {
+            doc.fontSize(14).text(key, { underline: true });
+            doc.moveDown(0.5);
+            
+            if (typeof value === 'string') {
+              doc.fontSize(12).text(value);
+            } else if (Array.isArray(value)) {
+              value.forEach(item => {
+                if (typeof item === 'string') {
+                  doc.fontSize(12).text(`• ${item}`);
+                } else if (typeof item === 'object') {
+                  Object.entries(item).forEach(([itemKey, itemValue]) => {
+                    doc.fontSize(12).text(`${itemKey}: ${itemValue}`);
+                  });
+                  doc.moveDown(0.5);
+                }
+              });
+            } else if (typeof value === 'object') {
+              Object.entries(value).forEach(([subKey, subValue]) => {
+                doc.fontSize(12).text(`${subKey}: ${subValue}`);
+              });
+            }
+            doc.moveDown();
+          });
         }
-      });
-      
-      return pdfBuffer;
-    } finally {
-      await browser.close();
-    }
+        
+        // Finalize the PDF
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
   
   // PDF Endpoint for Quotations
@@ -262,7 +291,31 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         </html>
       `;
       
-      const pdfBuffer = await generatePDF(html);
+      // Prepare structured content for PDF
+      const content = {
+        "Customer Information": {
+          "Name": quotation.customer?.name || 'Customer Name',
+          "Address": quotation.customer?.address || 'Customer Address',
+          "Phone": quotation.customer?.phone || 'Phone Number',
+          "Email": quotation.customer?.email || ''
+        },
+        "Quotation Details": quotation.rooms?.map(room => ({
+          "Room": room.name,
+          "Products": (room.products?.length || 0) + " items",
+          "Accessories": (room.accessories?.length || 0) + " items",
+          "Total": `₹${(room.totalDiscountedPrice || 0).toFixed(2)}`
+        })) || [],
+        "Pricing": {
+          "Sub Total": `₹${quotation.totalSellingPrice.toFixed(2)}`,
+          "Discount": quotation.globalDiscount ? `₹${((quotation.totalSellingPrice * quotation.globalDiscount) / 100).toFixed(2)}` : "₹0.00",
+          "Installation & Handling": quotation.installationHandling ? `₹${quotation.installationHandling.toFixed(2)}` : "₹0.00",
+          "GST": quotation.gstPercentage ? `₹${quotation.gstAmount.toFixed(2)}` : "₹0.00",
+          "Grand Total": `₹${quotation.finalPrice.toFixed(2)}`
+        },
+        "Terms and Conditions": quotation.terms || "No terms specified"
+      };
+      
+      const pdfBuffer = await generatePDF(`Quotation #${quotation.quotationNumber || quotation.id}`, content);
       
       // Set response headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
@@ -413,7 +466,27 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         </html>
       `;
       
-      const pdfBuffer = await generatePDF(html);
+      // Prepare structured content for PDF
+      const content = {
+        "Customer Information": {
+          "Name": customer.name,
+          "Address": customer.address || '',
+          "Phone": customer.phone || '',
+          "Email": customer.email || '',
+          "GST No": customer.gstNumber || ''
+        },
+        "Invoice Details": quotation && quotation.rooms ? quotation.rooms.map(room => ({
+          "Room": room.name,
+          "Amount": `₹${(room.totalDiscountedPrice || 0).toFixed(2)}`
+        })) : [],
+        "Pricing": {
+          "Sub Total": `₹${invoice.totalAmount ? invoice.totalAmount.toFixed(2) : '0.00'}`,
+          "Grand Total": `₹${invoice.totalAmount ? invoice.totalAmount.toFixed(2) : '0.00'}`
+        },
+        "Notes": invoice.notes || "No notes"
+      };
+      
+      const pdfBuffer = await generatePDF(`Invoice #${invoice.invoiceNumber}`, content);
       
       // Set response headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
@@ -549,7 +622,32 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         </html>
       `;
       
-      const pdfBuffer = await generatePDF(html);
+      // Format the payment method for display
+      const formattedPaymentMethod = payment.paymentMethod
+          .replace('_', ' ')
+          .replace(/\b\w/g, l => l.toUpperCase());
+      
+      // Prepare structured content for PDF
+      const content = {
+        "Receipt Information": {
+          "Receipt Number": payment.receiptNumber,
+          "Date": new Date(payment.paymentDate).toLocaleDateString()
+        },
+        "Customer Information": {
+          "Name": customer.name,
+          "Address": customer.address || '',
+          "Phone": customer.phone || '',
+          "Email": customer.email || ''
+        },
+        "Payment Details": {
+          "Description": payment.description || `Payment (${payment.paymentType.replace('_', ' ')})`,
+          "Amount": `₹${payment.amount.toFixed(2)}`,
+          "Payment Method": formattedPaymentMethod,
+          "Transaction ID": payment.transactionId || 'N/A'
+        }
+      };
+      
+      const pdfBuffer = await generatePDF(`Receipt #${payment.receiptNumber}`, content);
       
       // Set response headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
