@@ -201,29 +201,6 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
     );
   }
 
-  // Calculate product and accessory total (excluding installation)
-  let productAccessoryTotal = 0;
-  
-  // Loop through each room to get only product and accessory prices
-  for (const room of quotation.rooms) {
-    // Add product prices
-    for (const product of room.products) {
-      productAccessoryTotal += product.quantity * product.sellingPrice;
-    }
-    
-    // Add accessory prices
-    for (const accessory of room.accessories) {
-      productAccessoryTotal += accessory.quantity * accessory.sellingPrice;
-    }
-  }
-  
-  // Calculate discount only on product and accessory prices
-  const discountAmount = quotation.globalDiscount > 0
-    ? Math.round(productAccessoryTotal * (quotation.globalDiscount / 100))
-    : 0;
-  
-  const discountedProductAccessoryTotal = productAccessoryTotal - discountAmount;
-  
   // Calculate installation charges
   let totalInstallCharges = 0;
   
@@ -240,10 +217,37 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
   // Add handling charges
   const totalWithHandling = totalInstallCharges + quotation.installationHandling;
   
-  // Calculate taxable amount (discounted products/accessories + installation charges)
+  // Calculate total with global discount - only apply to products/accessories, not installation
+  let productAccessoryTotal = 0;
+  
+  // Calculate just the product and accessory total
+  for (const room of quotation.rooms) {
+    let roomProductAccessoryTotal = 0;
+    
+    // Add product prices
+    for (const product of room.products) {
+      roomProductAccessoryTotal += product.quantity * product.sellingPrice;
+    }
+    
+    // Add accessory prices
+    for (const accessory of room.accessories) {
+      roomProductAccessoryTotal += accessory.quantity * accessory.sellingPrice;
+    }
+    
+    productAccessoryTotal += roomProductAccessoryTotal;
+  }
+  
+  // Calculate discount amount
+  const discountAmount = quotation.globalDiscount > 0
+    ? Math.round(productAccessoryTotal * (quotation.globalDiscount / 100))
+    : 0;
+  
+  const discountedProductAccessoryTotal = productAccessoryTotal - discountAmount;
+  
+  // Calculate taxable amount (discounted products/accessories + installation)
   const taxableAmount = discountedProductAccessoryTotal + totalWithHandling;
   
-  // Calculate CGST and SGST (assuming equal split of GST)
+  // Calculate GST
   const gstRate = quotation.gstPercentage || 0;
   const halfGstRate = gstRate / 2;
   const gstAmount = Math.round(taxableAmount * (gstRate / 100));
@@ -251,6 +255,15 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
   
   // Calculate final price
   const finalPrice = taxableAmount + gstAmount;
+  
+  // Total selling price without discount
+  const totalSellingPriceWithInstallation = quotation.totalSellingPrice + totalWithHandling;
+  
+  // GST on total without discount
+  const gstOnTotalWithoutDiscount = Math.round(totalSellingPriceWithInstallation * (gstRate / 100));
+  
+  // Final price without discount
+  const finalPriceWithoutDiscount = totalSellingPriceWithInstallation + gstOnTotalWithoutDiscount;
 
   // Format date
   const invoiceDate = invoice.createdAt ? new Date(invoice.createdAt) : new Date();
@@ -286,7 +299,7 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
               <h1 className="text-2xl font-bold text-gray-800">{companySettings?.name || 'Interior Design Company'}</h1>
               <p className="text-gray-600">{companySettings?.address || '123 Design Street, Creative City'}</p>
               <p className="text-gray-600">{companySettings?.phone || '+1 234 567 8900'} | {companySettings?.email || 'info@designcompany.com'}</p>
-              <p className="text-gray-600">GST No: {companySettings?.gstNumber || 'Not Specified'}</p>
+              <p className="text-gray-600">GST No: {companySettings?.taxId || 'Not Specified'}</p>
             </div>
             <div className="text-right">
               <h2 className="text-xl font-bold text-gray-800 mb-1">TAX INVOICE</h2>
@@ -313,139 +326,128 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
             </div>
           </div>
 
-          {/* Invoice Items */}
+          {/* Invoice Items - Match Quotation Format */}
           <div className="mb-6">
-            <table className="w-full border-collapse items-table">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border text-left py-2 px-3">S.No</th>
-                  <th className="border text-left py-2 px-3">Description</th>
-                  <th className="border text-right py-2 px-3">Qty</th>
-                  <th className="border text-right py-2 px-3">Rate</th>
-                  <th className="border text-right py-2 px-3">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {quotation.rooms.map((room, roomIndex) => {
-                  // Calculate total for this room (products + accessories)
-                  let roomTotal = 0;
-                  
-                  // Add up all product values
-                  room.products.forEach(product => {
-                    roomTotal += product.quantity * product.sellingPrice;
-                  });
-                  
-                  // Add up all accessory values
-                  room.accessories.forEach(accessory => {
-                    roomTotal += accessory.quantity * accessory.sellingPrice;
-                  });
-                  
-                  return (
-                    <tr key={`room-${room.id}`}>
-                      <td className="border py-2 px-3">
-                        {roomIndex + 1}
-                      </td>
-                      <td className="border py-2 px-3 font-medium">
-                        {room.name.toUpperCase()}
-                      </td>
-                      <td className="border py-2 px-3 text-right">1</td>
-                      <td className="border py-2 px-3 text-right">{formatCurrency(roomTotal)}</td>
-                      <td className="border py-2 px-3 text-right">{formatCurrency(roomTotal)}</td>
-                    </tr>
-                  );
-                })}
-                
-                {/* Display all installation charges after rooms */}
-                {quotation.rooms.map((room, roomIndex) => (
-                  room.installationCharges && room.installationCharges.length > 0 && 
-                  room.installationCharges.map((charge, chargeIndex) => (
-                    <tr key={`charge-${charge.id || chargeIndex}`}>
-                      <td className="border py-2 px-3">
-                        {quotation.rooms.length + chargeIndex + 1}
-                      </td>
-                      <td className="border py-2 px-3">
-                        Installation: {room.name} {charge.cabinetType || ''}
-                      </td>
-                      <td className="border py-2 px-3 text-right">1</td>
-                      <td className="border py-2 px-3 text-right">{formatCurrency(charge.amount)}</td>
-                      <td className="border py-2 px-3 text-right">{formatCurrency(charge.amount)}</td>
-                    </tr>
-                  ))
-                ))}
-                
-                {/* Installation handling if any */}
-                {quotation.installationHandling > 0 && (
+            <h3 className="text-lg font-semibold mb-4 text-gray-700">Project Details</h3>
+            <div className="border rounded-md overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <td className="border py-2 px-3">
-                      {quotation.rooms.length + 
-                        quotation.rooms.reduce((total, room) => 
-                          total + (room.installationCharges ? room.installationCharges.length : 0), 0) + 1}
-                    </td>
-                    <td className="border py-2 px-3">Installation Handling</td>
-                    <td className="border py-2 px-3 text-right">1</td>
-                    <td className="border py-2 px-3 text-right">{formatCurrency(quotation.installationHandling)}</td>
-                    <td className="border py-2 px-3 text-right">{formatCurrency(quotation.installationHandling)}</td>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Product Description
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Selling Price
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {quotation.globalDiscount > 0 
+                        ? `Discounted Price (Incl. ${quotation.globalDiscount}% Discount)` 
+                        : "Discounted Price"}
+                    </th>
                   </tr>
-                )}
-
-                {/* Summary rows */}
-                <tr>
-                  <td colSpan={4} className="border py-2 px-3 text-right font-medium">
-                    Subtotal
-                  </td>
-                  <td className="border py-2 px-3 text-right font-medium">
-                    {formatCurrency(quotation.totalSellingPrice)}
-                  </td>
-                </tr>
-                
-                {quotation.globalDiscount > 0 && (
-                  <tr>
-                    <td colSpan={4} className="border py-2 px-3 text-right">
-                      Discount ({quotation.globalDiscount}%) on Products & Accessories
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {/* Rooms */}
+                  {quotation.rooms.map((room) => {
+                    // Calculate the room's selling price (products + accessories)
+                    let roomSellingPrice = 0;
+                    
+                    // Add product prices
+                    room.products.forEach(product => {
+                      roomSellingPrice += product.quantity * product.sellingPrice;
+                    });
+                    
+                    // Add accessory prices
+                    room.accessories.forEach(accessory => {
+                      roomSellingPrice += accessory.quantity * accessory.sellingPrice;
+                    });
+                    
+                    // Calculate the discounted price with global discount applied
+                    const calculatedDiscountedPrice = quotation.globalDiscount > 0
+                      ? roomSellingPrice - (roomSellingPrice * quotation.globalDiscount / 100)
+                      : roomSellingPrice;
+                    
+                    return (
+                      <tr key={room.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {room.name ? room.name.toUpperCase() : 'UNNAMED ROOM'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          {formatCurrency(roomSellingPrice)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {quotation.globalDiscount > 0 ? (
+                            <span className="text-indigo-600 font-medium">
+                              {formatCurrency(Math.round(calculatedDiscountedPrice))}
+                            </span>
+                          ) : (
+                            <>{formatCurrency(roomSellingPrice)}</>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  
+                  {/* Total of All Items */}
+                  <tr className="bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      Total Of All Items
                     </td>
-                    <td className="border py-2 px-3 text-right">
-                      -{formatCurrency(discountAmount)}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                      {formatCurrency(productAccessoryTotal)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
+                      {quotation.globalDiscount > 0 ? (
+                        <span className="text-indigo-600 font-medium">
+                          {formatCurrency(discountedProductAccessoryTotal)}
+                        </span>
+                      ) : (
+                        <>{formatCurrency(productAccessoryTotal)}</>
+                      )}
                     </td>
                   </tr>
-                )}
-                
-                <tr>
-                  <td colSpan={4} className="border py-2 px-3 text-right">
-                    Taxable Amount
-                  </td>
-                  <td className="border py-2 px-3 text-right font-medium">
-                    {formatCurrency(taxableAmount)}
-                  </td>
-                </tr>
-                
-                <tr>
-                  <td colSpan={4} className="border py-2 px-3 text-right">
-                    CGST @ {halfGstRate}%
-                  </td>
-                  <td className="border py-2 px-3 text-right">
-                    {formatCurrency(halfGstAmount)}
-                  </td>
-                </tr>
-                
-                <tr>
-                  <td colSpan={4} className="border py-2 px-3 text-right">
-                    SGST @ {halfGstRate}%
-                  </td>
-                  <td className="border py-2 px-3 text-right">
-                    {formatCurrency(halfGstAmount)}
-                  </td>
-                </tr>
-                
-                <tr className="bg-gray-100">
-                  <td colSpan={4} className="border py-2 px-3 text-right font-bold">
-                    TOTAL
-                  </td>
-                  <td className="border py-2 px-3 text-right font-bold">
-                    {formatCurrency(finalPrice)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  
+                  {/* Installation and handling charges */}
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      Installation and Handling
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {formatCurrency(totalWithHandling)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {formatCurrency(totalWithHandling)}
+                    </td>
+                  </tr>
+                  
+                  {/* GST */}
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      GST {gstRate}%
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {formatCurrency(gstOnTotalWithoutDiscount)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {formatCurrency(gstAmount)}
+                    </td>
+                  </tr>
+                      
+                  {/* Final Price */}
+                  <tr className="bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                      Final Price
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
+                      {formatCurrency(finalPriceWithoutDiscount)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
+                      {formatCurrency(finalPrice)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Amount in Words */}
@@ -462,7 +464,7 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
               <li>Interest @18% p.a. will be charged on delayed payments.</li>
               <li>Our responsibility ceases once the goods leave our premises.</li>
               <li>Subject to local jurisdiction only.</li>
-              {appSettings?.invoiceTerms && appSettings.invoiceTerms.split('\n').map((term, i) => (
+              {appSettings?.defaultTermsAndConditions && appSettings.defaultTermsAndConditions.split('\n').map((term: string, i: number) => (
                 <li key={i}>{term}</li>
               ))}
             </ol>
@@ -476,19 +478,19 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
                 <tbody>
                   <tr>
                     <td className="pr-4 py-1"><strong>Bank Name:</strong></td>
-                    <td>{companySettings?.bankName || 'HDFC Bank'}</td>
+                    <td>HDFC Bank</td>
                   </tr>
                   <tr>
                     <td className="pr-4 py-1"><strong>Account No:</strong></td>
-                    <td>{companySettings?.accountNumber || '50200012345678'}</td>
+                    <td>50200012345678</td>
                   </tr>
                   <tr>
                     <td className="pr-4 py-1"><strong>IFSC Code:</strong></td>
-                    <td>{companySettings?.ifscCode || 'HDFC0004321'}</td>
+                    <td>HDFC0004321</td>
                   </tr>
                   <tr>
                     <td className="pr-4 py-1"><strong>Branch:</strong></td>
-                    <td>{companySettings?.branch || 'Main Branch'}</td>
+                    <td>Main Branch</td>
                   </tr>
                 </tbody>
               </table>
