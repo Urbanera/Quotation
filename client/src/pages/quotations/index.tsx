@@ -437,8 +437,8 @@ export default function QuotationsList() {
                           });
                           
                           try {
-                            // Use the download URL method instead of client-side rendering
-                            window.location.href = `/quotations/print/${quotation.id}`;
+                            // Use the server-side API for PDF generation
+                            window.open(`/api/pdf/quotation/${quotation.id}`, '_blank');
                             
                             toast({
                               title: "PDF Generated",

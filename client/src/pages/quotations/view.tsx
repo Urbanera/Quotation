@@ -193,10 +193,29 @@ export default function ViewQuotation() {
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => toast({
-                  title: "Download",
-                  description: "Download functionality will be implemented soon."
-                })}
+                onClick={() => {
+                  toast({
+                    title: "Preparing PDF",
+                    description: "Your PDF is being generated...",
+                  });
+                  
+                  try {
+                    // Use server-side PDF generation
+                    window.open(`/api/pdf/quotation/${id}`, '_blank');
+                    
+                    toast({
+                      title: "PDF Generated",
+                      description: "Your PDF is being downloaded...",
+                    });
+                  } catch (error) {
+                    console.error("Error generating PDF", error);
+                    toast({
+                      title: "Error",
+                      description: "Could not generate PDF.",
+                      variant: "destructive"
+                    });
+                  }
+                }}
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
