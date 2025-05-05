@@ -31,7 +31,8 @@ import {
   Eye,
   Calendar,
   Wallet,
-  CreditCard as CardIcon
+  CreditCard as CardIcon,
+  Download
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
@@ -325,7 +326,7 @@ export default function PaymentsPage() {
                         </div>
                       )}
                     </div>
-                    <div className="ml-5 flex-shrink-0">
+                    <div className="ml-5 flex-shrink-0 flex space-x-2">
                       <Link href={`/payments/view/${payment.id}`}>
                         <Button
                           variant="ghost"
@@ -336,6 +337,21 @@ export default function PaymentsPage() {
                           View
                         </Button>
                       </Link>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-indigo-600 hover:text-indigo-900"
+                        onClick={() => {
+                          toast({
+                            title: "Preparing PDF",
+                            description: "Your payment receipt PDF is being generated...",
+                          });
+                          window.open(`/payments/print/${payment.id}`, '_blank');
+                        }}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
                     </div>
                   </div>
                 </li>
