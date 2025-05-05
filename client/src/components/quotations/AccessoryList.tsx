@@ -174,7 +174,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
         </div>
       </div>
       
-      {accessories.length === 0 ? (
+      {!accessories || accessories.length === 0 ? (
         <div className="bg-white border rounded-md p-6 mb-4 text-center">
           <p className="text-gray-500 text-sm mb-2">No accessories added yet.</p>
           <p className="text-gray-400 text-xs mb-3">Add accessories from the catalog or create custom ones</p>

@@ -454,6 +454,146 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to delete product' });
     }
   });
+  
+  // Accessory endpoints
+  app.get('/api/rooms/:roomId/accessories', async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const accessories = await storage.getAccessories(roomId);
+      res.json(accessories);
+    } catch (error) {
+      console.error('Error fetching accessories:', error);
+      res.status(500).json({ message: 'Failed to fetch accessories' });
+    }
+  });
+  
+  app.post('/api/rooms/:roomId/accessories', async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const accessoryData = {
+        ...req.body,
+        roomId
+      };
+      
+      const accessory = await storage.createAccessory(accessoryData);
+      res.status(201).json(accessory);
+    } catch (error) {
+      console.error('Error creating accessory:', error);
+      res.status(500).json({ message: 'Failed to create accessory' });
+    }
+  });
+  
+  app.get('/api/accessories/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const accessory = await storage.getAccessory(id);
+      
+      if (!accessory) {
+        return res.status(404).json({ message: 'Accessory not found' });
+      }
+      
+      res.json(accessory);
+    } catch (error) {
+      console.error('Error fetching accessory:', error);
+      res.status(500).json({ message: 'Failed to fetch accessory' });
+    }
+  });
+  
+  app.put('/api/accessories/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const accessory = await storage.updateAccessory(id, req.body);
+      
+      if (!accessory) {
+        return res.status(404).json({ message: 'Accessory not found' });
+      }
+      
+      res.json(accessory);
+    } catch (error) {
+      console.error('Error updating accessory:', error);
+      res.status(500).json({ message: 'Failed to update accessory' });
+    }
+  });
+  
+  app.delete('/api/accessories/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteAccessory(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Accessory not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting accessory:', error);
+      res.status(500).json({ message: 'Failed to delete accessory' });
+    }
+  });
+  
+  // Accessory Catalog endpoints
+  app.get('/api/accessory-catalog', async (req, res) => {
+    try {
+      const catalog = await storage.getAccessoryCatalog();
+      res.json(catalog);
+    } catch (error) {
+      console.error('Error fetching accessory catalog:', error);
+      res.status(500).json({ message: 'Failed to fetch accessory catalog' });
+    }
+  });
+  
+  app.get('/api/accessory-catalog/category/:category', async (req, res) => {
+    try {
+      const category = req.params.category;
+      const catalog = await storage.getAccessoryCatalogByCategory(category);
+      res.json(catalog);
+    } catch (error) {
+      console.error('Error fetching accessory catalog by category:', error);
+      res.status(500).json({ message: 'Failed to fetch accessory catalog by category' });
+    }
+  });
+  
+  app.post('/api/accessory-catalog', async (req, res) => {
+    try {
+      const item = await storage.createAccessoryCatalogItem(req.body);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error('Error creating accessory catalog item:', error);
+      res.status(500).json({ message: 'Failed to create accessory catalog item' });
+    }
+  });
+  
+  app.put('/api/accessory-catalog/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const item = await storage.updateAccessoryCatalogItem(id, req.body);
+      
+      if (!item) {
+        return res.status(404).json({ message: 'Accessory catalog item not found' });
+      }
+      
+      res.json(item);
+    } catch (error) {
+      console.error('Error updating accessory catalog item:', error);
+      res.status(500).json({ message: 'Failed to update accessory catalog item' });
+    }
+  });
+  
+  app.delete('/api/accessory-catalog/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteAccessoryCatalogItem(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Accessory catalog item not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting accessory catalog item:', error);
+      res.status(500).json({ message: 'Failed to delete accessory catalog item' });
+    }
+  });
   // PDF Generation utility function
   const generatePDF = async (documentType: string, data: any, isQuotation: boolean = true): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
