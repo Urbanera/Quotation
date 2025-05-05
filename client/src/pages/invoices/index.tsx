@@ -245,57 +245,18 @@ export default function InvoicesPage() {
                           });
                           
                           try {
-                            // Fetch invoice details
-                            const res = await apiRequest("GET", `/api/invoices/${invoice.id}`);
-                            const invoiceData = await res.json();
+                            // Use the download URL method instead of client-side rendering
+                            window.location.href = `/invoices/print/${invoice.id}`;
                             
-                            // Fetch quotation details related to this invoice
-                            let quotationDetails = null;
-                            if (invoiceData.quotationId) {
-                              const quotationRes = await apiRequest("GET", `/api/quotations/${invoiceData.quotationId}/details`);
-                              quotationDetails = await quotationRes.json();
-                            }
-                            
-                            // Create a temporary div to render the PDF content
-                            const tempDiv = document.createElement('div');
-                            tempDiv.style.position = 'absolute';
-                            tempDiv.style.left = '-9999px';
-                            tempDiv.id = 'temp-pdf-container';
-                            document.body.appendChild(tempDiv);
-                            
-                            // Render the PDF content
-                            const root = ReactDOM.createRoot(tempDiv);
-                            root.render(
-                              <InvoiceDetails invoice={invoiceData} quotation={quotationDetails} printMode={true} />
-                            );
-                            
-                            // Let the content render and then generate PDF
-                            setTimeout(async () => {
-                              try {
-                                await generatePDF('temp-pdf-container', `Invoice-${invoice.invoiceNumber}.pdf`);
-                                
-                                toast({
-                                  title: "PDF Generated",
-                                  description: "Your PDF has been downloaded successfully.",
-                                });
-                              } catch (error) {
-                                console.error("PDF generation error", error);
-                                toast({
-                                  title: "PDF Generation Failed",
-                                  description: "There was an error generating your PDF.",
-                                  variant: "destructive"
-                                });
-                              }
-                              
-                              // Clean up
-                              root.unmount();
-                              document.body.removeChild(tempDiv);
-                            }, 500);
+                            toast({
+                              title: "PDF Generated",
+                              description: "Your PDF is being downloaded...",
+                            });
                           } catch (error) {
-                            console.error("Error fetching invoice details", error);
+                            console.error("Error generating PDF", error);
                             toast({
                               title: "Error",
-                              description: "Could not fetch invoice details.",
+                              description: "Could not generate PDF.",
                               variant: "destructive"
                             });
                           }

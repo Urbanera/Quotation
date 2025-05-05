@@ -8,99 +8,80 @@ export async function generatePDF(elementId: string, filename: string): Promise<
   const element = document.getElementById(elementId);
   if (!element) {
     console.error(`Element with id '${elementId}' not found`);
-    return;
+    throw new Error(`Element with id '${elementId}' not found`);
   }
 
   try {
-    // Create a pdf with A4 dimensions
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    // Create a pdf with A4 dimensions (portrait)
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
+    
+    // Get page dimensions
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     
-    // A4 page dimensions (in pixels at 96 DPI)
-    const a4Width = 794; // ~210mm at 96 DPI 
-    const a4Height = 1123; // ~297mm at 96 DPI
-    
-    // Set the page margins (15mm on all sides)
-    const margin = 15;
+    // Set margins (10mm)
+    const margin = 10;
     const contentWidth = pdfWidth - (margin * 2);
+    
+    // Force element to be visible even if it's hidden
+    const originalDisplay = element.style.display;
+    element.style.display = 'block';
+    
+    // Get the element as a canvas with high resolution
+    const canvas = await html2canvas(element, {
+      scale: 2, // Higher resolution for better quality
+      useCORS: true, // Allow images from other domains
+      allowTaint: true, // Allow images to taint canvas
+      logging: false, // Disable logging
+      backgroundColor: '#FFFFFF', // White background
+    });
+    
+    // Calculate the scale ratio to fit within page width (accounting for margins)
+    const ratio = contentWidth / canvas.width;
+    const scaledHeight = canvas.height * ratio;
+    
+    // Get image data from canvas
+    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    
+    // Calculate how many pages we need
     const contentHeight = pdfHeight - (margin * 2);
+    const pageCount = Math.ceil(scaledHeight / contentHeight);
     
-    // Clone the element to avoid modifying the original
-    const clonedElement = element.cloneNode(true) as HTMLElement;
-    
-    // Set the cloned element's width to match A4 paper width (minus margins)
-    clonedElement.style.width = `${a4Width - (margin * 2 * 3.779)}px`; // Convert mm to px (1mm ≈ 3.779px)
-    
-    // Create a temporary container and append the cloned element
-    const container = document.createElement('div');
-    container.appendChild(clonedElement);
-    document.body.appendChild(container);
-    
-    // Position the container off-screen but make it visible
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    container.style.height = 'auto';
-    container.style.width = `${a4Width - (margin * 2 * 3.779)}px`; 
-    container.style.visibility = 'visible';
-    
-    try {
-      // Convert the element to canvas
-      const canvas = await html2canvas(clonedElement, { 
-        scale: 2, // Higher resolution
-        useCORS: true,
-        logging: false
-      });
-      
-      // Get canvas dimensions
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      
-      // Calculate the scaling ratio to fit the content width
-      const ratio = contentWidth / imgWidth;
-      
-      // Convert canvas to image data
-      const imgData = canvas.toDataURL('image/png');
-      
-      // Calculate how many pages we need
-      const totalPages = Math.ceil((imgHeight * ratio) / contentHeight);
-      
-      // Add each page
-      for (let page = 0; page < totalPages; page++) {
-        // Add a new page after the first one
-        if (page > 0) {
-          pdf.addPage();
-        }
-        
-        // Calculate what part of the image to use for this page
-        const srcY = page * contentHeight / ratio;
-        const srcHeight = Math.min(contentHeight / ratio, imgHeight - srcY);
-        
-        // Create a temporary canvas for the current page
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = imgWidth;
-        pageCanvas.height = srcHeight;
-        
-        // Draw the appropriate part of the original canvas onto this one
-        const ctx = pageCanvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(canvas, 0, srcY, imgWidth, srcHeight, 0, 0, imgWidth, srcHeight);
-          
-          // Add this slice to the PDF
-          const pageImgData = pageCanvas.toDataURL('image/png');
-          pdf.addImage(pageImgData, 'PNG', margin, margin, contentWidth, srcHeight * ratio);
-        }
+    // Add image to PDF, potentially across multiple pages
+    for (let i = 0; i < pageCount; i++) {
+      // Add new pages after the first page
+      if (i > 0) {
+        pdf.addPage();
       }
       
-      // Save the PDF
-      pdf.save(filename);
-    } finally {
-      // Cleanup: remove temporary container
-      document.body.removeChild(container);
+      // Calculate the portion of the image to use for this page
+      const position = -i * contentHeight / ratio; // Shift up for each page
+      
+      // Add the image to the PDF
+      pdf.addImage(
+        imgData, 'JPEG', 
+        margin, margin, // X, Y position (with margins)
+        contentWidth, scaledHeight, // Width and height in the PDF
+        `page-${i}`, // Alias for this image
+        'FAST', // Compression 
+        position // Vertical position shift
+      );
     }
+    
+    // Save the PDF
+    pdf.save(filename);
+    
+    // Restore original display style
+    element.style.display = originalDisplay;
+    
   } catch (error) {
     console.error('Error generating PDF:', error);
+    throw error;
   }
 }
 
