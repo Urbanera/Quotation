@@ -72,12 +72,22 @@ import PDFDocument from 'pdfkit';
 import { Readable } from 'stream';
 
 export async function registerRoutes(app: express.Express): Promise<Server> {
-  // PDF Generation utility function that creates a simple PDF directly
+  // PDF Generation utility function that creates a well-formatted PDF
   async function generatePDF(title: string, content: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
-        // Create a PDF document
-        const doc = new PDFDocument({ margin: 50 });
+        // Create a PDF document with A4 size
+        const doc = new PDFDocument({ 
+          margin: 50,
+          size: 'A4',
+          info: {
+            Title: title,
+            Author: 'Interio Designs',
+            Subject: 'Document',
+            Creator: 'PDF Generator'
+          }
+        });
+        
         const chunks: Buffer[] = [];
         
         // Collect data chunks
@@ -85,40 +95,96 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
         
-        // Add content to PDF
-        doc.fontSize(20).text(title, { align: 'center' });
-        doc.moveDown();
+        // Add header with company logo/name and document title
+        doc.fontSize(22).font('Helvetica-Bold').fillColor('#333333').text(title, { align: 'center' });
+        doc.moveDown(0.5);
+        
+        // Add horizontal line
+        doc.moveTo(50, doc.y)
+           .lineTo(doc.page.width - 50, doc.y)
+           .stroke('#cccccc');
+        
+        doc.moveDown(0.5);
         
         // If content is a string, add it as text
         if (typeof content === 'string') {
-          doc.fontSize(12).text(content);
+          doc.fontSize(12).font('Helvetica').text(content);
         } 
         // If content is an object with sections, handle each section
         else if (content && typeof content === 'object') {
           Object.entries(content).forEach(([key, value]) => {
-            doc.fontSize(14).text(key, { underline: true });
+            // Section header with blue background
+            doc.fillColor('#ffffff')
+               .rect(50, doc.y, doc.page.width - 100, 25)
+               .fill('#0066cc');
+            
+            doc.fontSize(14)
+               .font('Helvetica-Bold')
+               .fillColor('#ffffff')
+               .text(key, 60, doc.y - 20);
+            
             doc.moveDown(0.5);
+            doc.fillColor('#333333').font('Helvetica');
             
             if (typeof value === 'string') {
-              doc.fontSize(12).text(value);
+              doc.fontSize(12).text(value, { indent: 10 });
             } else if (Array.isArray(value)) {
               value.forEach(item => {
                 if (typeof item === 'string') {
-                  doc.fontSize(12).text(`• ${item}`);
+                  // Check if it's a section header (all caps with == prefix)
+                  if (item.startsWith('==') && item.endsWith('==')) {
+                    doc.moveDown(0.5);
+                    doc.fontSize(13).font('Helvetica-Bold').text(item.replace(/==/g, '').trim(), { indent: 5 });
+                    doc.font('Helvetica');
+                  } 
+                  // Check if it's a sub-header (all caps with no prefix)
+                  else if (item === item.toUpperCase() && item.length > 0) {
+                    doc.moveDown(0.3);
+                    doc.fontSize(12).font('Helvetica-Bold').text(item, { indent: 10 });
+                    doc.font('Helvetica');
+                  }
+                  // Regular bullet point
+                  else {
+                    doc.fontSize(11).text(`• ${item}`, { indent: 20 });
+                  }
                 } else if (typeof item === 'object') {
-                  Object.entries(item).forEach(([itemKey, itemValue]) => {
-                    doc.fontSize(12).text(`${itemKey}: ${itemValue}`);
-                  });
-                  doc.moveDown(0.5);
+                  // For items within a list, create a structured format
+                  doc.fontSize(11);
+                  const entries = Object.entries(item);
+                  const text = entries.map(([k, v]) => `${k}: ${v}`).join(' | ');
+                  doc.text(text, { indent: 20 });
+                  doc.moveDown(0.2);
                 }
               });
             } else if (typeof value === 'object') {
+              // For a key-value section, create a structured format
               Object.entries(value).forEach(([subKey, subValue]) => {
-                doc.fontSize(12).text(`${subKey}: ${subValue}`);
+                doc.fontSize(11)
+                   .font('Helvetica-Bold')
+                   .text(`${subKey}:`, { 
+                     continued: true,
+                     indent: 10
+                   })
+                   .font('Helvetica')
+                   .text(` ${subValue}`);
               });
             }
             doc.moveDown();
           });
+        }
+        
+        // Add page numbers
+        const totalPages = doc.bufferedPageRange().count;
+        for (let i = 0; i < totalPages; i++) {
+          doc.switchToPage(i);
+          doc.fontSize(10)
+             .fillColor('#999999')
+             .text(
+               `Page ${i + 1} of ${totalPages}`,
+               50,
+               doc.page.height - 50,
+               { align: 'center' }
+             );
         }
         
         // Finalize the PDF
@@ -291,25 +357,68 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         </html>
       `;
       
-      // Prepare structured content for PDF
+      // Create a more detailed PDF content structure with formatted output
+      const productsList = [];
+      
+      // Process each room with its products and accessories
+      if (quotation.rooms && quotation.rooms.length > 0) {
+        quotation.rooms.forEach(room => {
+          // Add room header
+          productsList.push(`== ${room.name.toUpperCase()} ==`);
+          
+          // Add products
+          if (room.products && room.products.length > 0) {
+            productsList.push("PRODUCTS:");
+            room.products.forEach(product => {
+              productsList.push({
+                "Item": product.name,
+                "Description": product.description || '-',
+                "Quantity": product.quantity,
+                "Price": `₹${product.discountedPrice.toFixed(2)}`
+              });
+            });
+          }
+          
+          // Add accessories
+          if (room.accessories && room.accessories.length > 0) {
+            productsList.push("ACCESSORIES:");
+            room.accessories.forEach(accessory => {
+              productsList.push({
+                "Item": accessory.name,
+                "Description": accessory.description || '-',
+                "Quantity": accessory.quantity,
+                "Price": `₹${accessory.discountedPrice.toFixed(2)}`
+              });
+            });
+          }
+          
+          // Add room total
+          productsList.push(`Room Total: ₹${(room.discountedPrice || 0).toFixed(2)}`);
+          productsList.push("---");
+        });
+      }
+      
       const content = {
+        "Quotation Information": {
+          "Quotation Number": quotation.quotationNumber || `Q-${quotation.id}`,
+          "Date": new Date(quotation.createdAt).toLocaleDateString(),
+          "Valid Until": quotation.validUntil ? new Date(quotation.validUntil).toLocaleDateString() : 'N/A'
+        },
         "Customer Information": {
           "Name": quotation.customer?.name || 'Customer Name',
           "Address": quotation.customer?.address || 'Customer Address',
           "Phone": quotation.customer?.phone || 'Phone Number',
           "Email": quotation.customer?.email || ''
         },
-        "Quotation Details": quotation.rooms?.map(room => ({
-          "Room": room.name,
-          "Products": (room.products?.length || 0) + " items",
-          "Accessories": (room.accessories?.length || 0) + " items",
-          "Total": `₹${(room.totalDiscountedPrice || 0).toFixed(2)}`
-        })) || [],
-        "Pricing": {
+        "Items": productsList,
+        "Pricing Summary": {
           "Sub Total": `₹${quotation.totalSellingPrice.toFixed(2)}`,
-          "Discount": quotation.globalDiscount ? `₹${((quotation.totalSellingPrice * quotation.globalDiscount) / 100).toFixed(2)}` : "₹0.00",
-          "Installation & Handling": quotation.installationHandling ? `₹${quotation.installationHandling.toFixed(2)}` : "₹0.00",
-          "GST": quotation.gstPercentage ? `₹${quotation.gstAmount.toFixed(2)}` : "₹0.00",
+          "Discount": quotation.globalDiscount ? 
+            `${quotation.globalDiscount}% (₹${((quotation.totalSellingPrice * quotation.globalDiscount) / 100).toFixed(2)})` : "0%",
+          "Installation & Handling": quotation.installationHandling ? 
+            `₹${quotation.installationHandling.toFixed(2)}` : "₹0.00",
+          "GST": quotation.gstPercentage ? 
+            `${quotation.gstPercentage}% (₹${quotation.gstAmount.toFixed(2)})` : "0%",
           "Grand Total": `₹${quotation.finalPrice.toFixed(2)}`
         },
         "Terms and Conditions": quotation.terms || "No terms specified"
@@ -466,8 +575,35 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         </html>
       `;
       
+      // Calculate invoice amount from quotation if available
+      let totalAmount = 0;
+      if (quotation) {
+        // Sum up room prices
+        let subtotal = 0;
+        if (quotation.rooms) {
+          subtotal = quotation.rooms.reduce((sum, room) => {
+            return sum + (room.discountedPrice || 0);
+          }, 0);
+        }
+        
+        // Add installation handling
+        const installationHandling = quotation.installationHandling || 0;
+        
+        // Calculate GST
+        const gstPercentage = quotation.gstPercentage || 0;
+        const gstAmount = ((subtotal + installationHandling) * gstPercentage) / 100;
+        
+        // Final amount
+        totalAmount = subtotal + installationHandling + gstAmount;
+      }
+      
       // Prepare structured content for PDF
       const content = {
+        "Invoice Information": {
+          "Invoice Number": invoice.invoiceNumber,
+          "Date": new Date(invoice.createdAt).toLocaleDateString(),
+          "Status": invoice.status.toUpperCase()
+        },
         "Customer Information": {
           "Name": customer.name,
           "Address": customer.address || '',
@@ -477,11 +613,15 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         },
         "Invoice Details": quotation && quotation.rooms ? quotation.rooms.map(room => ({
           "Room": room.name,
-          "Amount": `₹${(room.totalDiscountedPrice || 0).toFixed(2)}`
+          "Amount": `₹${(room.discountedPrice || 0).toFixed(2)}`
         })) : [],
+        "Installation & Handling": quotation && quotation.installationHandling ? 
+          `₹${quotation.installationHandling.toFixed(2)}` : "₹0.00",
         "Pricing": {
-          "Sub Total": `₹${invoice.totalAmount ? invoice.totalAmount.toFixed(2) : '0.00'}`,
-          "Grand Total": `₹${invoice.totalAmount ? invoice.totalAmount.toFixed(2) : '0.00'}`
+          "Sub Total": `₹${(quotation ? quotation.totalDiscountedPrice : 0).toFixed(2)}`,
+          "GST": quotation && quotation.gstPercentage ? 
+            `${quotation.gstPercentage}% (₹${quotation.gstAmount.toFixed(2)})` : "0%",
+          "Grand Total": `₹${totalAmount.toFixed(2)}`
         },
         "Notes": invoice.notes || "No notes"
       };
