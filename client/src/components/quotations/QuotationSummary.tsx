@@ -263,10 +263,10 @@ export default function QuotationSummary({
                   Installation and Handling
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN')}
+                  ₹{((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN')}
+                  ₹{((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
               </tr>
               
@@ -275,10 +275,10 @@ export default function QuotationSummary({
                   GST {gstPercentage}%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100)).toLocaleString('en-IN')}
+                  ₹{(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{(totals.gstAmount || 0).toLocaleString('en-IN')}
+                  ₹{(totals.gstAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
               </tr>
               
@@ -287,10 +287,10 @@ export default function QuotationSummary({
                   Final Price
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                  ₹{(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) + (((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100))).toLocaleString('en-IN')}
+                  ₹{(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) + (((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100))).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
-                  ₹{(totals.finalPrice || 0).toLocaleString('en-IN')}
+                  ₹{(totals.finalPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
               </tr>
             </tbody>
