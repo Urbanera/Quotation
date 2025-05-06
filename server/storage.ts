@@ -586,6 +586,18 @@ export class MemStorage implements IStorage {
     return this.appSettings;
   }
 
+  async updateCompanyLogo(logoUrl: string): Promise<CompanySettings> {
+    // Make sure we have company settings first
+    if (!this.companySettings) {
+      await this.getCompanySettings();
+    }
+    
+    // Update just the logo field
+    return this.updateCompanySettings({
+      logo: logoUrl
+    });
+  }
+
   async updateAppSettings(settings: Partial<InsertAppSettings>): Promise<AppSettings> {
     if (!this.appSettings) {
       this.appSettings = {
