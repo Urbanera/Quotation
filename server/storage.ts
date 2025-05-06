@@ -25,6 +25,7 @@ export interface IStorage {
   // Settings operations
   getCompanySettings(): Promise<CompanySettings | undefined>;
   updateCompanySettings(settings: Partial<InsertCompanySettings>): Promise<CompanySettings>;
+  updateCompanyLogo(logoUrl: string): Promise<CompanySettings>;
   getAppSettings(): Promise<AppSettings | undefined>;
   updateAppSettings(settings: Partial<InsertAppSettings>): Promise<AppSettings>;
 

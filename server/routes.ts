@@ -1266,12 +1266,25 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         return res.status(400).json({ message: "No logo file provided" });
       }
       
+      // Log the uploaded file information for debugging
+      console.log("Uploaded file:", req.file);
+      
       const logoUrl = `/uploads/${req.file.filename}`;
+      console.log("Logo URL:", logoUrl);
+      
+      // Ensure the uploads directory exists
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+        console.log("Created uploads directory:", uploadDir);
+      }
+      
       const settings = await storage.updateCompanyLogo(logoUrl);
+      console.log("Updated settings:", settings);
       
       res.json(settings);
     } catch (error) {
-      res.status(500).json({ message: "Failed to upload company logo" });
+      console.error("Error uploading logo:", error);
+      res.status(500).json({ message: "Failed to upload company logo", error: (error as Error).message });
     }
   });
 
