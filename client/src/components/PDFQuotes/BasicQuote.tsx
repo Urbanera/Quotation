@@ -82,7 +82,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       <div className="flex justify-between items-center mb-8 border-b pb-6">
         <div className="flex items-center">
           {companySettings?.logo && (
-            <img src={companySettings.logo} alt={companyName} className="h-10 mr-3" />
+            <img src={companySettings.logo.startsWith('/uploads/') ? companySettings.logo : `/uploads/${companySettings.logo}`} alt={companyName} className="h-10 mr-3" />
           )}
           <div>
             <h1 className="text-2xl font-bold text-indigo-600">{companyName}</h1>
@@ -162,7 +162,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                         {safeQuotation.globalDiscount > 0 ? (
                           <span className="text-indigo-600 font-medium">
-                            {formatCurrency(Math.round(calculatedDiscountedPrice))}
+                            {formatCurrency(calculatedDiscountedPrice)}
                           </span>
                         ) : (
                           <>{formatCurrency(roomSellingPrice)}</>

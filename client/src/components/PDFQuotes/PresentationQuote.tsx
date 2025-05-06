@@ -59,7 +59,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             {companySettings?.logo && (
-              <img src={companySettings.logo} alt={companyName} className="h-12 mr-4" />
+              <img src={companySettings.logo.startsWith('/uploads/') ? companySettings.logo : `/uploads/${companySettings.logo}`} alt={companyName} className="h-12 mr-4" />
             )}
             <div>
               <h1 className="text-3xl font-bold">{companyName}</h1>
@@ -121,7 +121,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                     <div className="grid grid-cols-2 gap-2">
                       {room.images.slice(0, 2).map((image) => (
                         <div key={image.id} className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
-                          <img src={image.path} alt={`Design for ${room.name || 'Room'}`} className="object-cover w-full h-full" />
+                          <img src={image.filename ? `/uploads/${image.filename}` : image.path} alt={`Design for ${room.name || 'Room'}`} className="object-cover w-full h-full" />
                         </div>
                       ))}
                     </div>
