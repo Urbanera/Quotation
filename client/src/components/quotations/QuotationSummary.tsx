@@ -231,7 +231,7 @@ export default function QuotationSummary({
                           ₹{Math.round(calculatedDiscountedPrice).toLocaleString('en-IN')}
                         </span>
                       ) : (
-                        <>₹{room.sellingPrice ? room.sellingPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}</>
+                        <>₹{room.sellingPrice ? Math.round(room.sellingPrice).toLocaleString('en-IN') : '0'}</>
                       )}
                     </td>
                   </tr>
