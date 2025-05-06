@@ -774,8 +774,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       }
       
       // Try to delete the file if it's a local file
-      if (image.url.startsWith('/uploads/')) {
-        const filename = image.url.replace('/uploads/', '');
+      if (image.path.startsWith('/uploads/')) {
+        const filename = image.path.replace('/uploads/', '');
         const filePath = path.join(uploadDir, filename);
         
         try {
