@@ -189,7 +189,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
                   {safeQuotation.globalDiscount > 0 ? (
                     <span className="text-indigo-600 font-medium">
-                      {formatCurrency(Math.round(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100)))}
+                      {formatCurrency(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))}
                     </span>
                   ) : (
                     <>{formatCurrency(safeQuotation.totalSellingPrice)}</>
@@ -215,7 +215,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                   GST {safeQuotation.gstPercentage}%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  {formatCurrency(Math.round((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}
+                  {formatCurrency((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                   {formatCurrency(gstAmount)}
@@ -228,7 +228,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
                   {formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + 
-                    Math.round((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}
+                    (safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
                   {formatCurrency(finalPrice)}

@@ -172,7 +172,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                       {safeQuotation.globalDiscount > 0 ? (
                         <span className="text-indigo-600 font-medium">
-                          {formatCurrency(Math.round(calculatedDiscountedPrice))}
+                          {formatCurrency(calculatedDiscountedPrice)}
                         </span>
                       ) : (
                         <>{formatCurrency(roomSellingPrice)}</>
@@ -191,7 +191,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
                   {safeQuotation.globalDiscount > 0 ? (
                     <span className="text-indigo-600 font-medium">
-                      {formatCurrency(Math.round(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100)))}
+                      {formatCurrency(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))}
                     </span>
                   ) : (
                     <>{formatCurrency(safeQuotation.totalSellingPrice)}</>
@@ -237,7 +237,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               {(() => {
                 // Calculate the discounted total
                 const discountedTotal = safeQuotation.globalDiscount > 0
-                  ? Math.round(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))
+                  ? safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100)
                   : safeQuotation.totalSellingPrice;
                 
                 // Calculate installation charges the same way as above
@@ -257,7 +257,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 const totalWithHandling = totalInstallCharges + safeQuotation.installationHandling;
                 
                 // Calculate GST based on discounted total + installation/handling
-                const gstAmount = Math.round((discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100));
+                const gstAmount = (discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100);
                 
                 // Calculate final price
                 const finalPrice = discountedTotal + totalWithHandling + gstAmount;
@@ -269,7 +269,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                         GST {safeQuotation.gstPercentage}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                        {formatCurrency(Math.round((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}
+                        {formatCurrency((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                         {formatCurrency(gstAmount)}
@@ -282,7 +282,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
                         {formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + 
-                          Math.round((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}
+                          (safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-lg font-bold text-indigo-700 text-right">
                         {formatCurrency(finalPrice)}
