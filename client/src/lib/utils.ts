@@ -63,7 +63,7 @@ export function convertToWords(amount: number): string {
 
   // Handle decimal part
   const rupees = Math.floor(amount);
-  const paise = Math.round((amount - rupees) * 100);
+  const paise = Math.trunc(((amount - rupees) * 100) + 0.5);
   
   let result = numToWords(rupees) + ' Rupees';
   if (paise > 0) {
