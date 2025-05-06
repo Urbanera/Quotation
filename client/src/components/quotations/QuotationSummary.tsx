@@ -223,15 +223,15 @@ export default function QuotationSummary({
                       {room.name ? room.name.toUpperCase() : 'UNTITLED ROOM'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      ₹{room.sellingPrice ? room.sellingPrice.toLocaleString('en-IN') : '0'}
+                      ₹{room.sellingPrice ? room.sellingPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                       {globalDiscount > 0 ? (
                         <span className="text-indigo-600 font-medium">
-                          ₹{Math.round(calculatedDiscountedPrice).toLocaleString('en-IN')}
+                          ₹{calculatedDiscountedPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       ) : (
-                        <>₹{room.sellingPrice ? room.sellingPrice.toLocaleString('en-IN') : '0'}</>
+                        <>₹{room.sellingPrice ? room.sellingPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}</>
                       )}
                     </td>
                   </tr>
@@ -243,15 +243,15 @@ export default function QuotationSummary({
                   Total Of All Items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                  ₹{(totals.totalSelling || 0).toLocaleString('en-IN')}
+                  ₹{(totals.totalSelling || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
                   {globalDiscount > 0 ? (
                     <span className="text-indigo-600 font-medium">
-                      ₹{(totals.totalAfterGlobalDiscount || 0).toLocaleString('en-IN')}
+                      ₹{(totals.totalAfterGlobalDiscount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   ) : (
-                    <>₹{(totals.totalAfterGlobalDiscount || 0).toLocaleString('en-IN')}</>
+                    <>₹{(totals.totalAfterGlobalDiscount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>
                   )}
                 </td>
               </tr>
