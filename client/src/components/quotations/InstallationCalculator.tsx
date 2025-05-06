@@ -100,8 +100,10 @@ export default function InstallationCalculator({
       // Use the passed quotationId first, then fall back to the data.quotationId
       if (quotationId) {
         queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/installation-charges`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/details`] });
       } else if (dataQuotationId) {
         queryClient.invalidateQueries({ queryKey: [`/api/quotations/${dataQuotationId}/installation-charges`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${dataQuotationId}/details`] });
       }
       toast({
         title: "Installation charge saved",

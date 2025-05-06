@@ -39,6 +39,13 @@ export default function ProductList({ roomId, products }: ProductListProps) {
     onSuccess: () => {
       setIsAddDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      
+      // Get the quotation ID from the room data
+      const roomData = queryClient.getQueryData([`/api/rooms/${roomId}`]) as any;
+      if (roomData && roomData.quotationId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/details`] });
+      }
+      
       toast({
         title: "Product added",
         description: "Product has been added successfully.",

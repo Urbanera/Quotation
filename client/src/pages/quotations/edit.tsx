@@ -59,6 +59,7 @@ export default function EditQuotation() {
       
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
       queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}/details`] });
     } catch (error) {
       toast({
         title: "Error",
