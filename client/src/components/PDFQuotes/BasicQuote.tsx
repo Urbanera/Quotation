@@ -68,9 +68,9 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
   // Calculations
   const totalWithHandling = calculateInstallationCharges();
   const discountedTotal = safeQuotation.globalDiscount > 0
-    ? Math.round(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))
+    ? safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100)
     : safeQuotation.totalSellingPrice;
-  const gstAmount = Math.round((discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100));
+  const gstAmount = (discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100);
   const finalPrice = discountedTotal + totalWithHandling + gstAmount;
 
   // Default company name if settings not loaded

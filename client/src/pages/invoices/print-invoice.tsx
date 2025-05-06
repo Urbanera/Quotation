@@ -239,7 +239,7 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
   
   // Calculate discount amount
   const discountAmount = quotation.globalDiscount > 0
-    ? Math.round(productAccessoryTotal * (quotation.globalDiscount / 100))
+    ? productAccessoryTotal * (quotation.globalDiscount / 100)
     : 0;
   
   const discountedProductAccessoryTotal = productAccessoryTotal - discountAmount;
@@ -250,8 +250,8 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
   // Calculate GST
   const gstRate = quotation.gstPercentage || 0;
   const halfGstRate = gstRate / 2;
-  const gstAmount = Math.round(taxableAmount * (gstRate / 100));
-  const halfGstAmount = Math.round(gstAmount / 2);
+  const gstAmount = taxableAmount * (gstRate / 100);
+  const halfGstAmount = gstAmount / 2;
   
   // Calculate final price
   const finalPrice = taxableAmount + gstAmount;
@@ -260,7 +260,7 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
   const totalSellingPriceWithInstallation = quotation.totalSellingPrice + totalWithHandling;
   
   // GST on total without discount
-  const gstOnTotalWithoutDiscount = Math.round(totalSellingPriceWithInstallation * (gstRate / 100));
+  const gstOnTotalWithoutDiscount = totalSellingPriceWithInstallation * (gstRate / 100);
   
   // Final price without discount
   const finalPriceWithoutDiscount = totalSellingPriceWithInstallation + gstOnTotalWithoutDiscount;
@@ -378,7 +378,7 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                           {quotation.globalDiscount > 0 ? (
                             <span className="text-indigo-600 font-medium">
-                              {formatCurrency(Math.round(calculatedDiscountedPrice))}
+                              {formatCurrency(calculatedDiscountedPrice)}
                             </span>
                           ) : (
                             <>{formatCurrency(roomSellingPrice)}</>
