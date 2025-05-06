@@ -1,10 +1,18 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   Select,
   SelectContent,
@@ -12,34 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  FileText, 
-  Search, 
-  Eye, 
-  Calendar, 
-  SortAsc, 
-  SortDesc, 
-  MoreVertical 
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { FileText, Search, Eye, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Invoice } from '@shared/schema';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
-
-type SortField = "invoiceNumber" | "createdAt" | "dueDate" | "totalAmount" | "status";
-type SortOrder = "asc" | "desc";
 
 export default function InvoicesPage() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [sortField, setSortField] = useState<SortField>("createdAt");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { data: invoices, isLoading } = useQuery<Invoice[]>({
     queryKey: ['/api/invoices'],
@@ -58,32 +49,12 @@ export default function InvoicesPage() {
       })
     : [];
 
-  // Sort the filtered invoices
-  const sortedInvoices = [...filteredInvoices].sort((a, b) => {
-    let comparison = 0;
-    
-    switch (sortField) {
-      case "invoiceNumber":
-        comparison = a.invoiceNumber.localeCompare(b.invoiceNumber);
-        break;
-      case "createdAt":
-        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        break;
-      case "dueDate":
-        const aDate = a.dueDate ? new Date(a.dueDate).getTime() : 0;
-        const bDate = b.dueDate ? new Date(b.dueDate).getTime() : 0;
-        comparison = aDate - bDate;
-        break;
-      case "totalAmount":
-        comparison = a.totalAmount - b.totalAmount;
-        break;
-      case "status":
-        comparison = a.status.localeCompare(b.status);
-        break;
-    }
-    
-    return sortOrder === "asc" ? comparison : -comparison;
-  });
+  // Pagination
+  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
+  const paginatedInvoices = filteredInvoices.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -99,85 +70,65 @@ export default function InvoicesPage() {
   };
 
   return (
-    <div className="py-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Invoices</h1>
-        </div>
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Invoices</h1>
+        <p className="text-gray-500">Manage and track all customer invoices</p>
+      </div>
 
-        <div className="mt-6 bg-white shadow overflow-hidden sm:rounded-md">
-          <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start gap-4">
-            <div className="w-full sm:max-w-xs relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle>Filter Invoices</CardTitle>
+          <CardDescription>Use the filters below to find specific invoices</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4 md:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                type="text"
-                placeholder="Search invoices..."
-                className="pl-10 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Search by invoice number or notes..."
+                className="pl-9"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page on new search
+                }}
               />
             </div>
-            
-            <div className="flex items-center gap-2">
-              <Select
-                value={statusFilter}
-                onValueChange={(value) => setStatusFilter(value)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="partially_paid">Partially Paid</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select
-                value={sortField}
-                onValueChange={(value) => setSortField(value as SortField)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="invoiceNumber">Invoice Number</SelectItem>
-                  <SelectItem value="createdAt">Date Created</SelectItem>
-                  <SelectItem value="dueDate">Due Date</SelectItem>
-                  <SelectItem value="totalAmount">Amount</SelectItem>
-                  <SelectItem value="status">Status</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setSortOrder("asc")}>
-                    <SortAsc className="mr-2 h-4 w-4" />
-                    <span>Ascending</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortOrder("desc")}>
-                    <SortDesc className="mr-2 h-4 w-4" />
-                    <span>Descending</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1); // Reset to first page on filter change
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="partially_paid">Partially Paid</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+        </CardContent>
+      </Card>
 
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>Invoice List</CardTitle>
+          <CardDescription>
+            {filteredInvoices.length} invoice{filteredInvoices.length !== 1 ? 's' : ''} found
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-              <p className="mt-2 text-gray-500">Loading invoices...</p>
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
             </div>
-          ) : !sortedInvoices?.length ? (
+          ) : filteredInvoices.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
               <h3 className="text-lg font-medium text-gray-900">No invoices found</h3>
@@ -188,53 +139,84 @@ export default function InvoicesPage() {
               </p>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-200">
-              {sortedInvoices.map((invoice) => (
-                <li key={invoice.id}>
-                  <div className="px-4 py-4 flex items-center sm:px-6">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center">
-                        <h3 className="text-sm font-medium text-indigo-600 truncate">
-                          {invoice.invoiceNumber}
-                        </h3>
-                        <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {formatCurrency(invoice.totalAmount)}
-                        </span>
-                        <span className="ml-2">
-                          {getStatusBadge(invoice.status)}
-                        </span>
-                      </div>
-                      <div className="mt-2 flex">
-                        <div className="flex items-center text-sm text-gray-500 mr-6">
-                          <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                          <span>Issued: {format(new Date(invoice.createdAt), 'MMM dd, yyyy')}</span>
-                        </div>
-                        {invoice.dueDate && (
-                          <div className="flex items-center text-sm text-gray-500">
-                            <span>Due: {format(new Date(invoice.dueDate), 'MMM dd, yyyy')}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="ml-5 flex-shrink-0">
-                      <Link href={`/invoices/${invoice.id}`}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-indigo-600 hover:text-indigo-900"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View
-                        </Button>
-                      </Link>
-                    </div>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice Number</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedInvoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                        <TableCell>{format(new Date(invoice.createdAt), 'MMM dd, yyyy')}</TableCell>
+                        <TableCell>
+                          {invoice.dueDate
+                            ? format(new Date(invoice.dueDate), 'MMM dd, yyyy')
+                            : 'Not set'}
+                        </TableCell>
+                        <TableCell>{formatCurrency(invoice.totalAmount)}</TableCell>
+                        <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/invoices/${invoice.id}`)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between space-x-2 py-4">
+                  <div className="text-sm text-gray-500">
+                    Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+                    {Math.min(currentPage * itemsPerPage, filteredInvoices.length)} of{' '}
+                    {filteredInvoices.length} results
                   </div>
-                </li>
-              ))}
-            </ul>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="sr-only">Previous</span>
+                    </Button>
+                    <div className="text-sm">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      <span className="sr-only">Next</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
