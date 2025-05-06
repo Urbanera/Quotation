@@ -48,8 +48,6 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
     },
     rooms: quotation?.rooms || []
   };
-  
-  console.log("PresentationQuote - rooms data:", safeQuotation.rooms);
 
   // Default company name if settings not loaded
   const companyName = companySettings?.name || "DesignQuotes";

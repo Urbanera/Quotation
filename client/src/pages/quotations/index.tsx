@@ -3,14 +3,11 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, Edit, Trash2, ArrowUpDown, SortAsc, SortDesc, Copy, Check, MoreVertical, Download } from "lucide-react";
-import { Quotation, Customer, QuotationWithDetails } from "@shared/schema";
+import { Plus, Search, Eye, Edit, Trash2, ArrowUpDown, SortAsc, SortDesc, Copy, Check, MoreVertical } from "lucide-react";
+import { Quotation, Customer } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { generatePDF } from "@/lib/pdfUtils";
-import ReactDOM from "react-dom/client";
-import BasicQuote from "@/components/PDFQuotes/BasicQuote";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -427,36 +424,6 @@ export default function QuotationsList() {
                           <span className="sr-only">Edit</span>
                         </Button>
                       </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={async () => {
-                          toast({
-                            title: "Preparing PDF",
-                            description: "Your PDF is being generated...",
-                          });
-                          
-                          try {
-                            // Use the server-side API for PDF generation
-                            window.open(`/api/pdf/quotation/${quotation.id}`, '_blank');
-                            
-                            toast({
-                              title: "PDF Generated",
-                              description: "Your PDF is being downloaded...",
-                            });
-                          } catch (error) {
-                            console.error("Error generating PDF", error);
-                            toast({
-                              title: "Error",
-                              description: "Could not generate PDF.",
-                              variant: "destructive"
-                            });
-                          }
-                        }}
-                      >
-                        <Download className="h-4 w-4" />
-                        <span className="sr-only">Download PDF</span>
-                      </Button>
                       <Button
                         variant="outline"
                         size="sm"

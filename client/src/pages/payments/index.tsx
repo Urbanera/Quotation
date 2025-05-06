@@ -31,13 +31,9 @@ import {
   Eye,
   Calendar,
   Wallet,
-  CreditCard as CardIcon,
-  Download
+  CreditCard as CardIcon
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { apiRequest } from "@/lib/queryClient";
-import { generatePDF } from "@/lib/pdfUtils";
-import ReactDOM from "react-dom/client";
 
 type SortField = "receiptNumber" | "paymentDate" | "amount" | "paymentType" | "paymentMethod" | "customer";
 type SortOrder = "asc" | "desc";
@@ -329,7 +325,7 @@ export default function PaymentsPage() {
                         </div>
                       )}
                     </div>
-                    <div className="ml-5 flex-shrink-0 flex space-x-2">
+                    <div className="ml-5 flex-shrink-0">
                       <Link href={`/payments/view/${payment.id}`}>
                         <Button
                           variant="ghost"
@@ -340,37 +336,6 @@ export default function PaymentsPage() {
                           View
                         </Button>
                       </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-indigo-600 hover:text-indigo-900"
-                        onClick={async () => {
-                          toast({
-                            title: "Preparing PDF",
-                            description: "Your payment receipt PDF is being generated...",
-                          });
-                          
-                          try {
-                            // Use the download URL method instead of client-side rendering
-                            window.location.href = `/payments/print-receipt/${payment.id}`;
-                            
-                            toast({
-                              title: "PDF Generated",
-                              description: "Your PDF is being downloaded...",
-                            });
-                          } catch (error) {
-                            console.error("Error generating PDF", error);
-                            toast({
-                              title: "Error",
-                              description: "Could not generate PDF.",
-                              variant: "destructive"
-                            });
-                          }
-                        }}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
                     </div>
                   </div>
                 </li>

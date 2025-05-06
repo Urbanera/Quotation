@@ -19,8 +19,7 @@ import {
   Calendar, 
   SortAsc, 
   SortDesc, 
-  MoreVertical,
-  Download
+  MoreVertical 
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,14 +27,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Invoice, QuotationWithDetails } from '@shared/schema';
+import { Invoice } from '@shared/schema';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { generatePDF } from '@/lib/pdfUtils';
-import ReactDOM from 'react-dom/client';
-import InvoiceDetails from '@/components/invoices/InvoiceDetails';
 
 type SortField = "invoiceNumber" | "createdAt" | "dueDate" | "totalAmount" | "status";
 type SortOrder = "asc" | "desc";
@@ -46,7 +40,6 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
-  const { toast } = useToast();
 
   const { data: invoices, isLoading } = useQuery<Invoice[]>({
     queryKey: ['/api/invoices'],
@@ -223,7 +216,7 @@ export default function InvoicesPage() {
                         )}
                       </div>
                     </div>
-                    <div className="ml-5 flex-shrink-0 flex space-x-2">
+                    <div className="ml-5 flex-shrink-0">
                       <Link href={`/invoices/${invoice.id}`}>
                         <Button
                           variant="ghost"
@@ -234,37 +227,6 @@ export default function InvoicesPage() {
                           View
                         </Button>
                       </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-indigo-600 hover:text-indigo-900"
-                        onClick={async () => {
-                          toast({
-                            title: "Preparing PDF",
-                            description: "Your PDF is being generated...",
-                          });
-                          
-                          try {
-                            // Use the download URL method instead of client-side rendering
-                            window.location.href = `/invoices/print-invoice/${invoice.id}`;
-                            
-                            toast({
-                              title: "PDF Generated",
-                              description: "Your PDF is being downloaded...",
-                            });
-                          } catch (error) {
-                            console.error("Error generating PDF", error);
-                            toast({
-                              title: "Error",
-                              description: "Could not generate PDF.",
-                              variant: "destructive"
-                            });
-                          }
-                        }}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
                     </div>
                   </div>
                 </li>

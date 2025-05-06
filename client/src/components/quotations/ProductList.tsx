@@ -162,7 +162,7 @@ export default function ProductList({ roomId, products }: ProductListProps) {
         </Dialog>
       </div>
       
-      {!products || products.length === 0 ? (
+      {products.length === 0 ? (
         <div className="bg-white border rounded-md p-8 mb-4 text-center">
           <p className="text-gray-500">No products added yet.</p>
           <Button 
