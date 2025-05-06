@@ -223,12 +223,12 @@ export default function QuotationSummary({
                       {room.name ? room.name.toUpperCase() : 'UNTITLED ROOM'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      ₹{room.sellingPrice ? room.sellingPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+                      ₹{room.sellingPrice ? Math.round(room.sellingPrice).toLocaleString('en-IN') : '0'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                       {globalDiscount > 0 ? (
                         <span className="text-indigo-600 font-medium">
-                          ₹{calculatedDiscountedPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ₹{Math.round(calculatedDiscountedPrice).toLocaleString('en-IN')}
                         </span>
                       ) : (
                         <>₹{room.sellingPrice ? room.sellingPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}</>
@@ -243,15 +243,15 @@ export default function QuotationSummary({
                   Total Of All Items
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                  ₹{(totals.totalSelling || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₹{Math.round(totals.totalSelling || 0).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
                   {globalDiscount > 0 ? (
                     <span className="text-indigo-600 font-medium">
-                      ₹{(totals.totalAfterGlobalDiscount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ₹{Math.round(totals.totalAfterGlobalDiscount || 0).toLocaleString('en-IN')}
                     </span>
                   ) : (
-                    <>₹{(totals.totalAfterGlobalDiscount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>
+                    <>₹{Math.round(totals.totalAfterGlobalDiscount || 0).toLocaleString('en-IN')}</>
                   )}
                 </td>
               </tr>
@@ -263,10 +263,10 @@ export default function QuotationSummary({
                   Installation and Handling
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₹{Math.round((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₹{Math.round((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN')}
                 </td>
               </tr>
               
@@ -275,10 +275,10 @@ export default function QuotationSummary({
                   GST {gstPercentage}%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₹{Math.round(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100)).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{(totals.gstAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₹{Math.round(totals.gstAmount || 0).toLocaleString('en-IN')}
                 </td>
               </tr>
               
@@ -287,10 +287,10 @@ export default function QuotationSummary({
                   Final Price
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                  ₹{(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) + (((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100))).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₹{Math.round(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) + (((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100))).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
-                  ₹{(totals.finalPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₹{Math.round(totals.finalPrice || 0).toLocaleString('en-IN')}
                 </td>
               </tr>
             </tbody>
