@@ -733,8 +733,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       
       const image = await storage.createImage({
         roomId,
-        url: `/uploads/${req.file.filename}`,
-        description: req.body.description || "",
+        path: `/uploads/${req.file.filename}`,
+        filename: req.file.filename,
         order: parseInt(req.body.order) || 0
       });
       
