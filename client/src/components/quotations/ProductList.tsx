@@ -71,6 +71,13 @@ export default function ProductList({ roomId, products }: ProductListProps) {
       setIsEditDialogOpen(false);
       setSelectedProduct(null);
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      
+      // Get the quotation ID from the room data
+      const roomData = queryClient.getQueryData([`/api/rooms/${roomId}`]) as any;
+      if (roomData && roomData.quotationId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/details`] });
+      }
+      
       toast({
         title: "Product updated",
         description: "Product has been updated successfully.",
@@ -93,6 +100,13 @@ export default function ProductList({ roomId, products }: ProductListProps) {
     onSuccess: () => {
       setProductToDelete(null);
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      
+      // Get the quotation ID from the room data
+      const roomData = queryClient.getQueryData([`/api/rooms/${roomId}`]) as any;
+      if (roomData && roomData.quotationId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/details`] });
+      }
+      
       toast({
         title: "Product deleted",
         description: "Product has been removed successfully.",

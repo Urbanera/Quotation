@@ -40,6 +40,13 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
     onSuccess: () => {
       setIsAddDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      
+      // Get the quotation ID from the room data
+      const roomData = queryClient.getQueryData([`/api/rooms/${roomId}`]) as any;
+      if (roomData && roomData.quotationId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/details`] });
+      }
+      
       toast({
         title: "Accessory added",
         description: "Accessory has been added successfully.",
@@ -65,6 +72,13 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
       setIsEditDialogOpen(false);
       setSelectedAccessory(null);
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      
+      // Get the quotation ID from the room data
+      const roomData = queryClient.getQueryData([`/api/rooms/${roomId}`]) as any;
+      if (roomData && roomData.quotationId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/details`] });
+      }
+      
       toast({
         title: "Accessory updated",
         description: "Accessory has been updated successfully.",
@@ -87,6 +101,13 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
     onSuccess: () => {
       setAccessoryToDelete(null);
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      
+      // Get the quotation ID from the room data
+      const roomData = queryClient.getQueryData([`/api/rooms/${roomId}`]) as any;
+      if (roomData && roomData.quotationId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/details`] });
+      }
+      
       toast({
         title: "Accessory deleted",
         description: "Accessory has been removed successfully.",
@@ -150,6 +171,12 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
             roomId={roomId} 
             onAdd={() => {
               queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+              
+              // Get the quotation ID from the room data and invalidate detailed query
+              const roomData = queryClient.getQueryData([`/api/rooms/${roomId}`]) as any;
+              if (roomData && roomData.quotationId) {
+                queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/details`] });
+              }
             }}
           />
           
