@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecco Cucina - Quotation Template</title>
+    <style>
+        :root {
+            --primary-green: #009245;
+            --primary-red: #D81F28;
+            --gray: #7A7A7A;
+            --light-gray: #E6E6E6;
+            --text: #2C2C2C;
+            --light: #FFFFFF;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .page-container {
+            width: 595px; /* A4 width in pixels */
+            height: 842px; /* A4 height in pixels */
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .cover-page {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .logo-area {
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 5px solid var(--primary-green);
+            height: 200;
+        }
+        
+        .logo {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .quotation-title {
+            background-color: var(--light);
+            padding: 20px 30px;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            color: var(--gray);
+            border-bottom: 2px solid var(--primary-red);
+        }
+        
+        .cover-image {
+            flex: 1;
+            background-image: url('/api/placeholder/550/400');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .project-info {
+            background-color: rgba(255,255,255,0.92);
+            padding: 20px 30px;
+            position: absolute;
+            bottom: 100px;
+            left: 30px;
+            width: 60%;
+            border-left: 3px solid var(--primary-red);
+        }
+        
+        .info-row {
+            margin-bottom: 10px;
+            display: flex;
+        }
+        
+        .info-label {
+            flex: 1;
+            font-weight: bold;
+            color: var(--primary-green);
+        }
+        
+        .info-value {
+            flex: 2;
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 12px;
+            background-color: var(--primary-green);
+            color: var(--light);
+        }
+        
+        /* USPs Page Styling */
+        .usps-page {
+            height: 100%;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: var(--primary-green);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        
+        .content {
+            padding: 20px 30px;
+            flex: 1;
+        }
+        
+        .usps-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .usps-columns {
+            display: flex;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .usps-column {
+            flex: 1;
+            padding: 0 15px;
+        }
+        
+        .usp-item {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .usp-arrow {
+            color: var(--primary-red);
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        .usp-text {
+            font-size: 15px;
+            line-height: 1.4;
+        }
+        
+        .badges-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding: 0 15px;
+            margin-bottom: 30px;
+        }
+        
+        .badge {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            font-size: 13px;
+            padding: 5px;
+        }
+        
+        .badge-eco {
+            background-color: var(--primary-green);
+            border: 2px solid var(--primary-green);
+        }
+        
+        .badge-hassle {
+            background-color: var(--light);
+            border: 2px solid #3683d6;
+            color: #3683d6;
+        }
+        
+        .badge-quality {
+            background-color: #FFCB05;
+            border: 2px solid #E3A900;
+            color: var(--text);
+        }
+        
+        .badge-delivery {
+            background-color: var(--light);
+            border: 2px solid #2B3990;
+            color: #2B3990;
+        }
+        
+        .badge-emi {
+            background-color: var(--primary-red);
+            border: 2px solid var(--primary-red);
+        }
+        
+        /* Page navigation */
+        .pages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+        }
+        
+        .page-label {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--primary-green);
+        }
+    </style>
+</head>
+<body>
+    <div class="pages-container">
+        <!-- Cover Page -->
+        <div>
+            <div class="page-label">Cover Page</div>
+            <div class="page-container">
+                <div class="cover-page">
+                    <div class="logo-area">
+                        <img src="https://leccocucina.com/wp-content/uploads/2023/05/lc-logo.png" alt="Lecco Cucina Logo" class="logo">
+                    </div>
+                    <div class="quotation-title">
+                        MODULAR INTERIOR QUOTATION
+                    </div>
+                    <div class="cover-image"></div>
+                    <div class="project-info">
+                        <div class="info-row">
+                            <div class="info-label">Client:</div>
+                            <div class="info-value">Mr. Dinesh</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Date:</div>
+                            <div class="info-value">May 04, 2025</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Quotation #:</div>
+                            <div class="info-value">LC-2025-0473</div>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        www.leccocucina.com
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- USPs Page -->
+        <div>
+            <div class="page-label">USPs Page</div>
+            <div class="page-container">
+                <div class="usps-page">
+                    <div class="header">
+                        <h1>Our USPs</h1>
+                        <div>Quotation #: LC-2025-0473</div>
+                    </div>
+                    <div class="content">
+                        <div class="usps-content">
+                            <div class="usps-columns">
+                                <div class="usps-column">
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">Best Price for Quality</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">Eco-Friendly</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">10 years' warranty and after sales services</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">Unique raw material</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">Italian designs</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">State of the art German technology</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">ACS Alloy coated steel kitchen carcass and sink</div>
+                                    </div>
+                              
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">Transparent policies and pricing</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">Kitchen & Wardrobe delivered in 30 days</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">NO COST EMI options</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">Kitchen starting at 1,50,000</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">Wardrobe starting at 50,000</div>
+                                    </div>
+                                    <div class="usp-item">
+                                        <div class="usp-arrow">➤</div>
+                                        <div class="usp-text">Hassle - Free handover</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+                    </div>
+                    <div class="footer">
+                        www.leccocucina.com
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

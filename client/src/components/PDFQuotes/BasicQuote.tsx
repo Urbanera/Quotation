@@ -18,8 +18,9 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      minimumFractionDigits: 2,
-    }).format(amount);
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(Math.round(amount));
   };
 
   // Format date
@@ -76,22 +77,25 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
   // Default company name if settings not loaded
   const companyName = companySettings?.name || "DesignQuotes";
 
+  // Get quotation number
+  const quotationNumber = quotation?.quotationNumber || `Q-${new Date().getFullYear()}-${String(quotation?.id || 0).padStart(4, '0')}`;
+
   return (
     <div ref={ref} className="max-w-4xl mx-auto bg-white p-8 print:p-4" id="basic-quote">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8 border-b pb-6">
+      <div className="flex justify-between items-center mb-8 border-b border-[#009245] pb-6">
         <div className="flex items-center">
           {companySettings?.logo && (
             <img src={companySettings.logo} alt={companyName} className="h-10 mr-3" />
           )}
           <div>
-            <h1 className="text-2xl font-bold text-indigo-600">{companyName}</h1>
-            <p className="text-gray-500">Interior Design Quotations</p>
+            <h1 className="text-2xl font-bold text-[#009245]">{companyName}</h1>
+            <p className="text-[#7A7A7A]">Interior Design Quotations</p>
           </div>
         </div>
         <div className="text-right">
-          <h2 className="text-xl font-bold">QUOTATION</h2>
-          <p className="text-gray-600">#{safeQuotation.id}</p>
+          <h2 className="text-xl font-bold text-[#D81F28]">QUOTATION</h2>
+          <p className="text-gray-600">#{quotationNumber}</p>
           <p className="text-gray-600">Date: {formatDate(safeQuotation.createdAt)}</p>
         </div>
       </div>
@@ -99,14 +103,14 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       {/* Client Information */}
       <div className="mb-8 grid grid-cols-2 gap-8">
         <div>
-          <h3 className="text-md font-semibold mb-2 text-gray-700">From:</h3>
+          <h3 className="text-md font-semibold mb-2 text-[#009245]">From:</h3>
           <p className="font-semibold">{companyName}</p>
-          <p>{companySettings?.address || "123 Design Street"}</p>
+          <p>{companySettings?.address || ""}</p>
           <p>{companySettings?.phone || ""}</p>
-          <p>{companySettings?.email || "design@example.com"}</p>
+          <p>{companySettings?.email || ""}</p>
         </div>
         <div>
-          <h3 className="text-md font-semibold mb-2 text-gray-700">To:</h3>
+          <h3 className="text-md font-semibold mb-2 text-[#009245]">To:</h3>
           {safeQuotation.customer ? (
             <>
               <p className="font-semibold">{safeQuotation.customer.name || 'N/A'}</p>
@@ -122,18 +126,18 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
 
       {/* Project Cost Summary */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold mb-4 text-gray-700">Project Cost Summary</h3>
+        <h3 className="text-lg font-semibold mb-4 text-[#009245]">Project Cost Summary</h3>
         <div className="border rounded-md overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-[#E6E6E6]">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#009245] uppercase tracking-wider">
                   Product Description
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-[#009245] uppercase tracking-wider">
                   Selling Price
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-[#009245] uppercase tracking-wider">
                   {safeQuotation.globalDiscount > 0 
                     ? `Discounted Price (Incl. ${safeQuotation.globalDiscount}% Discount)` 
                     : "Discounted Price"}
@@ -161,7 +165,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                         {safeQuotation.globalDiscount > 0 ? (
-                          <span className="text-indigo-600 font-medium">
+                          <span className="text-[#D81F28] font-medium">
                             {formatCurrency(calculatedDiscountedPrice)}
                           </span>
                         ) : (
@@ -179,7 +183,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 </tr>
               )}
               
-              <tr className="bg-gray-50">
+              <tr className="bg-[#E6E6E6]">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   Total Of All Items
                 </td>
@@ -188,7 +192,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
                   {safeQuotation.globalDiscount > 0 ? (
-                    <span className="text-indigo-600 font-medium">
+                    <span className="text-[#D81F28] font-medium">
                       {formatCurrency(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))}
                     </span>
                   ) : (
@@ -222,7 +226,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                 </td>
               </tr>
                   
-              <tr className="bg-gray-50">
+              <tr className="bg-[#E6E6E6]">
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
                   Final Price
                 </td>
@@ -230,7 +234,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                   {formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + 
                     (safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
+                <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-[#D81F28] text-right">
                   {formatCurrency(finalPrice)}
                 </td>
               </tr>
@@ -241,7 +245,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
 
       {/* Terms and conditions */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold mb-2 text-gray-700">Terms & Conditions</h3>
+        <h3 className="text-lg font-semibold mb-2 text-[#009245]">Terms & Conditions</h3>
         <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
           <li>Quotation is valid for 15 days from the date of issue.</li>
           <li>50% advance payment required to start the work.</li>
@@ -253,9 +257,9 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       </div>
 
       {/* Footer */}
-      <div className="mt-12 pt-6 border-t text-center text-sm text-gray-500">
+      <div className="mt-12 pt-6 border-t border-[#009245] text-center text-sm text-gray-500">
         <p>Thank you for your business!</p>
-        <p>For any queries, please contact us at {companySettings?.email || "support@designquotes.com"} 
+        <p>For any queries, please contact us at {companySettings?.email || ""} 
         {companySettings?.phone && ` or call ${companySettings.phone}`}</p>
         {companySettings?.website && <p>{companySettings.website}</p>}
       </div>

@@ -14,27 +14,33 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
   });
 
   // Format currency
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number = 0) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      minimumFractionDigits: 2,
-    }).format(amount);
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(Math.round(amount));
   };
 
   // Format date
   const formatDate = (dateString: string | Date) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-IN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date);
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }).format(date);
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   // Safe access to quotation fields
   const safeQuotation = {
     id: quotation?.id || 0,
+    quotationNumber: quotation?.quotationNumber || `Q-${new Date().getFullYear()}-${String(quotation?.id || 0).padStart(4, '0')}`,
     createdAt: quotation?.createdAt || new Date(),
     totalSellingPrice: quotation?.totalSellingPrice || 0,
     globalDiscount: quotation?.globalDiscount || 0,
@@ -49,303 +55,393 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
     rooms: quotation?.rooms || []
   };
 
+  // Calculate total installation charges safely
+  const calculateInstallationCharges = () => {
+    let totalInstallCharges = 0;
+    
+    if (Array.isArray(safeQuotation.rooms)) {
+      for (const room of safeQuotation.rooms) {
+        if (room?.installationCharges && Array.isArray(room.installationCharges)) {
+          for (const charge of room.installationCharges) {
+            totalInstallCharges += charge?.amount || 0;
+          }
+        }
+      }
+    }
+    
+    return totalInstallCharges + safeQuotation.installationHandling;
+  };
+
+  // Calculations
+  const totalWithHandling = calculateInstallationCharges();
+  const discountedTotal = safeQuotation.globalDiscount > 0
+    ? safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100)
+    : safeQuotation.totalSellingPrice;
+  const gstAmount = (discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100);
+  const finalPrice = discountedTotal + totalWithHandling + gstAmount;
+
   // Default company name if settings not loaded
   const companyName = companySettings?.name || "DesignQuotes";
 
   return (
     <div ref={ref} className="max-w-5xl mx-auto bg-white" id="presentation-quote">
-      {/* Header with gradient background */}
-      <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-8 rounded-t-lg">
-        <div className="flex justify-between items-center">
+      {/* Cover Page */}
+      <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden page-break-after-always">
+        {/* Logo Area */}
+        <div className="p-10 text-center border-b-5 border-[#009245]" style={{ borderBottomWidth: '5px' }}>
+          {companySettings?.logo && (
+            <img 
+              src={companySettings.logo} 
+              alt={companyName} 
+              className="h-20 mx-auto"
+            />
+          )}
+          {!companySettings?.logo && (
+            <h1 className="text-4xl font-bold">{companyName}</h1>
+          )}
+        </div>
+        
+        {/* Quotation Title */}
+        <div className="bg-white p-6 text-center">
+          <h2 className="text-2xl font-bold text-[#7A7A7A] uppercase">
+            MODULAR INTERIOR QUOTATION
+          </h2>
+          <div className="w-full h-0.5 bg-[#D81F28] mt-2"></div>
+        </div>
+        
+        {/* Cover Image - Using a background color instead of an image */}
+        <div className="flex-1 bg-gray-100 relative">
+          {/* Project Info Box */}
+          <div className="absolute bottom-32 left-8 bg-white bg-opacity-95 p-6 w-2/3 border-l-4 border-[#D81F28]">
+            <div className="mb-3 flex">
+              <div className="font-bold text-[#009245] w-32">Client:</div>
+              <div>{safeQuotation.customer.name}</div>
+            </div>
+            <div className="mb-3 flex">
+              <div className="font-bold text-[#009245] w-32">Date:</div>
+              <div>{formatDate(safeQuotation.createdAt)}</div>
+            </div>
+            <div className="flex">
+              <div className="font-bold text-[#009245] w-32">Quotation #:</div>
+              <div>{safeQuotation.quotationNumber}</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <div className="bg-[#009245] text-white p-4 text-center">
+          {companySettings?.website || "www.yourcompany.com"}
+        </div>
+      </div>
+      
+      {/* USPs Page */}
+      <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden page-break-after-always">
+        {/* Header */}
+        <div className="bg-[#009245] text-white px-8 py-4 flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Our USPs</h2>
+          <div>Quotation #: {safeQuotation.quotationNumber}</div>
+        </div>
+        
+        {/* USPs Content */}
+        <div className="p-8 flex-1">
+          <div className="space-y-4">
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>Best Price for Quality</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>Eco-Friendly</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>10 years' warranty and after sales services</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>Unique raw material</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>Italian designs</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>State of the art German technology</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>ACS Alloy coated steel kitchen carcass and sink</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>Transparent policies and pricing</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>Kitchen & Wardrobe delivered in 30 days</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>NO COST EMI options</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>Kitchen starting at 1,50,000</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>Wardrobe starting at 50,000</div>
+            </div>
+            <div className="flex items-start">
+              <div className="text-[#D81F28] font-bold mr-3">➤</div>
+              <div>Hassle - Free handover</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <div className="bg-[#009245] text-white p-4 text-center">
+          {companySettings?.website || "www.yourcompany.com"}
+        </div>
+      </div>
+      
+      {/* Content Pages - Starting with Scope of Work */}
+      <div className="bg-white p-8">
+        {/* Quotation Header */}
+        <div className="flex justify-between items-center pb-6 border-b border-[#009245]">
           <div className="flex items-center">
             {companySettings?.logo && (
-              <img src={companySettings.logo} alt={companyName} className="h-12 mr-4" />
+              <img 
+                src={companySettings.logo} 
+                alt={companyName} 
+                className="h-10 mr-3" 
+              />
             )}
             <div>
-              <h1 className="text-3xl font-bold">{companyName}</h1>
-              <p className="text-indigo-100">Transforming Spaces, Creating Experiences</p>
+              <h1 className="text-2xl font-bold text-[#009245]">{companyName}</h1>
+              <p className="text-[#7A7A7A]">Interior Design Quotations</p>
             </div>
           </div>
           <div className="text-right">
-            <h2 className="text-2xl font-bold">DESIGN PROPOSAL</h2>
-            <p>Reference: #{safeQuotation.id}</p>
-            <p>Date: {formatDate(safeQuotation.createdAt)}</p>
+            <h2 className="text-xl font-bold text-[#D81F28]">QUOTATION</h2>
+            <p className="text-gray-600">#{safeQuotation.quotationNumber}</p>
+            <p className="text-gray-600">Date: {formatDate(safeQuotation.createdAt)}</p>
           </div>
         </div>
-      </div>
 
-      {/* Client Introduction */}
-      <div className="p-8 bg-gray-50">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Interior Design Proposal for</h2>
-          <h3 className="text-3xl font-bold text-indigo-600 mb-6">{safeQuotation.customer.name}</h3>
-          <p className="text-gray-600 mb-4">{safeQuotation.customer.address}</p>
-          <div className="flex justify-center items-center gap-4 text-gray-600">
-            <span>{safeQuotation.customer.email}</span>
-            <span>•</span>
-            <span>{safeQuotation.customer.phone}</span>
+        {/* Client Information */}
+        <div className="my-6 grid grid-cols-2 gap-8">
+          <div>
+            <h3 className="text-md font-semibold mb-2 text-[#009245]">From:</h3>
+            <p className="font-semibold">{companyName}</p>
+            <p>{companySettings?.address || ""}</p>
+            <p>{companySettings?.phone || ""}</p>
+            <p>{companySettings?.email || ""}</p>
+          </div>
+          <div>
+            <h3 className="text-md font-semibold mb-2 text-[#009245]">To:</h3>
+            {safeQuotation.customer ? (
+              <>
+                <p className="font-semibold">{safeQuotation.customer.name || 'N/A'}</p>
+                <p>{safeQuotation.customer.address || 'N/A'}</p>
+                <p>{safeQuotation.customer.email || 'N/A'}</p>
+                <p>{safeQuotation.customer.phone || 'N/A'}</p>
+              </>
+            ) : (
+              <p className="italic text-gray-500">No customer information available</p>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Scope of Work */}
-      <div className="p-8">
-        <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Scope of Work</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          {safeQuotation.rooms.map((room) => (
-            <div key={room.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="bg-indigo-50 p-4 border-b">
-                <h4 className="text-lg font-semibold text-indigo-700">{room.name || 'Unnamed Room'}</h4>
-                {room.description && <p className="text-gray-600 mt-1">{room.description}</p>}
-              </div>
-              <div className="p-4">
-                <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
-                <ul className="list-disc list-inside text-gray-600 space-y-1">
-                  {room.products && room.products.map((product) => (
-                    <li key={product.id}>
-                      {product.name}
-                      {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
-                    </li>
-                  ))}
-                  {room.accessories && room.accessories.map((accessory) => (
-                    <li key={accessory.id}>
-                      {accessory.name}
-                      {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
-                    </li>
-                  ))}
-                </ul>
-                
-                {room.images && room.images.length > 0 && (
-                  <div className="mt-4">
-                    <h5 className="font-medium text-gray-800 mb-2">Design References:</h5>
-                    <div className="grid grid-cols-2 gap-2">
-                      {room.images.slice(0, 2).map((image) => (
-                        <div key={image.id} className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
-                          <img src={image.path} alt={`Design for ${room.name || 'Room'}`} className="object-cover w-full h-full" />
-                        </div>
-                      ))}
+        {/* Scope of Work - Rooms Description */}
+        <div className="my-6">
+          <h3 className="text-xl font-bold mb-4 text-[#009245]">Scope of Work</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            {safeQuotation.rooms.map((room) => (
+              <div key={room.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-[#E6E6E6] p-4 border-b">
+                  <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
+                  {room.description && <p className="text-gray-600 mt-1">{room.description}</p>}
+                </div>
+                <div className="p-4">
+                  <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
+                  <ul className="list-disc list-inside text-gray-600 space-y-1">
+                    {room.products && room.products.map((product) => (
+                      <li key={product.id}>
+                        {product.name}
+                        {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
+                      </li>
+                    ))}
+                    {room.accessories && room.accessories.map((accessory) => (
+                      <li key={accessory.id}>
+                        {accessory.name}
+                        {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  {room.images && room.images.length > 0 && (
+                    <div className="mt-4">
+                      <h5 className="font-medium text-gray-800 mb-2">Design References:</h5>
+                      <div className="grid grid-cols-2 gap-2">
+                        {room.images.slice(0, 2).map((image) => (
+                          <div key={image.id} className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
+                            <img 
+                              src={image.path} 
+                              alt={`Design for ${room.name || 'Room'}`} 
+                              className="object-cover w-full h-full" 
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Project Cost Summary */}
-      <div className="p-8 bg-gray-50">
-        <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Project Cost Summary</h3>
-        <div className="overflow-hidden border rounded-lg shadow-sm mt-6 bg-white">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-indigo-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
-                  Product Description
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-indigo-800 uppercase tracking-wider">
-                  Selling Price
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-indigo-800 uppercase tracking-wider">
-                  {safeQuotation.globalDiscount > 0 
-                    ? `Discounted Price (Incl. ${safeQuotation.globalDiscount}% Discount)` 
-                    : "Discounted Price"}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {safeQuotation.rooms.map((room) => {
-                // Calculate the discounted price with global discount applied
-                const roomSellingPrice = room.sellingPrice || 0;
-                const calculatedDiscountedPrice = safeQuotation.globalDiscount > 0
-                  ? roomSellingPrice - (roomSellingPrice * safeQuotation.globalDiscount / 100)
-                  : roomSellingPrice;
-                
-                return (
-                  <tr key={room.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {(room.name || 'Unnamed Room').toUpperCase()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                      {formatCurrency(roomSellingPrice)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {safeQuotation.globalDiscount > 0 ? (
-                        <span className="text-indigo-600 font-medium">
-                          {formatCurrency(calculatedDiscountedPrice)}
-                        </span>
-                      ) : (
-                        <>{formatCurrency(roomSellingPrice)}</>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              <tr className="bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Total Of All Items
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                  {formatCurrency(safeQuotation.totalSellingPrice)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
-                  {safeQuotation.globalDiscount > 0 ? (
-                    <span className="text-indigo-600 font-medium">
-                      {formatCurrency(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))}
-                    </span>
-                  ) : (
-                    <>{formatCurrency(safeQuotation.totalSellingPrice)}</>
                   )}
-                </td>
-              </tr>
-              
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-              
-              {/* Installation and handling charges */}
-              {(() => {
-                // Get total installation charges from all rooms
-                let totalInstallCharges = 0;
-                
-                // Loop through each room
-                for (const room of safeQuotation.rooms) {
-                  // If room has installation charges, add them all up
-                  if (room.installationCharges && room.installationCharges.length > 0) {
-                    for (const charge of room.installationCharges) {
-                      totalInstallCharges += charge.amount || 0;
-                    }
-                  }
-                }
-                
-                // Add handling charges
-                const totalWithHandling = totalInstallCharges + safeQuotation.installationHandling;
-                
-                return (
+        {/* Project Cost Summary */}
+        <div className="my-6">
+          <h3 className="text-xl font-bold mb-4 text-[#009245]">Project Cost Summary</h3>
+          <div className="border rounded-md overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-[#E6E6E6]">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#009245] uppercase tracking-wider">
+                    Product Description
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-[#009245] uppercase tracking-wider">
+                    Selling Price
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-[#009245] uppercase tracking-wider">
+                    {safeQuotation.globalDiscount > 0 
+                      ? `Discounted Price (Incl. ${safeQuotation.globalDiscount}% Discount)` 
+                      : "Discounted Price"}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Array.isArray(safeQuotation.rooms) && safeQuotation.rooms.length > 0 ? (
+                  safeQuotation.rooms.map((room) => {
+                    if (!room) return null;
+                    
+                    // Calculate the discounted price with global discount applied
+                    const roomSellingPrice = room.sellingPrice || 0;
+                    const calculatedDiscountedPrice = safeQuotation.globalDiscount > 0
+                      ? roomSellingPrice - (roomSellingPrice * safeQuotation.globalDiscount / 100)
+                      : roomSellingPrice;
+                    
+                    return (
+                      <tr key={room.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {(room.name || 'UNNAMED ROOM').toUpperCase()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          {formatCurrency(roomSellingPrice)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {safeQuotation.globalDiscount > 0 ? (
+                            <span className="text-[#D81F28] font-medium">
+                              {formatCurrency(calculatedDiscountedPrice)}
+                            </span>
+                          ) : (
+                            <>{formatCurrency(roomSellingPrice)}</>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
                   <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      Installation and Handling
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                      {formatCurrency(totalWithHandling)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatCurrency(totalWithHandling)}
+                    <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
+                      No rooms available for this quotation
                     </td>
                   </tr>
-                );
-              })()}
-              
-              {(() => {
-                // Calculate the discounted total
-                const discountedTotal = safeQuotation.globalDiscount > 0
-                  ? safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100)
-                  : safeQuotation.totalSellingPrice;
+                )}
                 
-                // Calculate installation charges the same way as above
-                let totalInstallCharges = 0;
+                <tr className="bg-[#E6E6E6]">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    Total Of All Items
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                    {formatCurrency(safeQuotation.totalSellingPrice)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
+                    {safeQuotation.globalDiscount > 0 ? (
+                      <span className="text-[#D81F28] font-medium">
+                        {formatCurrency(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))}
+                      </span>
+                    ) : (
+                      <>{formatCurrency(safeQuotation.totalSellingPrice)}</>
+                    )}
+                  </td>
+                </tr>
                 
-                // Loop through each room
-                for (const room of safeQuotation.rooms) {
-                  // If room has installation charges, add them all up
-                  if (room.installationCharges && room.installationCharges.length > 0) {
-                    for (const charge of room.installationCharges) {
-                      totalInstallCharges += charge.amount || 0;
-                    }
-                  }
-                }
+                {/* Installation and handling charges */}
+                <tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    Installation and Handling
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {formatCurrency(totalWithHandling)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {formatCurrency(totalWithHandling)}
+                  </td>
+                </tr>
                 
-                // Add handling charges
-                const totalWithHandling = totalInstallCharges + safeQuotation.installationHandling;
-                
-                // Calculate GST based on discounted total + installation/handling
-                const gstAmount = (discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100);
-                
-                // Calculate final price
-                const finalPrice = discountedTotal + totalWithHandling + gstAmount;
-                
-                return (
-                  <>
-                    <tr>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        GST {safeQuotation.gstPercentage}%
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                        {formatCurrency((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {formatCurrency(gstAmount)}
-                      </td>
-                    </tr>
+                <tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    GST {safeQuotation.gstPercentage}%
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {formatCurrency((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {formatCurrency(gstAmount)}
+                  </td>
+                </tr>
                     
-                    <tr className="bg-indigo-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        Final Price
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                        {formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + 
-                          (safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-lg font-bold text-indigo-700 text-right">
-                        {formatCurrency(finalPrice)}
-                      </td>
-                    </tr>
-                  </>
-                );
-              })()}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Value Proposition */}
-      <div className="p-8">
-        <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Why Choose Us</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-          <div className="text-center p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white">
-            <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <h4 className="text-lg font-semibold text-gray-800 mb-2">Premium Quality</h4>
-            <p className="text-gray-600">We use only the highest quality materials and fittings, ensuring durability and longevity.</p>
-          </div>
-          <div className="text-center p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white">
-            <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h4 className="text-lg font-semibold text-gray-800 mb-2">Timely Delivery</h4>
-            <p className="text-gray-600">We commit to completing your project within the stipulated timeline without compromising quality.</p>
-          </div>
-          <div className="text-center p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white">
-            <div className="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-              </svg>
-            </div>
-            <h4 className="text-lg font-semibold text-gray-800 mb-2">Expert Guidance</h4>
-            <p className="text-gray-600">Our professional designers will guide you throughout the journey, offering the best solutions for your needs.</p>
+                <tr className="bg-[#E6E6E6]">
+                  <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                    Final Price
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
+                    {formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + 
+                      (safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-[#D81F28] text-right">
+                    {formatCurrency(finalPrice)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
 
-      {/* Call to Action */}
-      <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-8 text-center">
-        <h3 className="text-2xl font-bold mb-4">Ready to Transform Your Space?</h3>
-        <p className="max-w-xl mx-auto mb-6">
-          This proposal is valid for 30 days from the date issued. Don't miss this opportunity to create your dream space.
-        </p>
-        <div className="inline-block bg-white text-indigo-700 py-3 px-6 rounded-lg font-semibold text-lg">
-          Contact Us: {companySettings?.phone || ""}
+        {/* Terms and conditions */}
+        <div className="my-6">
+          <h3 className="text-xl font-bold mb-2 text-[#009245]">Terms & Conditions</h3>
+          <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
+            <li>Quotation is valid for 15 days from the date of issue.</li>
+            <li>50% advance payment required to start the work.</li>
+            <li>Delivery time: 4-6 weeks from date of order confirmation.</li>
+            <li>Warranty: 1 year on manufacturing defects.</li>
+            <li>Transportation and installation included in the price.</li>
+            <li>Colors may vary slightly from the samples shown.</li>
+          </ul>
         </div>
-      </div>
 
-      {/* Footer */}
-      <div className="p-6 bg-gray-50 text-center text-sm text-gray-500 rounded-b-lg">
-        <p>{companyName} • {companySettings?.address || "123 Design Street, Creativity District"}</p>
-        <p>{companySettings?.email || "design@example.com"}{companySettings?.phone && ` • ${companySettings.phone}`}</p>
-        {companySettings?.website && <p>{companySettings.website}</p>}
+        {/* Footer */}
+        <div className="mt-12 pt-6 border-t text-center text-sm text-gray-500">
+          <p>Thank you for your business!</p>
+          <p>For any queries, please contact us at {companySettings?.email || "support@designquotes.com"} 
+          {companySettings?.phone && ` or call ${companySettings.phone}`}</p>
+          {companySettings?.website && <p>{companySettings.website}</p>}
+        </div>
       </div>
     </div>
   );
