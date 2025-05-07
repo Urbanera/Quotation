@@ -248,6 +248,15 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
                     <span>-{formatCurrency((quotation?.globalDiscount || 0) * (quotation?.totalSellingPrice || 0) / 100)}</span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Installation and Handling</span>
+                    <span>{formatCurrency(
+                      (quotation?.rooms?.reduce((total, room) => 
+                        total + (room.installationCharges?.reduce((sum, charge) => 
+                          sum + (charge.amount || 0), 0) || 0), 0) || 0) + 
+                      (quotation?.installationHandling || 0)
+                    )}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-sm text-gray-600">GST ({quotation?.gstPercentage || 0}%)</span>
                     <span>{formatCurrency(quotation?.gstAmount || 0)}</span>
                   </div>
