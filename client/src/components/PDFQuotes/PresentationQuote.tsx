@@ -247,50 +247,18 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       
       {/* Content Pages - Starting with Scope of Work */}
       <div className="bg-white p-8">
-        {/* Quotation Header */}
-        <div className="flex justify-between items-center pb-6 border-b border-[#009245]">
-          <div className="flex items-center">
-            {companySettings?.logo && (
-              <img 
-                src={companySettings.logo} 
-                alt={companyName} 
-                className="h-10 mr-3" 
-              />
-            )}
-            <div>
-              <h1 className="text-2xl font-bold text-[#009245]">{companyName}</h1>
-              <p className="text-[#7A7A7A]">Interior Design Quotations</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <h2 className="text-xl font-bold text-[#D81F28]">QUOTATION</h2>
-            <p className="text-gray-600">#{safeQuotation.quotationNumber}</p>
-            <p className="text-gray-600">Date: {formatDate(safeQuotation.createdAt)}</p>
-          </div>
-        </div>
-
-        {/* Client Information */}
-        <div className="my-6 grid grid-cols-2 gap-8">
-          <div>
-            <h3 className="text-md font-semibold mb-2 text-[#009245]">From:</h3>
-            <p className="font-semibold">{companyName}</p>
-            <p>{companySettings?.address || ""}</p>
-            <p>{companySettings?.phone || ""}</p>
-            <p>{companySettings?.email || ""}</p>
-          </div>
-          <div>
-            <h3 className="text-md font-semibold mb-2 text-[#009245]">To:</h3>
-            {safeQuotation.customer ? (
-              <>
-                <p className="font-semibold">{safeQuotation.customer.name || 'N/A'}</p>
-                <p>{safeQuotation.customer.address || 'N/A'}</p>
-                <p>{safeQuotation.customer.email || 'N/A'}</p>
-                <p>{safeQuotation.customer.phone || 'N/A'}</p>
-              </>
-            ) : (
-              <p className="italic text-gray-500">No customer information available</p>
-            )}
-          </div>
+        {/* Simple Logo Header */}
+        <div className="flex items-start pb-6">
+          {companySettings?.logo && (
+            <img 
+              src={companySettings.logo} 
+              alt={companyName} 
+              className="h-10" 
+            />
+          )}
+          {!companySettings?.logo && (
+            <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
+          )}
         </div>
 
         {/* Scope of Work - Rooms Description */}
