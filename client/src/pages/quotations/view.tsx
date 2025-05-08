@@ -124,8 +124,29 @@ export default function ViewQuotation() {
   
   const handlePrint = () => {
     if (window.print) {
-      // Print will be handled by CSS styles targeting #printable-quote
-      window.print();
+      // Ensure the printable div uses the styling from the currently active tab
+      const printableDiv = document.getElementById('printable-quote');
+      if (printableDiv) {
+        // Force styling to be preserved for print
+        const style = document.createElement('style');
+        style.textContent = `
+          @media print {
+            table th { background-color: #E6E6E6 !important; }
+            tr.bg-\\[\\#E6E6E6\\] { background-color: #E6E6E6 !important; }
+            .text-\\[\\#D81F28\\] { color: #D81F28 !important; }
+            .text-\\[\\#009245\\] { color: #009245 !important; }
+          }
+        `;
+        printableDiv.appendChild(style);
+
+        // Print the document
+        window.print();
+
+        // Remove the temporary style element after printing
+        printableDiv.removeChild(style);
+      } else {
+        window.print();
+      }
     } else {
       toast({
         title: "Print not supported",

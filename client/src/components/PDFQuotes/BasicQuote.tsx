@@ -128,16 +128,16 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       <div className="mb-4 avoid-break print:mb-2">
         <h3 className="text-lg font-semibold mb-2 text-[#009245] print:text-sm print:mb-1">Project Cost Summary</h3>
         <div className="border rounded-md overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-md">
             <thead className="bg-[#E6E6E6]">
               <tr>
-                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-[#009245] uppercase tracking-wider print:px-2 print:py-1 print:text-[10px]">
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-[#009245] uppercase tracking-wider print:px-2 print:py-1 print:text-[10px] border-b border-gray-200">
                   Product Description
                 </th>
-                <th scope="col" className="px-4 py-2 text-right text-xs font-medium text-[#009245] uppercase tracking-wider print:px-2 print:py-1 print:text-[10px]">
+                <th scope="col" className="px-4 py-2 text-right text-xs font-medium text-[#009245] uppercase tracking-wider print:px-2 print:py-1 print:text-[10px] border-b border-gray-200">
                   Selling Price
                 </th>
-                <th scope="col" className="px-4 py-2 text-right text-xs font-medium text-[#009245] uppercase tracking-wider print:px-2 print:py-1 print:text-[10px]">
+                <th scope="col" className="px-4 py-2 text-right text-xs font-medium text-[#009245] uppercase tracking-wider print:px-2 print:py-1 print:text-[10px] border-b border-gray-200">
                   {safeQuotation.globalDiscount > 0 
                     ? `Discounted Price (${safeQuotation.globalDiscount}%)` 
                     : "Discounted Price"}
@@ -157,13 +157,13 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
                   
                   return (
                     <tr key={room.id}>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 print:px-2 print:py-1 print:text-xs">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                         {room.name ? room.name.toUpperCase() : 'UNNAMED ROOM'}
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-right print:px-2 print:py-1 print:text-xs">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-right print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                         {formatCurrency(roomSellingPrice)}
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right print:px-2 print:py-1 print:text-xs">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                         {safeQuotation.globalDiscount > 0 ? (
                           <span className="text-[#D81F28] font-medium">
                             {formatCurrency(calculatedDiscountedPrice)}
@@ -184,13 +184,13 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
               )}
               
               <tr className="bg-[#E6E6E6]">
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 print:px-2 print:py-1 print:text-xs">
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                   Total Of All Items
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-right print:px-2 print:py-1 print:text-xs">
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-right print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                   {formatCurrency(safeQuotation.totalSellingPrice)}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-right print:px-2 print:py-1 print:text-xs">
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-right print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                   {safeQuotation.globalDiscount > 0 ? (
                     <span className="text-[#D81F28] font-medium">
                       {formatCurrency(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))}
@@ -203,25 +203,25 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
               
               {/* Installation and handling charges */}
               <tr>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 print:px-2 print:py-1 print:text-xs">
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                   Installation and Handling
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right print:px-2 print:py-1 print:text-xs">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                   {formatCurrency(totalWithHandling)}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right print:px-2 print:py-1 print:text-xs">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                   {formatCurrency(totalWithHandling)}
                 </td>
               </tr>
               
               <tr>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 print:px-2 print:py-1 print:text-xs">
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                   GST {safeQuotation.gstPercentage}%
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right print:px-2 print:py-1 print:text-xs">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                   {formatCurrency((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right print:px-2 print:py-1 print:text-xs">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right print:px-2 print:py-1 print:text-xs border-b border-gray-200">
                   {formatCurrency(gstAmount)}
                 </td>
               </tr>
