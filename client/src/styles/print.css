@@ -11,7 +11,8 @@
     padding: 0;
     background: white;
     font-family: 'Arial', sans-serif;
-    font-size: 11px;
+    font-size: 12px;
+    color: #000;
   }
   
   /* Ensure proper page breaks */
@@ -27,16 +28,23 @@
   }
   
   /* Force page breaks before sections */
-  .room-section, div[data-room-section="true"] {
+  .room-section, 
+  div[data-room-section="true"],
+  .room-section > div, 
+  div[data-room-section="true"] > div {
     page-break-before: always;
     break-before: page;
     margin-top: 15px;
   }
   
   /* First room doesn't need a page break */
-  .room-section:first-of-type, div[data-room-section="true"]:first-of-type {
-    page-break-before: auto;
-    break-before: auto;
+  .room-section:first-of-type, 
+  div[data-room-section="true"]:first-of-type,
+  .first-room,
+  .room-section.first-room, 
+  div[data-room-section="true"].first-room {
+    page-break-before: auto !important;
+    break-before: auto !important;
   }
   
   /* Ensure footers stay with their associated content */
@@ -87,6 +95,7 @@
     break-inside: avoid;
   }
   
+  /* Style table borders */
   table th, table td {
     border: 1px solid #ddd !important;
     padding: 8px !important;
@@ -108,6 +117,60 @@
   /* Hide UI elements */
   button, .TabsList, nav, header, aside {
     display: none !important;
+  }
+  
+  /* Specific styles for presentation quote */
+  #presentation-quote {
+    max-width: 100% !important;
+  }
+  
+  /* Cover page and USP page for presentation quote */
+  #presentation-quote > div:first-child,
+  #presentation-quote > div:nth-child(2) {
+    height: auto !important;
+    min-height: 95vh !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  
+  /* Main content container */
+  #presentation-quote > div:nth-child(3) {
+    padding: 10mm !important;
+  }
+  
+  /* Room grid for responsive layout in print */
+  #presentation-quote .grid {
+    display: block !important;
+  }
+  
+  #presentation-quote .grid > div {
+    margin-bottom: 15mm !important;
+  }
+  
+  /* Fix for BasicQuote */
+  #basic-quote {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  
+  #basic-quote table {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+  
+  /* Project summary section */
+  .project-summary {
+    page-break-before: always;
+    break-before: page;
+    margin-top: 15mm !important;
+  }
+  
+  /* Ensure page content is centered */
+  .print-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 }
 

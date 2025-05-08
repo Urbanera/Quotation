@@ -35,105 +35,18 @@ export default function PrintQuotation() {
   }
   
   return (
-    <div id="print-container" style={{ padding: '20px', maxWidth: '210mm', margin: '0 auto', background: 'white' }}>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          @page { 
-            size: A4 portrait;
-            margin: 10mm; 
-          }
-          body { 
-            background: white;
-            padding: 0;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-          }
-          /* Table styling */
-          table { 
-            width: 100%;
-            border-collapse: collapse;
-          }
-          th { 
-            background-color: #E6E6E6 !important;
-            color: #009245 !important;
-            border: 1px solid #ddd;
-            padding: 6px;
-            font-size: 11px;
-          }
-          td { 
-            border: 1px solid #ddd;
-            padding: 6px;
-            font-size: 11px;
-          }
-          /* Force background colors */
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
-          }
-          /* Hide print button after printing */
-          #print-button {
-            display: none !important;
-          }
-          /* Ensure consistent font sizes */
-          h1, h2, h3, p, span, div {
-            font-family: Arial, sans-serif;
-          }
-          h1 { font-size: 16px; }
-          h2 { font-size: 14px; }
-          h3 { font-size: 12px; }
-          p, span, div { font-size: 11px; }
-        }
-        
-        /* Similar styling for the screen view to match PDF output */
-        #print-content {
-          font-family: Arial, sans-serif;
-          font-size: 11px;
-        }
-        #print-content h1 { font-size: 16px; }
-        #print-content h2 { font-size: 14px; }
-        #print-content h3 { font-size: 12px; }
-        #print-content p, 
-        #print-content span, 
-        #print-content div:not(.print-content) { 
-          font-size: 11px; 
-        }
-        #print-content table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        #print-content th {
-          background-color: #E6E6E6;
-          color: #009245;
-          border: 1px solid #ddd;
-          padding: 6px;
-        }
-        #print-content td {
-          border: 1px solid #ddd;
-          padding: 6px;
-        }
-      `}} />
-      
+    <div className="print-container p-5 max-w-[210mm] mx-auto bg-white">
       {/* Print button visible only on screen */}
       <button 
         id="print-button"
         onClick={() => window.print()}
-        style={{ 
-          margin: '10px 0', 
-          padding: '8px 16px', 
-          background: '#4f46e5', 
-          color: 'white', 
-          border: 'none', 
-          borderRadius: '4px',
-          cursor: 'pointer'
-        }}
+        className="mb-4 px-4 py-2 bg-primary text-white rounded shadow hover:bg-primary/90 transition-colors print:hidden"
       >
         Print Now
       </button>
       
       {/* The actual content to print */}
-      <div id="print-content" className="print-content">
+      <div id="print-content">
         {isPresentationQuote ? (
           <PresentationQuote quotation={quotation} />
         ) : (
