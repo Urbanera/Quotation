@@ -9,6 +9,7 @@ import PresentationQuote from "@/components/PDFQuotes/PresentationQuote";
 import { ProjectTimeline } from "@/components/quotations/timeline/ProjectTimeline";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { exportToPdf } from "@/lib/pdfExport";
 import { format, addWeeks } from "date-fns";
 import {
   Tabs,
@@ -121,6 +122,7 @@ export default function ViewQuotation() {
   });
 
   const [activeTab, setActiveTab] = useState<string>("basic");
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   
   const handlePrint = () => {
     if (window.print) {
@@ -132,6 +134,41 @@ export default function ViewQuotation() {
         description: "Printing is not supported in your browser",
         variant: "destructive",
       });
+    }
+  };
+  
+  const handleDownloadPdf = async () => {
+    try {
+      setIsGeneratingPdf(true);
+      
+      // Get the appropriate quote element based on the active tab
+      const quoteElement = activeTab === 'basic' 
+        ? basicQuoteRef.current
+        : presentationQuoteRef.current;
+      
+      if (!quoteElement) {
+        throw new Error('Quote element not found');
+      }
+      
+      // Generate the filename
+      const filename = `Quotation-${quotation?.quotationNumber || id}`;
+      
+      // Export to PDF
+      await exportToPdf(quoteElement, filename);
+      
+      toast({
+        title: "PDF Generated",
+        description: "Your quotation has been downloaded as a PDF"
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "There was an error generating the PDF. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -196,13 +233,11 @@ export default function ViewQuotation() {
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => toast({
-                  title: "Download",
-                  description: "Download functionality will be implemented soon."
-                })}
+                onClick={handleDownloadPdf}
+                disabled={isGeneratingPdf}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Download PDF
+                {isGeneratingPdf ? "Generating PDF..." : "Download PDF"}
               </Button>
               
               {/* Show these buttons only if quotation is not approved */}
