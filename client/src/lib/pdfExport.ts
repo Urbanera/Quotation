@@ -44,6 +44,13 @@ export const exportToPdf = async (
           break-inside: avoid;
         }
         
+        /* Terms and conditions section should not break */
+        [style*="pageBreakInside: avoid"],
+        [style*="page-break-inside: avoid"] {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+        
         /* Keep table headers with rows */
         thead { display: table-header-group; }
         tfoot { display: table-footer-group; }
@@ -211,6 +218,13 @@ async function generatePresentationPdf(
   
   // Now add the content pages
   pdf.addPage();
+  
+  // Make sure terms and conditions section stays on one page
+  const termsSection = contentPage.querySelector('[style*="pageBreakInside: avoid"]');
+  if (termsSection) {
+    // Add a specific class for identification
+    termsSection.classList.add('terms-section');
+  }
   
   const contentCanvas = await html2canvas(contentPage, {
     scale: 2,

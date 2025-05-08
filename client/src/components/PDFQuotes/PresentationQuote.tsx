@@ -433,22 +433,22 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
 
         {/* Terms and conditions */}
-        <div className="my-6" style={{ pageBreakBefore: 'always', breakBefore: 'page' }}>
-          <h3 className="text-xl font-bold mb-4 text-[#009245]">Terms & Conditions</h3>
+        <div className="mt-2" style={{ pageBreakBefore: 'always', breakBefore: 'page', pageBreakInside: 'avoid' }}>
+          <h3 className="text-base font-bold mb-1 text-[#009245]">Terms & Conditions</h3>
           
           {appSettings?.presentationTermsAndConditions ? (
             // If custom terms are available in settings, use those with proper formatting
-            <div className="text-sm text-gray-600 whitespace-pre-line">
+            <div className="text-[10px] leading-tight text-gray-600 whitespace-pre-line max-h-[350px] overflow-hidden">
               {appSettings.presentationTermsAndConditions}
             </div>
           ) : (
             // Otherwise, use the quotation's terms or a default fallback
             quotation.terms ? (
-              <div className="text-sm text-gray-600 whitespace-pre-line">
+              <div className="text-[10px] leading-tight text-gray-600 whitespace-pre-line max-h-[350px] overflow-hidden">
                 {quotation.terms}
               </div>
             ) : (
-              <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
+              <ul className="list-disc pl-4 text-[10px] leading-tight text-gray-600 space-y-0">
                 <li>Quotation is valid for 15 days from the date of issue.</li>
                 <li>50% advance payment required to start the work.</li>
                 <li>Delivery time: 4-6 weeks from date of order confirmation.</li>
@@ -458,14 +458,14 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               </ul>
             )
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-12 pt-6 border-t text-center text-sm text-gray-500">
-          <p>Thank you for your business!</p>
-          <p>For any queries, please contact us at {companySettings?.email || "support@designquotes.com"} 
-          {companySettings?.phone && ` or call ${companySettings.phone}`}</p>
-          {companySettings?.website && <p>{companySettings.website}</p>}
+          
+          {/* Footer - Moved inside the same container to keep on same page */}
+          <div className="mt-4 pt-2 border-t text-center text-[10px] text-gray-500">
+            <p>Thank you for your business!</p>
+            <p>For any queries, please contact us at {companySettings?.email || "support@designquotes.com"} 
+            {companySettings?.phone && ` or call ${companySettings.phone}`}</p>
+            {companySettings?.website && <p>{companySettings.website}</p>}
+          </div>
         </div>
       </div>
     </div>
