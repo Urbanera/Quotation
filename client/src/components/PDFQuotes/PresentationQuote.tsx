@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { CompanySettings, QuotationWithDetails } from "@shared/schema";
+import { AppSettings, CompanySettings, QuotationWithDetails } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 
 interface PresentationQuoteProps {
@@ -10,6 +10,12 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
   // Fetch company settings
   const { data: companySettings } = useQuery<CompanySettings>({
     queryKey: ["/api/settings/company"],
+    retry: 1,
+  });
+  
+  // Fetch app settings for presentation terms and conditions
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ["/api/settings/app"],
     retry: 1,
   });
 
@@ -428,16 +434,31 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
 
         {/* Terms and conditions */}
-        <div className="my-6">
-          <h3 className="text-xl font-bold mb-2 text-[#009245]">Terms & Conditions</h3>
-          <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
-            <li>Quotation is valid for 15 days from the date of issue.</li>
-            <li>50% advance payment required to start the work.</li>
-            <li>Delivery time: 4-6 weeks from date of order confirmation.</li>
-            <li>Warranty: 1 year on manufacturing defects.</li>
-            <li>Transportation and installation included in the price.</li>
-            <li>Colors may vary slightly from the samples shown.</li>
-          </ul>
+        <div className="my-6" style={{ pageBreakBefore: 'always', breakBefore: 'page' }}>
+          <h3 className="text-xl font-bold mb-4 text-[#009245]">Terms & Conditions</h3>
+          
+          {appSettings?.presentationTermsAndConditions ? (
+            // If custom terms are available in settings, use those with proper formatting
+            <div className="text-sm text-gray-600 whitespace-pre-line">
+              {appSettings.presentationTermsAndConditions}
+            </div>
+          ) : (
+            // Otherwise, use the quotation's terms or a default fallback
+            quotation.terms ? (
+              <div className="text-sm text-gray-600 whitespace-pre-line">
+                {quotation.terms}
+              </div>
+            ) : (
+              <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
+                <li>Quotation is valid for 15 days from the date of issue.</li>
+                <li>50% advance payment required to start the work.</li>
+                <li>Delivery time: 4-6 weeks from date of order confirmation.</li>
+                <li>Warranty: 1 year on manufacturing defects.</li>
+                <li>Transportation and installation included in the price.</li>
+                <li>Colors may vary slightly from the samples shown.</li>
+              </ul>
+            )
+          )}
         </div>
 
         {/* Footer */}

@@ -229,6 +229,27 @@ export function AppSettingsForm() {
               
               <FormField
                 control={form.control}
+                name="presentationTermsAndConditions"
+                render={({ field }) => (
+                  <FormItem className="border p-4 rounded-md bg-muted/30">
+                    <FormLabel className="text-lg font-medium">Presentation Quote Terms & Conditions</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Enter terms and conditions for presentation quotations"
+                        className="min-h-32"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      These terms will appear on the last page of presentation quotations. They will be displayed in a formatted section and should include detailed scope of work, payment terms, delivery terms, and other legal information.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
                 name="receiptTermsAndConditions"
                 render={({ field }) => (
                   <FormItem className="border p-4 rounded-md bg-muted/30">
