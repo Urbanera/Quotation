@@ -1,96 +1,84 @@
 /* Print styles for A4 paper */
 @media print {
-  /* Hide everything except the printable content */
+  /* Hide all page elements except the quote */
   body * {
     visibility: hidden;
   }
-
-  /* Show only the printable area */
-  #printable-quote,
-  #printable-quote * {
+  
+  /* Show only the basic quote when printing */
+  #basic-quote, #basic-quote * {
     visibility: visible !important;
   }
-
-  /* Hide header, navigation, and buttons */
-  header, nav, button, .print-hidden,
-  .tabs-list, .sidebar, .button, .print\:hidden {
+  
+  /* Hide all other page elements */
+  body > *:not(#basic-quote), 
+  .sidebar, 
+  .header, 
+  .tabs, 
+  .TabsList, 
+  .button,
+  .flex, 
+  button {
     display: none !important;
   }
   
-  /* Set up the A4 page */
-  @page {
-    size: A4 portrait;
-    margin: 8mm;
-  }
-
-  /* Ensure the print-exact-copy works properly */
-  .print-exact-copy {
-    display: block !important;
-    background-color: white !important;
-  }
-  
-  /* Remove shadow in print mode */
-  .print-exact-copy .shadow {
-    box-shadow: none !important;
-    padding: 0 !important;
-  }
-  
-  /* Make table match exactly */
-  .print-exact-copy table {
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-    border: 1px solid #e5e7eb !important;
-    margin: 0 !important;
-    width: 100% !important;
-  }
-  
-  .print-exact-copy th,
-  .print-exact-copy td {
-    border: 1px solid #e5e7eb !important;
-  }
-  
-  /* Force colored backgrounds to show */
-  .print-exact-copy .bg-\[\#E6E6E6\],
-  .print-exact-copy thead,
-  .print-exact-copy tr.bg-\[\#E6E6E6\],
-  .print-exact-copy th {
-    background-color: #E6E6E6 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    forced-color-adjust: exact !important;
-  }
-  
-  /* Ensure colors print correctly */
-  .print-exact-copy .text-\[\#D81F28\] {
-    color: #D81F28 !important;
-  }
-  
-  .print-exact-copy .text-\[\#009245\] {
-    color: #009245 !important;
-  }
-  
-  /* Force color printing for everything */
-  .print-exact-copy * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    forced-color-adjust: exact !important;
-  }
-  
-  /* Set the print area positioning */
-  #printable-quote {
+  /* Position the quote at the top of the page */
+  #basic-quote {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
-    padding: 0;
+    max-width: 100%;
+    background: white;
+    padding: 10mm;
     margin: 0;
-    background-color: white;
   }
   
-  /* Make sure images print properly */
-  .print-exact-copy img {
-    max-width: 100% !important;
-    height: auto !important;
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+  
+  /* Table styles */
+  #basic-quote table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+  
+  #basic-quote th {
+    background-color: #E6E6E6 !important;
+    color: #009245 !important;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem;
+    text-align: left;
+  }
+  
+  #basic-quote td {
+    border: 1px solid #d1d5db;
+    padding: 0.5rem;
+  }
+  
+  /* Color background for specific rows */
+  #basic-quote tr.bg-\[\#E6E6E6\] {
+    background-color: #E6E6E6 !important;
+  }
+  
+  /* Text coloring */
+  #basic-quote .text-\[\#D81F28\] {
+    color: #D81F28 !important;
+  }
+  
+  #basic-quote .text-\[\#009245\] {
+    color: #009245 !important;
+  }
+  
+  /* Force color printing */
+  #basic-quote * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 }
 

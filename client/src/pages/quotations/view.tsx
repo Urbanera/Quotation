@@ -124,82 +124,8 @@ export default function ViewQuotation() {
   
   const handlePrint = () => {
     if (window.print) {
-      try {
-        // Directly clone the visible content for exact print matching
-        const printableDiv = document.getElementById('printable-quote');
-        
-        if (printableDiv && activeTab === "basic") {
-          const exactCopyContainer = printableDiv.querySelector('.print-exact-copy');
-          
-          if (exactCopyContainer) {
-            // Find the BasicQuote component in the visible UI
-            const visibleContent = document.getElementById('basic-quote');
-            
-            if (visibleContent) {
-              // Create an exact deep clone of the visible content
-              const clonedContent = visibleContent.cloneNode(true) as HTMLElement;
-              
-              // Add a wrapper with the exact same styling as the visible container
-              const wrapperDiv = document.createElement('div');
-              wrapperDiv.className = 'bg-white p-6';
-              wrapperDiv.style.backgroundColor = 'white';
-              wrapperDiv.style.padding = '1.5rem';
-              wrapperDiv.appendChild(clonedContent);
-              
-              // Clear previous content and add the cloned content with wrapper
-              exactCopyContainer.innerHTML = '';
-              exactCopyContainer.appendChild(wrapperDiv);
-              
-              // Force style preservation with inline !important styles for printing
-              const allElements = exactCopyContainer.querySelectorAll('*');
-              allElements.forEach(el => {
-                if (el instanceof HTMLElement) {
-                  // Preserve background colors for table elements 
-                  if (el.tagName === 'TH' || 
-                      el.classList.contains('bg-[#E6E6E6]') || 
-                      (el.parentElement && el.parentElement.classList.contains('bg-[#E6E6E6]'))) {
-                    el.style.backgroundColor = '#E6E6E6';
-                  }
-                  
-                  // Preserve text colors
-                  if (el.classList.contains('text-[#D81F28]')) {
-                    el.style.color = '#D81F28';
-                  }
-                  
-                  if (el.classList.contains('text-[#009245]')) {
-                    el.style.color = '#009245';
-                  }
-                  
-                  // Add borders to table cells for better visibility
-                  if (el.tagName === 'TD' || el.tagName === 'TH') {
-                    el.style.border = '1px solid #e5e7eb';
-                  }
-                }
-              });
-              
-              // Print the document
-              window.print();
-              
-              // Clean up after printing
-              exactCopyContainer.innerHTML = '';
-            } else {
-              toast({
-                title: "Print error",
-                description: "Could not find the quotation content to print",
-                variant: "destructive",
-              });
-            }
-          } else {
-            window.print();
-          }
-        } else {
-          window.print();
-        }
-      } catch (error) {
-        console.error('Print error:', error);
-        // Fall back to regular printing if any errors occur
-        window.print();
-      }
+      // Simply trigger the print dialog - our CSS will handle the styling
+      window.print();
     } else {
       toast({
         title: "Print not supported",
@@ -364,22 +290,7 @@ export default function ViewQuotation() {
         </div>
       </div>
       
-      {/* Printable area - hidden on screen but visible when printing */}
-      <div id="printable-quote" className="hidden print:block">
-        {activeTab === "basic" && (
-          <div className="a4-page">
-            {/* Direct copy of the visible div in the DOM to ensure exactly the same styling */}
-            <div className="print-exact-copy">
-              {/* This will be populated via JavaScript when printing */}
-            </div>
-          </div>
-        )}
-        {activeTab === "presentation" && (
-          <div className="a4-page">
-            <PresentationQuote quotation={quotation} />
-          </div>
-        )}
-      </div>
+      {/* No extra printable area needed - CSS will handle printing directly */}
       
       {/* Approval Dialog */}
       <Dialog
