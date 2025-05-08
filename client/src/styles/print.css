@@ -1,0 +1,75 @@
+/* Print styles for A4 paper */
+@media print {
+  /* Hide all non-printable elements */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Hide header, navigation, and buttons */
+  header, nav, button, .print-hidden, 
+  .tabs-list, .sidebar, .button, .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Show only the printable area */
+  #printable-quote, #printable-quote * {
+    visibility: visible;
+  }
+  
+  /* Set up the A4 page */
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+  
+  /* Set the print area as a block element and center it */
+  #printable-quote {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background-color: white;
+  }
+  
+  /* Remove any backgrounds and shadows */
+  #printable-quote .bg-white,
+  #printable-quote .shadow,
+  #printable-quote .rounded-lg {
+    background-color: white !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Control page breaks */
+  .page-break {
+    page-break-after: always;
+    break-after: page;
+  }
+  
+  .avoid-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Ensure text readability */
+  #printable-quote {
+    font-size: 12pt;
+    line-height: 1.3;
+  }
+  
+  /* Ensure tables don't overflow */
+  table {
+    width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Make sure images don't overflow */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
