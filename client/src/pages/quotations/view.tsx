@@ -189,7 +189,7 @@ export default function ViewQuotation() {
             <div className="mt-4 flex flex-wrap md:mt-0 md:ml-4 gap-3">
               <Button 
                 variant="outline"
-                onClick={handlePrint}
+                onClick={() => window.open(`/quotations/print/${id}`, '_blank')}
               >
                 <Printer className="mr-2 h-4 w-4" />
                 Print
