@@ -86,7 +86,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
   return (
     <div ref={ref} className="max-w-5xl mx-auto bg-white" id="presentation-quote">
       {/* Cover Page */}
-      <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden page-break-after-always">
+      <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden" 
+           style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
         {/* Logo Area */}
         <div className="p-10 text-center border-b-5 border-[#009245]" style={{ borderBottomWidth: '5px' }}>
           {companySettings?.logo && (
@@ -135,7 +136,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       </div>
       
       {/* USPs Page */}
-      <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden page-break-after-always">
+      <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden"
+           style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
         {/* Header */}
         <div className="bg-[#009245] text-white px-8 py-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold">Our USPs</h2>
@@ -258,8 +260,11 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         <div className="my-6">
           <h3 className="text-xl font-bold mb-4 text-[#009245]">Scope of Work</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            {safeQuotation.rooms.map((room) => (
-              <div key={room.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            {safeQuotation.rooms.map((room, index) => (
+              <div 
+                key={room.id} 
+                className={`border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow room-section ${index === 0 ? 'first-room' : ''}`}
+              >
                 <div className="bg-[#E6E6E6] p-4 border-b">
                   <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
                   {room.description && <p className="text-gray-600 mt-1">{room.description}</p>}

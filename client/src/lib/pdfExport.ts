@@ -2,155 +2,147 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 /**
- * Prepares a clone of the element with proper page break styling before rendering to PDF
- * This helps ensure consistent page breaks
- */
-const prepareElementForPdf = (element: HTMLElement): HTMLElement => {
-  // Clone the element to avoid modifying the original
-  const clone = element.cloneNode(true) as HTMLElement;
-  
-  // Add page break styling to tables and sections
-  const tables = clone.querySelectorAll('table');
-  tables.forEach(table => {
-    const tableElement = table as HTMLElement;
-    tableElement.style.pageBreakInside = 'avoid';
-    tableElement.style.breakInside = 'avoid';
-  });
-  
-  // Add page break before to section headings (except the first one)
-  const sections = clone.querySelectorAll('h2, h3');
-  sections.forEach((section, index) => {
-    if (index > 0) {
-      const sectionElement = section as HTMLElement;
-      sectionElement.style.pageBreakBefore = 'always';
-      sectionElement.style.breakBefore = 'page';
-      sectionElement.style.marginTop = '20px';
-    }
-  });
-  
-  // Ensure footers stay with their content
-  const footers = clone.querySelectorAll('.footer, .quote-footer, .summary, .total-section');
-  footers.forEach(footer => {
-    const footerElement = footer as HTMLElement;
-    footerElement.style.pageBreakInside = 'avoid';
-    footerElement.style.breakInside = 'avoid';
-  });
-  
-  // Add data attributes for print CSS to target
-  const roomSections = clone.querySelectorAll('.room-section');
-  roomSections.forEach((section, index) => {
-    const sectionElement = section as HTMLElement;
-    sectionElement.dataset.roomSection = 'true';
-  });
-  
-  const summarySection = clone.querySelector('.summary-section');
-  if (summarySection) {
-    (summarySection as HTMLElement).dataset.section = 'summary';
-  }
-  
-  const totalSection = clone.querySelector('.total-section');
-  if (totalSection) {
-    (totalSection as HTMLElement).dataset.section = 'total';
-  }
-  
-  return clone;
-};
-
-/**
- * Converts an HTML element to a PDF and downloads it
+ * A simplified PDF generation approach that works more reliably
  * @param element The HTML element to convert to PDF
  * @param filename The name of the downloaded file
  */
 export const exportToPdf = async (element: HTMLElement, filename: string): Promise<void> => {
   try {
-    // Prepare the element with proper page break styling
-    const preparedElement = prepareElementForPdf(element);
-    
-    // Temporarily append the prepared element to the document for rendering
-    preparedElement.style.position = 'absolute';
-    preparedElement.style.left = '-9999px';
-    preparedElement.style.width = '210mm'; // A4 width
-    document.body.appendChild(preparedElement);
-    
     // Create a PDF in A4 format
     const pdf = new jsPDF('portrait', 'mm', 'a4');
     
-    // Calculate dimensions for A4 page size
+    // Get page dimensions
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     
-    // Set a standard padding/margin (in mm)
-    const padding = 10;
-    
-    // Calculate content area dimensions with margins
-    const contentWidth = pageWidth - (padding * 2);
-    const contentHeight = pageHeight - (padding * 2);
-    
-    // Create a canvas of the element with enhanced settings
-    const canvas = await html2canvas(preparedElement, {
-      scale: 2, // Higher scale for better quality
-      useCORS: true, // Needed for external images (like logos)
-      logging: false,
-      backgroundColor: '#ffffff',
-      allowTaint: false,
-      // Removed unsupported letterRendering option
-      // Use an improved algorithm for slicing the content into pages
-      onclone: (clonedDoc) => {
-        const clonedElement = clonedDoc.body.querySelector('[data-pdf-clone="true"]');
-        if (clonedElement) {
-          // Additional adjustments to the cloned element if needed
-          const pageBreakElements = clonedElement.querySelectorAll('[data-page-break]');
-          pageBreakElements.forEach(el => {
-            (el as HTMLElement).style.pageBreakAfter = 'always';
-            (el as HTMLElement).style.breakAfter = 'page';
-          });
+    // Add styling to fix page breaks and layout
+    const style = document.createElement('style');
+    style.textContent = `
+      @media print {
+        body { margin: 0; padding: 0; }
+        
+        /* Ensure page breaks where needed */
+        .room-section, div[data-room-section="true"] {
+          page-break-before: always;
+          break-before: page;
+        }
+        
+        /* Keep content together */
+        .footer, .quote-footer, .summary-section, .total-section {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        
+        /* Keep table headers with rows */
+        thead { display: table-header-group; }
+        tfoot { display: table-footer-group; }
+        tr { page-break-inside: avoid; }
+        
+        /* Force color printing */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
       }
+    `;
+    
+    // Create a clone to avoid modifying the original
+    const clone = element.cloneNode(true) as HTMLElement;
+    
+    // Apply data attributes to help with PDF generation
+    const roomSections = clone.querySelectorAll('.room-section');
+    roomSections.forEach(section => {
+      (section as HTMLElement).setAttribute('data-room-section', 'true');
     });
     
-    // Remove the temporary element
-    document.body.removeChild(preparedElement);
+    // Add the clone to an offscreen container
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '-9999px';
+    container.style.width = '210mm'; // A4 width
+    container.appendChild(style);
+    container.appendChild(clone);
+    document.body.appendChild(container);
     
-    // Calculate the scaling factor to fit width (maintaining aspect ratio)
-    const imgWidth = contentWidth;
+    // Convert to canvas
+    const canvas = await html2canvas(clone, {
+      scale: 2, // Higher resolution
+      useCORS: true, // For images
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: 794, // ~210mm at 96dpi
+      windowHeight: 1123 // ~297mm at 96dpi
+    });
+    
+    // Clean up
+    document.body.removeChild(container);
+    
+    // Calculate dimensions
+    const imgWidth = pageWidth - 20; // 10mm margins
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
-    // Convert canvas to image data
+    // Get image data
     const imgData = canvas.toDataURL('image/png');
     
-    // Calculate how many pages we need
-    const pageCount = Math.ceil(imgHeight / contentHeight);
+    // Calculate needed pages
+    const pageCount = Math.ceil(imgHeight / (pageHeight - 20));
     
-    // Add each page separately with proper positioning
-    for (let i = 0; i < pageCount; i++) {
-      // Add a new page for all pages after the first
-      if (i > 0) {
-        pdf.addPage();
-      }
+    // For single page documents
+    if (pageCount <= 1) {
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save(`${filename}.pdf`);
+      return;
+    }
+    
+    // For multi-page documents
+    let heightLeft = imgHeight;
+    let position = 0;
+    let currentPage = 0;
+    
+    // Add first page
+    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, Math.min(pageHeight - 20, imgHeight));
+    heightLeft -= (pageHeight - 20);
+    position += (pageHeight - 20);
+    
+    // Add subsequent pages
+    while (heightLeft > 0) {
+      currentPage++;
+      pdf.addPage();
       
-      // Calculate the position and height for this page slice
-      const sourceY = i * contentHeight * (canvas.height / imgHeight);
+      // Calculate source area for this page
+      const sourceY = position * (canvas.height / imgHeight);
       const sourceHeight = Math.min(
-        contentHeight * (canvas.height / imgHeight),
+        (pageHeight - 20) * (canvas.height / imgHeight),
         canvas.height - sourceY
       );
       
-      // Handle last page special case
-      const destHeight = (i === pageCount - 1 && imgHeight % contentHeight !== 0)
-        ? (imgHeight % contentHeight)
-        : contentHeight;
+      // Get just this portion
+      const tempCanvas = document.createElement('canvas');
+      const ctx = tempCanvas.getContext('2d');
+      if (!ctx) continue;
       
-      // Add the image for this page using the correct overload
-      pdf.addImage({
-        imageData: imgData,
-        format: 'PNG',
-        x: padding,
-        y: padding,
-        width: imgWidth,
-        height: destHeight,
-        alias: `page-${i}`, // Unique identifier
-        compression: 'FAST'
-      });
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = sourceHeight;
+      
+      // Draw just the needed portion
+      ctx.drawImage(
+        canvas,
+        0, sourceY,
+        canvas.width, sourceHeight,
+        0, 0,
+        canvas.width, sourceHeight
+      );
+      
+      // Add to PDF
+      const pageImgData = tempCanvas.toDataURL('image/png');
+      const pageImgHeight = Math.min(pageHeight - 20, heightLeft);
+      
+      pdf.addImage(pageImgData, 'PNG', 10, 10, imgWidth, pageImgHeight);
+      
+      // Update tracking variables
+      heightLeft -= (pageHeight - 20);
+      position += (pageHeight - 20);
     }
     
     // Save the PDF
