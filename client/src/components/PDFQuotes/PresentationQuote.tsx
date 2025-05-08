@@ -2,6 +2,13 @@ import { forwardRef } from "react";
 import { AppSettings, CompanySettings, QuotationWithDetails } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 
+// Import feature icons
+import bestQualityImg from "@assets/Picture1.png";
+import fastDeliveryImg from "@assets/Picture2.png";
+import hassleFreeImg from "@assets/Picture3.png";
+import ecoFriendlyImg from "@assets/Picture5.png";
+import emiAvailableImg from "@assets/Picture6.png";
+
 interface PresentationQuoteProps {
   quotation: QuotationWithDetails;
 }
@@ -205,6 +212,30 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               <div className="text-[#D81F28] font-bold mr-3">➤</div>
               <div>Hassle - Free handover</div>
             </div>
+          </div>
+        </div>
+        
+        {/* Feature Images Row */}
+        <div className="px-6 py-8 flex justify-between items-center">
+          <div className="text-center">
+            <img src={bestQualityImg} alt="Best Quality" className="h-20 mx-auto mb-2" />
+            <p className="text-xs font-medium">BEST QUALITY</p>
+          </div>
+          <div className="text-center">
+            <img src={fastDeliveryImg} alt="Fast Delivery" className="h-20 mx-auto mb-2" />
+            <p className="text-xs font-medium">FAST DELIVERY</p>
+          </div>
+          <div className="text-center">
+            <img src={hassleFreeImg} alt="Hassle Free" className="h-20 mx-auto mb-2" />
+            <p className="text-xs font-medium">HASSLE FREE</p>
+          </div>
+          <div className="text-center">
+            <img src={ecoFriendlyImg} alt="Eco Friendly" className="h-20 mx-auto mb-2" />
+            <p className="text-xs font-medium">ECO FRIENDLY</p>
+          </div>
+          <div className="text-center">
+            <img src={emiAvailableImg} alt="EMI Available" className="h-20 mx-auto mb-2" />
+            <p className="text-xs font-medium">EMI AVAILABLE</p>
           </div>
         </div>
         
