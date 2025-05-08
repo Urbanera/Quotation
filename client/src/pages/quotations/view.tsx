@@ -120,8 +120,11 @@ export default function ViewQuotation() {
     },
   });
 
+  const [activeTab, setActiveTab] = useState<string>("basic");
+  
   const handlePrint = () => {
     if (window.print) {
+      // Print will be handled by CSS styles targeting #printable-quote
       window.print();
     } else {
       toast({
@@ -250,8 +253,8 @@ export default function ViewQuotation() {
       {/* Quote Tabs */}
       <div className="mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
+          <Tabs defaultValue="basic" className="w-full" onValueChange={setActiveTab}>
+            <TabsList className="grid w-full max-w-md grid-cols-3 print:hidden">
               <TabsTrigger value="basic" className="flex items-center">
                 <FileText className="mr-2 h-4 w-4" />
                 Basic Quote
@@ -285,6 +288,20 @@ export default function ViewQuotation() {
             </TabsContent>
           </Tabs>
         </div>
+      </div>
+      
+      {/* Printable area - hidden on screen but visible when printing */}
+      <div id="printable-quote" className="hidden">
+        {activeTab === "basic" && (
+          <div className="a4-page">
+            <BasicQuote quotation={quotation} />
+          </div>
+        )}
+        {activeTab === "presentation" && (
+          <div className="a4-page">
+            <PresentationQuote quotation={quotation} />
+          </div>
+        )}
       </div>
       
       {/* Approval Dialog */}

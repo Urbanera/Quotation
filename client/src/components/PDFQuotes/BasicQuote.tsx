@@ -81,9 +81,9 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
   const quotationNumber = quotation?.quotationNumber || `Q-${new Date().getFullYear()}-${String(quotation?.id || 0).padStart(4, '0')}`;
 
   return (
-    <div ref={ref} className="max-w-4xl mx-auto bg-white p-8 print:p-4" id="basic-quote">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8 border-b border-[#009245] pb-6">
+    <div ref={ref} className="max-w-4xl mx-auto bg-white p-8 print:p-0" id="basic-quote">
+      {/* Header - avoid page break after header */}
+      <div className="flex justify-between items-center mb-8 border-b border-[#009245] pb-6 avoid-break">
         <div className="flex items-center">
           {companySettings?.logo && (
             <img src={companySettings.logo} alt={companyName} className="h-10 mr-3" />
@@ -101,7 +101,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       </div>
 
       {/* Client Information */}
-      <div className="mb-8 grid grid-cols-2 gap-8">
+      <div className="mb-8 grid grid-cols-2 gap-8 avoid-break">
         <div>
           <h3 className="text-md font-semibold mb-2 text-[#009245]">From:</h3>
           <p className="font-semibold">{companyName}</p>
@@ -125,7 +125,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       </div>
 
       {/* Project Cost Summary */}
-      <div className="mb-8">
+      <div className="mb-8 avoid-break">
         <h3 className="text-lg font-semibold mb-4 text-[#009245]">Project Cost Summary</h3>
         <div className="border rounded-md overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
@@ -244,7 +244,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       </div>
 
       {/* Terms and conditions */}
-      <div className="mb-8">
+      <div className="mb-8 page-break avoid-break">
         <h3 className="text-lg font-semibold mb-2 text-[#009245]">Terms & Conditions</h3>
         <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
           <li>Quotation is valid for 15 days from the date of issue.</li>
@@ -257,7 +257,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       </div>
 
       {/* Footer */}
-      <div className="mt-12 pt-6 border-t border-[#009245] text-center text-sm text-gray-500">
+      <div className="mt-12 pt-6 border-t border-[#009245] text-center text-sm text-gray-500 avoid-break">
         <p>Thank you for your business!</p>
         <p>For any queries, please contact us at {companySettings?.email || ""} 
         {companySettings?.phone && ` or call ${companySettings.phone}`}</p>

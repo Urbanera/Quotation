@@ -13,12 +13,13 @@
   
   /* Show only the printable area */
   #printable-quote, #printable-quote * {
-    visibility: visible;
+    visibility: visible !important;
+    display: block !important;
   }
   
   /* Set up the A4 page */
   @page {
-    size: A4;
+    size: A4 portrait;
     margin: 10mm;
   }
   
@@ -27,10 +28,12 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
+    width: 210mm; /* A4 width */
+    height: auto;
     padding: 0;
     margin: 0;
     background-color: white;
+    overflow: visible !important;
   }
   
   /* Remove any backgrounds and shadows */
@@ -72,4 +75,34 @@
     max-width: 100% !important;
     height: auto !important;
   }
+  
+  /* Specific rules for quotation sections */
+  .a4-page {
+    width: 100%;
+    height: auto;
+    margin-bottom: 20mm; /* Space between pages */
+    page-break-after: always;
+    break-after: page;
+  }
+  
+  /* Fix for flexbox layouts that might be hidden in print */
+  .flex, .flex-row, .flex-col {
+    display: block !important;
+  }
+  
+  /* Hide elements with print:hidden */
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Show elements with print:block */
+  .hidden.print\:block {
+    display: block !important;
+    visibility: visible !important;
+  }
+}
+
+/* Add special class for printable elements */
+.hidden#printable-quote {
+  display: none;
 }
