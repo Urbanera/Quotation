@@ -5,10 +5,86 @@
     display: none !important;
   }
   
-  /* Basic styling for tables */
+  /* Basic formatting */
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+    font-family: 'Arial', sans-serif;
+    font-size: 11px;
+  }
+  
+  /* Ensure proper page breaks */
+  h1, h2, h3, h4 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  
+  /* Ensure items stay together where possible */
+  li, figure, .quote-header, .address-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Force page breaks before sections */
+  .room-section, div[data-room-section="true"] {
+    page-break-before: always;
+    break-before: page;
+    margin-top: 15px;
+  }
+  
+  /* First room doesn't need a page break */
+  .room-section:first-of-type, div[data-room-section="true"]:first-of-type {
+    page-break-before: auto;
+    break-before: auto;
+  }
+  
+  /* Ensure footers stay with their associated content */
+  .footer, 
+  .quote-footer, 
+  .footer-section, 
+  .summary-section, 
+  .total-section,
+  div[data-section="summary"],
+  div[data-section="total"] {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Add minimal spacing for readability */
+  p, ul, ol, dl, h1, h2, h3, h4, h5, h6 {
+    orphans: 3;
+    widows: 3;
+  }
+  
+  /* Table styles with improved page break behavior */
   table {
     border-collapse: collapse !important;
     width: 100% !important;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+  
+  /* Keep table headers with at least 2 rows */
+  thead {
+    display: table-header-group;
+  }
+  
+  /* Keep table footers with their tables */
+  tfoot {
+    display: table-footer-group;
+  }
+  
+  /* Individual rows can break */
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Smaller tables should try to avoid breaks */
+  table.small-table, div[data-small-table="true"] table {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
   
   table th, table td {
@@ -20,6 +96,7 @@
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
   
   /* Set up page for A4 */
