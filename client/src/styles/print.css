@@ -20,7 +20,7 @@
   /* Set up the A4 page */
   @page {
     size: A4 portrait;
-    margin: 10mm;
+    margin: 5mm;
   }
   
   /* Set the print area as a block element and center it */
@@ -34,6 +34,14 @@
     margin: 0;
     background-color: white;
     overflow: visible !important;
+    font-size: 10pt !important;
+  }
+  
+  /* Force BasicQuote to fit on a single page */
+  #basic-quote {
+    max-height: 297mm; /* A4 height */
+    font-size: 10pt !important;
+    line-height: 1.2 !important;
   }
   
   /* Remove any backgrounds and shadows */
