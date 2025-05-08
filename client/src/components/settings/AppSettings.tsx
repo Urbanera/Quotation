@@ -153,7 +153,7 @@ export function AppSettingsForm() {
                   <FormItem>
                     <FormLabel>Default Quotation Template</FormLabel>
                     <Select 
-                      defaultValue={field.value}
+                      defaultValue={field.value || "default"}
                       onValueChange={field.onChange}
                     >
                       <FormControl>
@@ -182,7 +182,7 @@ export function AppSettingsForm() {
                   <FormItem>
                     <FormLabel>Default Presentation Template</FormLabel>
                     <Select 
-                      defaultValue={field.value}
+                      defaultValue={field.value || "default"}
                       onValueChange={field.onChange}
                     >
                       <FormControl>
@@ -217,6 +217,7 @@ export function AppSettingsForm() {
                         placeholder="Enter default terms and conditions for all quotations"
                         className="min-h-32"
                         {...field}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormDescription>
@@ -238,6 +239,7 @@ export function AppSettingsForm() {
                         placeholder="Enter terms and conditions for presentation quotations"
                         className="min-h-32"
                         {...field}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormDescription>
@@ -259,6 +261,7 @@ export function AppSettingsForm() {
                         placeholder="Enter terms and conditions for payment receipts"
                         className="min-h-32"
                         {...field}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormDescription>
