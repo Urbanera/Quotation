@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import BasicQuote from "@/components/PDFQuotes/BasicQuote";
+import PresentationQuote from "@/components/PDFQuotes/PresentationQuote";
 import { QuotationWithDetails } from "@shared/schema";
 
 // This is a standalone print page without layout components
 export default function PrintQuotation() {
   const { id } = useParams<{ id: string }>();
+  const [location] = useLocation();
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Determine quote type from URL
+  const isPresentationQuote = location.includes('/presentation');
   
   // Fetch quotation data
   const { data: quotation } = useQuery<QuotationWithDetails>({
@@ -129,7 +134,11 @@ export default function PrintQuotation() {
       
       {/* The actual content to print */}
       <div id="print-content" className="print-content">
-        <BasicQuote quotation={quotation} />
+        {isPresentationQuote ? (
+          <PresentationQuote quotation={quotation} />
+        ) : (
+          <BasicQuote quotation={quotation} />
+        )}
       </div>
     </div>
   );

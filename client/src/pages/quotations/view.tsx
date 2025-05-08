@@ -141,8 +141,10 @@ export default function ViewQuotation() {
     try {
       setIsGeneratingPdf(true);
       
-      // Get the basic quote since it's more reliable for PDF export
-      const quoteElement = basicQuoteRef.current;
+      // Get the appropriate quote element based on the active tab
+      const quoteElement = activeTab === 'basic' 
+        ? basicQuoteRef.current
+        : presentationQuoteRef.current;
       
       if (!quoteElement) {
         throw new Error('Quote element not found');
@@ -224,10 +226,15 @@ export default function ViewQuotation() {
             <div className="mt-4 flex flex-wrap md:mt-0 md:ml-4 gap-3">
               <Button 
                 variant="outline"
-                onClick={() => window.open(`/quotations/print/${id}`, '_blank')}
+                onClick={() => {
+                  const printUrl = activeTab === 'basic' 
+                    ? `/quotations/print/${id}`
+                    : `/quotations/print/presentation/${id}`;
+                  window.open(printUrl, '_blank');
+                }}
               >
                 <Printer className="mr-2 h-4 w-4" />
-                Print
+                Print {activeTab === 'basic' ? 'Basic' : 'Presentation'} Quote
               </Button>
               <Button 
                 variant="outline"

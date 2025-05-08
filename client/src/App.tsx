@@ -37,6 +37,7 @@ function App() {
       <Switch>
         {/* Print routes that don't need the layout */}
         <Route path="/quotations/print/:id" component={PrintQuotation} />
+        <Route path="/quotations/print/presentation/:id" component={PrintQuotation} />
         <Route path="/invoices/print-invoice/:id" component={PrintInvoiceContainer} />
         <Route path="/payments/print-receipt/:id" component={PrintReceiptPage} />
         
