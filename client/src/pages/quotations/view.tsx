@@ -141,20 +141,40 @@ export default function ViewQuotation() {
     try {
       setIsGeneratingPdf(true);
       
-      // Get the appropriate quote element based on the active tab
-      const quoteElement = activeTab === 'basic' 
-        ? basicQuoteRef.current
-        : presentationQuoteRef.current;
+      // Instead of using the current view, we'll create a dedicated print-optimized version
+      // This approach ensures the PDF matches the print format exactly
       
-      if (!quoteElement) {
-        throw new Error('Quote element not found');
+      // Open the print page in a hidden iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = `/quotations/print/${id}`;
+      document.body.appendChild(iframe);
+      
+      // Wait for the iframe to load
+      await new Promise<void>((resolve) => {
+        iframe.onload = () => resolve();
+      });
+      
+      // Get the document from the iframe
+      const iframeDocument = iframe.contentDocument;
+      if (!iframeDocument) {
+        throw new Error('Could not access iframe document');
+      }
+      
+      // Find the quote content in the iframe
+      const printContent = iframeDocument.querySelector('.print-content');
+      if (!printContent) {
+        throw new Error('Print content not found in iframe');
       }
       
       // Generate the filename
       const filename = `Quotation-${quotation?.quotationNumber || id}`;
       
-      // Export to PDF
-      await exportToPdf(quoteElement, filename);
+      // Export to PDF using the optimized print view
+      await exportToPdf(printContent as HTMLElement, filename);
+      
+      // Clean up the iframe
+      document.body.removeChild(iframe);
       
       toast({
         title: "PDF Generated",

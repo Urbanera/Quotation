@@ -41,6 +41,8 @@ export default function PrintQuotation() {
             background: white;
             padding: 0;
             margin: 0;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
           }
           /* Table styling */
           table { 
@@ -51,11 +53,13 @@ export default function PrintQuotation() {
             background-color: #E6E6E6 !important;
             color: #009245 !important;
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 6px;
+            font-size: 11px;
           }
           td { 
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 6px;
+            font-size: 11px;
           }
           /* Force background colors */
           * {
@@ -67,6 +71,42 @@ export default function PrintQuotation() {
           #print-button {
             display: none !important;
           }
+          /* Ensure consistent font sizes */
+          h1, h2, h3, p, span, div {
+            font-family: Arial, sans-serif;
+          }
+          h1 { font-size: 16px; }
+          h2 { font-size: 14px; }
+          h3 { font-size: 12px; }
+          p, span, div { font-size: 11px; }
+        }
+        
+        /* Similar styling for the screen view to match PDF output */
+        #print-content {
+          font-family: Arial, sans-serif;
+          font-size: 11px;
+        }
+        #print-content h1 { font-size: 16px; }
+        #print-content h2 { font-size: 14px; }
+        #print-content h3 { font-size: 12px; }
+        #print-content p, 
+        #print-content span, 
+        #print-content div:not(.print-content) { 
+          font-size: 11px; 
+        }
+        #print-content table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        #print-content th {
+          background-color: #E6E6E6;
+          color: #009245;
+          border: 1px solid #ddd;
+          padding: 6px;
+        }
+        #print-content td {
+          border: 1px solid #ddd;
+          padding: 6px;
         }
       `}} />
       
@@ -88,7 +128,7 @@ export default function PrintQuotation() {
       </button>
       
       {/* The actual content to print */}
-      <div id="print-content">
+      <div id="print-content" className="print-content">
         <BasicQuote quotation={quotation} />
       </div>
     </div>
