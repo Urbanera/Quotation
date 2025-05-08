@@ -424,56 +424,7 @@ export class MemStorage implements IStorage {
     this.quotations.set(quotation.id, quotation);
     
     // Add project timeline milestones for the demo quotation
-    const milestones = [
-      {
-        id: this.milestoneIdCounter++,
-        quotationId: quotation.id,
-        title: "Design Approval",
-        description: "Client approves final design concept",
-        startDate: new Date(),
-        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 5),
-        status: "pending" as const,
-        completedDate: null,
-        order: 0,
-        createdAt: new Date()
-      },
-      {
-        id: this.milestoneIdCounter++,
-        quotationId: quotation.id,
-        title: "Material Procurement",
-        description: "Purchase and delivery of all materials",
-        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 6),
-        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 15),
-        status: "pending" as const,
-        completedDate: null,
-        order: 1,
-        createdAt: new Date()
-      },
-      {
-        id: this.milestoneIdCounter++,
-        quotationId: quotation.id,
-        title: "Installation Phase",
-        description: "Installation of all fixtures and cabinets",
-        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 16),
-        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 25),
-        status: "pending" as const,
-        completedDate: null,
-        order: 2,
-        createdAt: new Date()
-      },
-      {
-        id: this.milestoneIdCounter++,
-        quotationId: quotation.id,
-        title: "Final Inspection",
-        description: "Quality check and client acceptance",
-        startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 26),
-        endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 28),
-        status: "pending" as const,
-        completedDate: null,
-        order: 3,
-        createdAt: new Date()
-      }
-    ];
+    const milestones = this.createDefaultProjectMilestones(quotation.id, now);
     
     // Add milestones to the storage
     milestones.forEach(milestone => {
@@ -1365,6 +1316,15 @@ export class MemStorage implements IStorage {
       updatedAt: now,
     };
     this.quotations.set(id, newQuotation);
+    
+    // Create default project milestones for the new quotation
+    const milestones = this.createDefaultProjectMilestones(id, now);
+    
+    // Add milestones to storage
+    milestones.forEach(milestone => {
+      this.milestones.set(milestone.id, milestone);
+    });
+    
     return newQuotation;
   }
   
@@ -1514,19 +1474,13 @@ export class MemStorage implements IStorage {
       }
     }
     
-    // Create milestones for the new quotation
-    const originalMilestones = await this.getMilestones(originalQuotation.id);
-    for (const milestone of originalMilestones) {
-      await this.createMilestone({
-        quotationId: newQuotation.id,
-        title: milestone.title,
-        description: milestone.description,
-        startDate: milestone.startDate,
-        endDate: milestone.endDate,
-        status: 'pending',
-        order: milestone.order
-      });
-    }
+    // Create default milestones for the new quotation
+    const milestones = this.createDefaultProjectMilestones(newQuotation.id, now);
+    
+    // Add milestones to storage
+    milestones.forEach(milestone => {
+      this.milestones.set(milestone.id, milestone);
+    });
     
     // Update the prices
     await this.updateQuotationPrices(newQuotation.id);
@@ -1697,6 +1651,245 @@ export class MemStorage implements IStorage {
     return this.products.get(id);
   }
   
+  // Helper function to generate default project milestones for a quotation
+  private createDefaultProjectMilestones(quotationId: number, startDate: Date = new Date()): Milestone[] {
+    const milestones: Milestone[] = [];
+    let currentDate = new Date(startDate);
+    
+    // Phase 1: Initial Consultation & Design (1-2 weeks)
+    // Day 1: Initial customer contact and preliminary design concept with quotation provided
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Initial Consultation",
+      description: "Initial customer contact and preliminary design concept with quotation provided",
+      startDate: new Date(currentDate),
+      endDate: new Date(currentDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    // Day 3-7: Design meeting(s) with customer
+    currentDate = new Date(startDate);
+    currentDate.setDate(currentDate.getDate() + 3);
+    const designMeetingEndDate = new Date(startDate);
+    designMeetingEndDate.setDate(designMeetingEndDate.getDate() + 7);
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Design Meetings",
+      description: "Design meeting(s) with customer to finalize details",
+      startDate: new Date(currentDate),
+      endDate: new Date(designMeetingEndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    // Day 5-10: Laser measurements of the site
+    currentDate = new Date(startDate);
+    currentDate.setDate(currentDate.getDate() + 5);
+    const measurementsEndDate = new Date(startDate);
+    measurementsEndDate.setDate(measurementsEndDate.getDate() + 10);
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Site Measurements",
+      description: "Laser measurements of the site",
+      startDate: new Date(currentDate),
+      endDate: new Date(measurementsEndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    // Day 10-14: Finalization of designs
+    currentDate = new Date(startDate);
+    currentDate.setDate(currentDate.getDate() + 10);
+    const finalizationEndDate = new Date(startDate);
+    finalizationEndDate.setDate(finalizationEndDate.getDate() + 14);
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Design Finalization",
+      description: "Finalization of designs",
+      startDate: new Date(currentDate),
+      endDate: new Date(finalizationEndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    // Phase 2: Design Confirmation & Production Initiation (1-3 days)
+    currentDate = new Date(finalizationEndDate);
+    currentDate.setDate(currentDate.getDate() + 1);
+    const phase2EndDate = new Date(currentDate);
+    phase2EndDate.setDate(phase2EndDate.getDate() + 3);
+    
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Detailed Design Document",
+      description: "Provide detailed document with finalized design and accessories",
+      startDate: new Date(currentDate),
+      endDate: new Date(phase2EndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Customer Confirmation",
+      description: "Customer confirmation and 50% advance payment",
+      startDate: new Date(currentDate),
+      endDate: new Date(phase2EndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Production Order",
+      description: "Production order sent to factory",
+      startDate: new Date(currentDate),
+      endDate: new Date(phase2EndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    // Phase 3: Production (30-45 days)
+    currentDate = new Date(phase2EndDate);
+    currentDate.setDate(currentDate.getDate() + 1);
+    
+    const standardFinishEndDate = new Date(currentDate);
+    standardFinishEndDate.setDate(standardFinishEndDate.getDate() + 30);
+    
+    const premiumFinishEndDate = new Date(currentDate);
+    premiumFinishEndDate.setDate(premiumFinishEndDate.getDate() + 45);
+    
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Production Phase",
+      description: "30 days: Standard finishes (Highgloss, Matt, Softmat, Laminates), 45 days: Premium finishes (Classic Lacquer)",
+      startDate: new Date(currentDate),
+      endDate: new Date(premiumFinishEndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Production Completion",
+      description: "Production completion notification",
+      startDate: new Date(premiumFinishEndDate),
+      endDate: new Date(premiumFinishEndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    // Phase 4: Payment & Logistics (1-3 days)
+    currentDate = new Date(premiumFinishEndDate);
+    currentDate.setDate(currentDate.getDate() + 1);
+    const phase4EndDate = new Date(currentDate);
+    phase4EndDate.setDate(phase4EndDate.getDate() + 3);
+    
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Remaining Payment",
+      description: "Remaining 50% payment collection",
+      startDate: new Date(currentDate),
+      endDate: new Date(phase4EndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Dispatch Confirmation",
+      description: "Dispatch confirmation from factory",
+      startDate: new Date(currentDate),
+      endDate: new Date(phase4EndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    // Phase 5: Delivery & Installation (15 days)
+    currentDate = new Date(phase4EndDate);
+    currentDate.setDate(currentDate.getDate() + 1);
+    
+    const transportEndDate = new Date(currentDate);
+    transportEndDate.setDate(transportEndDate.getDate() + 10);
+    
+    const installationEndDate = new Date(transportEndDate);
+    installationEndDate.setDate(installationEndDate.getDate() + 5);
+    
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Transport to Site",
+      description: "Transport from factory to project site (Days 1-10)",
+      startDate: new Date(currentDate),
+      endDate: new Date(transportEndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Installation",
+      description: "Installation of modular components (Days 11-15)",
+      startDate: new Date(transportEndDate),
+      endDate: new Date(installationEndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    milestones.push({
+      id: this.milestoneIdCounter++,
+      quotationId,
+      title: "Project Handover",
+      description: "Project handover to customer",
+      startDate: new Date(installationEndDate),
+      endDate: new Date(installationEndDate),
+      status: "pending" as const,
+      completedDate: null,
+      order: milestones.length,
+      createdAt: new Date()
+    });
+    
+    return milestones;
+  }
+
   // Helper function to calculate discounted price
   private calculateDiscountedPrice(sellingPrice: number, discount: number, discountType: string): number {
     if (!discount) return sellingPrice;
