@@ -153,8 +153,8 @@ export default function ViewQuotation() {
       // Generate the filename
       const filename = `Quotation-${quotation?.quotationNumber || id}`;
       
-      // Export to PDF
-      await exportToPdf(quoteElement, filename);
+      // Export to PDF with type information
+      await exportToPdf(quoteElement, filename, activeTab === 'presentation');
       
       toast({
         title: "PDF Generated",
