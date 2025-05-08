@@ -108,7 +108,7 @@ export function AppSettingsForm() {
                         step="0.01"
                         placeholder="Default Global Discount" 
                         {...field}
-                        value={field.value.toString()}
+                        value={(field.value || 0).toString()}
                         onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
                     </FormControl>
@@ -134,7 +134,7 @@ export function AppSettingsForm() {
                         step="0.01"
                         placeholder="Default GST Percentage" 
                         {...field}
-                        value={field.value.toString()}
+                        value={(field.value || 0).toString()}
                         onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
                     </FormControl>
