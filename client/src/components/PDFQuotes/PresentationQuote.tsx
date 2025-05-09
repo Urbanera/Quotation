@@ -91,8 +91,9 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
 
   // Calculations
   const totalWithHandling = calculateInstallationCharges();
-  const discountedTotal = safeQuotation.globalDiscount > 0
-    ? safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100)
+  const discountPercentage = safeQuotation.globalDiscount || 0;
+  const discountedTotal = discountPercentage > 0
+    ? safeQuotation.totalSellingPrice * (1 - discountPercentage / 100)
     : safeQuotation.totalSellingPrice;
   const gstAmount = (discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100);
   const finalPrice = discountedTotal + totalWithHandling + gstAmount;
@@ -173,8 +174,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         <div className="px-10 mb-8">
           <h2 className="text-2xl font-bold text-[#009245] mb-4">About Us</h2>
           <p className="text-gray-700 leading-relaxed">
-            {companySettings?.description || 
-            `${companyName} specializes in creating elegant, functional interior spaces tailored to your unique lifestyle and preferences. Our team of skilled designers and craftsmen work closely with you to transform your vision into reality, ensuring every detail is perfect.`}
+            {`${companyName} specializes in creating elegant, functional interior spaces tailored to your unique lifestyle and preferences. Our team of skilled designers and craftsmen work closely with you to transform your vision into reality, ensuring every detail is perfect.`}
           </p>
         </div>
         
@@ -432,9 +432,9 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                     {formatCurrency(safeQuotation.totalSellingPrice)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
-                    {safeQuotation.globalDiscount > 0 ? (
+                    {discountPercentage > 0 ? (
                       <span className="text-[#D81F28] font-medium">
-                        {formatCurrency(safeQuotation.totalSellingPrice * (1 - safeQuotation.globalDiscount / 100))}
+                        {formatCurrency(discountedTotal)}
                       </span>
                     ) : (
                       <>{formatCurrency(safeQuotation.totalSellingPrice)}</>
@@ -463,7 +463,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                     {formatCurrency((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                    {formatCurrency(gstAmount)}
+                    {formatCurrency((discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
                   </td>
                 </tr>
                     
@@ -476,7 +476,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                       (safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-[#D81F28] text-right">
-                    {formatCurrency(finalPrice)}
+                    {formatCurrency(discountedTotal + totalWithHandling + gstAmount)}
                   </td>
                 </tr>
               </tbody>
