@@ -262,54 +262,128 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
 
         {/* Scope of Work - Rooms Description */}
-        <div className="my-6">
+        <div className="my-6" style={{ breakInside: 'avoid' }}>
           <h3 className="text-xl font-bold mb-4 text-[#009245]">Scope of Work</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            {safeQuotation.rooms.map((room, index) => (
-              <div 
-                key={room.id} 
-                className={`border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow room-section ${index === 0 ? 'first-room' : ''}`}
-              >
-                <div className="bg-[#E6E6E6] p-4 border-b">
-                  <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
-                  {room.description && <p className="text-gray-600 mt-1">{room.description}</p>}
-                </div>
-                <div className="p-4">
-                  <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
-                  <ul className="list-disc list-inside text-gray-600 space-y-1">
-                    {room.products && room.products.map((product) => (
-                      <li key={product.id}>
-                        {product.name}
-                        {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
-                      </li>
-                    ))}
-                    {room.accessories && room.accessories.map((accessory) => (
-                      <li key={accessory.id}>
-                        {accessory.name}
-                        {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  {room.images && room.images.length > 0 && (
-                    <div className="mt-4">
-                      <h5 className="font-medium text-gray-800 mb-2">Design References:</h5>
-                      <div className="grid grid-cols-2 gap-2">
-                        {room.images.slice(0, 2).map((image) => (
-                          <div key={image.id} className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
-                            <img 
-                              src={image.path} 
-                              alt={`Design for ${room.name || 'Room'}`} 
-                              className="object-cover w-full h-full" 
-                            />
-                          </div>
+          
+          {/* Remove md:grid-cols-2 - Force grid to be 2 columns even in print with table-based layout */}
+          <div className="w-full" style={{ display: 'table', tableLayout: 'fixed', borderSpacing: '20px 0' }}>
+            <div style={{ display: 'table-row' }}>
+              {safeQuotation.rooms.map((room, index) => (
+                <div
+                  key={room.id}
+                  style={{ 
+                    display: index % 2 === 0 ? 'table-cell' : (index === safeQuotation.rooms.length - 1 && safeQuotation.rooms.length % 2 !== 0 ? 'table-cell' : 'none'),
+                    width: '50%',
+                    paddingBottom: '20px',
+                    verticalAlign: 'top'
+                  }}
+                >
+                  <div className="border rounded-lg overflow-hidden shadow-sm room-section">
+                    <div className="bg-[#E6E6E6] p-4 border-b">
+                      <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
+                      {room.description && <p className="text-gray-600 mt-1">{room.description}</p>}
+                    </div>
+                    <div className="p-4">
+                      <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
+                      <ul className="list-disc list-inside text-gray-600 space-y-1">
+                        {room.products && room.products.map((product) => (
+                          <li key={product.id}>
+                            {product.name}
+                            {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
+                          </li>
                         ))}
+                        {room.accessories && room.accessories.map((accessory) => (
+                          <li key={accessory.id}>
+                            {accessory.name}
+                            {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
+                          </li>
+                        ))}
+                      </ul>
+                      
+                      {room.images && room.images.length > 0 && (
+                        <div className="mt-4">
+                          <h5 className="font-medium text-gray-800 mb-2">Design References:</h5>
+                          <div className="grid grid-cols-2 gap-2">
+                            {room.images.slice(0, 2).map((image) => (
+                              <div key={image.id} className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
+                                <img 
+                                  src={image.path} 
+                                  alt={`Design for ${room.name || 'Room'}`} 
+                                  className="object-cover w-full h-full" 
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* For odd number of rooms, add an empty cell to keep layout consistent */}
+              {safeQuotation.rooms.length % 2 !== 0 && (
+                <div style={{ display: 'table-cell', width: '50%' }}></div>
+              )}
+            </div>
+            
+            {/* Display the second row of rooms */}
+            {safeQuotation.rooms.length > 2 && (
+              <div style={{ display: 'table-row' }}>
+                {safeQuotation.rooms.map((room, index) => (
+                  <div
+                    key={`second-row-${room.id}`}
+                    style={{ 
+                      display: index % 2 !== 0 ? 'table-cell' : 'none',
+                      width: '50%',
+                      paddingBottom: '20px',
+                      verticalAlign: 'top'
+                    }}
+                  >
+                    <div className="border rounded-lg overflow-hidden shadow-sm room-section">
+                      <div className="bg-[#E6E6E6] p-4 border-b">
+                        <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
+                        {room.description && <p className="text-gray-600 mt-1">{room.description}</p>}
+                      </div>
+                      <div className="p-4">
+                        <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
+                        <ul className="list-disc list-inside text-gray-600 space-y-1">
+                          {room.products && room.products.map((product) => (
+                            <li key={product.id}>
+                              {product.name}
+                              {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
+                            </li>
+                          ))}
+                          {room.accessories && room.accessories.map((accessory) => (
+                            <li key={accessory.id}>
+                              {accessory.name}
+                              {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
+                            </li>
+                          ))}
+                        </ul>
+                        
+                        {room.images && room.images.length > 0 && (
+                          <div className="mt-4">
+                            <h5 className="font-medium text-gray-800 mb-2">Design References:</h5>
+                            <div className="grid grid-cols-2 gap-2">
+                              {room.images.slice(0, 2).map((image) => (
+                                <div key={image.id} className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
+                                  <img 
+                                    src={image.path} 
+                                    alt={`Design for ${room.name || 'Room'}`} 
+                                    className="object-cover w-full h-full" 
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -434,28 +508,45 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
 
         {/* Terms and conditions */}
         <div className="mt-2" style={{ pageBreakBefore: 'always', breakBefore: 'page', pageBreakInside: 'avoid' }}>
-          <h3 className="text-base font-bold mb-1 text-[#009245]">Terms & Conditions</h3>
+          <h3 className="text-base font-bold mb-4 text-[#009245]">Terms & Conditions</h3>
           
           {appSettings?.presentationTermsAndConditions ? (
             // If custom terms are available in settings, use those with proper formatting
-            <div className="text-[10px] leading-tight text-gray-600 whitespace-pre-line max-h-[350px] overflow-hidden">
+            <div className="text-[10px] leading-tight text-gray-600 whitespace-pre-line" style={{ 
+              minHeight: '650px',
+              columnCount: 1,
+              columnGap: '20px',
+              columnFill: 'auto'
+            }}>
               {appSettings.presentationTermsAndConditions}
             </div>
           ) : (
             // Otherwise, use the quotation's terms or a default fallback
             quotation.terms ? (
-              <div className="text-[10px] leading-tight text-gray-600 whitespace-pre-line max-h-[350px] overflow-hidden">
+              <div className="text-[10px] leading-tight text-gray-600 whitespace-pre-line" style={{ 
+                minHeight: '650px',
+                columnCount: 1,
+                columnGap: '20px',
+                columnFill: 'auto'
+              }}>
                 {quotation.terms}
               </div>
             ) : (
-              <ul className="list-disc pl-4 text-[10px] leading-tight text-gray-600 space-y-0">
-                <li>Quotation is valid for 15 days from the date of issue.</li>
-                <li>50% advance payment required to start the work.</li>
-                <li>Delivery time: 4-6 weeks from date of order confirmation.</li>
-                <li>Warranty: 1 year on manufacturing defects.</li>
-                <li>Transportation and installation included in the price.</li>
-                <li>Colors may vary slightly from the samples shown.</li>
-              </ul>
+              <div style={{ 
+                minHeight: '650px',
+                columnCount: 1, 
+                columnGap: '20px', 
+                columnFill: 'auto'
+              }}>
+                <ul className="list-disc pl-4 text-[10px] leading-tight text-gray-600 space-y-2">
+                  <li>Quotation is valid for 15 days from the date of issue.</li>
+                  <li>50% advance payment required to start the work.</li>
+                  <li>Delivery time: 4-6 weeks from date of order confirmation.</li>
+                  <li>Warranty: 1 year on manufacturing defects.</li>
+                  <li>Transportation and installation included in the price.</li>
+                  <li>Colors may vary slightly from the samples shown.</li>
+                </ul>
+              </div>
             )
           )}
           
