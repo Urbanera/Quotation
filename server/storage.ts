@@ -2197,14 +2197,14 @@ export class MemStorage implements IStorage {
     
     // Add product prices
     for (const product of products) {
-      sellingPrice += product.sellingPrice;
-      discountedPrice += product.discountedPrice;
+      sellingPrice += product.sellingPrice * (product.quantity || 1);
+      discountedPrice += product.discountedPrice * (product.quantity || 1);
     }
     
-    // Add accessory prices
+    // Add accessory prices with quantity
     for (const accessory of accessories) {
-      sellingPrice += accessory.sellingPrice;
-      discountedPrice += accessory.discountedPrice;
+      sellingPrice += accessory.sellingPrice * (accessory.quantity || 1);
+      discountedPrice += accessory.discountedPrice * (accessory.quantity || 1);
     }
     
     // Update room
