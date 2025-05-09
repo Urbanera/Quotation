@@ -248,7 +248,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       {/* Content Pages - Starting with Scope of Work */}
       <div className="bg-white p-8">
         {/* Simple Logo Header */}
-        <div className="flex items-start pb-6">
+        <div className="flex items-start pb-6 border-b border-gray-200" style={{ pageBreakAfter: 'avoid' }}>
           {companySettings?.logo && (
             <img 
               src={companySettings.logo} 
@@ -262,135 +262,68 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
 
         {/* Scope of Work - Rooms Description */}
-        <div className="my-6" style={{ breakInside: 'avoid' }}>
-          <h3 className="text-xl font-bold mb-4 text-[#009245]">Scope of Work</h3>
+        <div className="mt-6 mb-10">
+          <h3 className="text-xl font-bold mb-6 text-[#009245]" style={{ pageBreakAfter: 'avoid' }}>Scope of Work</h3>
           
-          {/* Remove md:grid-cols-2 - Force grid to be 2 columns even in print with table-based layout */}
-          <div className="w-full" style={{ display: 'table', tableLayout: 'fixed', borderSpacing: '20px 0' }}>
-            <div style={{ display: 'table-row' }}>
-              {safeQuotation.rooms.map((room, index) => (
-                <div
-                  key={room.id}
-                  style={{ 
-                    display: index % 2 === 0 ? 'table-cell' : (index === safeQuotation.rooms.length - 1 && safeQuotation.rooms.length % 2 !== 0 ? 'table-cell' : 'none'),
-                    width: '50%',
-                    paddingBottom: '20px',
-                    verticalAlign: 'top'
-                  }}
-                >
-                  <div className="border rounded-lg overflow-hidden shadow-sm room-section">
-                    <div className="bg-[#E6E6E6] p-4 border-b">
-                      <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
-                      {room.description && <p className="text-gray-600 mt-1">{room.description}</p>}
-                    </div>
-                    <div className="p-4">
-                      <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
-                      <ul className="list-disc list-inside text-gray-600 space-y-1">
-                        {room.products && room.products.map((product) => (
-                          <li key={product.id}>
-                            {product.name}
-                            {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
-                          </li>
-                        ))}
-                        {room.accessories && room.accessories.map((accessory) => (
-                          <li key={accessory.id}>
-                            {accessory.name}
-                            {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
-                          </li>
-                        ))}
-                      </ul>
-                      
-                      {room.images && room.images.length > 0 && (
-                        <div className="mt-4">
-                          <h5 className="font-medium text-gray-800 mb-2">Design References:</h5>
-                          <div className="grid grid-cols-2 gap-2">
-                            {room.images.slice(0, 2).map((image) => (
-                              <div key={image.id} className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
-                                <img 
-                                  src={image.path} 
-                                  alt={`Design for ${room.name || 'Room'}`} 
-                                  className="object-cover w-full h-full" 
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {/* For odd number of rooms, add an empty cell to keep layout consistent */}
-              {safeQuotation.rooms.length % 2 !== 0 && (
-                <div style={{ display: 'table-cell', width: '50%' }}></div>
-              )}
-            </div>
-            
-            {/* Display the second row of rooms */}
-            {safeQuotation.rooms.length > 2 && (
-              <div style={{ display: 'table-row' }}>
-                {safeQuotation.rooms.map((room, index) => (
-                  <div
-                    key={`second-row-${room.id}`}
-                    style={{ 
-                      display: index % 2 !== 0 ? 'table-cell' : 'none',
-                      width: '50%',
-                      paddingBottom: '20px',
-                      verticalAlign: 'top'
-                    }}
-                  >
-                    <div className="border rounded-lg overflow-hidden shadow-sm room-section">
-                      <div className="bg-[#E6E6E6] p-4 border-b">
-                        <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
-                        {room.description && <p className="text-gray-600 mt-1">{room.description}</p>}
-                      </div>
-                      <div className="p-4">
-                        <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
-                        <ul className="list-disc list-inside text-gray-600 space-y-1">
-                          {room.products && room.products.map((product) => (
-                            <li key={product.id}>
-                              {product.name}
-                              {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
-                            </li>
-                          ))}
-                          {room.accessories && room.accessories.map((accessory) => (
-                            <li key={accessory.id}>
-                              {accessory.name}
-                              {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
-                            </li>
-                          ))}
-                        </ul>
-                        
-                        {room.images && room.images.length > 0 && (
-                          <div className="mt-4">
-                            <h5 className="font-medium text-gray-800 mb-2">Design References:</h5>
-                            <div className="grid grid-cols-2 gap-2">
-                              {room.images.slice(0, 2).map((image) => (
-                                <div key={image.id} className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
-                                  <img 
-                                    src={image.path} 
-                                    alt={`Design for ${room.name || 'Room'}`} 
-                                    className="object-cover w-full h-full" 
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+          {/* Individual Rooms with Better Page Break Control */}
+          {safeQuotation.rooms.map((room, index) => (
+            <div 
+              key={room.id} 
+              className="mb-8 pb-6 border-b border-gray-200 last:border-b-0"
+              style={{ pageBreakInside: 'avoid', pageBreakBefore: index !== 0 ? 'auto' : 'avoid' }}
+            >
+              <div className="bg-[#E6E6E6] p-4 border-b border rounded-t-lg">
+                <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
+                {room.description && <p className="text-gray-600 mt-1">{room.description}</p>}
               </div>
-            )}
-          </div>
+              
+              <div className="p-4 border border-t-0 rounded-b-lg">
+                {/* Inclusions Section */}
+                <div style={{ pageBreakInside: 'avoid' }}>
+                  <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
+                  <ul className="list-disc list-inside text-gray-600 space-y-1">
+                    {room.products && room.products.map((product) => (
+                      <li key={product.id}>
+                        {product.name}
+                        {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
+                      </li>
+                    ))}
+                    {room.accessories && room.accessories.map((accessory) => (
+                      <li key={accessory.id}>
+                        {accessory.name}
+                        {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                {/* Design References with Images */}
+                {room.images && room.images.length > 0 && (
+                  <div className="mt-6" style={{ pageBreakInside: 'avoid' }}>
+                    <h5 className="font-medium text-gray-800 mb-3">Design References:</h5>
+                    <div className="flex flex-wrap gap-4">
+                      {room.images.map((image) => (
+                        <div key={image.id} className="w-full max-w-xs mb-4">
+                          <img 
+                            src={image.path} 
+                            alt={`Design for ${room.name || 'Room'}`} 
+                            className="w-full h-auto object-contain rounded-md border border-gray-200" 
+                            style={{ maxHeight: '200px' }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Project Cost Summary */}
-        <div className="my-6">
-          <h3 className="text-xl font-bold mb-4 text-[#009245]">Project Cost Summary</h3>
-          <div className="border rounded-md overflow-hidden">
+        <div className="my-10" style={{ pageBreakBefore: 'always', breakBefore: 'page', pageBreakInside: 'avoid' }}>
+          <h3 className="text-xl font-bold mb-6 text-[#009245]">Project Cost Summary</h3>
+          <div className="border rounded-md overflow-hidden shadow-sm">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-[#E6E6E6]">
                 <tr>
