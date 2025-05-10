@@ -237,13 +237,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
         
         {/* Feature icons in a row */}
-        <div style={{ 
-          position: 'absolute', 
-          bottom: '60px', 
-          left: 0, 
-          right: 0,
-          padding: '0 10px'
-        }}>
+        <div className="mt-auto mb-16 px-10" style={{ position: 'absolute', bottom: '20px', left: 0, right: 0 }}>
           <div className="flex justify-around items-center">
             <img src={bestQualityImg} alt="Best Quality" className="h-14 object-contain" />
             <img src={fastDeliveryImg} alt="Fast Delivery" className="h-14 object-contain" />
@@ -254,12 +248,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
         
         {/* Footer */}
-        <div className="bg-[#009245] text-white p-4 text-center" style={{ 
-          position: 'absolute', 
-          bottom: 0, 
-          left: 0, 
-          right: 0 
-        }}>
+        <div className="bg-[#009245] text-white p-4 text-center" style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
           {companySettings?.website || "www.yourcompany.com"}
         </div>
       </div>
@@ -310,66 +299,47 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               </ul>
             </div>
             
-            {/* Design References with Images - NEW TABLE FORMAT FOR 2 IMAGES PER ROW */}
+            {/* Design References with Images */}
             {room.images && room.images.length > 0 && (
               <div className="mb-6">
                 <h5 className="font-medium text-gray-800 mb-3">Design References:</h5>
                 <table width="100%" cellPadding="10" cellSpacing="0" border="0">
                   <tbody>
-                    {/* Create rows based on images array length */}
+                    {/* Force images into pairs in the table */}
                     {Array.from({ length: Math.ceil(room.images.length / 2) }).map((_, rowIndex) => (
                       <tr key={rowIndex}>
-                        {/* First column */}
-                        <td width="50%" align="center" valign="middle">
-                          {room.images[rowIndex * 2] && (
-                            <div style={{
-                              width: '100%',
-                              height: '200px',
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '6px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              overflow: 'hidden'
-                            }}>
-                              <img 
-                                src={room.images[rowIndex * 2].path} 
-                                alt={`Design ${rowIndex * 2 + 1}`}
-                                style={{
-                                  maxHeight: '190px',
-                                  maxWidth: '100%',
-                                  objectFit: 'contain'
-                                }}
-                              />
-                            </div>
-                          )}
-                        </td>
-                        
-                        {/* Second column */}
-                        <td width="50%" align="center" valign="middle">
-                          {room.images[rowIndex * 2 + 1] && (
-                            <div style={{
-                              width: '100%',
-                              height: '200px',
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '6px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              overflow: 'hidden'
-                            }}>
-                              <img 
-                                src={room.images[rowIndex * 2 + 1].path} 
-                                alt={`Design ${rowIndex * 2 + 2}`}
-                                style={{
-                                  maxHeight: '190px',
-                                  maxWidth: '100%',
-                                  objectFit: 'contain'
-                                }}
-                              />
-                            </div>
-                          )}
-                        </td>
+                        {[0, 1].map(colIndex => {
+                          const imageIndex = rowIndex * 2 + colIndex;
+                          const image = room.images[imageIndex];
+                          return (
+                            <td key={colIndex} width="50%" style={{ verticalAlign: 'middle' }}>
+                              {image && (
+                    <div 
+                      key={image.id} 
+                      className="image-container" 
+                      style={{ 
+                        height: '200px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '6px'
+                      }}
+                    >
+                      <img 
+                        src={image.path} 
+                        alt={`Design for ${room.name || 'Room'}`} 
+                        style={{ 
+                          maxHeight: '190px', 
+                          maxWidth: '100%',
+                          objectFit: 'contain'
+                        }}
+                      />
+                              )}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>
@@ -404,7 +374,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
               </div>
               <div className="text-xs text-gray-500">
-                Page {index + 3} of {safeQuotation.rooms.length + 4}
+                Page {3 + index} of {3 + safeQuotation.rooms.length + 1 + 1}
               </div>
             </div>
           </div>
@@ -442,90 +412,109 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-[#009245] uppercase tracking-wider">
                     Selling Price
                   </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-[#009245] uppercase tracking-wider">
+                    {safeQuotation.globalDiscount > 0 
+                      ? `Discounted Price (Incl. ${safeQuotation.globalDiscount}% Discount)` 
+                      : "Discounted Price"}
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {safeQuotation.rooms.map((room) => (
-                  <tr key={room.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {(room.name || 'UNNAMED ROOM').toUpperCase()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                      {formatCurrency(room.sellingPrice || 0)}
-                    </td>
-                  </tr>
-                ))}
-                
-                {/* Installation Charges if any */}
-                {totalWithHandling > 0 && (
+                {Array.isArray(safeQuotation.rooms) && safeQuotation.rooms.length > 0 ? (
+                  safeQuotation.rooms.map((room) => {
+                    if (!room) return null;
+                    
+                    // Calculate the discounted price with global discount applied
+                    const roomSellingPrice = room.sellingPrice || 0;
+                    const calculatedDiscountedPrice = safeQuotation.globalDiscount > 0
+                      ? roomSellingPrice - (roomSellingPrice * safeQuotation.globalDiscount / 100)
+                      : roomSellingPrice;
+                    
+                    return (
+                      <tr key={room.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {(room.name || 'UNNAMED ROOM').toUpperCase()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          {formatCurrency(roomSellingPrice)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {safeQuotation.globalDiscount > 0 ? (
+                            <span className="text-[#D81F28] font-medium">
+                              {formatCurrency(calculatedDiscountedPrice)}
+                            </span>
+                          ) : (
+                            <>{formatCurrency(roomSellingPrice)}</>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
                   <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      INSTALLATION CHARGES
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                      {formatCurrency(totalWithHandling)}
+                    <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
+                      No rooms available for this quotation
                     </td>
                   </tr>
                 )}
                 
-                {/* Subtotal */}
-                <tr className="bg-gray-50">
+                <tr className="bg-[#E6E6E6]">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    SUBTOTAL
+                    Total Of All Items
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
                     {formatCurrency(safeQuotation.totalSellingPrice)}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
+                    {discountPercentage > 0 ? (
+                      <span className="text-[#D81F28] font-medium">
+                        {formatCurrency(discountedTotal)}
+                      </span>
+                    ) : (
+                      <>{formatCurrency(safeQuotation.totalSellingPrice)}</>
+                    )}
+                  </td>
                 </tr>
                 
-                {/* Discount if applicable */}
-                {discountPercentage > 0 && (
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      DISCOUNT ({discountPercentage}%)
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#D81F28] text-right">
-                      - {formatCurrency(safeQuotation.totalSellingPrice * (discountPercentage / 100))}
-                    </td>
-                  </tr>
-                )}
-                
-                {/* GST if applicable */}
-                {safeQuotation.gstPercentage > 0 && (
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      GST ({safeQuotation.gstPercentage}%)
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                      {formatCurrency(gstAmount)}
-                    </td>
-                  </tr>
-                )}
-                
-                {/* Total */}
-                <tr className="bg-[#E6E6E6]">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#009245]">
-                    TOTAL PRICE
+                {/* Installation and handling charges */}
+                <tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    Installation and Handling
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#009245] text-right">
-                    {formatCurrency(finalPrice)}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {formatCurrency(totalWithHandling)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {formatCurrency(totalWithHandling)}
+                  </td>
+                </tr>
+                
+                <tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    GST {safeQuotation.gstPercentage}%
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {formatCurrency((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {formatCurrency((discountedTotal + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
+                  </td>
+                </tr>
+                    
+                <tr className="bg-[#E6E6E6]">
+                  <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                    Final Price
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
+                    {formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + 
+                      (safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-[#D81F28] text-right">
+                    {formatCurrency(discountedTotal + totalWithHandling + gstAmount)}
                   </td>
                 </tr>
               </tbody>
             </table>
-          </div>
-          
-          {/* Payment Terms */}
-          <div className="mt-8">
-            <h4 className="text-lg font-semibold mb-2 text-[#009245]">Payment Terms</h4>
-            <div className="bg-gray-50 p-4 rounded-md">
-              <ul className="list-disc list-inside space-y-2 text-gray-700">
-                <li>50% advance payment required to begin work.</li>
-                <li>40% payment upon delivery of materials.</li>
-                <li>10% payment upon completion of installation.</li>
-                <li>All payments to be made via bank transfer or cheque.</li>
-              </ul>
-            </div>
           </div>
         </div>
         
@@ -536,7 +525,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
             </div>
             <div className="text-xs text-gray-500">
-              Page {safeQuotation.rooms.length + 3} of {safeQuotation.rooms.length + 4}
+              Page {3 + safeQuotation.rooms.length} of {3 + safeQuotation.rooms.length + 1 + 1}
             </div>
           </div>
         </div>
@@ -568,38 +557,48 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               {appSettings.presentationTermsAndConditions}
             </div>
           ) : (
-            <div className="text-sm leading-relaxed text-gray-700">
-              <p className="mb-3">1. <strong>Scope of Work:</strong> {companyName} agrees to perform the production and services outlined in our individual quotation and this agreement according to the terms and conditions contained herein.</p>
-              <p className="mb-3">2. <strong>Quotation Validity:</strong> This quotation is valid for 30 days from the date of issue. Prices and availability of materials are subject to change after this period.</p>
-              <p className="mb-3">3. <strong>Measurement & Design:</strong> All product dimensions and designs are agreed upon in advance. Any changes after production begins may incur additional charges and delay delivery.</p>
-              <p className="mb-3">4. <strong>Payment Terms:</strong> The payment schedule is as follows:<br />
-                • 50% advance upon acceptance of quotation<br />
-                • 40% upon delivery of materials<br />
-                • 10% upon completion of installation</p>
-              <p className="mb-3">5. <strong>Cancellation:</strong> In the event of cancellation after production has begun, the client shall be liable for costs incurred up to the point of cancellation, including materials, labor, and a 15% administration fee.</p>
-              <p className="mb-3">6. <strong>Delivery:</strong> Standard delivery timeline is 6-8 weeks from confirmation of order unless otherwise specified. We're not responsible for delays due to circumstances beyond our control.</p>
-              <p className="mb-3">7. <strong>Site Readiness:</strong> The installation site must be clean, accessible, and with electrical connections available. Additional charges may apply if our team needs to prepare the site.</p>
-              <p className="mb-3">8. <strong>Warranty:</strong> All products come with a 1-year warranty against manufacturing defects. This excludes damage from misuse, normal wear and tear, or unauthorized modifications.</p>
-              <p className="mb-3">9. <strong>Returns & Refunds:</strong> Custom-made products cannot be returned or refunded except in cases of manufacturing defects. Defective items will be repaired or replaced at our discretion.</p>
-              <p className="mb-3">10. <strong>Ownership:</strong> All goods remain the property of {companyName} until payment has been received in full.</p>
-            </div>
+            quotation.terms ? (
+              <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
+                {quotation.terms}
+              </div>
+            ) : (
+              <div>
+                <ul className="list-disc pl-6 text-sm leading-relaxed text-gray-700 space-y-2">
+                  <li>Quotation is valid for 15 days from the date of issue.</li>
+                  <li>50% advance payment required to start the work.</li>
+                  <li>Delivery time: 4-6 weeks from date of order confirmation.</li>
+                  <li>Warranty: 1 year on manufacturing defects.</li>
+                  <li>Transportation and installation included in the price.</li>
+                  <li>Colors may vary slightly from the samples shown.</li>
+                </ul>
+              </div>
+            )
           )}
         </div>
         
         {/* Page Footer */}
         <div className="mt-auto pt-4 border-t border-gray-200">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-4">
             <div className="text-xs text-gray-500">
               {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
             </div>
             <div className="text-xs text-gray-500">
-              Page {safeQuotation.rooms.length + 4} of {safeQuotation.rooms.length + 4}
+              Page {3 + safeQuotation.rooms.length + 1} of {3 + safeQuotation.rooms.length + 1 + 1}
             </div>
+          </div>
+          
+          <div className="text-center text-sm text-gray-600">
+            <p>Thank you for your business!</p>
+            <p className="mt-1">For any queries, please contact us at {companySettings?.email || "support@designquotes.com"} 
+            {companySettings?.phone && ` or call ${companySettings.phone}`}</p>
+            {companySettings?.website && <p className="mt-1">{companySettings.website}</p>}
           </div>
         </div>
       </div>
     </div>
   );
 });
+
+PresentationQuote.displayName = "PresentationQuote";
 
 export default PresentationQuote;
