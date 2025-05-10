@@ -295,6 +295,9 @@ export default function QuotationsList() {
         case "createdAt":
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
+        case "updatedAt":
+          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          break;
         case "totalAmount":
           comparison = (a.finalPrice || 0) - (b.finalPrice || 0);
           break;
@@ -343,6 +346,7 @@ export default function QuotationsList() {
                 <SelectContent>
                   <SelectItem value="quotationNumber">Quotation Number</SelectItem>
                   <SelectItem value="createdAt">Date Created</SelectItem>
+                  <SelectItem value="updatedAt">Last Modified</SelectItem>
                   <SelectItem value="totalAmount">Amount</SelectItem>
                 </SelectContent>
               </Select>
