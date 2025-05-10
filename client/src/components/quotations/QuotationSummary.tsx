@@ -354,25 +354,25 @@ export default function QuotationSummary({
             onClick={() => {
               toast({
                 title: "Feature coming soon",
-                description: "Basic quote generation will be available soon."
+                description: "Preview functionality will be available soon."
               });
             }}
             className="gap-2"
           >
             <FileText className="h-5 w-5" />
-            Basic Quote
+            Preview
           </Button>
           <Button
             onClick={() => {
               toast({
                 title: "Feature coming soon",
-                description: "Presentation quote generation will be available soon."
+                description: "Save as Final functionality will be available soon."
               });
             }}
             className="bg-indigo-600 hover:bg-indigo-700 gap-2"
           >
             <FileOutput className="h-5 w-5" />
-            Presentation Quote
+            Save as Final
           </Button>
         </div>
       </div>
