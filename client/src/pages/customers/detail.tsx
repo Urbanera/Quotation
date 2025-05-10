@@ -25,6 +25,16 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { 
   ClipboardList, 
   FileText, 
   Mail, 
@@ -37,7 +47,11 @@ import {
   Clock,
   FileEdit,
   Tag,
-  CreditCard
+  CreditCard,
+  Eye,
+  Edit,
+  Copy,
+  Trash2
 } from "lucide-react";
 import { CustomerLedger } from "@/components/customers/CustomerLedger";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +81,8 @@ export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const [completingId, setCompletingId] = useState<number | null>(null);
+  const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
+  const [quotationToDuplicate, setQuotationToDuplicate] = useState<Quotation | null>(null);
   const customerId = parseInt(id);
 
   const { data: customer, isLoading: isLoadingCustomer } = useQuery<Customer>({
@@ -127,6 +143,68 @@ export default function CustomerDetailPage() {
   const [selectedFollowUpId, setSelectedFollowUpId] = useState<number | null>(null);
   const [updateStage, setUpdateStage] = useState(false);
   const [newStage, setNewStage] = useState<string | null>(customer?.stage || null);
+  
+  // Delete quotation mutation
+  const deleteQuotationMutation = useMutation({
+    mutationFn: async (quotationId: number) => {
+      const response = await apiRequest("DELETE", `/api/quotations/${quotationId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations", "customer", customerId] });
+      toast({
+        title: "Quotation deleted",
+        description: "The quotation has been successfully deleted.",
+      });
+      setQuotationToDelete(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete quotation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Duplicate quotation mutation
+  const duplicateQuotationMutation = useMutation({
+    mutationFn: async (quotationId: number) => {
+      const response = await apiRequest(
+        "POST", 
+        `/api/quotations/${quotationId}/duplicate`, 
+        { customerId }
+      );
+      return response.json();
+    },
+    onSuccess: (newQuotation) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations", "customer", customerId] });
+      toast({
+        title: "Quotation duplicated",
+        description: `A copy of the quotation has been created with ID #${newQuotation.id}.`,
+      });
+      setQuotationToDuplicate(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to duplicate quotation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleDeleteQuotation = () => {
+    if (quotationToDelete) {
+      deleteQuotationMutation.mutate(quotationToDelete.id);
+    }
+  };
+
+  const handleDuplicateQuotation = () => {
+    if (quotationToDuplicate) {
+      duplicateQuotationMutation.mutate(quotationToDuplicate.id);
+    }
+  };
 
   const markCompleteMutation = useMutation({
     mutationFn: ({ followUpId, updateCustomerStage, newCustomerStage }: { 
@@ -682,14 +760,34 @@ export default function CustomerDetailPage() {
                               <div className="flex justify-end space-x-2">
                                 <Link href={`/quotations/view/${quotation.id}`}>
                                   <Button variant="outline" size="sm">
-                                    View
+                                    <Eye className="h-4 w-4" />
+                                    <span className="sr-only">View</span>
                                   </Button>
                                 </Link>
                                 <Link href={`/quotations/edit/${quotation.id}`}>
                                   <Button variant="outline" size="sm">
-                                    Edit
+                                    <Edit className="h-4 w-4" />
+                                    <span className="sr-only">Edit</span>
                                   </Button>
                                 </Link>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setQuotationToDuplicate(quotation)}
+                                  className="text-blue-600 hover:text-blue-800 border-blue-200 hover:border-blue-300"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                  <span className="sr-only">Duplicate</span>
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setQuotationToDelete(quotation)}
+                                  className="text-red-600 hover:text-red-800 border-red-200 hover:border-red-300"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="sr-only">Delete</span>
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -702,6 +800,48 @@ export default function CustomerDetailPage() {
             </div>
           </TabsContent>
         </Tabs>
+        
+        {/* Delete Quotation Dialog */}
+        <AlertDialog open={!!quotationToDelete} onOpenChange={(open) => !open && setQuotationToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Quotation</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this quotation? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteQuotation}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        {/* Duplicate Quotation Dialog */}
+        <AlertDialog open={!!quotationToDuplicate} onOpenChange={(open) => !open && setQuotationToDuplicate(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Duplicate Quotation</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to create a copy of this quotation for this customer?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDuplicateQuotation}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Duplicate
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
