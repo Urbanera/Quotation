@@ -9,37 +9,52 @@ import { QuotationWithDetails } from "@shared/schema";
 const printStyles = `
 @media print {
   @page {
-    size: A4;
-    margin: 10mm;
+    size: A4 portrait;
+    margin: 0;
   }
   
   html, body {
     height: 100%;
     margin: 0 !important;
     padding: 0 !important;
+    width: 210mm;
+    height: 297mm;
   }
   
   .print-container {
     margin: 0 !important;
     padding: 0 !important;
     max-width: none !important;
+    width: 210mm;
   }
   
   #print-content {
     transform: scale(0.8);
-    transform-origin: top center;
+    transform-origin: top left;
+    width: 210mm;
   }
   
   /* Adjust all logo sections to match the reference */
   .logo-container img {
     display: block;
     margin: 0 auto;
+    max-height: 60px;
   }
   
   /* Ensure each page break works correctly */
   .page-break {
     page-break-after: always;
     break-after: page;
+  }
+  
+  /* Set fixed dimensions for page containers */
+  .page-container {
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden;
+    page-break-after: always;
+    break-after: page;
+    position: relative;
   }
 }
 `;

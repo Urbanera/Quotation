@@ -104,7 +104,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
   return (
     <div ref={ref} className="max-w-5xl mx-auto bg-white" id="presentation-quote">
       {/* Cover Page - First Fixed Page */}
-      <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden" 
+      <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden page-container" 
            style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
         {/* Logo Area */}
         <div className="p-10 text-center border-b-5 border-[#009245] logo-container" style={{ borderBottomWidth: '5px' }}>
@@ -154,7 +154,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       </div>
       
       {/* Second Page - Our Features - Second Fixed Page */}
-      <div className="h-[1100px] bg-white flex flex-col overflow-hidden" 
+      <div className="h-[1100px] bg-white flex flex-col overflow-hidden page-container" 
            style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
         {/* Logo Area */}
         <div className="p-10 text-center logo-container">
