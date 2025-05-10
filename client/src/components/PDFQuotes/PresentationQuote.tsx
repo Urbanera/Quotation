@@ -310,70 +310,159 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               </ul>
             </div>
             
-            {/* Design References with Images - NEW TABLE FORMAT FOR 2 IMAGES PER ROW */}
+            {/* Design References with Images - ADAPTIVE LAYOUT: 2 IMAGES PER ROW (≤6) OR 3 IMAGES PER ROW (>6) */}
             {room.images && room.images.length > 0 && (
               <div className="mb-6">
                 <h5 className="font-medium text-gray-800 mb-3">Design References:</h5>
-                <table width="100%" cellPadding="10" cellSpacing="0" border="0">
-                  <tbody>
-                    {/* Create rows based on images array length */}
-                    {Array.from({ length: Math.ceil(room.images.length / 2) }).map((_, rowIndex) => (
-                      <tr key={rowIndex}>
-                        {/* First column */}
-                        <td width="50%" align="center" valign="middle">
-                          {room.images[rowIndex * 2] && (
-                            <div style={{
-                              width: '100%',
-                              height: '200px',
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '6px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              overflow: 'hidden'
-                            }}>
-                              <img 
-                                src={room.images[rowIndex * 2].path} 
-                                alt={`Design ${rowIndex * 2 + 1}`}
-                                style={{
-                                  maxHeight: '190px',
-                                  maxWidth: '100%',
-                                  objectFit: 'contain'
-                                }}
-                              />
-                            </div>
-                          )}
-                        </td>
-                        
-                        {/* Second column */}
-                        <td width="50%" align="center" valign="middle">
-                          {room.images[rowIndex * 2 + 1] && (
-                            <div style={{
-                              width: '100%',
-                              height: '200px',
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '6px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              overflow: 'hidden'
-                            }}>
-                              <img 
-                                src={room.images[rowIndex * 2 + 1].path} 
-                                alt={`Design ${rowIndex * 2 + 2}`}
-                                style={{
-                                  maxHeight: '190px',
-                                  maxWidth: '100%',
-                                  objectFit: 'contain'
-                                }}
-                              />
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {room.images.length <= 6 ? (
+                  // For 6 or fewer images - 2 per row
+                  <table style={{width: '100%'}} cellPadding={10} cellSpacing={0} border={0}>
+                    <tbody>
+                      {Array.from({ length: Math.ceil(room.images.length / 2) }).map((_, rowIndex) => (
+                        <tr key={rowIndex}>
+                          {/* First column */}
+                          <td width="50%" align="center" valign="middle">
+                            {room.images[rowIndex * 2] && (
+                              <div style={{
+                                width: '100%',
+                                height: '200px',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden'
+                              }}>
+                                <img 
+                                  src={room.images[rowIndex * 2].path} 
+                                  alt={`Design ${rowIndex * 2 + 1}`}
+                                  style={{
+                                    maxHeight: '190px',
+                                    maxWidth: '100%',
+                                    objectFit: 'contain'
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          
+                          {/* Second column */}
+                          <td width="50%" align="center" valign="middle">
+                            {room.images[rowIndex * 2 + 1] && (
+                              <div style={{
+                                width: '100%',
+                                height: '200px',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden'
+                              }}>
+                                <img 
+                                  src={room.images[rowIndex * 2 + 1].path} 
+                                  alt={`Design ${rowIndex * 2 + 2}`}
+                                  style={{
+                                    maxHeight: '190px',
+                                    maxWidth: '100%',
+                                    objectFit: 'contain'
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  // For more than 6 images - 3 per row
+                  <table style={{width: '100%'}} cellPadding={6} cellSpacing={0} border={0}>
+                    <tbody>
+                      {Array.from({ length: Math.ceil(room.images.length / 3) }).map((_, rowIndex) => (
+                        <tr key={rowIndex}>
+                          {/* First column */}
+                          <td width="33.33%" align="center" valign="middle">
+                            {room.images[rowIndex * 3] && (
+                              <div style={{
+                                width: '100%',
+                                height: '180px',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden'
+                              }}>
+                                <img 
+                                  src={room.images[rowIndex * 3].path} 
+                                  alt={`Design ${rowIndex * 3 + 1}`}
+                                  style={{
+                                    maxHeight: '170px',
+                                    maxWidth: '100%',
+                                    objectFit: 'contain'
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          
+                          {/* Second column */}
+                          <td width="33.33%" align="center" valign="middle">
+                            {room.images[rowIndex * 3 + 1] && (
+                              <div style={{
+                                width: '100%',
+                                height: '180px',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden'
+                              }}>
+                                <img 
+                                  src={room.images[rowIndex * 3 + 1].path} 
+                                  alt={`Design ${rowIndex * 3 + 2}`}
+                                  style={{
+                                    maxHeight: '170px',
+                                    maxWidth: '100%',
+                                    objectFit: 'contain'
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          
+                          {/* Third column */}
+                          <td width="33.33%" align="center" valign="middle">
+                            {room.images[rowIndex * 3 + 2] && (
+                              <div style={{
+                                width: '100%',
+                                height: '180px',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden'
+                              }}>
+                                <img 
+                                  src={room.images[rowIndex * 3 + 2].path} 
+                                  alt={`Design ${rowIndex * 3 + 3}`}
+                                  style={{
+                                    maxHeight: '170px',
+                                    maxWidth: '100%',
+                                    objectFit: 'contain'
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             )}
             
@@ -515,18 +604,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
             </table>
           </div>
           
-          {/* Payment Terms */}
-          <div className="mt-8">
-            <h4 className="text-lg font-semibold mb-2 text-[#009245]">Payment Terms</h4>
-            <div className="bg-gray-50 p-4 rounded-md">
-              <ul className="list-disc list-inside space-y-2 text-gray-700">
-                <li>50% advance payment required to begin work.</li>
-                <li>40% payment upon delivery of materials.</li>
-                <li>10% payment upon completion of installation.</li>
-                <li>All payments to be made via bank transfer or cheque.</li>
-              </ul>
-            </div>
-          </div>
+          {/* Removed payment terms as requested */}
         </div>
         
         {/* Page Footer */}
