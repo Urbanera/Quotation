@@ -1,10 +1,14 @@
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { FileText, FileOutput } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { QuotationWithDetails, Room, InstallationCharge } from "@shared/schema";
+import { validateQuotation, markQuotationAsSaved, ValidationError, ValidationWarning } from "@/lib/quotationValidation";
+import { ValidationDialog } from "@/components/quotations/ValidationDialog";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface QuotationSummaryProps {
   quotationId: number;
@@ -28,6 +32,12 @@ export default function QuotationSummary({
   onSave
 }: QuotationSummaryProps) {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
+  
+  // States for validation dialog
+  const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validationWarnings, setValidationWarnings] = useState<ValidationWarning[]>([]);
 
   const { data: quotation, isLoading } = useQuery<QuotationWithDetails>({
     queryKey: [`/api/quotations/${quotationId}/details`],
@@ -352,10 +362,16 @@ export default function QuotationSummary({
           <Button
             variant="outline"
             onClick={() => {
-              toast({
-                title: "Feature coming soon",
-                description: "Preview functionality will be available soon."
-              });
+              // Navigate to the preview page
+              if (quotationId) {
+                navigate(`/quotations/view/${quotationId}`);
+              } else {
+                toast({
+                  title: "Error",
+                  description: "Cannot preview quotation - no quotation ID found.",
+                  variant: "destructive"
+                });
+              }
             }}
             className="gap-2"
           >
@@ -363,11 +379,27 @@ export default function QuotationSummary({
             Preview
           </Button>
           <Button
-            onClick={() => {
-              toast({
-                title: "Feature coming soon",
-                description: "Save as Final functionality will be available soon."
-              });
+            onClick={async () => {
+              // Save the quotation first to make sure changes are persisted
+              onSave();
+              
+              try {
+                // Validate the quotation
+                const validationResult = await validateQuotation(quotationId);
+                
+                setValidationErrors(validationResult.errors);
+                setValidationWarnings(validationResult.warnings);
+                
+                // Show validation dialog
+                setIsValidationDialogOpen(true);
+              } catch (error) {
+                console.error("Validation failed:", error);
+                toast({
+                  title: "Error",
+                  description: "Failed to validate quotation. Please try again.",
+                  variant: "destructive"
+                });
+              }
             }}
             className="bg-indigo-600 hover:bg-indigo-700 gap-2"
           >
@@ -375,6 +407,48 @@ export default function QuotationSummary({
             Save as Final
           </Button>
         </div>
+        
+        {/* Validation Dialog */}
+        <ValidationDialog
+          open={isValidationDialogOpen}
+          onOpenChange={setIsValidationDialogOpen}
+          errors={validationErrors}
+          warnings={validationWarnings}
+          onProceed={validationErrors.length === 0 ? 
+            async () => {
+              try {
+                // Mark the quotation as saved
+                await markQuotationAsSaved(quotationId);
+                
+                toast({
+                  title: "Success",
+                  description: "Quotation has been saved as final and can now be approved."
+                });
+                
+                // Close dialog
+                setIsValidationDialogOpen(false);
+                
+                // Navigate to view page
+                navigate(`/quotations/view/${quotationId}`);
+                
+                // Invalidate queries
+                queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}`] });
+                queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/details`] });
+                queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+              } catch (error) {
+                console.error("Failed to save as final:", error);
+                toast({
+                  title: "Error",
+                  description: "Failed to save quotation as final. Please try again.",
+                  variant: "destructive"
+                });
+              }
+            } 
+            : undefined
+          }
+          onCancel={() => setIsValidationDialogOpen(false)}
+          quotationId={quotationId}
+        />
       </div>
     </div>
   );
