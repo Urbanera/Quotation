@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, Eye, Save } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { ChevronLeft, Eye, Save, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -9,6 +9,8 @@ import { Customer, QuotationWithDetails } from "@shared/schema";
 import ClientInfo from "@/components/quotations/ClientInfo";
 import RoomTabs from "@/components/quotations/RoomTabs";
 import QuotationSummary from "@/components/quotations/QuotationSummary";
+import { ValidationDialog } from "@/components/quotations/ValidationDialog";
+import { validateQuotation, markQuotationAsSaved, ValidationError, ValidationWarning } from "@/lib/quotationValidation";
 
 export default function EditQuotation() {
   const { id } = useParams();
@@ -18,6 +20,11 @@ export default function EditQuotation() {
   const [installationHandling, setInstallationHandling] = useState<number>(0);
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [gstPercentage, setGstPercentage] = useState<number>(18);
+  
+  // States for validation dialog
+  const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validationWarnings, setValidationWarnings] = useState<ValidationWarning[]>([]);
 
   // Fetch quotation details
   const { data: quotation, isLoading: quotationLoading } = useQuery<QuotationWithDetails>({
@@ -40,7 +47,7 @@ export default function EditQuotation() {
     }
   }, [quotation]);
 
-  // Save quotation
+  // Save quotation (as draft)
   const handleSaveQuotation = useCallback(async () => {
     if (!id || !selectedCustomerId) return;
 
@@ -54,7 +61,7 @@ export default function EditQuotation() {
       
       toast({
         title: "Success",
-        description: "Quotation updated successfully",
+        description: "Draft quotation updated successfully",
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
@@ -68,6 +75,72 @@ export default function EditQuotation() {
       });
     }
   }, [id, selectedCustomerId, installationHandling, globalDiscount, gstPercentage, toast]);
+  
+  // Start validation process for saving quotation as final (saved status)
+  const handleValidateForFinalSave = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      // First save any current changes as draft
+      await handleSaveQuotation();
+      
+      // Run validation
+      const validationResult = await validateQuotation(parseInt(id));
+      
+      setValidationErrors(validationResult.errors);
+      setValidationWarnings(validationResult.warnings);
+      
+      // Show dialog with errors or warnings
+      setIsValidationDialogOpen(true);
+      
+    } catch (error) {
+      console.error("Validation failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to validate quotation. Please try again.",
+        variant: "destructive"
+      });
+    }
+  }, [id, handleSaveQuotation, toast]);
+
+  // Mutation to save quotation as final
+  const saveAsFinalMutation = useMutation({
+    mutationFn: async () => {
+      const quotationId = parseInt(id as string);
+      return await markQuotationAsSaved(quotationId);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Quotation has been saved as final and can now be approved."
+      });
+      
+      // Close the dialog
+      setIsValidationDialogOpen(false);
+      
+      // Navigate to view page
+      navigate(`/quotations/view/${id}`);
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}/details`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+    },
+    onError: (error: any) => {
+      // Handle validation errors specially
+      if (error.response && error.response.data && error.response.data.errorType === "validation") {
+        setValidationErrors(error.response.data.validationErrors || []);
+        setIsValidationDialogOpen(true);
+        return;
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to save quotation as final. Please fix any issues and try again.",
+        variant: "destructive"
+      });
+    }
+  });
 
   if (quotationLoading) {
     return (
@@ -134,7 +207,15 @@ export default function EditQuotation() {
                 className="bg-indigo-600 hover:bg-indigo-700"
               >
                 <Save className="mr-2 h-4 w-4" />
-                Save Changes
+                Save Draft
+              </Button>
+              <Button 
+                onClick={handleValidateForFinalSave}
+                disabled={!selectedCustomerId || quotation?.status === "saved"}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <FileCheck className="mr-2 h-4 w-4" />
+                Save as Final
               </Button>
             </div>
           </div>
