@@ -89,8 +89,15 @@ export async function validateQuotation(quotationId: number): Promise<Validation
     });
   }
   
-  // Warning check: Verify specific accessories
-  const requiredAccessories = ['skirting', 'handles', 'sliding mechanism', 't profile'];
+  // Get settings for required accessories
+  const appSettingsResponse = await apiRequest('GET', `/api/settings/app`);
+  const appSettings = await appSettingsResponse.json();
+  
+  // Warning check: Verify specific accessories from settings
+  const requiredAccessories = (appSettings.requiredAccessories || 'skirting,handles,sliding mechanism,t profile')
+    .split(',')
+    .map(item => item.trim().toLowerCase());
+    
   const accessoryCategories = quotation.rooms
     .flatMap(room => room.accessories || [])
     .map(acc => acc.name.toLowerCase());

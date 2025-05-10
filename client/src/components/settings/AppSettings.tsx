@@ -46,6 +46,7 @@ export function AppSettingsForm() {
       receiptTermsAndConditions: "",
       quotationTemplateId: "default",
       presentationTemplateId: "default",
+      requiredAccessories: "skirting,handles,sliding mechanism,t profile",
     },
     values: settings || undefined,
   });
@@ -198,6 +199,27 @@ export function AppSettingsForm() {
                     </Select>
                     <FormDescription>
                       Template used for presentation PDFs with images
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="requiredAccessories"
+                render={({ field }) => (
+                  <FormItem className="col-span-1 md:col-span-2">
+                    <FormLabel>Required Accessories for Validation</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="skirting,handles,sliding mechanism,t profile" 
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Comma-separated list of accessories that will trigger warnings during quotation validation. These are names that should appear in accessories added to rooms.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -39,6 +39,7 @@ export const appSettings = pgTable("app_settings", {
   presentationTermsAndConditions: text("presentation_terms_and_conditions"),
   quotationTemplateId: text("quotation_template_id").default("default"),
   presentationTemplateId: text("presentation_template_id").default("default"),
+  requiredAccessories: text("required_accessories").default("skirting,handles,sliding mechanism,t profile"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -335,6 +336,8 @@ export const appSettingsFormSchema = z.object({
   presentationTermsAndConditions: z.string().optional().or(z.literal("")),
   quotationTemplateId: z.string().default("default"),
   presentationTemplateId: z.string().default("default"),
+  requiredAccessories: z.string().default("skirting,handles,sliding mechanism,t profile")
+    .describe("Comma-separated list of required accessories to check in quotation validation"),
 });
 
 export const roomFormSchema = z.object({

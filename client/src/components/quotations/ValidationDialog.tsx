@@ -86,13 +86,27 @@ export function ValidationDialog({
                 <div className="flex-1">
                   <p className="text-sm font-medium text-amber-700">{warning.message}</p>
                   {warning.type === 'check_accessories' && warning.accessories.length > 0 && (
-                    <ul className="list-disc pl-5 mt-1 space-y-1">
-                      {warning.accessories.map((accessory, i) => (
-                        <li key={i} className="text-sm text-amber-600">
-                          {accessory.charAt(0).toUpperCase() + accessory.slice(1)}
-                        </li>
-                      ))}
-                    </ul>
+                    <>
+                      <ul className="list-disc pl-5 mt-1 space-y-1">
+                        {warning.accessories.map((accessory, i) => (
+                          <li key={i} className="text-sm text-amber-600">
+                            {accessory.charAt(0).toUpperCase() + accessory.slice(1)}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-2">
+                        <Button 
+                          variant="link" 
+                          className="p-0 h-auto text-xs text-amber-700"
+                          onClick={() => {
+                            onOpenChange(false);
+                            window.location.href = '/settings';
+                          }}
+                        >
+                          Update required accessories in Settings
+                        </Button>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
