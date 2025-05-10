@@ -102,7 +102,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
   const companyName = companySettings?.name || "DesignQuotes";
 
   return (
-    <div ref={ref} className="max-w-5xl mx-auto bg-white" id="presentation-quote">
+    <div ref={ref} className="bg-white w-[210mm] mx-auto" id="presentation-quote">
       {/* Cover Page - First Fixed Page */}
       <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden page-container" 
            style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
@@ -257,7 +257,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       {safeQuotation.rooms.map((room, index) => (
         <div 
           key={room.id} 
-          className="h-[1100px] bg-white p-8 flex flex-col" 
+          className="h-[1100px] bg-white p-8 flex flex-col page-container" 
           style={{ pageBreakAfter: 'always', breakAfter: 'page' }}
         >
           {/* Room Header with Logo */}
@@ -305,11 +305,12 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 <h5 className="font-medium text-gray-800 mb-3">Design References:</h5>
                 <div className="grid grid-cols-3 gap-4">
                   {room.images.map((image) => (
-                    <div key={image.id} className="aspect-w-3 aspect-h-2 rounded-md overflow-hidden border border-gray-200">
+                    <div key={image.id} className="aspect-w-3 aspect-h-2 rounded-md overflow-hidden border border-gray-200 flex items-center justify-center" style={{ height: '120px' }}>
                       <img 
                         src={image.path} 
                         alt={`Design for ${room.name || 'Room'}`} 
-                        className="object-contain w-full h-full" 
+                        className="object-contain max-w-full max-h-full" 
+                        style={{ maxHeight: '110px', maxWidth: '100%' }}
                       />
                     </div>
                   ))}
@@ -352,7 +353,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       ))}
       
       {/* Project Cost Summary Page */}
-      <div className="h-[1100px] bg-white p-8 flex flex-col" 
+      <div className="h-[1100px] bg-white p-8 flex flex-col page-container" 
            style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
         {/* Page Header with Logo */}
         <div className="flex items-start mb-6 border-b border-gray-200 pb-4">
@@ -502,18 +503,20 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       </div>
       
       {/* Terms and Conditions Page */}
-      <div className="h-[1100px] bg-white p-8 flex flex-col">
+      <div className="h-[1100px] bg-white p-8 flex flex-col page-container">
         {/* Page Header with Logo */}
         <div className="flex items-start mb-6 border-b border-gray-200 pb-4">
-          {companySettings?.logo ? (
-            <img 
-              src={companySettings.logo} 
-              alt={companyName} 
-              className="h-10" 
-            />
-          ) : (
-            <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
-          )}
+          <div className="logo-container">
+            {companySettings?.logo ? (
+              <img 
+                src={companySettings.logo} 
+                alt={companyName} 
+                className="h-10" 
+              />
+            ) : (
+              <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
+            )}
+          </div>
         </div>
         
         {/* Terms and Conditions Content */}
