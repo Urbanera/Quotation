@@ -46,22 +46,11 @@ export default function CreatePaymentPage() {
   const { toast } = useToast();
   const [location, navigate] = useLocation();
   
-  // Generate a unique transaction ID
-  const generateTransactionId = () => {
-    return `TXN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-  };
+  // We'll no longer generate a default transaction ID
 
   // Fetch customers
   const { data: customers, isLoading: isLoadingCustomers } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to load customers",
-        variant: "destructive",
-      });
-      console.error("Failed to load customers:", error);
-    },
+    queryKey: ["/api/customers"]
   });
 
   // Filter customers in 'booked' stage
@@ -77,7 +66,7 @@ export default function CreatePaymentPage() {
       paymentMethod: undefined,
       paymentType: undefined,
       paymentDate: new Date(),
-      transactionId: generateTransactionId(),
+      transactionId: "",
       description: "",
     },
   });
@@ -346,6 +335,7 @@ export default function CreatePaymentPage() {
                           placeholder="Enter payment description to be shown on the receipt"
                           className="resize-none min-h-32"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormDescription>

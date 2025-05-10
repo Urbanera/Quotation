@@ -50,28 +50,12 @@ export default function EditPaymentPage() {
   // Fetch payment data
   const { data: payment, isLoading: isLoadingPayment } = useQuery<CustomerPayment>({
     queryKey: [`/api/customer-payments/${paymentId}`],
-    enabled: !isNaN(paymentId),
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to load payment details",
-        variant: "destructive",
-      });
-      console.error("Failed to load payment details:", error);
-    },
+    enabled: !isNaN(paymentId)
   });
 
   // Fetch customers
   const { data: customers, isLoading: isLoadingCustomers } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to load customers",
-        variant: "destructive",
-      });
-      console.error("Failed to load customers:", error);
-    },
+    queryKey: ["/api/customers"]
   });
 
   // Filter customers in 'booked' stage
@@ -388,6 +372,7 @@ export default function EditPaymentPage() {
                         placeholder="Enter payment description to be shown on the receipt"
                         className="resize-none min-h-32"
                         {...field}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormDescription>
