@@ -57,7 +57,7 @@ export function ValidationDialog({
         {/* Error List */}
         {errors.length > 0 && (
           <div className="space-y-3 my-2">
-            {errors.map((error, index) => (
+            {errors.map((error: ValidationError, index: number) => (
               <div key={index} className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
                 <XCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
@@ -80,7 +80,7 @@ export function ValidationDialog({
         {/* Warning List */}
         {errors.length === 0 && warnings.length > 0 && (
           <div className="space-y-3 my-2">
-            {warnings.map((warning, index) => (
+            {warnings.map((warning: ValidationWarning, index: number) => (
               <div key={index} className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
                 <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
@@ -88,7 +88,7 @@ export function ValidationDialog({
                   {warning.type === 'check_accessories' && warning.accessories.length > 0 && (
                     <>
                       <ul className="list-disc pl-5 mt-1 space-y-1">
-                        {warning.accessories.map((accessory, i) => (
+                        {warning.accessories.map((accessory: string, i: number) => (
                           <li key={i} className="text-sm text-amber-600">
                             {accessory.charAt(0).toUpperCase() + accessory.slice(1)}
                           </li>

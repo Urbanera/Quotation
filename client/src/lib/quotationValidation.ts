@@ -96,14 +96,14 @@ export async function validateQuotation(quotationId: number): Promise<Validation
   // Warning check: Verify specific accessories from settings
   const requiredAccessories = (appSettings.requiredAccessories || 'skirting,handles,sliding mechanism,t profile')
     .split(',')
-    .map(item => item.trim().toLowerCase());
+    .map((item: string) => item.trim().toLowerCase());
     
   const accessoryCategories = quotation.rooms
     .flatMap(room => room.accessories || [])
-    .map(acc => acc.name.toLowerCase());
+    .map(acc => acc.name.toLowerCase() as string);
   
   const missingAccessories = requiredAccessories.filter(
-    required => !accessoryCategories.some(cat => cat.includes(required))
+    (required: string) => !accessoryCategories.some(cat => cat.includes(required))
   );
   
   if (missingAccessories.length > 0) {
