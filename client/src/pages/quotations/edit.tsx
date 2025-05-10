@@ -257,6 +257,17 @@ export default function EditQuotation() {
           )}
         </div>
       </div>
+      
+      {/* Validation Dialog */}
+      <ValidationDialog
+        open={isValidationDialogOpen}
+        onOpenChange={setIsValidationDialogOpen}
+        errors={validationErrors}
+        warnings={validationWarnings}
+        onProceed={validationErrors.length === 0 ? () => saveAsFinalMutation.mutate() : undefined}
+        onCancel={() => setIsValidationDialogOpen(false)}
+        quotationId={parseInt(id || "0")}
+      />
     </div>
   );
 }
