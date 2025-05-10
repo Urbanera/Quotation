@@ -8,6 +8,11 @@ import { QuotationWithDetails } from "@shared/schema";
 // Add custom print styles
 const printStyles = `
 @media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+  
   html, body {
     height: 100%;
     margin: 0 !important;
@@ -23,6 +28,18 @@ const printStyles = `
   #print-content {
     transform: scale(0.8);
     transform-origin: top center;
+  }
+  
+  /* Adjust all logo sections to match the reference */
+  .logo-container img {
+    display: block;
+    margin: 0 auto;
+  }
+  
+  /* Ensure each page break works correctly */
+  .page-break {
+    page-break-after: always;
+    break-after: page;
   }
 }
 `;

@@ -107,7 +107,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden" 
            style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
         {/* Logo Area */}
-        <div className="p-10 text-center border-b-5 border-[#009245]" style={{ borderBottomWidth: '5px' }}>
+        <div className="p-10 text-center border-b-5 border-[#009245] logo-container" style={{ borderBottomWidth: '5px' }}>
           {companySettings?.logo && (
             <img 
               src={companySettings.logo} 
@@ -157,7 +157,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       <div className="h-[1100px] bg-white flex flex-col overflow-hidden" 
            style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
         {/* Logo Area */}
-        <div className="p-10 text-center">
+        <div className="p-10 text-center logo-container">
           {companySettings?.logo && (
             <img 
               src={companySettings.logo} 
@@ -262,15 +262,17 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         >
           {/* Room Header with Logo */}
           <div className="flex items-start justify-between mb-6 border-b border-gray-200 pb-4">
-            {companySettings?.logo ? (
-              <img 
-                src={companySettings.logo} 
-                alt={companyName} 
-                className="h-10" 
-              />
-            ) : (
-              <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
-            )}
+            <div className="logo-container">
+              {companySettings?.logo ? (
+                <img 
+                  src={companySettings.logo} 
+                  alt={companyName} 
+                  className="h-10" 
+                />
+              ) : (
+                <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
+              )}
+            </div>
             <div className="bg-[#E6E6E6] px-4 py-2 rounded-md">
               <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
             </div>
@@ -354,15 +356,17 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
            style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
         {/* Page Header with Logo */}
         <div className="flex items-start mb-6 border-b border-gray-200 pb-4">
-          {companySettings?.logo ? (
-            <img 
-              src={companySettings.logo} 
-              alt={companyName} 
-              className="h-10" 
-            />
-          ) : (
-            <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
-          )}
+          <div className="logo-container">
+            {companySettings?.logo ? (
+              <img 
+                src={companySettings.logo} 
+                alt={companyName} 
+                className="h-10" 
+              />
+            ) : (
+              <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
+            )}
+          </div>
         </div>
         
         {/* Project Cost Summary Content */}

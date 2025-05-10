@@ -10,7 +10,7 @@ const printStyles = `
 @media print {
   @page {
     size: A4;
-    margin: 20mm;
+    margin: 15mm;
   }
   
   body {
@@ -39,14 +39,17 @@ const printStyles = `
     max-width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
-    margin-top: 15mm !important;
+    margin-top: 10mm !important;
     box-shadow: none !important;
     border: none !important;
+    /* Apply 80% scale to match the user's preferred scale */
+    transform: scale(0.8);
+    transform-origin: top center;
   }
 
   .terms-conditions {
-    margin-top: 10mm;
-    padding: 5mm;
+    margin-top: 8mm;
+    padding: 4mm;
     border: 1px solid #ddd;
     background-color: #f9f9f9;
     border-radius: 5px;
@@ -54,9 +57,16 @@ const printStyles = `
 
   .payment-highlight {
     font-weight: 600;
-    font-size: 14pt;
-    margin: 5mm 0;
+    font-size: 13pt;
+    margin: 4mm 0;
     color: #333;
+  }
+  
+  /* Adjust the logo position to match the reference */
+  .logo-container {
+    display: flex;
+    justify-content: center !important;
+    margin-right: 0 !important;
   }
 }
 `;
@@ -218,7 +228,7 @@ export default function PrintReceiptPage() {
             <p className="text-sm">GSTIN: {companyInfo.gstin}</p>
             <p className="text-sm">State: {companyInfo.state}</p>
           </div>
-          <div className="w-1/4 flex justify-end items-start">
+          <div className="w-1/4 flex justify-end items-start logo-container">
             {companyInfo.logo ? (
               <img src={companyInfo.logo} alt="Company Logo" className="h-16 object-contain" />
             ) : (
