@@ -13,27 +13,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CustomerPayment, Customer } from "@shared/schema";
-import { Loader2, CreditCard, Plus, FileText } from "lucide-react";
+import { Loader2, CreditCard, Plus, FileText, Edit } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 export default function PaymentsPage() {
   const { toast } = useToast();
 
   // Fetch all customer payments
-  const { data: customerPayments, isLoading: isLoadingPayments } = useQuery<CustomerPayment[]>({
-    queryKey: ["/api/customer-payments"],
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to load customer payments",
-        variant: "destructive",
-      });
-      console.error("Failed to load customer payments:", error);
-    },
+  const { data: customerPayments = [], isLoading: isLoadingPayments } = useQuery<CustomerPayment[]>({
+    queryKey: ["/api/customer-payments"]
   });
 
-  const { data: customers, isLoading: isLoadingCustomers } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
+  const { data: customers = [], isLoading: isLoadingCustomers } = useQuery<Customer[]>({
+    queryKey: ["/api/customers"]
   });
 
   const isLoading = isLoadingPayments || isLoadingCustomers;
@@ -125,12 +117,20 @@ export default function PaymentsPage() {
                       {payment.transactionId}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/payments/view/${payment.id}`}>
-                        <Button size="sm" variant="outline">
-                          <FileText className="h-4 w-4 mr-2" />
-                          View Receipt
-                        </Button>
-                      </Link>
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/payments/edit/${payment.id}`}>
+                          <Button size="sm" variant="outline">
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </Button>
+                        </Link>
+                        <Link href={`/payments/view/${payment.id}`}>
+                          <Button size="sm" variant="outline">
+                            <FileText className="h-4 w-4 mr-2" />
+                            View
+                          </Button>
+                        </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
