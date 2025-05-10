@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import PaymentReceipt, { StaticReceipt } from "@/components/payments/PaymentReceipt";
-import { ArrowLeft, Download, Loader2, Printer } from "lucide-react";
+import { ArrowLeft, Download, Edit, Loader2, Printer } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -149,6 +149,12 @@ export default function ViewPaymentPage() {
         </div>
         {payment && (
           <div className="flex gap-2">
+            <Link href={`/payments/edit/${id}`}>
+              <Button variant="outline">
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Receipt
+              </Button>
+            </Link>
             <Link href={`/payments/print-receipt/${id}`}>
               <Button variant="default">
                 <Printer className="mr-2 h-4 w-4" />
