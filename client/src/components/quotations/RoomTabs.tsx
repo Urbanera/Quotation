@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Grip, Pencil, Trash2 } from "lucide-react";
+import { Plus, GripVertical, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Room, RoomWithItems, InstallationCharge } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +11,16 @@ import AccessoryList from "./AccessoryList";
 import ImageUpload from "./ImageUpload";
 import RoomForm from "./RoomForm";
 import InstallationCalculator from "./InstallationCalculator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface RoomTabsProps {
   quotationId: number;
@@ -21,6 +31,10 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
   const [addRoomDialogOpen, setAddRoomDialogOpen] = useState(false);
   const [editingInstallationId, setEditingInstallationId] = useState<number | null>(null);
   const [addingInstallation, setAddingInstallation] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+  const draggedItemRef = useRef<number | null>(null);
+  const dragOverItemRef = useRef<number | null>(null);
   const { toast } = useToast();
 
   // Fetch rooms for this quotation
@@ -69,6 +83,120 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
       });
     }
   });
+  
+  // Reorder rooms mutation
+  const reorderRoomsMutation = useMutation({
+    mutationFn: async (roomIds: number[]) => {
+      const response = await apiRequest(
+        "POST", 
+        `/api/quotations/${quotationId}/rooms/reorder`, 
+        { roomIds }
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/rooms`] });
+      toast({
+        title: "Rooms reordered",
+        description: "Room order has been updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reorder rooms.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Delete room mutation
+  const deleteRoomMutation = useMutation({
+    mutationFn: async (roomId: number) => {
+      const response = await apiRequest("DELETE", `/api/rooms/${roomId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/rooms`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/details`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}`] });
+      
+      // Set the active room to null to prevent errors
+      setActiveRoomId(null);
+      
+      toast({
+        title: "Room deleted",
+        description: `Room has been removed from the quotation.`,
+      });
+      
+      setRoomToDelete(null);
+    },
+    onError: (error: any) => {
+      let errorMessage = "Failed to delete room.";
+      
+      if (error.response && error.response.status === 400) {
+        errorMessage = "Cannot delete the only room in a quotation.";
+      }
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      setRoomToDelete(null);
+    }
+  });
+
+  // Drag & drop functions for room reordering
+  const handleDragStart = (index: number) => {
+    draggedItemRef.current = index;
+    setIsDragging(true);
+  };
+  
+  const handleDragEnter = (index: number) => {
+    dragOverItemRef.current = index;
+  };
+  
+  const handleDragEnd = () => {
+    if (draggedItemRef.current === null || dragOverItemRef.current === null || !rooms) {
+      setIsDragging(false);
+      return;
+    }
+    
+    const draggedIndex = draggedItemRef.current;
+    const dropIndex = dragOverItemRef.current;
+    
+    if (draggedIndex === dropIndex) {
+      setIsDragging(false);
+      return;
+    }
+    
+    // Create a new array with the updated order
+    const roomsCopy = [...rooms];
+    const draggedRoom = roomsCopy[draggedIndex];
+    roomsCopy.splice(draggedIndex, 1);
+    roomsCopy.splice(dropIndex, 0, draggedRoom);
+    
+    // Get the IDs in the new order and call the API
+    const roomIds = roomsCopy.map(room => room.id);
+    reorderRoomsMutation.mutate(roomIds);
+    
+    // Reset refs and dragging state
+    draggedItemRef.current = null;
+    dragOverItemRef.current = null;
+    setIsDragging(false);
+  };
+  
+  const handleDeleteRoom = (room: Room) => {
+    setRoomToDelete(room);
+  };
+  
+  const confirmDeleteRoom = () => {
+    if (roomToDelete) {
+      deleteRoomMutation.mutate(roomToDelete.id);
+    }
+  };
 
   return (
     <div className="bg-white shadow rounded-lg mb-6">
@@ -81,19 +209,36 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
             ) : !rooms?.length ? (
               <div className="py-4 px-1 text-gray-500">No rooms yet</div>
             ) : (
-              rooms.map((room) => (
-                <button
+              rooms.map((room, index) => (
+                <div
                   key={room.id}
-                  className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeRoomId === room.id
-                      ? "border-indigo-500 text-indigo-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-                  aria-current={activeRoomId === room.id ? "page" : undefined}
-                  onClick={() => setActiveRoomId(room.id)}
+                  className={`relative flex items-center group ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragEnter={() => handleDragEnter(index)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => e.preventDefault()}
                 >
-                  {room.name}
-                </button>
+                  <GripVertical className="h-4 w-4 mr-1 text-gray-400 invisible group-hover:visible" />
+                  <button
+                    className={`whitespace-nowrap py-4 px-2 border-b-2 font-medium text-sm ${
+                      activeRoomId === room.id
+                        ? "border-indigo-500 text-indigo-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
+                    aria-current={activeRoomId === room.id ? "page" : undefined}
+                    onClick={() => setActiveRoomId(room.id)}
+                  >
+                    {room.name}
+                  </button>
+                  <button 
+                    className="ml-1 invisible group-hover:visible text-red-500 hover:text-red-700 focus:outline-none"
+                    onClick={() => handleDeleteRoom(room)}
+                    title="Delete room"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               ))
             )}
             
@@ -119,6 +264,29 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
           </nav>
         </div>
       </div>
+      
+      {/* Delete Room Confirmation Dialog */}
+      <AlertDialog open={!!roomToDelete} onOpenChange={(open) => !open && setRoomToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Room</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the room "{roomToDelete?.name}"? 
+              This will permanently remove all products, accessories, and installation charges 
+              associated with this room.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteRoom} 
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       {/* Room content */}
       <div className="px-4 py-5 sm:p-6">
