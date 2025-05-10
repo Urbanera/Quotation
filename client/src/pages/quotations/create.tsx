@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ChevronLeft, Eye, Save } from "lucide-react";
+import { ChevronLeft, Eye, Save, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -9,6 +9,8 @@ import { AppSettings, Customer, quotationFormSchema } from "@shared/schema";
 import ClientInfo from "@/components/quotations/ClientInfo";
 import RoomTabs from "@/components/quotations/RoomTabs";
 import QuotationSummary from "@/components/quotations/QuotationSummary";
+import { ValidationDialog } from "@/components/quotations/ValidationDialog";
+import { validateQuotation, markQuotationAsSaved, ValidationError, ValidationWarning } from "@/lib/quotationValidation";
 
 export default function CreateQuotation() {
   const [, navigate] = useLocation();
@@ -18,6 +20,11 @@ export default function CreateQuotation() {
   const [installationHandling, setInstallationHandling] = useState<number>(0);
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [gstPercentage, setGstPercentage] = useState<number>(18);
+  
+  // States for validation dialog
+  const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validationWarnings, setValidationWarnings] = useState<ValidationWarning[]>([]);
   
   // Fetch app settings for default values
   const { data: appSettings } = useQuery<AppSettings>({
@@ -78,7 +85,9 @@ export default function CreateQuotation() {
         customerId: selectedCustomerId,
         installationHandling,
         globalDiscount,
-        gstPercentage
+        gstPercentage,
+        title: "",
+        status: "draft"
       });
     } else {
       // Update existing quotation
@@ -91,7 +100,7 @@ export default function CreateQuotation() {
         });
         toast({
           title: "Success",
-          description: "Quotation updated successfully",
+          description: "Draft quotation updated successfully",
         });
         queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
         queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}`] });
@@ -103,7 +112,100 @@ export default function CreateQuotation() {
         });
       }
     }
-  }, [selectedCustomerId, quotationId, installationHandling, globalDiscount, gstPercentage, createQuotationMutation, toast]);
+  }, [selectedCustomerId, quotationId, installationHandling, globalDiscount, gstPercentage, toast, createQuotationMutation]);
+
+  // Start validation process for saving quotation as final (saved status)
+  const handleValidateForFinalSave = useCallback(async () => {
+    if (!quotationId) {
+      // If no quotation exists yet, first create it
+      if (!selectedCustomerId) {
+        toast({
+          title: "Error",
+          description: "Please select a customer",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Create the quotation first
+      createQuotationMutation.mutate({
+        customerId: selectedCustomerId,
+        installationHandling,
+        globalDiscount,
+        gstPercentage,
+        title: "",
+        status: "draft"
+      });
+      
+      // Toast explaining they need to add content first
+      toast({
+        title: "Quotation created",
+        description: "Please add rooms, products and installation charges before saving as final",
+      });
+      return;
+    }
+    
+    try {
+      // First save any current changes
+      await handleSaveQuotation();
+      
+      // Run validation
+      const validationResult = await validateQuotation(quotationId);
+      
+      setValidationErrors(validationResult.errors);
+      setValidationWarnings(validationResult.warnings);
+      
+      // Show dialog with errors or warnings
+      setIsValidationDialogOpen(true);
+      
+    } catch (error) {
+      console.error("Validation failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to validate quotation. Please try again.",
+        variant: "destructive"
+      });
+    }
+  }, [quotationId, selectedCustomerId, installationHandling, globalDiscount, gstPercentage, toast, createQuotationMutation, handleSaveQuotation]);
+
+  // Mutation to save quotation as final
+  const saveAsFinalMutation = useMutation({
+    mutationFn: async () => {
+      if (!quotationId) throw new Error("Quotation ID is missing");
+      return await markQuotationAsSaved(quotationId);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Quotation has been saved as final and can now be approved."
+      });
+      
+      // Close the dialog
+      setIsValidationDialogOpen(false);
+      
+      // Navigate to view page
+      navigate(`/quotations/view/${quotationId}`);
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/details`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+    },
+    onError: (error: any) => {
+      // Handle validation errors specially
+      if (error.response && error.response.data && error.response.data.errorType === "validation") {
+        setValidationErrors(error.response.data.validationErrors || []);
+        setIsValidationDialogOpen(true);
+        return;
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to save quotation as final. Please fix any issues and try again.",
+        variant: "destructive"
+      });
+    }
+  });
 
   return (
     <div className="pb-8">
@@ -140,7 +242,15 @@ export default function CreateQuotation() {
                 className="bg-indigo-600 hover:bg-indigo-700"
               >
                 <Save className="mr-2 h-4 w-4" />
-                Save Quotation
+                Save Draft
+              </Button>
+              <Button 
+                onClick={handleValidateForFinalSave}
+                disabled={!selectedCustomerId || createQuotationMutation.isPending}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <FileCheck className="mr-2 h-4 w-4" />
+                Save as Final
               </Button>
             </div>
           </div>
@@ -189,19 +299,40 @@ export default function CreateQuotation() {
                 <p className="text-gray-500 mb-4">
                   Select a customer above and save to start adding rooms and products to your quotation.
                 </p>
-                <Button 
-                  onClick={handleSaveQuotation}
-                  disabled={!selectedCustomerId || createQuotationMutation.isPending}
-                  className="bg-indigo-600 hover:bg-indigo-700"
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  {createQuotationMutation.isPending ? 'Creating...' : 'Create Quotation'}
-                </Button>
+                <div className="flex justify-center space-x-3">
+                  <Button 
+                    onClick={handleSaveQuotation}
+                    disabled={!selectedCustomerId || createQuotationMutation.isPending}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    {createQuotationMutation.isPending ? 'Creating...' : 'Create as Draft'}
+                  </Button>
+                  <Button 
+                    onClick={handleValidateForFinalSave}
+                    disabled={!selectedCustomerId || createQuotationMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <FileCheck className="mr-2 h-4 w-4" />
+                    Create for Final
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
+      
+      {/* Validation Dialog */}
+      <ValidationDialog
+        open={isValidationDialogOpen}
+        onOpenChange={setIsValidationDialogOpen}
+        errors={validationErrors}
+        warnings={validationWarnings}
+        onProceed={validationErrors.length === 0 ? () => saveAsFinalMutation.mutate() : undefined}
+        onCancel={() => setIsValidationDialogOpen(false)}
+        quotationId={quotationId || 0}
+      />
     </div>
   );
 }
