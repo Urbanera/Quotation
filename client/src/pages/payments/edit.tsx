@@ -42,7 +42,8 @@ const formSchema = customerPaymentFormSchema.extend({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function EditPaymentPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params.id || "";
   const paymentId = parseInt(id);
   const { toast } = useToast();
   const [location, navigate] = useLocation();
