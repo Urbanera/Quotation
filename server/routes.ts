@@ -482,23 +482,18 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       }
       
       // Check if this is the only room in the quotation
-      const quotationRooms = await storage.getQuotationRooms(room.quotationId);
+      const quotationRooms = await storage.getRooms(room.quotationId);
       
       if (quotationRooms.length <= 1) {
         return res.status(400).json({ message: "Cannot delete the only room in a quotation" });
       }
       
-      // Delete all related data first
-      await storage.deleteRoomProducts(id);
-      await storage.deleteRoomAccessories(id);
-      await storage.deleteRoomImages(id);
-      await storage.deleteRoomInstallationCharges(id);
+      // Delete the room along with all related data
+      const success = await storage.deleteRoom(id);
       
-      // Delete the room itself
-      await storage.deleteRoom(id);
-      
-      // Update the quotation totals
-      await storage.recalculateQuotationTotals(room.quotationId);
+      if (!success) {
+        return res.status(500).json({ message: "Failed to delete room" });
+      }
       
       res.status(200).json({ success: true });
     } catch (error) {
