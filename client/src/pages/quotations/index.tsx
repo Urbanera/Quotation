@@ -42,7 +42,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-type SortField = "quotationNumber" | "createdAt" | "totalAmount";
+type SortField = "quotationNumber" | "createdAt" | "updatedAt" | "totalAmount";
 type SortOrder = "asc" | "desc";
 
 export default function QuotationsList() {
@@ -402,12 +402,15 @@ export default function QuotationsList() {
                           </span>
                         )}
                       </div>
-                      <div className="mt-2 flex">
-                        <div className="flex items-center text-sm text-gray-500 mr-6">
+                      <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1">
+                        <div className="flex items-center text-sm text-gray-500">
                           <span className="truncate">{getCustomerName(quotation.customerId)}</span>
                         </div>
                         <div className="flex items-center text-sm text-gray-500">
                           <span>Created: {new Date(quotation.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <span>Modified: {new Date(quotation.updatedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
