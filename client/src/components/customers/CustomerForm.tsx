@@ -132,6 +132,7 @@ export default function CustomerForm({
                     <SelectItem value="cold">Cold</SelectItem>
                     <SelectItem value="warm">Warm</SelectItem>
                     <SelectItem value="booked">Booked</SelectItem>
+                    <SelectItem value="lost">Lost</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

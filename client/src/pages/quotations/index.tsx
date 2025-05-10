@@ -272,10 +272,14 @@ export default function QuotationsList() {
 
   // Sorted and filtered quotations
   const filteredQuotations = useMemo(() => {
-    if (!quotations) return [];
+    if (!quotations || !customers) return [];
     
-    // First filter by search term
+    // First filter out quotations from lost customers and then by search term
     let result = quotations.filter(quotation => {
+      const customer = customers.find(c => c.id === quotation.customerId);
+      // Skip quotations for lost customers
+      if (customer && customer.stage === "lost") return false;
+      
       const customerName = getCustomerName(quotation.customerId);
       return (
         customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||

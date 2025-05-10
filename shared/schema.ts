@@ -405,7 +405,7 @@ export const customerFormSchema = z.object({
   phone: z.string().min(8, "Phone number must be at least 8 digits"),
   address: z.string().min(1, "Address is required"),
   gstNumber: z.string().optional(),
-  stage: z.enum(['new', 'pipeline', 'cold', 'warm', 'booked']).default('new'),
+  stage: z.enum(['new', 'pipeline', 'cold', 'warm', 'booked', 'lost']).default('new'),
 });
 
 // User role management validation schemas

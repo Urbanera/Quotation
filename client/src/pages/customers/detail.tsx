@@ -501,6 +501,7 @@ export default function CustomerDetailPage() {
                                     <SelectItem value="cold">Cold</SelectItem>
                                     <SelectItem value="warm">Warm</SelectItem>
                                     <SelectItem value="booked">Booked</SelectItem>
+                                    <SelectItem value="lost">Lost</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormDescription>
@@ -669,6 +670,7 @@ export default function CustomerDetailPage() {
                           <SelectItem value="cold">Cold</SelectItem>
                           <SelectItem value="warm">Warm</SelectItem>
                           <SelectItem value="booked">Booked</SelectItem>
+                          <SelectItem value="lost">Lost</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground flex items-center space-x-1 mt-1">
