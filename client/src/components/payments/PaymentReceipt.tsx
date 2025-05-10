@@ -192,7 +192,7 @@ const StaticReceipt: React.FC<StaticReceiptProps> = ({
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={{...styles.page, height: '120%', width: '120%'}}>
         {/* Company Header */}
         <View style={styles.headerSection}>
           <View style={styles.companyInfoSection}>
@@ -324,7 +324,7 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) =>
   if (!customer || !companySettings) {
     return (
       <Document>
-        <Page size="A4" style={styles.page}>
+        <Page size="A4" style={{...styles.page, height: '120%', width: '120%'}}>
           <Text>Loading receipt data...</Text>
         </Page>
       </Document>

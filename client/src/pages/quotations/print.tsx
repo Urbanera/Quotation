@@ -5,6 +5,28 @@ import BasicQuote from "@/components/PDFQuotes/BasicQuote";
 import PresentationQuote from "@/components/PDFQuotes/PresentationQuote";
 import { QuotationWithDetails } from "@shared/schema";
 
+// Add custom print styles
+const printStyles = `
+@media print {
+  html, body {
+    height: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .print-container {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  
+  #print-content {
+    transform: scale(0.8);
+    transform-origin: top center;
+  }
+}
+`;
+
 // This is a standalone print page without layout components
 export default function PrintQuotation() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +41,17 @@ export default function PrintQuotation() {
     queryKey: [`/api/quotations/${id}/details`],
     enabled: !!id,
   });
+  
+  // Add print styles to head
+  useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = printStyles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
   
   useEffect(() => {
     if (quotation) {
