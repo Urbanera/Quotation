@@ -17,51 +17,52 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#fff',
-    padding: 30,
+    padding: 20, // Reduced padding
     fontFamily: 'Inter',
   },
   headerSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 10, // Reduced margin
   },
   companyInfoSection: {
-    width: '75%',
+    width: '65%', // Reduced width to give more space for logo
   },
   logoSection: {
-    width: '25%',
-    alignItems: 'flex-end',
+    width: '35%',
+    alignItems: 'center', // Center the logo as per the reference image
+    justifyContent: 'flex-start',
   },
   companyName: {
-    fontSize: 14,
+    fontSize: 12, // Reduced font size
     fontWeight: 'bold',
-    marginBottom: 3,
+    marginBottom: 2, // Reduced margin
   },
   companyDetail: {
-    fontSize: 9,
+    fontSize: 8, // Reduced font size
     marginBottom: 1,
     fontWeight: 'normal',
   },
   logo: {
-    width: 70,
-    height: 50,
+    width: 130, // Increased width for better visibility
+    height: 45, // Adjusted height
     objectFit: 'contain',
   },
   divider: {
     borderBottomWidth: 1,
     borderBottomColor: '#000',
-    marginBottom: 10,
+    marginBottom: 5, // Further reduced margin
   },
   receiptTitle: {
-    fontSize: 14,
+    fontSize: 10, // Further reduced font size
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 8, // Further reduced margin
   },
   twoColumnSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 10, // Reduced margin
   },
   leftColumn: {
     width: '60%',
@@ -70,55 +71,55 @@ const styles = StyleSheet.create({
     width: '35%',
   },
   sectionTitle: {
-    fontSize: 10,
+    fontSize: 9, // Reduced font size
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 3, // Reduced margin
   },
   detailText: {
-    fontSize: 9,
-    marginBottom: 2,
-    lineHeight: 1.4,
+    fontSize: 8, // Reduced font size
+    marginBottom: 1, // Reduced margin
+    lineHeight: 1.3, // Reduced line height
   },
   amountWordsSection: {
-    marginBottom: 10,
+    marginBottom: 8, // Reduced margin
   },
   amountWords: {
-    fontSize: 9,
+    fontSize: 8, // Reduced font size
     fontWeight: 'bold',
   },
   paymentDetailSection: {
-    marginBottom: 10,
+    marginBottom: 8, // Reduced margin
   },
   paymentDetail: {
-    fontSize: 9,
-    marginBottom: 2,
+    fontSize: 8, // Reduced font size
+    marginBottom: 1, // Reduced margin
   },
   amountDisplaySection: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginBottom: 15,
+    marginBottom: 8, // Reduced margin
   },
   amountDisplay: {
-    fontSize: 11,
+    fontSize: 10, // Reduced font size
     fontWeight: 'bold',
   },
   descriptionSection: {
-    marginBottom: 40,
+    marginBottom: 15, // Reduced margin
   },
   description: {
-    fontSize: 9,
-    lineHeight: 1.5,
+    fontSize: 8, // Reduced font size
+    lineHeight: 1.3, // Reduced line height
   },
   footerSection: {
-    marginTop: 30,
+    marginTop: 10, // Reduced margin
   },
   companyFor: {
-    fontSize: 9,
+    fontSize: 8, // Reduced font size
     textAlign: 'right',
-    marginBottom: 30,
+    marginBottom: 20, // Reduced margin
   },
   signatureText: {
-    fontSize: 9,
+    fontSize: 8, // Reduced font size
     fontWeight: 'bold',
     textAlign: 'right',
   }
@@ -205,7 +206,14 @@ const StaticReceipt: React.FC<StaticReceiptProps> = ({
             {companyInfo.logo ? (
               <Image style={styles.logo} src={companyInfo.logo} />
             ) : (
-              <Text style={{fontSize: 12, fontWeight: 'bold'}}>LECCO CUCINA</Text>
+              <View style={{border: '1px solid #ccc', padding: 5, backgroundColor: '#fff'}}>
+                <Text style={{fontSize: 12, fontWeight: 'bold', color: '#777'}}>
+                  LECCO
+                </Text>
+                <Text style={{fontSize: 12, fontWeight: 'bold', color: '#777'}}>
+                  CUCINA
+                </Text>
+              </View>
             )}
           </View>
         </View>
@@ -221,8 +229,7 @@ const StaticReceipt: React.FC<StaticReceiptProps> = ({
           <View style={styles.leftColumn}>
             <Text style={styles.sectionTitle}>Received From:</Text>
             <Text style={styles.detailText}>{customer.name.toUpperCase()}</Text>
-            <Text style={styles.detailText}>{customer.address.split(',')[0]}</Text>
-            <Text style={styles.detailText}>{customer.address.split(',').slice(1).join(',')}</Text>
+            <Text style={styles.detailText}>{customer.address ? (customer.address.length > 50 ? customer.address.substring(0, 50) + '...' : customer.address) : ''}</Text>
             <Text style={styles.detailText}>State: {companyInfo.state}</Text>
           </View>
           <View style={styles.rightColumn}>
@@ -233,24 +240,27 @@ const StaticReceipt: React.FC<StaticReceiptProps> = ({
           </View>
         </View>
 
-        {/* Amount in Words */}
-        <View style={styles.amountWordsSection}>
-          <Text style={styles.amountWords}>Amount in Words: {convertToWords(payment.amount)}</Text>
+        {/* Amount and Payment Details in a single row */}
+        <View style={[styles.twoColumnSection, { marginBottom: 5 }]}>
+          <View style={styles.leftColumn}>
+            <Text style={styles.amountWords}>Received amount of ₹ {payment.amount.toFixed(2)} from {customer.name} as {payment.description || 'payment'}</Text>
+            <Text style={styles.amountWords}>Amount in Words: {convertToWords(payment.amount)}</Text>
+          </View>
+          <View style={styles.rightColumn}>
+            <Text style={styles.amountDisplay}>₹ {payment.amount.toFixed(2)}</Text>
+          </View>
         </View>
-
-        {/* Payment Method Details */}
+        
+        {/* Payment Method Details - more compact */}
         <View style={styles.paymentDetailSection}>
           <Text style={styles.paymentDetail}>Payment Mode: {paymentMethods[payment.paymentMethod]} {payment.transactionId ? `(${payment.transactionId})` : ''}</Text>
         </View>
 
-        {/* Amount Display */}
-        <View style={styles.amountDisplaySection}>
-          <Text style={styles.amountDisplay}>₹ {payment.amount.toFixed(2)}</Text>
-        </View>
-
-        {/* Description/Terms */}
+        {/* Description/Terms - wrap to fit on one page */}
         <View style={styles.descriptionSection}>
-          <Text style={styles.description}>{termsText}</Text>
+          <Text style={styles.description}>
+            {termsText && termsText.length > 250 ? termsText.substring(0, 250) + '...' : termsText}
+          </Text>
         </View>
 
         {/* Signature Section */}
@@ -326,7 +336,7 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({ payment, customer }) =>
       payment={payment} 
       customer={customer} 
       companySettings={companySettings} 
-      appSettings={appSettings}
+      appSettings={appSettings || undefined}
     />
   );
 };
