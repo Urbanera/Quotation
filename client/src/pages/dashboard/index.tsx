@@ -32,7 +32,8 @@ export default function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="text-3xl font-bold">
-                  {isLoadingCustomers ? "..." : customers?.length || 0}
+                  {isLoadingCustomers ? "..." : 
+                    customers?.filter(customer => customer.stage !== "lost").length || 0}
                 </div>
                 <div className="p-2 bg-indigo-100 rounded-full">
                   <Users className="h-6 w-6 text-indigo-600" />

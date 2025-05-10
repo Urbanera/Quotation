@@ -8,7 +8,8 @@ export const customerStageEnum = pgEnum('customer_stage', [
   'pipeline',
   'cold',
   'warm',
-  'booked'
+  'booked',
+  'lost'
 ]);
 
 // Company Settings schema

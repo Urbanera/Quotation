@@ -19,14 +19,18 @@ export default function CustomerStageFilter({ customers }: CustomerStageFilterPr
     ? customers 
     : customers.filter(customer => customer.stage === activeTab);
 
+  // Filter out lost customers for the total count
+  const activeCustomers = customers.filter(c => c.stage !== "lost");
+
   // Count customers by stage
   const stageCounts = {
-    all: customers.length,
+    all: activeCustomers.length,
     new: customers.filter(c => c.stage === "new").length,
     pipeline: customers.filter(c => c.stage === "pipeline").length,
     cold: customers.filter(c => c.stage === "cold").length,
     warm: customers.filter(c => c.stage === "warm").length,
     booked: customers.filter(c => c.stage === "booked").length,
+    lost: customers.filter(c => c.stage === "lost").length,
   };
 
   // Stage color mapping for badges
@@ -36,6 +40,7 @@ export default function CustomerStageFilter({ customers }: CustomerStageFilterPr
     cold: "bg-gray-100 text-gray-800 hover:bg-gray-200",
     warm: "bg-orange-100 text-orange-800 hover:bg-orange-200",
     booked: "bg-green-100 text-green-800 hover:bg-green-200",
+    lost: "bg-red-100 text-red-800 hover:bg-red-200",
   };
 
   return (
@@ -50,7 +55,7 @@ export default function CustomerStageFilter({ customers }: CustomerStageFilterPr
           onValueChange={setActiveTab}
           className="w-full"
         >
-          <TabsList className="w-full grid grid-cols-6 mb-6">
+          <TabsList className="w-full grid grid-cols-7 mb-6">
             <TabsTrigger value="all" className="text-sm">
               All
               <Badge className="ml-2 bg-gray-100 text-gray-800">{stageCounts.all}</Badge>
@@ -74,6 +79,10 @@ export default function CustomerStageFilter({ customers }: CustomerStageFilterPr
             <TabsTrigger value="booked" className="text-sm">
               Booked
               <Badge className="ml-2 bg-green-100 text-green-800">{stageCounts.booked}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="lost" className="text-sm">
+              Lost
+              <Badge className="ml-2 bg-red-100 text-red-800">{stageCounts.lost}</Badge>
             </TabsTrigger>
           </TabsList>
 
