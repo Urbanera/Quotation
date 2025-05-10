@@ -65,7 +65,7 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({
 });
 
 // Quotation status enum
-export const quotationStatusEnum = pgEnum('quotation_status', ['draft', 'sent', 'approved', 'rejected', 'expired', 'converted']);
+export const quotationStatusEnum = pgEnum('quotation_status', ['draft', 'saved', 'sent', 'approved', 'rejected', 'expired', 'converted']);
 
 // Quotation schema
 export const quotations = pgTable("quotations", {

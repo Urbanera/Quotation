@@ -1513,7 +1513,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { status } = req.body;
       
-      if (!status || !["draft", "sent", "approved", "rejected", "expired", "converted"].includes(status)) {
+      if (!status || !["draft", "saved", "sent", "approved", "rejected", "expired", "converted"].includes(status)) {
         return res.status(400).json({ message: "Invalid status value" });
       }
       
@@ -1526,6 +1526,94 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       if (existingQuotation.status === "converted") {
         return res.status(400).json({ 
           message: "Cannot update status of a quotation that has already been converted to a sales order or invoice" 
+        });
+      }
+      
+      // Additional validation logic when changing to "saved" status
+      if (status === "saved") {
+        // Get full quotation details
+        const quotationWithDetails = await storage.getQuotationWithDetails(id);
+        
+        // Validate there's at least one room
+        if (!quotationWithDetails.rooms || quotationWithDetails.rooms.length === 0) {
+          return res.status(400).json({ 
+            message: "Cannot save quotation: At least one room must be added",
+            errorType: "validation",
+            validationErrors: [{
+              type: "missing_room",
+              message: "Quotation must have at least one room."
+            }]
+          });
+        }
+        
+        const validationErrors = [];
+        
+        // Validate each room
+        for (const room of quotationWithDetails.rooms) {
+          // Check room value is not zero
+          if (room.sellingPrice === 0) {
+            validationErrors.push({
+              type: "room_zero_value",
+              message: `Room "${room.name || 'Untitled'}" has a zero value.`,
+              roomId: room.id,
+              roomName: room.name || 'Untitled'
+            });
+          }
+          
+          // Check every room has products
+          if (!room.products || room.products.length === 0) {
+            validationErrors.push({
+              type: "missing_product",
+              message: `Room "${room.name || 'Untitled'}" does not have any products.`,
+              roomId: room.id,
+              roomName: room.name || 'Untitled'
+            });
+          }
+          
+          // Check every room has accessories
+          if (!room.accessories || room.accessories.length === 0) {
+            validationErrors.push({
+              type: "missing_accessory",
+              message: `Room "${room.name || 'Untitled'}" does not have any accessories.`,
+              roomId: room.id,
+              roomName: room.name || 'Untitled'
+            });
+          }
+          
+          // Check every room has installation charges
+          if (!room.installationCharges || room.installationCharges.length === 0) {
+            validationErrors.push({
+              type: "missing_installation",
+              message: `Room "${room.name || 'Untitled'}" does not have installation charges.`,
+              roomId: room.id,
+              roomName: room.name || 'Untitled'
+            });
+          }
+        }
+        
+        // Check handling charge is entered
+        if (!quotationWithDetails.installationHandling || quotationWithDetails.installationHandling === 0) {
+          validationErrors.push({
+            type: "missing_handling_charge",
+            message: "Handling charge must be entered."
+          });
+        }
+        
+        // If there are validation errors, return them
+        if (validationErrors.length > 0) {
+          return res.status(400).json({
+            message: "Cannot save quotation: Validation failed",
+            errorType: "validation",
+            validationErrors
+          });
+        }
+      }
+      
+      // When changing to "approved", verify it's in "saved" status first
+      if (status === "approved" && existingQuotation.status !== "saved") {
+        return res.status(400).json({ 
+          message: "Cannot approve quotation: Only quotations in 'saved' status can be approved",
+          errorType: "invalid_transition"
         });
       }
       
