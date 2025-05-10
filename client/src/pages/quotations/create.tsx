@@ -100,7 +100,7 @@ export default function CreateQuotation() {
         });
         toast({
           title: "Success",
-          description: "Draft quotation updated successfully",
+          description: "Quotation updated successfully",
         });
         queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
         queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}`] });
@@ -242,15 +242,7 @@ export default function CreateQuotation() {
                 className="bg-indigo-600 hover:bg-indigo-700"
               >
                 <Save className="mr-2 h-4 w-4" />
-                Save Draft
-              </Button>
-              <Button 
-                onClick={handleValidateForFinalSave}
-                disabled={!selectedCustomerId || createQuotationMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <FileCheck className="mr-2 h-4 w-4" />
-                Save as Final
+                Save Quotation
               </Button>
             </div>
           </div>
@@ -299,22 +291,14 @@ export default function CreateQuotation() {
                 <p className="text-gray-500 mb-4">
                   Select a customer above and save to start adding rooms and products to your quotation.
                 </p>
-                <div className="flex justify-center space-x-3">
+                <div className="flex justify-center">
                   <Button 
                     onClick={handleSaveQuotation}
                     disabled={!selectedCustomerId || createQuotationMutation.isPending}
                     className="bg-indigo-600 hover:bg-indigo-700"
                   >
                     <Save className="mr-2 h-4 w-4" />
-                    {createQuotationMutation.isPending ? 'Creating...' : 'Create as Draft'}
-                  </Button>
-                  <Button 
-                    onClick={handleValidateForFinalSave}
-                    disabled={!selectedCustomerId || createQuotationMutation.isPending}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <FileCheck className="mr-2 h-4 w-4" />
-                    Create for Final
+                    {createQuotationMutation.isPending ? 'Creating...' : 'Create Quotation'}
                   </Button>
                 </div>
               </div>
