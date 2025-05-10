@@ -470,19 +470,43 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update room" });
     }
   });
-
+  
+  // Delete room endpoint
   app.delete("/api/rooms/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deleteRoom(id);
-      if (!success) {
+      const room = await storage.getRoom(id);
+      
+      if (!room) {
         return res.status(404).json({ message: "Room not found" });
       }
-      res.json({ success: true });
+      
+      // Check if this is the only room in the quotation
+      const quotationRooms = await storage.getQuotationRooms(room.quotationId);
+      
+      if (quotationRooms.length <= 1) {
+        return res.status(400).json({ message: "Cannot delete the only room in a quotation" });
+      }
+      
+      // Delete all related data first
+      await storage.deleteRoomProducts(id);
+      await storage.deleteRoomAccessories(id);
+      await storage.deleteRoomImages(id);
+      await storage.deleteRoomInstallationCharges(id);
+      
+      // Delete the room itself
+      await storage.deleteRoom(id);
+      
+      // Update the quotation totals
+      await storage.recalculateQuotationTotals(room.quotationId);
+      
+      res.status(200).json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete room" });
     }
   });
+
+
 
   app.post("/api/quotations/:quotationId/rooms/reorder", async (req, res) => {
     try {
