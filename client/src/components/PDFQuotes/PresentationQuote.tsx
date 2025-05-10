@@ -102,7 +102,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
   const companyName = companySettings?.name || "DesignQuotes";
 
   return (
-    <div ref={ref} className="bg-white w-[210mm] mx-auto" id="presentation-quote">
+    <div ref={ref} className="bg-white w-full mx-auto" id="presentation-quote">
       {/* Cover Page - First Fixed Page */}
       <div className="h-[1100px] bg-white relative flex flex-col overflow-hidden page-container" 
            style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
@@ -303,14 +303,18 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
             {room.images && room.images.length > 0 && (
               <div className="mb-6">
                 <h5 className="font-medium text-gray-800 mb-3">Design References:</h5>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-6 image-grid">
                   {room.images.map((image) => (
-                    <div key={image.id} className="aspect-w-3 aspect-h-2 rounded-md overflow-hidden border border-gray-200 flex items-center justify-center" style={{ height: '120px' }}>
+                    <div 
+                      key={image.id} 
+                      className="rounded-md overflow-hidden border border-gray-200 flex items-center justify-center image-container" 
+                      style={{ height: '200px' }}
+                    >
                       <img 
                         src={image.path} 
                         alt={`Design for ${room.name || 'Room'}`} 
                         className="object-contain max-w-full max-h-full" 
-                        style={{ maxHeight: '110px', maxWidth: '100%' }}
+                        style={{ maxHeight: '190px', maxWidth: '100%' }}
                       />
                     </div>
                   ))}

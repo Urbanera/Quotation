@@ -17,21 +17,20 @@ const printStyles = `
     height: 100%;
     margin: 0 !important;
     padding: 0 !important;
-    width: 210mm;
-    height: 297mm;
+    width: 100%;
   }
   
   .print-container {
     margin: 0 !important;
     padding: 0 !important;
     max-width: none !important;
-    width: 210mm;
+    width: 100%;
   }
   
   #print-content {
-    transform: scale(0.8);
-    transform-origin: top left;
-    width: 210mm;
+    transform: scale(1);
+    transform-origin: top center;
+    width: 100%;
   }
   
   /* Adjust all logo sections to match the reference */
@@ -49,12 +48,34 @@ const printStyles = `
   
   /* Set fixed dimensions for page containers */
   .page-container {
-    width: 210mm;
+    width: 100%;
     height: 297mm;
     overflow: hidden;
     page-break-after: always;
     break-after: page;
     position: relative;
+  }
+  
+  /* Adjust image containers to display properly */
+  .image-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+  }
+  
+  .image-container {
+    width: 100% !important;
+    height: 200px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+  
+  .image-container img {
+    max-width: 100% !important;
+    max-height: 190px !important;
+    object-fit: contain !important;
   }
 }
 `;
@@ -100,7 +121,7 @@ export default function PrintQuotation() {
   }
   
   return (
-    <div className="print-container p-5 max-w-[210mm] mx-auto bg-white">
+    <div className="print-container p-5 w-full mx-auto bg-white">
       {/* Print button visible only on screen */}
       <button 
         id="print-button"
