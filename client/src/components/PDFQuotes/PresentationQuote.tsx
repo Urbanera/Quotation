@@ -155,7 +155,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       
       {/* Second Page - Our Features - Second Fixed Page */}
       <div className="h-[1100px] bg-white flex flex-col overflow-hidden page-container" 
-           style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
+           style={{ pageBreakInside: 'avoid', pageBreakAfter: 'always', breakAfter: 'page', position: 'relative' }}>
         {/* Logo Area */}
         <div className="p-10 text-center logo-container">
           {companySettings?.logo && (
@@ -237,18 +237,18 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
         
         {/* Feature icons in a row */}
-        <div className="mt-auto mb-10 px-10">
+        <div className="mt-auto mb-16 px-10" style={{ position: 'absolute', bottom: '20px', left: 0, right: 0 }}>
           <div className="flex justify-around items-center">
-            <img src={bestQualityImg} alt="Best Quality" className="h-16 object-contain" />
-            <img src={fastDeliveryImg} alt="Fast Delivery" className="h-16 object-contain" />
-            <img src={hassleFreeImg} alt="Hassle-Free" className="h-16 object-contain" />
-            <img src={ecoFriendlyImg} alt="Eco-Friendly" className="h-16 object-contain" />
-            <img src={emiAvailableImg} alt="EMI Available" className="h-16 object-contain" />
+            <img src={bestQualityImg} alt="Best Quality" className="h-14 object-contain" />
+            <img src={fastDeliveryImg} alt="Fast Delivery" className="h-14 object-contain" />
+            <img src={hassleFreeImg} alt="Hassle-Free" className="h-14 object-contain" />
+            <img src={ecoFriendlyImg} alt="Eco-Friendly" className="h-14 object-contain" />
+            <img src={emiAvailableImg} alt="EMI Available" className="h-14 object-contain" />
           </div>
         </div>
         
         {/* Footer */}
-        <div className="bg-[#009245] text-white p-4 text-center mt-auto">
+        <div className="bg-[#009245] text-white p-4 text-center" style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
           {companySettings?.website || "www.yourcompany.com"}
         </div>
       </div>
@@ -303,18 +303,34 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
             {room.images && room.images.length > 0 && (
               <div className="mb-6">
                 <h5 className="font-medium text-gray-800 mb-3">Design References:</h5>
-                <div className="grid grid-cols-2 gap-6 image-grid">
+                <div className="image-grid" style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '20px',
+                  width: '100%'
+                }}>
                   {room.images.map((image) => (
                     <div 
                       key={image.id} 
-                      className="rounded-md overflow-hidden border border-gray-200 flex items-center justify-center image-container" 
-                      style={{ height: '200px' }}
+                      className="image-container" 
+                      style={{ 
+                        height: '200px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '6px'
+                      }}
                     >
                       <img 
                         src={image.path} 
                         alt={`Design for ${room.name || 'Room'}`} 
-                        className="object-contain max-w-full max-h-full" 
-                        style={{ maxHeight: '190px', maxWidth: '100%' }}
+                        style={{ 
+                          maxHeight: '190px', 
+                          maxWidth: '100%',
+                          objectFit: 'contain'
+                        }}
                       />
                     </div>
                   ))}

@@ -59,8 +59,10 @@ const printStyles = `
   /* Adjust image containers to display properly */
   .image-grid {
     display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
     gap: 20px !important;
+    width: 100% !important;
   }
   
   .image-container {
@@ -70,6 +72,8 @@ const printStyles = `
     align-items: center !important;
     justify-content: center !important;
     overflow: hidden !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
   }
   
   .image-container img {
