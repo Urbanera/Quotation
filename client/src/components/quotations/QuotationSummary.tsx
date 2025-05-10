@@ -30,7 +30,7 @@ export default function QuotationSummary({
   const { toast } = useToast();
 
   const { data: quotation, isLoading } = useQuery<QuotationWithDetails>({
-    queryKey: [`/api/quotations/${quotationId}`],
+    queryKey: [`/api/quotations/${quotationId}/details`],
     enabled: !!quotationId,
   });
   
