@@ -743,8 +743,14 @@ export default function CustomerDetailPage() {
                         <PopoverContent className="w-auto p-0">
                           <Calendar
                             mode="single"
-                            selected={nextFollowUpDate || undefined}
-                            onSelect={setNextFollowUpDate}
+                            selected={nextFollowUpDate || undefined} 
+                            onSelect={(date) => {
+                              if (date) {
+                                setNextFollowUpDate(date);
+                              } else {
+                                setNextFollowUpDate(null);
+                              }
+                            }}
                             initialFocus
                           />
                         </PopoverContent>

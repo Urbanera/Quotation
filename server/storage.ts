@@ -713,14 +713,16 @@ export class MemStorage implements IStorage {
     });
   }
   
-  async markFollowUpComplete(id: number, completionNotes?: string): Promise<FollowUp | undefined> {
+  async markFollowUpComplete(id: number, completionNotes?: string, nextFollowUpDate?: Date | null): Promise<FollowUp | undefined> {
     const followUp = this.followUps.get(id);
     if (!followUp) return undefined;
     
     const updatedFollowUp = {
       ...followUp,
       completed: true,
-      completionNotes: completionNotes || null
+      completionNotes: completionNotes || null,
+      // Only update nextFollowUpDate if explicitly provided (including null)
+      nextFollowUpDate: nextFollowUpDate !== undefined ? nextFollowUpDate : followUp.nextFollowUpDate
     };
     
     this.followUps.set(id, updatedFollowUp);
