@@ -250,7 +250,6 @@ export default function CustomerDetailPage() {
       setSelectedFollowUpId(null);
       setUpdateStage(false);
       setNewStage(customer?.stage || null);
-      setCompletionNotes("");
       setNextFollowUpDate(new Date());
       setNextFollowUpNotes("");
     },
@@ -263,7 +262,6 @@ export default function CustomerDetailPage() {
       setCompletingId(null);
       setShowStageDialog(false);
       setSelectedFollowUpId(null);
-      setCompletionNotes("");
       setNextFollowUpDate(new Date());
       setNextFollowUpNotes("");
     },
@@ -296,7 +294,6 @@ export default function CustomerDetailPage() {
     setSelectedFollowUpId(null);
     setUpdateStage(false);
     setNewStage(customer?.stage || null);
-    setCompletionNotes("");
     setNextFollowUpNotes("");
   }
 
