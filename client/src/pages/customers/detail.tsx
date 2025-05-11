@@ -74,7 +74,7 @@ const followUpFormSchema = insertFollowUpSchema.extend({
   }),
   interactionDate: z.date().default(() => new Date()),
   updateCustomerStage: z.boolean().default(false),
-  newCustomerStage: z.enum(['new', 'pipeline', 'cold', 'warm', 'booked']).optional(),
+  newCustomerStage: z.enum(['new', 'pipeline', 'cold', 'warm', 'booked', 'lost']).optional(),
 });
 
 export default function CustomerDetailPage() {
@@ -640,6 +640,20 @@ export default function CustomerDetailPage() {
                 </DialogHeader>
                 
                 <div className="py-4 space-y-4">
+                  {/* Completion Notes */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium leading-none">
+                      Completion Notes
+                    </label>
+                    <Textarea
+                      placeholder="Enter notes about this completed follow-up"
+                      value={completionNotes}
+                      onChange={(e) => setCompletionNotes(e.target.value)}
+                      className="resize-none"
+                    />
+                  </div>
+
+                  {/* Update stage checkbox */}
                   <div className="flex items-start space-x-3 pt-2">
                     <Checkbox 
                       id="update-stage-checkbox"
@@ -659,6 +673,7 @@ export default function CustomerDetailPage() {
                     </div>
                   </div>
                   
+                  {/* Stage selection */}
                   {updateStage && (
                     <div className="space-y-2">
                       <label className="text-sm font-medium leading-none">
@@ -684,6 +699,13 @@ export default function CustomerDetailPage() {
                         <Tag className="h-3 w-3" />
                         <span>Current stage: <Badge variant="outline" className="ml-1">{customer.stage}</Badge></span>
                       </p>
+                      
+                      {/* Note about lost customers */}
+                      {newStage === "lost" && (
+                        <p className="text-xs text-amber-600 mt-2">
+                          Note: Next follow-up is optional for lost customers.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
