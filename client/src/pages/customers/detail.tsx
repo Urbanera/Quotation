@@ -143,6 +143,7 @@ export default function CustomerDetailPage() {
   const [selectedFollowUpId, setSelectedFollowUpId] = useState<number | null>(null);
   const [updateStage, setUpdateStage] = useState(false);
   const [newStage, setNewStage] = useState<string | null>(customer?.stage || null);
+  const [completionNotes, setCompletionNotes] = useState<string>("");
   
   // Delete quotation mutation
   const deleteQuotationMutation = useMutation({
@@ -207,15 +208,17 @@ export default function CustomerDetailPage() {
   };
 
   const markCompleteMutation = useMutation({
-    mutationFn: ({ followUpId, updateCustomerStage, newCustomerStage }: { 
+    mutationFn: ({ followUpId, updateCustomerStage, newCustomerStage, completionNotes }: { 
       followUpId: number, 
       updateCustomerStage?: boolean, 
-      newCustomerStage?: string 
+      newCustomerStage?: string,
+      completionNotes?: string
     }) => {
       setCompletingId(followUpId);
       return apiRequest("PUT", `/api/follow-ups/${followUpId}/complete`, {
         updateCustomerStage,
-        newCustomerStage
+        newCustomerStage,
+        completionNotes
       });
     },
     onSuccess: () => {
@@ -233,6 +236,7 @@ export default function CustomerDetailPage() {
       setSelectedFollowUpId(null);
       setUpdateStage(false);
       setNewStage(customer?.stage || null);
+      setCompletionNotes("");
     },
     onError: () => {
       toast({
@@ -243,6 +247,7 @@ export default function CustomerDetailPage() {
       setCompletingId(null);
       setShowStageDialog(false);
       setSelectedFollowUpId(null);
+      setCompletionNotes("");
     },
   });
 
@@ -261,7 +266,8 @@ export default function CustomerDetailPage() {
     markCompleteMutation.mutate({
       followUpId: selectedFollowUpId,
       updateCustomerStage: updateStage,
-      newCustomerStage: updateStage ? newStage! : undefined
+      newCustomerStage: updateStage ? newStage! : undefined,
+      completionNotes: completionNotes.trim() || undefined
     });
   }
   
@@ -270,6 +276,7 @@ export default function CustomerDetailPage() {
     setSelectedFollowUpId(null);
     setUpdateStage(false);
     setNewStage(customer?.stage || null);
+    setCompletionNotes("");
   }
 
   if (isLoadingCustomer) {
