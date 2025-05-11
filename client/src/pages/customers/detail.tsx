@@ -65,6 +65,12 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Customer, FollowUp, Quotation, insertFollowUpSchema } from "@shared/schema";
+
+// Enhanced follow-up type with user information
+type EnhancedFollowUp = FollowUp & {
+  userName?: string;
+  userUsername?: string;
+};
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 

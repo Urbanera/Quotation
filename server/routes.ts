@@ -327,8 +327,37 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       if (!followUp) {
         return res.status(404).json({ message: "Follow-up not found" });
       }
-      res.json(followUp);
+      
+      // Enhance with user information
+      let enhancedFollowUp = {...followUp};
+      
+      if (followUp.userId) {
+        try {
+          const user = await storage.getUser(followUp.userId);
+          enhancedFollowUp = {
+            ...followUp,
+            userName: user ? user.fullName : "Unknown User",
+            userUsername: user ? user.username : "unknown"
+          };
+        } catch (err) {
+          console.error(`Failed to get user info for ID ${followUp.userId}:`, err);
+          enhancedFollowUp = {
+            ...followUp,
+            userName: "Unknown User",
+            userUsername: "unknown"
+          };
+        }
+      } else {
+        enhancedFollowUp = {
+          ...followUp,
+          userName: "System",
+          userUsername: "system"
+        };
+      }
+      
+      res.json(enhancedFollowUp);
     } catch (error) {
+      console.error("Failed to fetch follow-up:", error);
       res.status(500).json({ message: "Failed to fetch follow-up" });
     }
   });
