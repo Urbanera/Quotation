@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -26,6 +27,19 @@ export default function CustomerForm({
   defaultValues,
   isEdit = false 
 }: CustomerFormProps) {
+  // Fetch app settings to get lead source options
+  const { data: appSettings } = useQuery({
+    queryKey: ["/api/settings/app"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/app");
+      return res.json();
+    }
+  });
+
+  const leadSourceOptions = appSettings?.leadSourceOptions 
+    ? appSettings.leadSourceOptions.split(',').map((s: string) => s.trim())
+    : ['walk-in', 'website', 'referral', 'social media', 'other'];
+
   // Initialize form with default values
   const form = useForm<typeof customerFormSchema._type>({
     resolver: zodResolver(customerFormSchema),
@@ -35,6 +49,7 @@ export default function CustomerForm({
       phone: defaultValues?.phone || "",
       address: defaultValues?.address || "",
       gstNumber: defaultValues?.gstNumber || "",
+      leadSource: defaultValues?.leadSource || "",
       stage: defaultValues?.stage || "new",
     },
   });
@@ -106,6 +121,34 @@ export default function CustomerForm({
                     {...field} 
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="leadSource"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lead Source</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select lead source" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {leadSourceOptions.map((source) => (
+                      <SelectItem key={source} value={source}>
+                        {source.charAt(0).toUpperCase() + source.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

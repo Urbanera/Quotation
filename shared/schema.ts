@@ -341,6 +341,8 @@ export const appSettingsFormSchema = z.object({
   presentationTemplateId: z.string().default("default"),
   requiredAccessories: z.string().default("skirting,handles,sliding mechanism,t profile")
     .describe("Comma-separated list of required accessories to check in quotation validation"),
+  leadSourceOptions: z.string().default("walk-in,website,referral,social media,other")
+    .describe("Comma-separated list of lead sources"),
 });
 
 export const roomFormSchema = z.object({
@@ -407,6 +409,7 @@ export const customerFormSchema = z.object({
   phone: z.string().min(8, "Phone number must be at least 8 digits"),
   address: z.string().min(1, "Address is required"),
   gstNumber: z.string().optional(),
+  leadSource: z.string().optional(),
   stage: z.enum(['new', 'pipeline', 'cold', 'warm', 'booked', 'lost']).default('new'),
 });
 
