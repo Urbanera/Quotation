@@ -113,9 +113,13 @@ export default function CustomersList() {
   
   // Lead source options and counts
   const leadSourcesData = useMemo(() => {
-    if (!customers || !appSettings?.leadSourceOptions) return { options: [], counts: {} };
+    if (!customers) return { options: [], counts: { all: 0 } };
     
-    const options = appSettings.leadSourceOptions.split(',').map((s: string) => s.trim());
+    // Handle missing or invalid leadSourceOptions
+    const leadSourceOptionsStr = appSettings?.leadSourceOptions || '';
+    const options = leadSourceOptionsStr 
+      ? leadSourceOptionsStr.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : [];
     
     // Count customers by lead source
     const counts: Record<string, number> = { all: customers.length };
@@ -152,7 +156,9 @@ export default function CustomersList() {
     
     // Apply lead source filter
     if (leadSourceFilter !== 'all') {
-      filtered = filtered.filter(customer => customer.leadSource === leadSourceFilter);
+      filtered = filtered.filter(customer => 
+        customer.leadSource && leadSourceFilter && customer.leadSource === leadSourceFilter
+      );
     }
     
     // Apply search filter - case insensitive
@@ -174,13 +180,16 @@ export default function CustomersList() {
       yesterday.setDate(yesterday.getDate() - 1);
       
       // First get customer IDs with matching follow-ups
-      const pendingFollowUps = allFollowUps.filter(f => !f.completed && f.nextFollowUpDate);
+      // Filter out follow-ups that don't have a valid next follow-up date
+      const pendingFollowUps = allFollowUps?.filter(f => !f.completed && !!f.nextFollowUpDate) || [];
       
       let customerIdsWithMatchingFollowUps: number[] = [];
       
       if (followUpFilter === 'today') {
         customerIdsWithMatchingFollowUps = pendingFollowUps
           .filter(f => {
+            // Skip follow-ups with no date
+            if (!f.nextFollowUpDate) return false;
             const followUpDate = new Date(f.nextFollowUpDate);
             followUpDate.setHours(0, 0, 0, 0);
             return followUpDate.getTime() === today.getTime();
@@ -189,6 +198,8 @@ export default function CustomersList() {
       } else if (followUpFilter === 'yesterday') {
         customerIdsWithMatchingFollowUps = pendingFollowUps
           .filter(f => {
+            // Skip follow-ups with no date
+            if (!f.nextFollowUpDate) return false;
             const followUpDate = new Date(f.nextFollowUpDate);
             followUpDate.setHours(0, 0, 0, 0);
             return followUpDate.getTime() === yesterday.getTime();
@@ -197,6 +208,8 @@ export default function CustomersList() {
       } else if (followUpFilter === 'missed') {
         customerIdsWithMatchingFollowUps = pendingFollowUps
           .filter(f => {
+            // Skip follow-ups with no date
+            if (!f.nextFollowUpDate) return false;
             const followUpDate = new Date(f.nextFollowUpDate);
             followUpDate.setHours(0, 0, 0, 0);
             return followUpDate < today;
@@ -205,6 +218,8 @@ export default function CustomersList() {
       } else if (followUpFilter === 'future') {
         customerIdsWithMatchingFollowUps = pendingFollowUps
           .filter(f => {
+            // Skip follow-ups with no date
+            if (!f.nextFollowUpDate) return false;
             const followUpDate = new Date(f.nextFollowUpDate);
             followUpDate.setHours(0, 0, 0, 0);
             return followUpDate > today;
@@ -435,13 +450,13 @@ export default function CustomersList() {
           <div className="flex flex-wrap gap-2 items-center">
             {stageFilter !== "all" && (
               <Badge variant="outline" className="py-1 px-3">
-                Stage: {stageFilter.charAt(0).toUpperCase() + stageFilter.slice(1)}
+                Stage: {stageFilter && typeof stageFilter === 'string' ? (stageFilter.charAt(0).toUpperCase() + stageFilter.slice(1)) : 'All'}
                 <X className="ml-1 h-3 w-3 cursor-pointer" onClick={() => setStageFilter("all")} />
               </Badge>
             )}
             {followUpFilter !== "all" && (
               <Badge variant="outline" className="py-1 px-3">
-                Follow-up: {followUpFilter.charAt(0).toUpperCase() + followUpFilter.slice(1)}
+                Follow-up: {followUpFilter && typeof followUpFilter === 'string' ? (followUpFilter.charAt(0).toUpperCase() + followUpFilter.slice(1)) : 'All'}
                 <X className="ml-1 h-3 w-3 cursor-pointer" onClick={() => setFollowUpFilter("all")} />
               </Badge>
             )}
@@ -568,7 +583,7 @@ export default function CustomersList() {
                               "bg-red-100 text-red-800"
                             }`}
                           >
-                            {customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1)}
+                            {customer.stage && typeof customer.stage === 'string' ? (customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1)) : 'Unknown'}
                           </Badge>
                         </TableCell>
                         <TableCell>{new Date(customer.createdAt).toLocaleDateString()}</TableCell>
