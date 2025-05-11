@@ -748,13 +748,13 @@ export default function CustomerDetailPage() {
                         </Popover>
                       </div>
                       
-                      {/* Next follow-up notes */}
+                      {/* Notes for completion and next follow-up */}
                       <div className="space-y-2 mt-4">
                         <label className="text-sm font-medium leading-none">
-                          Next Follow-up Notes
+                          Notes
                         </label>
                         <Textarea
-                          placeholder="Enter notes for the next follow-up (will be automatically created)"
+                          placeholder="Enter notes for this completion and the next follow-up"
                           value={nextFollowUpNotes}
                           onChange={(e) => setNextFollowUpNotes(e.target.value)}
                           className="resize-none"
