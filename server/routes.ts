@@ -265,8 +265,13 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.put("/api/follow-ups/:id/complete", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { updateCustomerStage, newCustomerStage, completionNotes, nextFollowUpDate } = req.body || {};
-      const followUp = await storage.markFollowUpComplete(id, completionNotes, nextFollowUpDate !== undefined ? nextFollowUpDate : undefined);
+      const { updateCustomerStage, newCustomerStage, completionNotes, nextFollowUpDate, nextFollowUpNotes } = req.body || {};
+      const followUp = await storage.markFollowUpComplete(
+        id, 
+        completionNotes, 
+        nextFollowUpDate !== undefined ? nextFollowUpDate : undefined,
+        nextFollowUpNotes
+      );
       
       if (!followUp) {
         return res.status(404).json({ message: "Follow-up not found" });
