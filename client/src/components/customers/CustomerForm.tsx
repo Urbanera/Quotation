@@ -142,7 +142,7 @@ export default function CustomerForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {leadSourceOptions.map((source) => (
+                    {leadSourceOptions.map((source: string) => (
                       <SelectItem key={source} value={source}>
                         {source.charAt(0).toUpperCase() + source.slice(1)}
                       </SelectItem>

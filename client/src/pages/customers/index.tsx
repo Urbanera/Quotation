@@ -115,12 +115,12 @@ export default function CustomersList() {
   const leadSourcesData = useMemo(() => {
     if (!customers || !appSettings?.leadSourceOptions) return { options: [], counts: {} };
     
-    const options = appSettings.leadSourceOptions.split(',').map(s => s.trim());
+    const options = appSettings.leadSourceOptions.split(',').map((s: string) => s.trim());
     
     // Count customers by lead source
     const counts: Record<string, number> = { all: customers.length };
     
-    options.forEach(source => {
+    options.forEach((source: string) => {
       counts[source] = customers.reduce((count, c) => 
         c.leadSource === source ? count + 1 : count, 0
       );
@@ -362,7 +362,7 @@ export default function CustomersList() {
               </CardHeader>
               <CardContent>
                 <div className={`grid ${leadSourcesData.options.length > 4 ? 'grid-cols-3' : 'grid-cols-4'} gap-2 text-center`}>
-                  {leadSourcesData.options.slice(0, 6).map(source => {
+                  {leadSourcesData.options.slice(0, 6).map((source: string) => {
                     // Create abbreviated display name (first 4 chars or first word)
                     const displayName = source.includes(' ') 
                       ? source.split(' ')[0].toUpperCase() 
