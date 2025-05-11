@@ -41,6 +41,7 @@ export const appSettings = pgTable("app_settings", {
   quotationTemplateId: text("quotation_template_id").default("default"),
   presentationTemplateId: text("presentation_template_id").default("default"),
   requiredAccessories: text("required_accessories").default("skirting,handles,sliding mechanism,t profile"),
+  leadSourceOptions: text("lead_source_options").default("walk-in,website,referral,social media,other"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -57,6 +58,7 @@ export const customers = pgTable("customers", {
   phone: text("phone").notNull(),
   address: text("address").notNull(),
   gstNumber: text("gst_number"),
+  leadSource: text("lead_source"),
   stage: customerStageEnum("stage").notNull().default('new'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

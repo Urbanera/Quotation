@@ -2,8 +2,9 @@ import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Edit, Trash2, Eye, SortAsc, SortDesc, Filter } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, SortAsc, SortDesc, Filter, X } from "lucide-react";
 import { Customer, FollowUp } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -48,7 +49,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 type SortField = "name" | "email" | "createdAt";
 type SortOrder = "asc" | "desc";
@@ -57,25 +57,28 @@ type FollowUpFilter = "all" | "today" | "yesterday" | "missed" | "future";
 
 export default function CustomersList() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
   const [followUpFilter, setFollowUpFilter] = useState<FollowUpFilter>("all");
+  const [deleteCustomerId, setDeleteCustomerId] = useState<number | null>(null);
+  const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [location, setLocation] = useLocation();
 
-  // We can use the query parameters to filter customers
+  // Fetch customers
   const { data: customers, isLoading } = useQuery<Customer[]>({
-    queryKey: ["/api/customers", { stage: stageFilter !== "all" ? stageFilter : undefined, followUpFilter: followUpFilter !== "all" ? followUpFilter : undefined }],
-    queryFn: async ({ queryKey }) => {
-      const [_, params] = queryKey as [string, { stage?: string; followUpFilter?: string }];
-      const queryParams = new URLSearchParams();
-      
-      if (params.stage) queryParams.append("stage", params.stage);
-      if (params.followUpFilter) queryParams.append("followUpFilter", params.followUpFilter);
-      
-      const res = await fetch(`/api/customers?${queryParams.toString()}`);
+    queryKey: ["/api/customers"],
+    queryFn: async () => {
+      const res = await fetch("/api/customers");
+      return res.json();
+    }
+  });
+
+  // Get all customer follow-ups for counting
+  const { data: allFollowUps } = useQuery<FollowUp[]>({
+    queryKey: ["/api/follow-ups/all"],
+    queryFn: async () => {
+      const res = await fetch("/api/follow-ups/all");
       return res.json();
     }
   });
@@ -111,400 +114,470 @@ export default function CustomersList() {
   const filteredCustomers = useMemo(() => {
     if (!customers) return [];
     
-    // Text search filter
-    let result = customers.filter(customer => 
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // First filter by stage and search term
+    let filtered = [...customers];
     
-    // Then sort
-    return [...result].sort((a, b) => {
-      let comparison = 0;
+    // Apply stage filter
+    if (stageFilter !== 'all') {
+      filtered = filtered.filter(customer => customer.stage === stageFilter);
+    }
+    
+    // Apply search filter - case insensitive
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(customer => 
+        customer.name.toLowerCase().includes(term) || 
+        customer.email.toLowerCase().includes(term) || 
+        customer.phone.toLowerCase().includes(term)
+      );
+    }
+    
+    // Apply follow-up filter
+    if (followUpFilter !== 'all' && allFollowUps) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       
-      switch (sortField) {
-        case "name":
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case "email":
-          comparison = a.email.localeCompare(b.email);
-          break;
-        case "createdAt":
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          break;
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      // First get customer IDs with matching follow-ups
+      const pendingFollowUps = allFollowUps.filter(f => !f.completed && f.nextFollowUpDate);
+      
+      let customerIdsWithMatchingFollowUps: number[] = [];
+      
+      if (followUpFilter === 'today') {
+        customerIdsWithMatchingFollowUps = pendingFollowUps
+          .filter(f => {
+            const followUpDate = new Date(f.nextFollowUpDate);
+            followUpDate.setHours(0, 0, 0, 0);
+            return followUpDate.getTime() === today.getTime();
+          })
+          .map(f => f.customerId);
+      } else if (followUpFilter === 'yesterday') {
+        customerIdsWithMatchingFollowUps = pendingFollowUps
+          .filter(f => {
+            const followUpDate = new Date(f.nextFollowUpDate);
+            followUpDate.setHours(0, 0, 0, 0);
+            return followUpDate.getTime() === yesterday.getTime();
+          })
+          .map(f => f.customerId);
+      } else if (followUpFilter === 'missed') {
+        customerIdsWithMatchingFollowUps = pendingFollowUps
+          .filter(f => {
+            const followUpDate = new Date(f.nextFollowUpDate);
+            followUpDate.setHours(0, 0, 0, 0);
+            return followUpDate < today;
+          })
+          .map(f => f.customerId);
+      } else if (followUpFilter === 'future') {
+        customerIdsWithMatchingFollowUps = pendingFollowUps
+          .filter(f => {
+            const followUpDate = new Date(f.nextFollowUpDate);
+            followUpDate.setHours(0, 0, 0, 0);
+            return followUpDate > today;
+          })
+          .map(f => f.customerId);
       }
       
-      return sortOrder === "asc" ? comparison : -comparison;
+      // Only show customers with matching follow-ups
+      filtered = filtered.filter(c => customerIdsWithMatchingFollowUps.includes(c.id));
+    }
+    
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      // For string fields
+      if (sortField === 'name' || sortField === 'email') {
+        const aVal = a[sortField].toLowerCase();
+        const bVal = b[sortField].toLowerCase();
+        
+        if (sortOrder === 'asc') {
+          return aVal.localeCompare(bVal);
+        } else {
+          return bVal.localeCompare(aVal);
+        }
+      } 
+      
+      // For date fields
+      if (sortField === 'createdAt') {
+        const aDate = new Date(a.createdAt).getTime();
+        const bDate = new Date(b.createdAt).getTime();
+        
+        if (sortOrder === 'asc') {
+          return aDate - bDate;
+        } else {
+          return bDate - aDate;
+        }
+      }
+      
+      return 0;
     });
-  }, [customers, searchTerm, sortField, sortOrder]);
+  }, [customers, searchTerm, sortField, sortOrder, stageFilter, followUpFilter, allFollowUps]);
 
+  // Delete customer handler
   const handleDeleteCustomer = async () => {
-    if (!customerToDelete) return;
+    if (!deleteCustomerId) return;
     
     try {
-      await apiRequest("DELETE", `/api/customers/${customerToDelete.id}`);
+      await apiRequest("DELETE", `/api/customers/${deleteCustomerId}`);
+      
+      // Invalidate customers cache to reload the list
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      
       toast({
-        title: "Customer deleted",
-        description: `${customerToDelete.name} has been removed.`,
+        title: "Customer Deleted",
+        description: "Customer has been deleted successfully",
       });
-      setCustomerToDelete(null);
-    } catch (error) {
+      
+      // Close the dialog
+      setDeleteCustomerId(null);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to delete customer.",
+        description: error.message || "Failed to delete customer",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <div className="py-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
-          <Link href="/customers/add">
-            <Button className="bg-indigo-600 hover:bg-indigo-700">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Customer
-            </Button>
+    <div className="container p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Customers</h1>
+        <Button asChild>
+          <Link to="/customers/create">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Customer
           </Link>
-        </div>
-
-        {isLoading ? (
-          <div className="mt-6 text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-2 text-gray-500">Loading customers...</p>
-          </div>
-        ) : !customers?.length ? (
-          <div className="mt-6 text-center py-8 bg-white shadow rounded-md">
-            <p className="text-gray-500 p-8">No customers yet.</p>
-          </div>
-        ) : (
-          <div className="mt-6 space-y-6">
-            {/* Stats Cards Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Customer Stats Card */}
-              <Card className="bg-orange-500 text-white overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-white flex items-center">
-                    <span>Customer</span>
-                    <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
-                      <span>{stageCounts.all}</span>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-4 gap-2 text-center">
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">{stageCounts.new}</div>
-                      <div className="text-xs uppercase">NEW</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">{stageCounts.warm}</div>
-                      <div className="text-xs uppercase">WARM</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">{stageCounts.pipeline}</div>
-                      <div className="text-xs uppercase">PIPE</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">{stageCounts.cold}</div>
-                      <div className="text-xs uppercase">COLD</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">{stageCounts.booked}</div>
-                      <div className="text-xs uppercase">BOOKED</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">{stageCounts.lost}</div>
-                      <div className="text-xs uppercase">LOST</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Lead Source Stats Card */}
-              <Card className="bg-slate-600 text-white overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-white flex items-center">
-                    <span>Lead Source</span>
-                    <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
-                      <span>0</span>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-4 gap-2 text-center">
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">0</div>
-                      <div className="text-xs uppercase">WALK</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">0</div>
-                      <div className="text-xs uppercase">WEB</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">0</div>
-                      <div className="text-xs uppercase">REF</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">0</div>
-                      <div className="text-xs uppercase">SM</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Follow Up Stats Card */}
-              <Card className="bg-green-600 text-white overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-white flex items-center">
-                    <span>Follow Up</span>
-                    <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
-                      <span>{followUpCounts.all}</span>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-4 gap-2 text-center">
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">{followUpCounts.today}</div>
-                      <div className="text-xs uppercase">TODAY</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold text-red-300">{followUpCounts.yesterday}</div>
-                      <div className="text-xs uppercase">YESTERDAY</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">{followUpCounts.missed}</div>
-                      <div className="text-xs uppercase">MISSED</div>
-                    </div>
-                    <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">{followUpCounts.future}</div>
-                      <div className="text-xs uppercase">FUTURE</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Filters */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Filters</CardTitle>
-                <CardDescription>Filter customers by stage and follow-up date</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col sm:flex-row gap-4 pb-4">
-                  {/* Stage Filter */}
-                  <div className="w-full sm:w-1/2">
-                    <div className="text-sm font-medium mb-2">Customer Stage</div>
-                    <Select
-                      value={stageFilter}
-                      onValueChange={(value) => setStageFilter(value as StageFilter)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select stage" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Stages</SelectItem>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="pipeline">Pipeline</SelectItem>
-                        <SelectItem value="cold">Cold</SelectItem>
-                        <SelectItem value="warm">Warm</SelectItem>
-                        <SelectItem value="booked">Booked</SelectItem>
-                        <SelectItem value="lost">Lost</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {/* Follow-up Filter */}
-                  <div className="w-full sm:w-1/2">
-                    <div className="text-sm font-medium mb-2">Follow-up Date</div>
-                    <Select
-                      value={followUpFilter}
-                      onValueChange={(value) => setFollowUpFilter(value as FollowUpFilter)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select follow-up filter" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Follow-ups</SelectItem>
-                        <SelectItem value="today">Today</SelectItem>
-                        <SelectItem value="yesterday">Yesterday</SelectItem>
-                        <SelectItem value="missed">Missed</SelectItem>
-                        <SelectItem value="future">Future</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Customer Table View */}
-            <Card>
-              <CardHeader className="pb-3 flex flex-row justify-between items-center">
-                <div>
-                  <CardTitle>Customer List</CardTitle>
-                  <CardDescription>
-                    {stageFilter !== 'all' && `Filtered by stage: ${stageFilter}`}
-                    {followUpFilter !== 'all' && stageFilter !== 'all' && ' and '}
-                    {followUpFilter !== 'all' && `follow-up date: ${followUpFilter}`}
-                    {stageFilter === 'all' && followUpFilter === 'all' && 'Showing all customers'}
-                  </CardDescription>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <div className="w-full sm:max-w-xs relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <Input
-                      type="text"
-                      placeholder="Search customers..."
-                      className="pl-10 focus:ring-indigo-500 focus:border-indigo-500"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                
-                  <Select
-                    value={sortField}
-                    onValueChange={(value) => setSortField(value as SortField)}
-                  >
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="name">Name</SelectItem>
-                      <SelectItem value="email">Email</SelectItem>
-                      <SelectItem value="createdAt">Date Created</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setSortOrder("asc")}>
-                        <SortAsc className="mr-2 h-4 w-4" />
-                        <span>Ascending</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSortOrder("desc")}>
-                        <SortDesc className="mr-2 h-4 w-4" />
-                        <span>Descending</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {!filteredCustomers?.length ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No matching customers found.</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[250px]">Customer</TableHead>
-                        <TableHead>Contact Information</TableHead>
-                        <TableHead>Address</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredCustomers.map((customer) => (
-                        <TableRow key={customer.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center">
-                              <span className="mr-2">{customer.name}</span>
-                              {customer.stage && (
-                                <Badge className={
-                                  customer.stage === 'new' ? 'bg-blue-100 text-blue-800' :
-                                  customer.stage === 'pipeline' ? 'bg-purple-100 text-purple-800' :
-                                  customer.stage === 'cold' ? 'bg-gray-100 text-gray-800' :
-                                  customer.stage === 'warm' ? 'bg-orange-100 text-orange-800' :
-                                  customer.stage === 'booked' ? 'bg-green-100 text-green-800' :
-                                  'bg-red-100 text-red-800'
-                                }>
-                                  {customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1)}
-                                </Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="text-sm">{customer.email}</span>
-                              <span className="text-sm text-muted-foreground">{customer.phone}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {customer.address}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end space-x-2">
-                              <Link href={`/customers/view/${customer.id}`}>
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-4 w-4" />
-                                  <span className="sr-only">View</span>
-                                </Button>
-                              </Link>
-                              <Link href={`/customers/edit/${customer.id}`}>
-                                <Button variant="outline" size="sm">
-                                  <Edit className="h-4 w-4" />
-                                  <span className="sr-only">Edit</span>
-                                </Button>
-                              </Link>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCustomerToDelete(customer)}
-                                className="text-red-600 hover:text-red-800 border-red-200 hover:border-red-300"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Delete</span>
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        <AlertDialog
-          open={!!customerToDelete}
-          onOpenChange={(open) => !open && setCustomerToDelete(null)}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete {customerToDelete?.name} and all associated data.
-                This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteCustomer}
-                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        </Button>
       </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-6">
+          {/* Stats Cards Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Customer Stats Card */}
+            <Card className="bg-primary text-white overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white flex items-center">
+                  <span>Customer</span>
+                  <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <span>{stageCounts.all}</span>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "new" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setStageFilter(stageFilter === "new" ? "all" : "new")}
+                  >
+                    <div className="text-lg font-bold">{stageCounts.new}</div>
+                    <div className="text-xs uppercase">NEW</div>
+                  </div>
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "warm" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setStageFilter(stageFilter === "warm" ? "all" : "warm")}
+                  >
+                    <div className="text-lg font-bold">{stageCounts.warm}</div>
+                    <div className="text-xs uppercase">WARM</div>
+                  </div>
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "pipeline" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setStageFilter(stageFilter === "pipeline" ? "all" : "pipeline")}
+                  >
+                    <div className="text-lg font-bold">{stageCounts.pipeline}</div>
+                    <div className="text-xs uppercase">PIPE</div>
+                  </div>
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "cold" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setStageFilter(stageFilter === "cold" ? "all" : "cold")}
+                  >
+                    <div className="text-lg font-bold">{stageCounts.cold}</div>
+                    <div className="text-xs uppercase">COLD</div>
+                  </div>
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "booked" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setStageFilter(stageFilter === "booked" ? "all" : "booked")}
+                  >
+                    <div className="text-lg font-bold">{stageCounts.booked}</div>
+                    <div className="text-xs uppercase">BOOKED</div>
+                  </div>
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "lost" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setStageFilter(stageFilter === "lost" ? "all" : "lost")}
+                  >
+                    <div className="text-lg font-bold">{stageCounts.lost}</div>
+                    <div className="text-xs uppercase">LOST</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lead Source Stats Card */}
+            <Card className="bg-secondary text-white overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white flex items-center">
+                  <span>Lead Source</span>
+                  <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <span>0</span>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors">
+                    <div className="text-lg font-bold">0</div>
+                    <div className="text-xs uppercase">WALK</div>
+                  </div>
+                  <div className="bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors">
+                    <div className="text-lg font-bold">0</div>
+                    <div className="text-xs uppercase">WEB</div>
+                  </div>
+                  <div className="bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors">
+                    <div className="text-lg font-bold">0</div>
+                    <div className="text-xs uppercase">REF</div>
+                  </div>
+                  <div className="bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors">
+                    <div className="text-lg font-bold">0</div>
+                    <div className="text-xs uppercase">SM</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Follow Up Stats Card */}
+            <Card className="bg-green-600 text-white overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white flex items-center">
+                  <span>Follow Up</span>
+                  <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <span>{followUpCounts.all}</span>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "today" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setFollowUpFilter(followUpFilter === "today" ? "all" : "today")}
+                  >
+                    <div className="text-lg font-bold">{followUpCounts.today}</div>
+                    <div className="text-xs uppercase">TODAY</div>
+                  </div>
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "yesterday" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setFollowUpFilter(followUpFilter === "yesterday" ? "all" : "yesterday")}
+                  >
+                    <div className="text-lg font-bold text-red-300">{followUpCounts.yesterday}</div>
+                    <div className="text-xs uppercase">YESTERDAY</div>
+                  </div>
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "missed" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setFollowUpFilter(followUpFilter === "missed" ? "all" : "missed")}
+                  >
+                    <div className="text-lg font-bold">{followUpCounts.missed}</div>
+                    <div className="text-xs uppercase">MISSED</div>
+                  </div>
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "future" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setFollowUpFilter(followUpFilter === "future" ? "all" : "future")}
+                  >
+                    <div className="text-lg font-bold">{followUpCounts.future}</div>
+                    <div className="text-xs uppercase">FUTURE</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Active Filters Display */}
+          <div className="flex flex-wrap gap-2 items-center">
+            {stageFilter !== "all" && (
+              <Badge variant="outline" className="py-1 px-3">
+                Stage: {stageFilter.charAt(0).toUpperCase() + stageFilter.slice(1)}
+                <X className="ml-1 h-3 w-3 cursor-pointer" onClick={() => setStageFilter("all")} />
+              </Badge>
+            )}
+            {followUpFilter !== "all" && (
+              <Badge variant="outline" className="py-1 px-3">
+                Follow-up: {followUpFilter.charAt(0).toUpperCase() + followUpFilter.slice(1)}
+                <X className="ml-1 h-3 w-3 cursor-pointer" onClick={() => setFollowUpFilter("all")} />
+              </Badge>
+            )}
+            {(stageFilter !== "all" || followUpFilter !== "all") && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setStageFilter("all");
+                  setFollowUpFilter("all");
+                }}
+                className="h-7"
+              >
+                Clear all
+              </Button>
+            )}
+          </div>
+
+          {/* Customer Table View */}
+          <Card>
+            <CardHeader className="pb-3 flex flex-row justify-between items-center">
+              <div>
+                <CardTitle>Customers</CardTitle>
+                <CardDescription>
+                  {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''} found
+                </CardDescription>
+              </div>
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search customers..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead 
+                      className="cursor-pointer hover:text-primary"
+                      onClick={() => {
+                        if (sortField === "name") {
+                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                        } else {
+                          setSortField("name");
+                          setSortOrder("asc");
+                        }
+                      }}
+                    >
+                      Name 
+                      {sortField === "name" && (
+                        sortOrder === "asc" ? <SortAsc className="inline ml-1 h-4 w-4" /> : <SortDesc className="inline ml-1 h-4 w-4" />
+                      )}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:text-primary"
+                      onClick={() => {
+                        if (sortField === "email") {
+                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                        } else {
+                          setSortField("email");
+                          setSortOrder("asc");
+                        }
+                      }}
+                    >
+                      Email 
+                      {sortField === "email" && (
+                        sortOrder === "asc" ? <SortAsc className="inline ml-1 h-4 w-4" /> : <SortDesc className="inline ml-1 h-4 w-4" />
+                      )}
+                    </TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Stage</TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:text-primary"
+                      onClick={() => {
+                        if (sortField === "createdAt") {
+                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                        } else {
+                          setSortField("createdAt");
+                          setSortOrder("asc");
+                        }
+                      }}
+                    >
+                      Created At 
+                      {sortField === "createdAt" && (
+                        sortOrder === "asc" ? <SortAsc className="inline ml-1 h-4 w-4" /> : <SortDesc className="inline ml-1 h-4 w-4" />
+                      )}
+                    </TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCustomers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                        No customers found. Try changing your filters or create a new customer.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredCustomers.map((customer) => (
+                      <TableRow key={customer.id} className="hover:bg-accent/50">
+                        <TableCell className="font-medium">{customer.name}</TableCell>
+                        <TableCell>{customer.email}</TableCell>
+                        <TableCell>{customer.phone}</TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={`${
+                              customer.stage === "new" ? "bg-blue-100 text-blue-800" : 
+                              customer.stage === "pipeline" ? "bg-purple-100 text-purple-800" : 
+                              customer.stage === "cold" ? "bg-gray-100 text-gray-800" : 
+                              customer.stage === "warm" ? "bg-orange-100 text-orange-800" : 
+                              customer.stage === "booked" ? "bg-green-100 text-green-800" : 
+                              "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{new Date(customer.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end">
+                            <Button variant="ghost" size="icon" asChild>
+                              <Link to={`/customers/${customer.id}`}>
+                                <Eye className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                            <Button variant="ghost" size="icon" asChild>
+                              <Link to={`/customers/${customer.id}/edit`}>
+                                <Edit className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => setDeleteCustomerId(customer.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteCustomerId !== null} onOpenChange={() => setDeleteCustomerId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will permanently delete this customer and all associated data. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteCustomer}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
