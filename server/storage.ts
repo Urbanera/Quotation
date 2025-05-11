@@ -31,6 +31,7 @@ export interface IStorage {
 
   // Customer operations
   getCustomers(): Promise<Customer[]>;
+  getCustomersByStage(stage: string): Promise<Customer[]>;
   getCustomer(id: number): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: number, customer: InsertCustomer): Promise<Customer | undefined>;
@@ -38,6 +39,7 @@ export interface IStorage {
   deleteCustomer(id: number): Promise<boolean>;
   
   // Customer Follow-up operations
+  getAllFollowUps(): Promise<FollowUp[]>;
   getFollowUps(customerId: number): Promise<FollowUp[]>;
   getFollowUp(id: number): Promise<FollowUp | undefined>;
   createFollowUp(followUp: InsertFollowUp): Promise<FollowUp>;
@@ -579,6 +581,15 @@ export class MemStorage implements IStorage {
     return Array.from(this.customers.values());
   }
   
+  async getCustomersByStage(stage: string): Promise<Customer[]> {
+    if (!stage || stage === 'all') {
+      return this.getCustomers();
+    }
+    return Array.from(this.customers.values()).filter(customer => 
+      customer.stage === stage
+    );
+  }
+  
   async getCustomer(id: number): Promise<Customer | undefined> {
     return this.customers.get(id);
   }
@@ -629,7 +640,8 @@ export class MemStorage implements IStorage {
   
   // Customer Follow-up operations
   async getAllFollowUps(): Promise<FollowUp[]> {
-    return Array.from(this.followUps.values());
+    return Array.from(this.followUps.values())
+      .sort((a, b) => b.interactionDate.getTime() - a.interactionDate.getTime()); // Most recent first
   }
   
   async getFollowUps(customerId: number): Promise<FollowUp[]> {

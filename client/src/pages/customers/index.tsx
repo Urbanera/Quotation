@@ -69,11 +69,11 @@ export default function CustomersList() {
   const { data: customers, isLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers", { stage: stageFilter !== "all" ? stageFilter : undefined, followUpFilter: followUpFilter !== "all" ? followUpFilter : undefined }],
     queryFn: async ({ queryKey }) => {
-      const [_, params] = queryKey;
+      const [_, params] = queryKey as [string, { stage?: string; followUpFilter?: string }];
       const queryParams = new URLSearchParams();
       
-      if (params.stage) queryParams.append("stage", params.stage as string);
-      if (params.followUpFilter) queryParams.append("followUpFilter", params.followUpFilter as string);
+      if (params.stage) queryParams.append("stage", params.stage);
+      if (params.followUpFilter) queryParams.append("followUpFilter", params.followUpFilter);
       
       const res = await fetch(`/api/customers?${queryParams.toString()}`);
       return res.json();
