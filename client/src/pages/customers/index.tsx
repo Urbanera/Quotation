@@ -475,6 +475,7 @@ export default function CustomersList() {
                 onClick={() => {
                   setStageFilter("all");
                   setFollowUpFilter("all");
+                  setLeadSourceFilter("all");
                 }}
                 className="h-7"
               >
