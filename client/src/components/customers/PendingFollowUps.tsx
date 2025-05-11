@@ -10,7 +10,11 @@ import { Clock, Bell, CheckCircle2, ChevronRight } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-type PendingFollowUp = FollowUp & { customer: Customer };
+type PendingFollowUp = FollowUp & { 
+  customer: Customer;
+  userName?: string;
+  userUsername?: string;
+};
 
 export default function PendingFollowUps() {
   const { toast } = useToast();
