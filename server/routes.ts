@@ -354,12 +354,23 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.put("/api/follow-ups/:id", validateRequest(followUpFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const followUp = await storage.updateFollowUp(id, req.body);
+      
+      // Get current user ID (this is a mock, would be from auth session in real app)
+      const userId = 1; // In a real app, this would be req.user.id
+      
+      // Add userId to the update data
+      const updateData = {
+        ...req.body,
+        userId
+      };
+      
+      const followUp = await storage.updateFollowUp(id, updateData);
       if (!followUp) {
         return res.status(404).json({ message: "Follow-up not found" });
       }
       res.json(followUp);
     } catch (error) {
+      console.error("Failed to update follow-up:", error);
       res.status(500).json({ message: "Failed to update follow-up" });
     }
   });
@@ -373,12 +384,13 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       const userId = 1; // In a real app, this would be req.user.id
       console.log(`User ID ${userId} is completing follow-up ${id}`);
       
-      // First mark the follow-up as complete
+      // First mark the follow-up as complete with the userId
       const followUp = await storage.markFollowUpComplete(
         id, 
         completionNotes, 
         nextFollowUpDate !== undefined ? nextFollowUpDate : undefined,
-        nextFollowUpNotes
+        nextFollowUpNotes,
+        userId // Add the userId parameter
       );
       
       if (!followUp) {

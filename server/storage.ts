@@ -44,7 +44,7 @@ export interface IStorage {
   updateFollowUp(id: number, followUp: Partial<InsertFollowUp>): Promise<FollowUp | undefined>;
   deleteFollowUp(id: number): Promise<boolean>;
   getPendingFollowUps(): Promise<Array<FollowUp & { customer: Customer }>>;
-  markFollowUpComplete(id: number, completionNotes?: string, nextFollowUpDate?: Date | null, nextFollowUpNotes?: string): Promise<FollowUp | undefined>;
+  markFollowUpComplete(id: number, completionNotes?: string, nextFollowUpDate?: Date | null, nextFollowUpNotes?: string, userId?: number): Promise<FollowUp | undefined>;
   
   // Quotation operations
   getQuotations(): Promise<Quotation[]>;
@@ -731,7 +731,7 @@ export class MemStorage implements IStorage {
     });
   }
   
-  async markFollowUpComplete(id: number, completionNotes?: string, nextFollowUpDate?: Date | null, nextFollowUpNotes?: string): Promise<FollowUp | undefined> {
+  async markFollowUpComplete(id: number, completionNotes?: string, nextFollowUpDate?: Date | null, nextFollowUpNotes?: string, userId?: number): Promise<FollowUp | undefined> {
     const followUp = this.followUps.get(id);
     if (!followUp) return undefined;
     
@@ -741,7 +741,9 @@ export class MemStorage implements IStorage {
       completed: true,
       completionNotes: completionNotes || null,
       // Only update nextFollowUpDate if explicitly provided (including null)
-      nextFollowUpDate: nextFollowUpDate !== undefined ? nextFollowUpDate : followUp.nextFollowUpDate
+      nextFollowUpDate: nextFollowUpDate !== undefined ? nextFollowUpDate : followUp.nextFollowUpDate,
+      // Update the userId if provided
+      userId: userId !== undefined ? userId : followUp.userId
     };
     
     this.followUps.set(id, updatedFollowUp);
