@@ -97,7 +97,7 @@ export default function CustomerDetailPage() {
     enabled: !isNaN(customerId),
   });
 
-  const { data: followUps, isLoading: isLoadingFollowUps } = useQuery<FollowUp[]>({
+  const { data: followUps, isLoading: isLoadingFollowUps } = useQuery<EnhancedFollowUp[]>({
     queryKey: ["/api/follow-ups", customerId],
     queryFn: () => fetch(`/api/follow-ups?customerId=${customerId}`).then((res) => res.json()),
     enabled: !isNaN(customerId),
