@@ -249,6 +249,7 @@ export default function CustomerDetailPage() {
       setUpdateStage(false);
       setNewStage(customer?.stage || null);
       setCompletionNotes("");
+      setNextFollowUpDate(new Date());
     },
     onError: () => {
       toast({
@@ -260,6 +261,7 @@ export default function CustomerDetailPage() {
       setShowStageDialog(false);
       setSelectedFollowUpId(null);
       setCompletionNotes("");
+      setNextFollowUpDate(new Date());
     },
   });
 
@@ -279,7 +281,8 @@ export default function CustomerDetailPage() {
       followUpId: selectedFollowUpId,
       updateCustomerStage: updateStage,
       newCustomerStage: updateStage ? newStage! : undefined,
-      completionNotes: completionNotes.trim() || undefined
+      completionNotes: completionNotes.trim() || undefined,
+      nextFollowUpDate: (updateStage && newStage === "lost") ? null : nextFollowUpDate
     });
   }
   
@@ -718,6 +721,34 @@ export default function CustomerDetailPage() {
                           Note: Next follow-up is optional for lost customers.
                         </p>
                       )}
+                    </div>
+                  )}
+                  
+                  {/* Next follow-up date - hide if customer is marked as "lost" */}
+                  {(!updateStage || newStage !== "lost") && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium leading-none">
+                        Next Follow-up Date
+                      </label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`w-full justify-start text-left font-normal ${!nextFollowUpDate && "text-muted-foreground"}`}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {nextFollowUpDate ? format(nextFollowUpDate, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={nextFollowUpDate || undefined}
+                            onSelect={setNextFollowUpDate}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   )}
                 </div>
