@@ -628,6 +628,10 @@ export class MemStorage implements IStorage {
   }
   
   // Customer Follow-up operations
+  async getAllFollowUps(): Promise<FollowUp[]> {
+    return Array.from(this.followUps.values());
+  }
+  
   async getFollowUps(customerId: number): Promise<FollowUp[]> {
     return Array.from(this.followUps.values())
       .filter(followUp => followUp.customerId === customerId)

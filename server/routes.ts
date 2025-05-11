@@ -88,9 +88,52 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.get("/api/customers", async (req, res) => {
     try {
       const stage = req.query.stage as string | undefined;
-      const customers = stage 
-        ? await storage.getCustomersByStage(stage)
-        : await storage.getCustomers();
+      const followUpFilter = req.query.followUpFilter as string | undefined;
+      
+      let customers = [];
+      
+      if (stage) {
+        customers = await storage.getCustomersByStage(stage);
+      } else {
+        customers = await storage.getCustomers();
+      }
+      
+      // If followUpFilter is specified, filter customers based on their follow-ups
+      if (followUpFilter) {
+        // Get all follow-ups
+        const allFollowUps = await storage.getAllFollowUps();
+        
+        // Create a map to store customer IDs that match the filter
+        const matchingCustomerIds = new Set<number>();
+        
+        // Filter the follow-ups based on the filter criteria
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1); // Yesterday
+        
+        allFollowUps.forEach(followUp => {
+          if (!followUp.completed && followUp.nextFollowUpDate) {
+            const followUpDate = new Date(followUp.nextFollowUpDate);
+            followUpDate.setHours(0, 0, 0, 0);
+            
+            if (followUpFilter === 'today' && followUpDate.getTime() === today.getTime()) {
+              matchingCustomerIds.add(followUp.customerId);
+            } else if (followUpFilter === 'yesterday' && followUpDate.getTime() === yesterday.getTime()) {
+              matchingCustomerIds.add(followUp.customerId);
+            } else if (followUpFilter === 'missed' && followUpDate < today) {
+              matchingCustomerIds.add(followUp.customerId);
+            } else if (followUpFilter === 'future' && followUpDate > today) {
+              matchingCustomerIds.add(followUp.customerId);
+            }
+          }
+        });
+        
+        // Filter the customers based on the matching IDs
+        customers = customers.filter(customer => matchingCustomerIds.has(customer.id));
+      }
+      
       res.json(customers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customers" });
