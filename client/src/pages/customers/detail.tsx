@@ -648,7 +648,7 @@ export default function CustomerDetailPage() {
                                   <div className="flex flex-col space-y-1">
                                     <div>Completed: {format(new Date(followUp.interactionDate), 'PPP')}</div>
                                     <div className="text-sm">
-                                      <span className="font-medium">Completion notes:</span> {followUp.notes}
+                                      {followUp.notes}
                                     </div>
                                     {followUp.userName && (
                                       <div className="text-xs flex items-center text-muted-foreground">
