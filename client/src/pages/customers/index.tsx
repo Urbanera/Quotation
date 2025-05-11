@@ -80,23 +80,70 @@ export default function CustomersList() {
     }
   });
   
+  // Get all customer follow-ups for counting
+  const { data: allFollowUps } = useQuery<FollowUp[]>({
+    queryKey: ["/api/follow-ups/all"],
+    queryFn: async () => {
+      const res = await fetch("/api/follow-ups/all");
+      return res.json();
+    }
+  });
+  
   // Computed values for badges and filter counts
   const stageCounts = useMemo(() => {
     if (!customers) return { all: 0, new: 0, pipeline: 0, cold: 0, warm: 0, booked: 0, lost: 0 };
     
-    // Count customers by stage
+    // Count customers by stage using array methods
     const counts = {
       all: customers.length,
-      new: customers.filter(c => c.stage === "new").length,
-      pipeline: customers.filter(c => c.stage === "pipeline").length,
-      cold: customers.filter(c => c.stage === "cold").length,
-      warm: customers.filter(c => c.stage === "warm").length,
-      booked: customers.filter(c => c.stage === "booked").length,
-      lost: customers.filter(c => c.stage === "lost").length,
+      new: customers.reduce((count, c) => c.stage === "new" ? count + 1 : count, 0),
+      pipeline: customers.reduce((count, c) => c.stage === "pipeline" ? count + 1 : count, 0),
+      cold: customers.reduce((count, c) => c.stage === "cold" ? count + 1 : count, 0),
+      warm: customers.reduce((count, c) => c.stage === "warm" ? count + 1 : count, 0),
+      booked: customers.reduce((count, c) => c.stage === "booked" ? count + 1 : count, 0),
+      lost: customers.reduce((count, c) => c.stage === "lost" ? count + 1 : count, 0),
     };
     
     return counts;
   }, [customers]);
+  
+  // Calculate follow-up counts
+  const followUpCounts = useMemo(() => {
+    if (!allFollowUps) return { all: 0, today: 0, yesterday: 0, missed: 0, future: 0 };
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Only count incomplete follow-ups
+    const pendingFollowUps = allFollowUps.filter(f => !f.completed && f.nextFollowUpDate);
+    
+    return {
+      all: pendingFollowUps.length,
+      today: pendingFollowUps.filter(f => {
+        const followUpDate = new Date(f.nextFollowUpDate);
+        followUpDate.setHours(0, 0, 0, 0);
+        return followUpDate.getTime() === today.getTime();
+      }).length,
+      yesterday: pendingFollowUps.filter(f => {
+        const followUpDate = new Date(f.nextFollowUpDate);
+        followUpDate.setHours(0, 0, 0, 0);
+        return followUpDate.getTime() === yesterday.getTime();
+      }).length,
+      missed: pendingFollowUps.filter(f => {
+        const followUpDate = new Date(f.nextFollowUpDate);
+        followUpDate.setHours(0, 0, 0, 0);
+        return followUpDate < today;
+      }).length,
+      future: pendingFollowUps.filter(f => {
+        const followUpDate = new Date(f.nextFollowUpDate);
+        followUpDate.setHours(0, 0, 0, 0);
+        return followUpDate > today;
+      }).length,
+    };
+  }, [allFollowUps]);
   
   // Sorted and filtered customers
   const filteredCustomers = useMemo(() => {
@@ -173,6 +220,114 @@ export default function CustomersList() {
           </div>
         ) : (
           <div className="mt-6 space-y-6">
+            {/* Stats Cards Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Customer Stats Card */}
+              <Card className="bg-orange-500 text-white overflow-hidden">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-white flex items-center">
+                    <span>Customer</span>
+                    <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
+                      <span>{stageCounts.all}</span>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">{stageCounts.new}</div>
+                      <div className="text-xs uppercase">NEW</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">{stageCounts.warm}</div>
+                      <div className="text-xs uppercase">WARM</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">{stageCounts.pipeline}</div>
+                      <div className="text-xs uppercase">PIPE</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">{stageCounts.cold}</div>
+                      <div className="text-xs uppercase">COLD</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">{stageCounts.booked}</div>
+                      <div className="text-xs uppercase">BOOKED</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">{stageCounts.lost}</div>
+                      <div className="text-xs uppercase">LOST</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Lead Source Stats Card */}
+              <Card className="bg-slate-600 text-white overflow-hidden">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-white flex items-center">
+                    <span>Lead Source</span>
+                    <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
+                      <span>0</span>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">0</div>
+                      <div className="text-xs uppercase">WALK</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">0</div>
+                      <div className="text-xs uppercase">WEB</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">0</div>
+                      <div className="text-xs uppercase">REF</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">0</div>
+                      <div className="text-xs uppercase">SM</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Follow Up Stats Card */}
+              <Card className="bg-green-600 text-white overflow-hidden">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-white flex items-center">
+                    <span>Follow Up</span>
+                    <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
+                      <span>0</span>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">0</div>
+                      <div className="text-xs uppercase">TODAY</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold text-red-300">0</div>
+                      <div className="text-xs uppercase">YESTERDAY</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">0</div>
+                      <div className="text-xs uppercase">MISSED</div>
+                    </div>
+                    <div className="bg-white/10 p-2 rounded">
+                      <div className="text-lg font-bold">0</div>
+                      <div className="text-xs uppercase">FUTURE</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filters */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle>Filters</CardTitle>
