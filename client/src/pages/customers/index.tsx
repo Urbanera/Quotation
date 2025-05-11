@@ -4,7 +4,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Edit, Trash2, Eye, SortAsc, SortDesc, Filter } from "lucide-react";
-import { Customer } from "@shared/schema";
+import { Customer, FollowUp } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -80,15 +80,6 @@ export default function CustomersList() {
     }
   });
   
-  // Get all customer follow-ups for counting
-  const { data: allFollowUps } = useQuery<FollowUp[]>({
-    queryKey: ["/api/follow-ups/all"],
-    queryFn: async () => {
-      const res = await fetch("/api/follow-ups/all");
-      return res.json();
-    }
-  });
-  
   // Computed values for badges and filter counts
   const stageCounts = useMemo(() => {
     if (!customers) return { all: 0, new: 0, pipeline: 0, cold: 0, warm: 0, booked: 0, lost: 0 };
@@ -107,43 +98,14 @@ export default function CustomersList() {
     return counts;
   }, [customers]);
   
-  // Calculate follow-up counts
-  const followUpCounts = useMemo(() => {
-    if (!allFollowUps) return { all: 0, today: 0, yesterday: 0, missed: 0, future: 0 };
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    // Only count incomplete follow-ups
-    const pendingFollowUps = allFollowUps.filter(f => !f.completed && f.nextFollowUpDate);
-    
-    return {
-      all: pendingFollowUps.length,
-      today: pendingFollowUps.filter(f => {
-        const followUpDate = new Date(f.nextFollowUpDate);
-        followUpDate.setHours(0, 0, 0, 0);
-        return followUpDate.getTime() === today.getTime();
-      }).length,
-      yesterday: pendingFollowUps.filter(f => {
-        const followUpDate = new Date(f.nextFollowUpDate);
-        followUpDate.setHours(0, 0, 0, 0);
-        return followUpDate.getTime() === yesterday.getTime();
-      }).length,
-      missed: pendingFollowUps.filter(f => {
-        const followUpDate = new Date(f.nextFollowUpDate);
-        followUpDate.setHours(0, 0, 0, 0);
-        return followUpDate < today;
-      }).length,
-      future: pendingFollowUps.filter(f => {
-        const followUpDate = new Date(f.nextFollowUpDate);
-        followUpDate.setHours(0, 0, 0, 0);
-        return followUpDate > today;
-      }).length,
-    };
-  }, [allFollowUps]);
+  // Hardcoded follow-up counts for now - we'll implement the real counts later
+  const followUpCounts = {
+    all: 0,
+    today: 0,
+    yesterday: 0,
+    missed: 0,
+    future: 0
+  };
   
   // Sorted and filtered customers
   const filteredCustomers = useMemo(() => {
@@ -300,26 +262,26 @@ export default function CustomersList() {
                   <CardTitle className="text-white flex items-center">
                     <span>Follow Up</span>
                     <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
-                      <span>0</span>
+                      <span>{followUpCounts.all}</span>
                     </div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-4 gap-2 text-center">
                     <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">0</div>
+                      <div className="text-lg font-bold">{followUpCounts.today}</div>
                       <div className="text-xs uppercase">TODAY</div>
                     </div>
                     <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold text-red-300">0</div>
+                      <div className="text-lg font-bold text-red-300">{followUpCounts.yesterday}</div>
                       <div className="text-xs uppercase">YESTERDAY</div>
                     </div>
                     <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">0</div>
+                      <div className="text-lg font-bold">{followUpCounts.missed}</div>
                       <div className="text-xs uppercase">MISSED</div>
                     </div>
                     <div className="bg-white/10 p-2 rounded">
-                      <div className="text-lg font-bold">0</div>
+                      <div className="text-lg font-bold">{followUpCounts.future}</div>
                       <div className="text-xs uppercase">FUTURE</div>
                     </div>
                   </div>

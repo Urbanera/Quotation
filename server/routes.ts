@@ -277,6 +277,46 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
   
   // Follow-up routes
+  app.get("/api/follow-ups/all", async (req, res) => {
+    try {
+      const allFollowUps = await storage.getAllFollowUps();
+      
+      // Enhance follow-ups with user information
+      const enhancedFollowUps = await Promise.all(
+        allFollowUps.map(async (followUp) => {
+          if (followUp.userId) {
+            try {
+              const user = await storage.getUser(followUp.userId);
+              return {
+                ...followUp,
+                userName: user ? user.fullName : "Unknown User",
+                userUsername: user ? user.username : "unknown"
+              };
+            } catch (err) {
+              console.error(`Failed to get user info for ID ${followUp.userId}:`, err);
+              return {
+                ...followUp,
+                userName: "Unknown User",
+                userUsername: "unknown"
+              };
+            }
+          } else {
+            return {
+              ...followUp,
+              userName: "System",
+              userUsername: "system"
+            };
+          }
+        })
+      );
+      
+      res.json(enhancedFollowUps);
+    } catch (error) {
+      console.error("Failed to fetch all follow-ups:", error);
+      res.status(500).json({ message: "Failed to fetch all follow-ups" });
+    }
+  });
+
   app.get("/api/follow-ups/pending", async (req, res) => {
     try {
       const pendingFollowUps = await storage.getPendingFollowUps();
