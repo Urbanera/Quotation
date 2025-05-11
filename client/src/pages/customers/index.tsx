@@ -596,7 +596,7 @@ export default function CustomersList() {
                               </Link>
                             </Button>
                             <Button variant="ghost" size="icon" asChild>
-                              <Link to={`/customers/${customer.id}/edit`}>
+                              <Link to={`/customers/edit/${customer.id}`}>
                                 <Edit className="h-4 w-4" />
                               </Link>
                             </Button>
