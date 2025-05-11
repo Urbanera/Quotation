@@ -43,7 +43,7 @@ export interface IStorage {
   updateFollowUp(id: number, followUp: Partial<InsertFollowUp>): Promise<FollowUp | undefined>;
   deleteFollowUp(id: number): Promise<boolean>;
   getPendingFollowUps(): Promise<Array<FollowUp & { customer: Customer }>>;
-  markFollowUpComplete(id: number): Promise<FollowUp | undefined>;
+  markFollowUpComplete(id: number, completionNotes?: string, nextFollowUpDate?: Date | null, nextFollowUpNotes?: string): Promise<FollowUp | undefined>;
   
   // Quotation operations
   getQuotations(): Promise<Quotation[]>;
@@ -713,10 +713,11 @@ export class MemStorage implements IStorage {
     });
   }
   
-  async markFollowUpComplete(id: number, completionNotes?: string, nextFollowUpDate?: Date | null): Promise<FollowUp | undefined> {
+  async markFollowUpComplete(id: number, completionNotes?: string, nextFollowUpDate?: Date | null, nextFollowUpNotes?: string): Promise<FollowUp | undefined> {
     const followUp = this.followUps.get(id);
     if (!followUp) return undefined;
     
+    // Create the updated follow-up record to mark it complete
     const updatedFollowUp = {
       ...followUp,
       completed: true,
@@ -726,6 +727,26 @@ export class MemStorage implements IStorage {
     };
     
     this.followUps.set(id, updatedFollowUp);
+    
+    // If nextFollowUpDate is provided and not null, create a new follow-up
+    if (nextFollowUpDate && followUp.customerId) {
+      const newFollowUpId = this.followUpIdCounter++;
+      
+      const newFollowUp: FollowUp = {
+        id: newFollowUpId,
+        customerId: followUp.customerId,
+        notes: nextFollowUpNotes || "",
+        interactionDate: new Date(),
+        nextFollowUpDate: nextFollowUpDate,
+        completed: false,
+        completionNotes: null,
+        userId: followUp.userId,
+        createdAt: new Date(),
+      };
+      
+      this.followUps.set(newFollowUpId, newFollowUp);
+    }
+    
     return updatedFollowUp;
   }
   

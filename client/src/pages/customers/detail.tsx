@@ -733,36 +733,51 @@ export default function CustomerDetailPage() {
                   
                   {/* Next follow-up date - hide if customer is marked as "lost" */}
                   {(!updateStage || newStage !== "lost") && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium leading-none">
-                        Next Follow-up Date
-                      </label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={`w-full justify-start text-left font-normal ${!nextFollowUpDate && "text-muted-foreground"}`}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {nextFollowUpDate ? format(nextFollowUpDate, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={nextFollowUpDate || undefined} 
-                            onSelect={(date) => {
-                              if (date) {
-                                setNextFollowUpDate(date);
-                              } else {
-                                setNextFollowUpDate(null);
-                              }
-                            }}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium leading-none">
+                          Next Follow-up Date
+                        </label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={`w-full justify-start text-left font-normal ${!nextFollowUpDate && "text-muted-foreground"}`}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {nextFollowUpDate ? format(nextFollowUpDate, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={nextFollowUpDate || undefined} 
+                              onSelect={(date) => {
+                                if (date) {
+                                  setNextFollowUpDate(date);
+                                } else {
+                                  setNextFollowUpDate(null);
+                                }
+                              }}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      
+                      {/* Next follow-up notes */}
+                      <div className="space-y-2 mt-4">
+                        <label className="text-sm font-medium leading-none">
+                          Next Follow-up Notes
+                        </label>
+                        <Textarea
+                          placeholder="Enter notes for the next follow-up (will be automatically created)"
+                          value={nextFollowUpNotes}
+                          onChange={(e) => setNextFollowUpNotes(e.target.value)}
+                          className="resize-none"
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
                 
