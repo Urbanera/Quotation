@@ -597,6 +597,22 @@ export class MemStorage implements IStorage {
   }
   
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
+    // Check for duplicate email
+    const customerWithSameEmail = Array.from(this.customers.values()).find(
+      c => c.email.toLowerCase() === customer.email.toLowerCase()
+    );
+    if (customerWithSameEmail) {
+      throw new Error(`The email "${customer.email}" is already associated with customer "${customerWithSameEmail.name}"`);
+    }
+
+    // Check for duplicate phone
+    const customerWithSamePhone = Array.from(this.customers.values()).find(
+      c => c.phone === customer.phone
+    );
+    if (customerWithSamePhone) {
+      throw new Error(`The phone number "${customer.phone}" is already associated with customer "${customerWithSamePhone.name}"`);
+    }
+
     const id = this.customerIdCounter++;
     const newCustomer: Customer = {
       ...customer,
@@ -610,6 +626,22 @@ export class MemStorage implements IStorage {
   async updateCustomer(id: number, customer: InsertCustomer): Promise<Customer | undefined> {
     const existingCustomer = this.customers.get(id);
     if (!existingCustomer) return undefined;
+    
+    // Check for duplicate email (ignoring the current customer)
+    const customerWithSameEmail = Array.from(this.customers.values()).find(
+      c => c.id !== id && c.email.toLowerCase() === customer.email.toLowerCase()
+    );
+    if (customerWithSameEmail) {
+      throw new Error(`The email "${customer.email}" is already associated with customer "${customerWithSameEmail.name}"`);
+    }
+
+    // Check for duplicate phone (ignoring the current customer)
+    const customerWithSamePhone = Array.from(this.customers.values()).find(
+      c => c.id !== id && c.phone === customer.phone
+    );
+    if (customerWithSamePhone) {
+      throw new Error(`The phone number "${customer.phone}" is already associated with customer "${customerWithSamePhone.name}"`);
+    }
     
     const updatedCustomer: Customer = {
       ...existingCustomer,

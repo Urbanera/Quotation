@@ -157,7 +157,11 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     try {
       const customer = await storage.createCustomer(req.body);
       res.status(201).json(customer);
-    } catch (error) {
+    } catch (error: any) {
+      // Check if it's a duplicate email/phone error (look for specific error message text)
+      if (error.message && (error.message.includes("is already associated with customer"))) {
+        return res.status(400).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to create customer" });
     }
   });
@@ -170,7 +174,11 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         return res.status(404).json({ message: "Customer not found" });
       }
       res.json(customer);
-    } catch (error) {
+    } catch (error: any) {
+      // Check if it's a duplicate email/phone error (look for specific error message text)
+      if (error.message && (error.message.includes("is already associated with customer"))) {
+        return res.status(400).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to update customer" });
     }
   });
