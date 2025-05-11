@@ -629,10 +629,26 @@ export default function CustomerDetailPage() {
                                   <div>Follow-up Date: {format(new Date(followUp.nextFollowUpDate), 'PPP')}</div>
                                 )}
                                 {followUp.completed && (
-                                  <div>Completed: {format(new Date(followUp.interactionDate), 'PPP')}</div>
+                                  <div className="flex flex-col space-y-1">
+                                    <div>Completed: {format(new Date(followUp.interactionDate), 'PPP')}</div>
+                                    {followUp.completionNotes && (
+                                      <div className="text-sm">
+                                        <span className="font-medium">Completion notes:</span> {followUp.completionNotes}
+                                      </div>
+                                    )}
+                                    {followUp.userName && (
+                                      <div className="text-xs flex items-center text-muted-foreground">
+                                        <User className="h-3 w-3 mr-1" />
+                                        Completed by: {followUp.userName}
+                                      </div>
+                                    )}
+                                  </div>
                                 )}
-                                {followUp.userName && (
-                                  <div>Updated by: {followUp.userName}</div>
+                                {!followUp.completed && followUp.userName && (
+                                  <div className="text-xs flex items-center text-muted-foreground">
+                                    <User className="h-3 w-3 mr-1" />
+                                    Created by: {followUp.userName}
+                                  </div>
                                 )}
                               </div>
                             </div>
