@@ -616,6 +616,9 @@ export default function CustomerDetailPage() {
                                 {followUp.completed && (
                                   <div>Completed: {format(new Date(followUp.interactionDate), 'PPP')}</div>
                                 )}
+                                {followUp.userName && (
+                                  <div>Updated by: {followUp.userName}</div>
+                                )}
                               </div>
                             </div>
                           </div>

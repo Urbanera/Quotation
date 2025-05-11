@@ -125,6 +125,11 @@ export default function PendingFollowUps() {
                 </Badge>
               </div>
               <p className="text-sm text-gray-600 line-clamp-2 mb-3">{followUp.notes}</p>
+              {followUp.userName && (
+                <p className="text-xs text-gray-500 italic mb-2">
+                  Updated by: {followUp.userName}
+                </p>
+              )}
               <div className="flex items-center justify-between">
                 <div className="text-xs text-gray-500">
                   Follow-up date: {format(new Date(followUp.nextFollowUpDate!), 'MMM d, yyyy')}

@@ -335,9 +335,18 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   
   app.post("/api/follow-ups", validateRequest(followUpFormSchema), async (req, res) => {
     try {
-      const followUp = await storage.createFollowUp(req.body);
+      // Get current user ID (this is a mock, would be from auth session in real app)
+      const userId = 1; // In a real app, this would be req.user.id
+      
+      const followUpData = { 
+        ...req.body,
+        userId // Add the userId to the follow-up data
+      };
+      
+      const followUp = await storage.createFollowUp(followUpData);
       res.status(201).json(followUp);
     } catch (error) {
+      console.error("Failed to create follow-up:", error);
       res.status(500).json({ message: "Failed to create follow-up" });
     }
   });
