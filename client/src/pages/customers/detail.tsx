@@ -295,6 +295,21 @@ export default function CustomerDetailPage() {
   function confirmMarkComplete() {
     if (!selectedFollowUpId) return;
     
+    // Check if the selected date is today (for next follow-up)
+    if (nextFollowUpDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDate = new Date(nextFollowUpDate);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      // If it's the same day, show a confirmation dialog
+      if (selectedDate.getTime() === today.getTime()) {
+        if (!window.confirm("DO YOU WANT TO UPDATE FOLLOW-UP FOR THE SAME DAY?")) {
+          return; // User declined, don't proceed
+        }
+      }
+    }
+    
     markCompleteMutation.mutate({
       followUpId: selectedFollowUpId,
       updateCustomerStage: updateStage,
@@ -632,11 +647,9 @@ export default function CustomerDetailPage() {
                                 {followUp.completed && (
                                   <div className="flex flex-col space-y-1">
                                     <div>Completed: {format(new Date(followUp.interactionDate), 'PPP')}</div>
-                                    {followUp.completionNotes && (
-                                      <div className="text-sm">
-                                        <span className="font-medium">Completion notes:</span> {followUp.completionNotes}
-                                      </div>
-                                    )}
+                                    <div className="text-sm">
+                                      <span className="font-medium">Completion notes:</span> {followUp.notes}
+                                    </div>
                                     {followUp.userName && (
                                       <div className="text-xs flex items-center text-muted-foreground">
                                         <User className="h-3 w-3 mr-1" />
@@ -778,20 +791,7 @@ export default function CustomerDetailPage() {
                               }}
                               onSelect={(date) => {
                                 if (date) {
-                                  // Check if the selected date is today
-                                  const today = new Date();
-                                  today.setHours(0, 0, 0, 0);
-                                  const selectedDate = new Date(date);
-                                  selectedDate.setHours(0, 0, 0, 0);
-                                  
-                                  // If it's the same day, show a confirmation dialog
-                                  if (selectedDate.getTime() === today.getTime()) {
-                                    if (window.confirm("DO YOU WANT TO UPDATE FOLLOW-UP FOR THE SAME DAY?")) {
-                                      setNextFollowUpDate(date);
-                                    }
-                                  } else {
-                                    setNextFollowUpDate(date);
-                                  }
+                                  setNextFollowUpDate(date);
                                 } else {
                                   setNextFollowUpDate(null);
                                 }
