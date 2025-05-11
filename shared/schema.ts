@@ -439,6 +439,7 @@ export const followUps = pgTable("follow_ups", {
   interactionDate: timestamp("interaction_date").defaultNow().notNull(),
   nextFollowUpDate: timestamp("next_follow_up_date"),
   completed: boolean("completed").default(false).notNull(),
+  completionNotes: text("completion_notes"),
   userId: integer("user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -265,8 +265,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.put("/api/follow-ups/:id/complete", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { updateCustomerStage, newCustomerStage } = req.body || {};
-      const followUp = await storage.markFollowUpComplete(id);
+      const { updateCustomerStage, newCustomerStage, completionNotes } = req.body || {};
+      const followUp = await storage.markFollowUpComplete(id, completionNotes);
       
       if (!followUp) {
         return res.status(404).json({ message: "Follow-up not found" });
@@ -274,7 +274,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       
       // If requested, also update the customer stage
       if (updateCustomerStage && newCustomerStage) {
-        const validStages = ["new", "pipeline", "cold", "warm", "booked"];
+        const validStages = ["new", "pipeline", "cold", "warm", "booked", "lost"];
         if (!validStages.includes(newCustomerStage)) {
           return res.status(400).json({ message: "Invalid customer stage" });
         }
