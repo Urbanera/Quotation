@@ -51,7 +51,8 @@ import {
   Eye,
   Edit,
   Copy,
-  Trash2
+  Trash2,
+  User
 } from "lucide-react";
 import { CustomerLedger } from "@/components/customers/CustomerLedger";
 import { Badge } from "@/components/ui/badge";
@@ -803,14 +804,19 @@ export default function CustomerDetailPage() {
                       
                       {/* Notes for completion and next follow-up */}
                       <div className="space-y-2 mt-4">
-                        <label className="text-sm font-medium leading-none">
-                          Notes
-                        </label>
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium leading-none">
+                            Notes <span className="text-red-500">*</span>
+                          </label>
+                          {nextFollowUpNotes.trim().length === 0 && (
+                            <p className="text-xs text-red-500">Notes are required</p>
+                          )}
+                        </div>
                         <Textarea
                           placeholder="Enter notes for this completion and the next follow-up"
                           value={nextFollowUpNotes}
                           onChange={(e) => setNextFollowUpNotes(e.target.value)}
-                          className="resize-none"
+                          className={`resize-none ${nextFollowUpNotes.trim().length === 0 ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         />
                       </div>
                     </>
@@ -828,7 +834,7 @@ export default function CustomerDetailPage() {
                   <Button
                     type="button"
                     onClick={confirmMarkComplete}
-                    disabled={markCompleteMutation.isPending}
+                    disabled={markCompleteMutation.isPending || nextFollowUpNotes.trim().length === 0}
                     className="bg-indigo-600 hover:bg-indigo-700"
                   >
                     {markCompleteMutation.isPending ? (
