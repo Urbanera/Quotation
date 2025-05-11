@@ -145,6 +145,7 @@ export default function CustomerDetailPage() {
   const [newStage, setNewStage] = useState<string | null>(customer?.stage || null);
   const [completionNotes, setCompletionNotes] = useState<string>("");
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(new Date());
+  const [nextFollowUpNotes, setNextFollowUpNotes] = useState<string>("");
   
   // Effect to handle changing next follow-up date when stage changes to "lost"
   useEffect(() => {
@@ -218,19 +219,21 @@ export default function CustomerDetailPage() {
   };
 
   const markCompleteMutation = useMutation({
-    mutationFn: ({ followUpId, updateCustomerStage, newCustomerStage, completionNotes, nextFollowUpDate }: { 
+    mutationFn: ({ followUpId, updateCustomerStage, newCustomerStage, completionNotes, nextFollowUpDate, nextFollowUpNotes }: { 
       followUpId: number, 
       updateCustomerStage?: boolean, 
       newCustomerStage?: string,
       completionNotes?: string,
-      nextFollowUpDate?: Date | null
+      nextFollowUpDate?: Date | null,
+      nextFollowUpNotes?: string
     }) => {
       setCompletingId(followUpId);
       return apiRequest("PUT", `/api/follow-ups/${followUpId}/complete`, {
         updateCustomerStage,
         newCustomerStage,
         completionNotes,
-        nextFollowUpDate
+        nextFollowUpDate,
+        nextFollowUpNotes
       });
     },
     onSuccess: () => {
@@ -250,6 +253,7 @@ export default function CustomerDetailPage() {
       setNewStage(customer?.stage || null);
       setCompletionNotes("");
       setNextFollowUpDate(new Date());
+      setNextFollowUpNotes("");
     },
     onError: () => {
       toast({
@@ -262,6 +266,7 @@ export default function CustomerDetailPage() {
       setSelectedFollowUpId(null);
       setCompletionNotes("");
       setNextFollowUpDate(new Date());
+      setNextFollowUpNotes("");
     },
   });
 
@@ -282,7 +287,8 @@ export default function CustomerDetailPage() {
       updateCustomerStage: updateStage,
       newCustomerStage: updateStage ? newStage! : undefined,
       completionNotes: completionNotes.trim() || undefined,
-      nextFollowUpDate: (updateStage && newStage === "lost") ? null : nextFollowUpDate
+      nextFollowUpDate: (updateStage && newStage === "lost") ? null : nextFollowUpDate,
+      nextFollowUpNotes: nextFollowUpNotes.trim() || undefined
     });
   }
   
@@ -292,6 +298,7 @@ export default function CustomerDetailPage() {
     setUpdateStage(false);
     setNewStage(customer?.stage || null);
     setCompletionNotes("");
+    setNextFollowUpNotes("");
   }
 
   if (isLoadingCustomer) {
