@@ -292,7 +292,7 @@ export default function CustomersList() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Customers</h1>
         <Button asChild>
-          <Link to="/customers/create">
+          <Link to="/customers/add">
             <Plus className="h-4 w-4 mr-2" />
             Add Customer
           </Link>
@@ -591,7 +591,7 @@ export default function CustomersList() {
                         <TableCell className="text-right">
                           <div className="flex justify-end">
                             <Button variant="ghost" size="icon" asChild>
-                              <Link to={`/customers/${customer.id}`}>
+                              <Link to={`/customers/view/${customer.id}`}>
                                 <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
