@@ -266,6 +266,12 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { updateCustomerStage, newCustomerStage, completionNotes, nextFollowUpDate, nextFollowUpNotes } = req.body || {};
+      
+      // Get current user ID (this is a mock, would be from auth session in real app)
+      const userId = 1; // In a real app, this would be req.user.id
+      console.log(`User ID ${userId} is completing follow-up ${id}`);
+      
+      // First mark the follow-up as complete
       const followUp = await storage.markFollowUpComplete(
         id, 
         completionNotes, 
@@ -279,17 +285,33 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       
       // If requested, also update the customer stage
       if (updateCustomerStage && newCustomerStage) {
+        console.log(`User ID ${userId} is updating customer ${followUp.customerId} stage to ${newCustomerStage}`);
+        
         const validStages = ["new", "pipeline", "cold", "warm", "booked", "lost"];
         if (!validStages.includes(newCustomerStage)) {
           return res.status(400).json({ message: "Invalid customer stage" });
         }
         
-        await storage.updateCustomerStage(followUp.customerId, newCustomerStage);
+        try {
+          await storage.updateCustomerStage(followUp.customerId, newCustomerStage);
+          console.log(`Successfully updated customer ${followUp.customerId} stage to ${newCustomerStage}`);
+        } catch (stageError) {
+          console.error('Error updating customer stage:', stageError);
+          return res.status(400).json({ 
+            message: "Error updating customer stage", 
+            error: stageError instanceof Error ? stageError.message : "Unknown error" 
+          });
+        }
       }
       
+      // Return the completed follow-up
       res.json(followUp);
     } catch (error) {
-      res.status(500).json({ message: "Failed to complete follow-up" });
+      console.error('Error completing follow-up:', error);
+      res.status(500).json({ 
+        message: "Failed to complete follow-up",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
   

@@ -34,6 +34,7 @@ export interface IStorage {
   getCustomer(id: number): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: number, customer: InsertCustomer): Promise<Customer | undefined>;
+  updateCustomerStage(id: number, stage: string): Promise<Customer | undefined>;
   deleteCustomer(id: number): Promise<boolean>;
   
   // Customer Follow-up operations
@@ -600,6 +601,23 @@ export class MemStorage implements IStorage {
     const updatedCustomer: Customer = {
       ...existingCustomer,
       ...customer,
+    };
+    this.customers.set(id, updatedCustomer);
+    return updatedCustomer;
+  }
+  
+  async updateCustomerStage(id: number, stage: string): Promise<Customer | undefined> {
+    const existingCustomer = this.customers.get(id);
+    if (!existingCustomer) return undefined;
+    
+    const validStages = ["new", "pipeline", "cold", "warm", "booked", "lost"];
+    if (!validStages.includes(stage)) {
+      throw new Error("Invalid customer stage");
+    }
+    
+    const updatedCustomer: Customer = {
+      ...existingCustomer,
+      stage: stage as "new" | "pipeline" | "cold" | "warm" | "booked" | "lost"
     };
     this.customers.set(id, updatedCustomer);
     return updatedCustomer;
