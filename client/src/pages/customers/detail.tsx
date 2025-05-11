@@ -75,6 +75,10 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const followUpFormSchema = insertFollowUpSchema.extend({
+  // Make notes required
+  notes: z.string({
+    required_error: "Notes are required",
+  }).min(1, "Notes cannot be empty"),
   nextFollowUpDate: z.date({
     required_error: "A follow-up date is required",
   }),
@@ -280,6 +284,11 @@ export default function CustomerDetailPage() {
   function handleMarkComplete(followUpId: number) {
     setSelectedFollowUpId(followUpId);
     setShowStageDialog(true);
+    
+    // Default to today for the next follow-up date (ensuring it's not in the past)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to beginning of today
+    setNextFollowUpDate(today);
   }
   
   function confirmMarkComplete() {
@@ -743,10 +752,29 @@ export default function CustomerDetailPage() {
                           <PopoverContent className="w-auto p-0">
                             <Calendar
                               mode="single"
-                              selected={nextFollowUpDate || undefined} 
+                              selected={nextFollowUpDate || undefined}
+                              // Add disabled dates in the past
+                              disabled={(date) => {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                return date < today;
+                              }}
                               onSelect={(date) => {
                                 if (date) {
-                                  setNextFollowUpDate(date);
+                                  // Check if the selected date is today
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
+                                  const selectedDate = new Date(date);
+                                  selectedDate.setHours(0, 0, 0, 0);
+                                  
+                                  // If it's the same day, show a confirmation dialog
+                                  if (selectedDate.getTime() === today.getTime()) {
+                                    if (window.confirm("DO YOU WANT TO UPDATE FOLLOW-UP FOR THE SAME DAY?")) {
+                                      setNextFollowUpDate(date);
+                                    }
+                                  } else {
+                                    setNextFollowUpDate(date);
+                                  }
                                 } else {
                                   setNextFollowUpDate(null);
                                 }
