@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -144,7 +144,17 @@ export default function CustomerDetailPage() {
   const [updateStage, setUpdateStage] = useState(false);
   const [newStage, setNewStage] = useState<string | null>(customer?.stage || null);
   const [completionNotes, setCompletionNotes] = useState<string>("");
+  const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(new Date());
   
+  // Effect to handle changing next follow-up date when stage changes to "lost"
+  useEffect(() => {
+    if (updateStage && newStage === "lost") {
+      setNextFollowUpDate(null);
+    } else if (nextFollowUpDate === null && (!updateStage || newStage !== "lost")) {
+      setNextFollowUpDate(new Date());
+    }
+  }, [updateStage, newStage, nextFollowUpDate]);
+
   // Delete quotation mutation
   const deleteQuotationMutation = useMutation({
     mutationFn: async (quotationId: number) => {
@@ -208,17 +218,19 @@ export default function CustomerDetailPage() {
   };
 
   const markCompleteMutation = useMutation({
-    mutationFn: ({ followUpId, updateCustomerStage, newCustomerStage, completionNotes }: { 
+    mutationFn: ({ followUpId, updateCustomerStage, newCustomerStage, completionNotes, nextFollowUpDate }: { 
       followUpId: number, 
       updateCustomerStage?: boolean, 
       newCustomerStage?: string,
-      completionNotes?: string
+      completionNotes?: string,
+      nextFollowUpDate?: Date | null
     }) => {
       setCompletingId(followUpId);
       return apiRequest("PUT", `/api/follow-ups/${followUpId}/complete`, {
         updateCustomerStage,
         newCustomerStage,
-        completionNotes
+        completionNotes,
+        nextFollowUpDate
       });
     },
     onSuccess: () => {
