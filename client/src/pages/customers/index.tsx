@@ -356,17 +356,20 @@ export default function CustomersList() {
                 <CardTitle className="text-white flex items-center">
                   <span>Lead Source</span>
                   <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <span>{leadSourcesData.options.length}</span>
+                    <span>{leadSourcesData.options?.length || 0}</span>
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={`grid ${leadSourcesData.options.length > 4 ? 'grid-cols-3' : 'grid-cols-4'} gap-2 text-center`}>
-                  {leadSourcesData.options.slice(0, 6).map((source: string) => {
+                <div className={`grid ${(leadSourcesData.options?.length || 0) > 4 ? 'grid-cols-3' : 'grid-cols-4'} gap-2 text-center`}>
+                  {(leadSourcesData.options || []).slice(0, 6).map((source: string) => {
                     // Create abbreviated display name (first 4 chars or first word)
-                    const displayName = source.includes(' ') 
-                      ? source.split(' ')[0].toUpperCase() 
-                      : source.slice(0, 4).toUpperCase();
+                    // Make sure source is not undefined and is a string
+                    const displayName = source && typeof source === 'string'
+                      ? (source.includes(' ') 
+                          ? source.split(' ')[0].toUpperCase() 
+                          : source.slice(0, 4).toUpperCase())
+                      : 'N/A';
                     
                     return (
                       <div 
@@ -442,7 +445,15 @@ export default function CustomersList() {
                 <X className="ml-1 h-3 w-3 cursor-pointer" onClick={() => setFollowUpFilter("all")} />
               </Badge>
             )}
-            {(stageFilter !== "all" || followUpFilter !== "all") && (
+            {leadSourceFilter !== "all" && (
+              <Badge variant="outline" className="py-1 px-3">
+                Source: {leadSourceFilter && typeof leadSourceFilter === 'string' 
+                  ? (leadSourceFilter.charAt(0).toUpperCase() + leadSourceFilter.slice(1)) 
+                  : 'Unknown'}
+                <X className="ml-1 h-3 w-3 cursor-pointer" onClick={() => setLeadSourceFilter("all")} />
+              </Badge>
+            )}
+            {(stageFilter !== "all" || followUpFilter !== "all" || leadSourceFilter !== "all") && (
               <Button 
                 variant="ghost" 
                 size="sm" 
