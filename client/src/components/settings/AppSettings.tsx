@@ -47,6 +47,7 @@ export function AppSettingsForm() {
       quotationTemplateId: "default",
       presentationTemplateId: "default",
       requiredAccessories: "skirting,handles,sliding mechanism,t profile",
+      leadSourceOptions: "walk-in,website,referral,social media,other",
     },
     values: settings || undefined,
   });
@@ -220,6 +221,27 @@ export function AppSettingsForm() {
                     </FormControl>
                     <FormDescription>
                       Comma-separated list of accessories that will trigger warnings during quotation validation. These are names that should appear in accessories added to rooms.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="leadSourceOptions"
+                render={({ field }) => (
+                  <FormItem className="col-span-1 md:col-span-2">
+                    <FormLabel>Lead Source Options</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="walk-in,website,referral,social media,other" 
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Comma-separated list of lead sources available in customer forms. These values will appear in the lead source dropdown when creating or editing customers.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

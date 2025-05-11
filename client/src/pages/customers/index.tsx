@@ -61,9 +61,19 @@ export default function CustomersList() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
   const [followUpFilter, setFollowUpFilter] = useState<FollowUpFilter>("all");
+  const [leadSourceFilter, setLeadSourceFilter] = useState<string>("all");
   const [deleteCustomerId, setDeleteCustomerId] = useState<number | null>(null);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  
+  // Fetch app settings for lead source options
+  const { data: appSettings } = useQuery({
+    queryKey: ["/api/settings/app"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/app");
+      return res.json();
+    }
+  });
 
   // Fetch customers
   const { data: customers, isLoading } = useQuery<Customer[]>({
@@ -101,6 +111,24 @@ export default function CustomersList() {
     return counts;
   }, [customers]);
   
+  // Lead source options and counts
+  const leadSourcesData = useMemo(() => {
+    if (!customers || !appSettings?.leadSourceOptions) return { options: [], counts: {} };
+    
+    const options = appSettings.leadSourceOptions.split(',').map(s => s.trim());
+    
+    // Count customers by lead source
+    const counts: Record<string, number> = { all: customers.length };
+    
+    options.forEach(source => {
+      counts[source] = customers.reduce((count, c) => 
+        c.leadSource === source ? count + 1 : count, 0
+      );
+    });
+    
+    return { options, counts };
+  }, [customers, appSettings?.leadSourceOptions]);
+  
   // Hardcoded follow-up counts for now - we'll implement the real counts later
   const followUpCounts = {
     all: 0,
@@ -120,6 +148,11 @@ export default function CustomersList() {
     // Apply stage filter
     if (stageFilter !== 'all') {
       filtered = filtered.filter(customer => customer.stage === stageFilter);
+    }
+    
+    // Apply lead source filter
+    if (leadSourceFilter !== 'all') {
+      filtered = filtered.filter(customer => customer.leadSource === leadSourceFilter);
     }
     
     // Apply search filter - case insensitive
@@ -323,28 +356,29 @@ export default function CustomersList() {
                 <CardTitle className="text-white flex items-center">
                   <span>Lead Source</span>
                   <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <span>0</span>
+                    <span>{leadSourcesData.options.length}</span>
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-2 text-center">
-                  <div className="bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors">
-                    <div className="text-lg font-bold">0</div>
-                    <div className="text-xs uppercase">WALK</div>
-                  </div>
-                  <div className="bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors">
-                    <div className="text-lg font-bold">0</div>
-                    <div className="text-xs uppercase">WEB</div>
-                  </div>
-                  <div className="bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors">
-                    <div className="text-lg font-bold">0</div>
-                    <div className="text-xs uppercase">REF</div>
-                  </div>
-                  <div className="bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors">
-                    <div className="text-lg font-bold">0</div>
-                    <div className="text-xs uppercase">SM</div>
-                  </div>
+                <div className={`grid ${leadSourcesData.options.length > 4 ? 'grid-cols-3' : 'grid-cols-4'} gap-2 text-center`}>
+                  {leadSourcesData.options.slice(0, 6).map(source => {
+                    // Create abbreviated display name (first 4 chars or first word)
+                    const displayName = source.includes(' ') 
+                      ? source.split(' ')[0].toUpperCase() 
+                      : source.slice(0, 4).toUpperCase();
+                    
+                    return (
+                      <div 
+                        key={source}
+                        className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${leadSourceFilter === source ? "ring-2 ring-white" : ""}`}
+                        onClick={() => setLeadSourceFilter(leadSourceFilter === source ? "all" : source)}
+                      >
+                        <div className="text-lg font-bold">{leadSourcesData.counts[source] || 0}</div>
+                        <div className="text-xs uppercase">{displayName}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

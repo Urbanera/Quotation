@@ -564,6 +564,8 @@ export class MemStorage implements IStorage {
         presentationTermsAndConditions: settings.presentationTermsAndConditions || "",
         quotationTemplateId: settings.quotationTemplateId || "default",
         presentationTemplateId: settings.presentationTemplateId || "default",
+        requiredAccessories: settings.requiredAccessories || "skirting,handles,sliding mechanism,t profile",
+        leadSourceOptions: settings.leadSourceOptions || "walk-in,website,referral,social media,other",
         updatedAt: new Date()
       };
     } else {
