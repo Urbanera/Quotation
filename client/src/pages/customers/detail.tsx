@@ -143,7 +143,6 @@ export default function CustomerDetailPage() {
   const [selectedFollowUpId, setSelectedFollowUpId] = useState<number | null>(null);
   const [updateStage, setUpdateStage] = useState(false);
   const [newStage, setNewStage] = useState<string | null>(customer?.stage || null);
-  const [completionNotes, setCompletionNotes] = useState<string>("");
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(new Date());
   const [nextFollowUpNotes, setNextFollowUpNotes] = useState<string>("");
   
@@ -231,7 +230,7 @@ export default function CustomerDetailPage() {
       return apiRequest("PUT", `/api/follow-ups/${followUpId}/complete`, {
         updateCustomerStage,
         newCustomerStage,
-        completionNotes,
+        completionNotes: nextFollowUpNotes,
         nextFollowUpDate,
         nextFollowUpNotes
       });
@@ -286,7 +285,7 @@ export default function CustomerDetailPage() {
       followUpId: selectedFollowUpId,
       updateCustomerStage: updateStage,
       newCustomerStage: updateStage ? newStage! : undefined,
-      completionNotes: completionNotes.trim() || undefined,
+      completionNotes: nextFollowUpNotes.trim() || undefined,
       nextFollowUpDate: (updateStage && newStage === "lost") ? null : nextFollowUpDate,
       nextFollowUpNotes: nextFollowUpNotes.trim() || undefined
     });
@@ -662,19 +661,6 @@ export default function CustomerDetailPage() {
                 </DialogHeader>
                 
                 <div className="py-4 space-y-4">
-                  {/* Completion Notes */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none">
-                      Completion Notes
-                    </label>
-                    <Textarea
-                      placeholder="Enter notes about this completed follow-up"
-                      value={completionNotes}
-                      onChange={(e) => setCompletionNotes(e.target.value)}
-                      className="resize-none"
-                    />
-                  </div>
-
                   {/* Update stage checkbox */}
                   <div className="flex items-start space-x-3 pt-2">
                     <Checkbox 
