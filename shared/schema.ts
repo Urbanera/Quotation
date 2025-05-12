@@ -42,6 +42,16 @@ export const appSettings = pgTable("app_settings", {
   presentationTemplateId: text("presentation_template_id").default("default"),
   requiredAccessories: text("required_accessories").default("skirting,handles,sliding mechanism,t profile"),
   leadSourceOptions: text("lead_source_options").default("walk-in,website,referral,social media,other"),
+  // Email settings
+  smtpHost: text("smtp_host"),
+  smtpPort: integer("smtp_port").default(587),
+  smtpSecure: boolean("smtp_secure").default(false),
+  smtpUser: text("smtp_user"),
+  smtpPassword: text("smtp_password"),
+  emailFrom: text("email_from"),
+  emailReplyTo: text("email_reply_to"),
+  emailFooter: text("email_footer"),
+  emailEnabled: boolean("email_enabled").default(false),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 

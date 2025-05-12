@@ -6,6 +6,7 @@ import path from "path";
 import fs from "fs";
 
 import { storage } from "./storage";
+import { emailService } from "./email";
 import {
   customerFormSchema,
   quotationFormSchema,
