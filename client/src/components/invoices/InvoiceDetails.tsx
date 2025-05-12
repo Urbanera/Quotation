@@ -91,7 +91,8 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
       let pdfBase64 = null;
       
       try {
-        // Navigate to the print page to get the PDF content
+        // Use our existing exportToPdf function instead of opening a new window
+        // First, we need to get the invoice element from the print view
         const printUrl = `/invoices/print/${invoiceId}`;
         const printWindow = window.open(printUrl, '_blank');
         
@@ -99,22 +100,22 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
           // Wait for the print page to load and render
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Try to capture the content as PDF
+          // Try to capture the content
           const documentElement = printWindow.document.documentElement;
           
           if (documentElement) {
             // Use html2canvas to capture the content
-            const canvas = await import('html2canvas').then(module => 
-              module.default(documentElement, { 
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                windowWidth: 1140
-              })
-            );
-            
-            // Convert to PDF using jsPDF
+            const { default: html2canvas } = await import('html2canvas');
             const { jsPDF } = await import('jspdf');
+            
+            const canvas = await html2canvas(documentElement, { 
+              scale: 2,
+              useCORS: true,
+              allowTaint: true,
+              windowWidth: 1140
+            });
+            
+            // Create PDF
             const pdf = new jsPDF({
               orientation: 'portrait',
               unit: 'mm',
@@ -122,10 +123,12 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
             });
             
             const imgData = canvas.toDataURL('image/png');
-            const imgWidth = 210; // A4 width in mm
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = pageWidth - 20; // 10mm margins
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, Math.min(pageHeight - 20, imgHeight));
             
             // Convert PDF to base64
             pdfBase64 = pdf.output('datauristring');

@@ -104,7 +104,7 @@ export const exportToPdf = async (
     
     // Regular PDF generation for basic quotes
     const canvas = await html2canvas(clone, {
-      scale: 2, // Higher resolution
+      scale: returnBlob ? 1.5 : 2, // Lower scale for email attachments
       useCORS: true, // For images
       logging: false,
       backgroundColor: '#ffffff',
@@ -119,8 +119,10 @@ export const exportToPdf = async (
     const imgWidth = pageWidth - 20; // 10mm margins
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
-    // Get image data
-    const imgData = canvas.toDataURL('image/png');
+    // Get image data (use lower quality JPEG for email attachments to reduce size)
+    const imgData = returnBlob ? 
+      canvas.toDataURL('image/jpeg', 0.85) : 
+      canvas.toDataURL('image/png');
     
     // Calculate needed pages
     const pageCount = Math.ceil(imgHeight / (pageHeight - 20));
@@ -210,13 +212,15 @@ async function generatePresentationPdf(
     }
     
     const coverCanvas = await html2canvas(coverPages[i], {
-      scale: 2,
+      scale: returnBlob ? 1.5 : 2, // Lower scale for email attachments
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff'
     });
     
-    const imgData = coverCanvas.toDataURL('image/png');
+    const imgData = returnBlob ? 
+      coverCanvas.toDataURL('image/jpeg', 0.85) : 
+      coverCanvas.toDataURL('image/png');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const imgWidth = pageWidth - 20;
@@ -236,7 +240,7 @@ async function generatePresentationPdf(
   }
   
   const contentCanvas = await html2canvas(contentPage, {
-    scale: 2,
+    scale: returnBlob ? 1.5 : 2, // Lower scale for email attachments
     useCORS: true,
     logging: false,
     backgroundColor: '#ffffff'
@@ -296,8 +300,10 @@ async function generatePresentationPdf(
       contentCanvas.width, sourceHeight
     );
     
-    // Add to PDF
-    const pageImgData = tempCanvas.toDataURL('image/png');
+    // Add to PDF (with reduced quality for email)
+    const pageImgData = returnBlob ? 
+      tempCanvas.toDataURL('image/jpeg', 0.85) : 
+      tempCanvas.toDataURL('image/png');
     const pageImgHeight = Math.min(pageHeight - 20, heightLeft);
     
     pdf.addImage(pageImgData, 'PNG', 10, 10, imgWidth, pageImgHeight);
