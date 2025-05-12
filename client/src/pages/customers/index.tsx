@@ -423,13 +423,92 @@ export default function CustomersList() {
 
   // Export customers handler
   const handleExportCustomers = () => {
-    // Use a direct window.location approach for file download
-    window.location.href = '/api/customers/export';
-    
-    toast({
-      title: "Export Started",
-      description: "Your customers data export has started",
-    });
+    try {
+      // Create CSV data directly from the customers list in the state
+      // This bypasses the problematic server export endpoint
+      if (!customers || customers.length === 0) {
+        toast({
+          title: "No Customers",
+          description: "There are no customers to export",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create CSV header
+      const headers = [
+        'Name', 'Email', 'Phone', 'Address', 'Current Stage', 
+        'Lead Source', 'Last Follow-up Date', 'Next Follow-up Date'
+      ].join(',') + '\n';
+      
+      // Process customer data to include follow-ups
+      const customerFollowUps = new Map();
+      allFollowUps.forEach(followUp => {
+        if (!customerFollowUps.has(followUp.customerId)) {
+          customerFollowUps.set(followUp.customerId, []);
+        }
+        customerFollowUps.get(followUp.customerId).push(followUp);
+      });
+      
+      // Create CSV rows
+      let csvContent = headers;
+      customers.forEach(customer => {
+        const customerFollowUpsList = customerFollowUps.get(customer.id) || [];
+        
+        // Sort follow-ups by date desc and get the latest one
+        const sortedFollowUps = [...customerFollowUpsList].sort((a, b) => 
+          new Date(b.interactionDate).getTime() - new Date(a.interactionDate).getTime()
+        );
+        
+        const latestFollowUp = sortedFollowUps[0] || null;
+        const lastFollowUpDate = latestFollowUp?.interactionDate ? 
+          new Date(latestFollowUp.interactionDate).toISOString().split('T')[0] : '';
+        const nextFollowUpDate = latestFollowUp?.completed && latestFollowUp.nextFollowUpDate ? 
+          new Date(latestFollowUp.nextFollowUpDate).toISOString().split('T')[0] : '';
+        
+        const row = [
+          `"${(customer.name || '').replace(/"/g, '""')}"`,
+          `"${(customer.email || '').replace(/"/g, '""')}"`,
+          `"${(customer.phone || '').replace(/"/g, '""')}"`,
+          `"${(customer.address || '').replace(/"/g, '""')}"`,
+          `"${(customer.stage || '').replace(/"/g, '""')}"`,
+          `"${(customer.leadSource || '').replace(/"/g, '""')}"`,
+          `"${lastFollowUpDate}"`,
+          `"${nextFollowUpDate}"`
+        ].join(',') + '\n';
+        
+        csvContent += row;
+      });
+      
+      // Create a blob with the CSV data
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      
+      // Create a temporary download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'customers.csv';
+      
+      // Click the download link
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Export Complete",
+        description: `Exported ${customers.length} customers successfully`,
+      });
+    } catch (error) {
+      console.error('Error exporting customers:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export customers. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Debug export function for troubleshooting
