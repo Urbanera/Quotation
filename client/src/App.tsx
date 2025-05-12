@@ -1,6 +1,7 @@
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
+import { AuthProvider } from "@/hooks/use-auth";
 import MainLayout from "./components/layout/MainLayout";
 import Dashboard from "./pages/dashboard";
 import CustomersList from "./pages/customers";
@@ -47,54 +48,56 @@ function App() {
         
         {/* All other routes with the main layout */}
         <Route>
-          <MainLayout>
-            <Switch>
-              <Route path="/" component={Dashboard} />
-              
-              {/* Customer Routes */}
-              <Route path="/customers" component={CustomersList} />
-              <Route path="/customers/add" component={AddCustomer} />
-              <Route path="/customers/edit/:id" component={EditCustomer} />
-              <Route path="/customers/view/:id" component={CustomerDetailPage} />
-              
-              {/* Quotation Routes */}
-              <Route path="/quotations" component={QuotationsList} />
-              <Route path="/quotations/create" component={CreateQuotation} />
-              <Route path="/quotations/edit/:id" component={EditQuotation} />
-              <Route path="/quotations/view/:id" component={ViewQuotation} />
-              
-              {/* Sales Order Routes */}
-              <Route path="/sales-orders" component={SalesOrdersPage} />
-              <Route path="/sales-orders/create/:quotationId" component={CreateSalesOrder} />
-              <Route path="/sales-orders/view/:id" component={ViewSalesOrder} />
-              <Route path="/sales-orders/:id/payments" component={SalesOrderPaymentsPage} />
-              <Route path="/sales-orders/:id/payments/add" component={AddPaymentPage} />
-              
-              {/* Payment Routes */}
-              <Route path="/payments" component={PaymentsPage} />
-              <Route path="/payments/create" component={CreatePaymentPage} />
-              <Route path="/payments/view/:id" component={ViewPaymentPage} />
-              <Route path="/payments/edit/:id" component={EditPaymentPage} />
-              
-              {/* Invoice Routes */}
-              <Route path="/invoices" component={InvoicesPage} />
-              <Route path="/invoices/:id" component={InvoiceDetailPage} />
-              
-              {/* Other Routes */}
-              <Route path="/accessories" component={AccessoryCatalogPage} />
-              <Route path="/users" component={UsersPage} />
-              <Route path="/teams" component={TeamsPage} />
-              <Route path="/teams/:id" component={TeamDetailsPage} />
-              <Route path="/settings" component={SettingsPage} />
-              
-              {/* Profile Routes */}
-              <Route path="/profile" component={ProfilePage} />
-              <Route path="/profile/edit" component={EditProfilePage} />
-              <Route path="/profile/change-password" component={ChangePasswordPage} />
-              
-              <Route component={NotFound} />
-            </Switch>
-          </MainLayout>
+          <AuthProvider>
+            <MainLayout>
+              <Switch>
+                <Route path="/" component={Dashboard} />
+                
+                {/* Customer Routes */}
+                <Route path="/customers" component={CustomersList} />
+                <Route path="/customers/add" component={AddCustomer} />
+                <Route path="/customers/edit/:id" component={EditCustomer} />
+                <Route path="/customers/view/:id" component={CustomerDetailPage} />
+                
+                {/* Quotation Routes */}
+                <Route path="/quotations" component={QuotationsList} />
+                <Route path="/quotations/create" component={CreateQuotation} />
+                <Route path="/quotations/edit/:id" component={EditQuotation} />
+                <Route path="/quotations/view/:id" component={ViewQuotation} />
+                
+                {/* Sales Order Routes */}
+                <Route path="/sales-orders" component={SalesOrdersPage} />
+                <Route path="/sales-orders/create/:quotationId" component={CreateSalesOrder} />
+                <Route path="/sales-orders/view/:id" component={ViewSalesOrder} />
+                <Route path="/sales-orders/:id/payments" component={SalesOrderPaymentsPage} />
+                <Route path="/sales-orders/:id/payments/add" component={AddPaymentPage} />
+                
+                {/* Payment Routes */}
+                <Route path="/payments" component={PaymentsPage} />
+                <Route path="/payments/create" component={CreatePaymentPage} />
+                <Route path="/payments/view/:id" component={ViewPaymentPage} />
+                <Route path="/payments/edit/:id" component={EditPaymentPage} />
+                
+                {/* Invoice Routes */}
+                <Route path="/invoices" component={InvoicesPage} />
+                <Route path="/invoices/:id" component={InvoiceDetailPage} />
+                
+                {/* Other Routes */}
+                <Route path="/accessories" component={AccessoryCatalogPage} />
+                <Route path="/users" component={UsersPage} />
+                <Route path="/teams" component={TeamsPage} />
+                <Route path="/teams/:id" component={TeamDetailsPage} />
+                <Route path="/settings" component={SettingsPage} />
+                
+                {/* Profile Routes */}
+                <Route path="/profile" component={ProfilePage} />
+                <Route path="/profile/edit" component={EditProfilePage} />
+                <Route path="/profile/change-password" component={ChangePasswordPage} />
+                
+                <Route component={NotFound} />
+              </Switch>
+            </MainLayout>
+          </AuthProvider>
         </Route>
       </Switch>
     </QueryClientProvider>

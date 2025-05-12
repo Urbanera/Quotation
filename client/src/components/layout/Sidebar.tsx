@@ -15,28 +15,86 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { CompanySettings } from "@shared/schema";
+import { useAuth, useRoleBasedAccess } from "@/hooks/use-auth";
 
 interface SidebarProps {
   isMobile?: boolean;
   onClose?: () => void;
 }
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "Customers", href: "/customers", icon: Users },
-  { name: "Quotations", href: "/quotations", icon: FileText },
-  { name: "Sales Orders", href: "/sales-orders", icon: ShoppingCart },
-  { name: "Invoices", href: "/invoices", icon: Receipt },
-  { name: "Payments", href: "/payments", icon: CreditCard },
-  { name: "Products", href: "/products", icon: Package },
-  { name: "Accessories", href: "/accessories", icon: Layers },
-  { name: "Teams", href: "/teams", icon: UserCheck },
-  { name: "Users", href: "/users", icon: UserCog },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  requiredRoles?: Array<"admin" | "manager" | "designer" | "viewer">;
+}
 
 export default function Sidebar({ isMobile, onClose }: SidebarProps) {
   const [location] = useLocation();
+  const { user } = useAuth();
+  const { 
+    canAccess, 
+    isAdmin, 
+    isManager, 
+    canManageUsers, 
+    canManageTeams, 
+    canCreateSalesOrder 
+  } = useRoleBasedAccess();
+  
+  // Define navigation with role-based access
+  const navigation: NavigationItem[] = [
+    { name: "Dashboard", href: "/", icon: Home },
+    { name: "Customers", href: "/customers", icon: Users },
+    { name: "Quotations", href: "/quotations", icon: FileText },
+    { 
+      name: "Sales Orders", 
+      href: "/sales-orders", 
+      icon: ShoppingCart, 
+      requiredRoles: ["admin", "manager"] 
+    },
+    { 
+      name: "Invoices", 
+      href: "/invoices", 
+      icon: Receipt, 
+      requiredRoles: ["admin", "manager"] 
+    },
+    { 
+      name: "Payments", 
+      href: "/payments", 
+      icon: CreditCard, 
+      requiredRoles: ["admin", "manager"] 
+    },
+    { 
+      name: "Products", 
+      href: "/products", 
+      icon: Package, 
+      requiredRoles: ["admin", "manager", "designer"] 
+    },
+    { 
+      name: "Accessories", 
+      href: "/accessories", 
+      icon: Layers, 
+      requiredRoles: ["admin", "manager", "designer"] 
+    },
+    { 
+      name: "Teams", 
+      href: "/teams", 
+      icon: UserCheck, 
+      requiredRoles: ["admin", "manager"] 
+    },
+    { 
+      name: "Users", 
+      href: "/users", 
+      icon: UserCog, 
+      requiredRoles: ["admin"] 
+    },
+    { 
+      name: "Settings", 
+      href: "/settings", 
+      icon: Settings, 
+      requiredRoles: ["admin"] 
+    },
+  ];
   
   // Fetch company settings for name
   const { data: settings } = useQuery<CompanySettings>({
@@ -82,6 +140,11 @@ export default function Sidebar({ isMobile, onClose }: SidebarProps) {
       <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
         <nav className="mt-5 flex-1 px-2 space-y-1">
           {navigation.map((item) => {
+            // Check if user has access to this menu item
+            const hasAccess = !item.requiredRoles || canAccess(item.requiredRoles);
+            // Skip rendering if user doesn't have access
+            if (!hasAccess) return null;
+            
             const isActive = location === item.href || 
               (item.href !== "/" && location.startsWith(item.href));
             
@@ -112,6 +175,15 @@ export default function Sidebar({ isMobile, onClose }: SidebarProps) {
           })}
         </nav>
       </div>
+      
+      {/* User role indicator */}
+      {user && (
+        <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+          <div className="text-xs font-medium text-gray-500">
+            Role: <span className="text-indigo-600 capitalize">{user.role}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
