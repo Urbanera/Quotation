@@ -17,7 +17,7 @@ import {
   CalendarClock,
   MapPin,
   Phone,
-  Mail,
+  Mail as MailIcon,
   Printer
 } from 'lucide-react';
 import { Invoice, QuotationWithDetails } from '@shared/schema';
@@ -44,6 +44,9 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const { data: invoice, isLoading: isInvoiceLoading } = useQuery<Invoice>({
     queryKey: [`/api/invoices/${invoiceId}`],
@@ -75,6 +78,52 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
       });
     }
   });
+  
+  // Email invoice mutation
+  const emailInvoiceMutation = useMutation({
+    mutationFn: async (email: string) => {
+      setSendingEmail(true);
+      
+      // Send email request to server
+      const response = await apiRequest(
+        "POST",
+        `/api/invoices/${invoiceId}/email`,
+        { emailTo: email }
+      );
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Email Sent",
+        description: "The invoice has been sent via email successfully.",
+      });
+      setIsEmailDialogOpen(false);
+      setSendingEmail(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to send email: ${error.message}`,
+        variant: "destructive",
+      });
+      console.error("Failed to send invoice via email:", error);
+      setSendingEmail(false);
+    },
+  });
+  
+  const handleSendEmail = () => {
+    if (!emailTo) {
+      toast({
+        title: "Email Required",
+        description: "Please enter an email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    emailInvoiceMutation.mutate(emailTo);
+  };
 
   const markAsPaidMutation = useMutation({
     mutationFn: async () => {

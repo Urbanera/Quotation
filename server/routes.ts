@@ -207,6 +207,159 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: error.message || "Server error" });
     }
   });
+  
+  // Email invoice endpoint
+  app.post("/api/invoices/:id/email", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { emailTo } = req.body;
+      
+      if (!emailTo) {
+        return res.status(400).json({ message: "Email recipient is required" });
+      }
+      
+      // Get invoice details
+      const invoice = await storage.getInvoice(parseInt(id));
+      
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      // Get customer details
+      const customer = await storage.getCustomer(invoice.customerId);
+      
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      // First check if email service is configured
+      const isConfigured = await emailService.isConfigured();
+      
+      if (!isConfigured) {
+        return res.status(400).json({ 
+          message: "Email service is not configured. Please configure email settings first." 
+        });
+      }
+      
+      // Get company settings
+      const companySettings = await storage.getCompanySettings();
+      
+      // Create a simple invoice email with details
+      const subject = `Invoice ${invoice.invoiceNumber} from ${companySettings?.name || 'Our Company'}`;
+      
+      const emailResult = await emailService.sendEmail({
+        to: emailTo,
+        subject,
+        html: `
+          <h2>Invoice ${invoice.invoiceNumber}</h2>
+          <p>Dear ${customer.name},</p>
+          <p>Please find attached the invoice for your order. Details are provided below:</p>
+          <p>Invoice Number: ${invoice.invoiceNumber}</p>
+          <p>Date: ${new Date(invoice.createdAt).toLocaleDateString()}</p>
+          <p>Amount: ₹${invoice.amount.toFixed(2)}</p>
+          <p>If you have any questions about this invoice, please don't hesitate to contact us.</p>
+          <p>Best regards,<br>${companySettings?.name || 'Our Company'}</p>
+        `,
+        // Skip attachments for now since we need to generate PDFs server-side
+      });
+      
+      if (emailResult) {
+        res.status(200).json({ success: true, message: "Email sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send email" });
+      }
+    } catch (error: any) {
+      console.error("Error sending invoice email:", error);
+      res.status(500).json({ message: error.message || "Server error" });
+    }
+  });
+  
+  // Email payment receipt endpoint
+  app.post("/api/payments/:id/email", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { emailTo } = req.body;
+      
+      if (!emailTo) {
+        return res.status(400).json({ message: "Email recipient is required" });
+      }
+      
+      // Get payment details
+      const payment = await storage.getCustomerPayment(parseInt(id));
+      
+      if (!payment) {
+        return res.status(404).json({ message: "Payment receipt not found" });
+      }
+      
+      // Get customer details
+      const customer = await storage.getCustomer(payment.customerId);
+      
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      // First check if email service is configured
+      const isConfigured = await emailService.isConfigured();
+      
+      if (!isConfigured) {
+        return res.status(400).json({ 
+          message: "Email service is not configured. Please configure email settings first." 
+        });
+      }
+      
+      // Get company settings
+      const companySettings = await storage.getCompanySettings();
+      
+      // Define payment methods for display
+      const paymentMethods: Record<string, string> = {
+        'cash': 'Cash',
+        'check': 'Check',
+        'card': 'Credit/Debit Card',
+        'netbanking': 'Net Banking',
+        'upi': 'UPI',
+        'wallet': 'Digital Wallet',
+        'other': 'Other'
+      };
+      
+      // Format amount in Indian currency format
+      const formatter = new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2
+      });
+      
+      // Create a simple payment receipt email with details
+      const subject = `Payment Receipt ${payment.receiptNumber} from ${companySettings?.name || 'Our Company'}`;
+      
+      const emailResult = await emailService.sendEmail({
+        to: emailTo,
+        subject,
+        html: `
+          <h2>Payment Receipt ${payment.receiptNumber}</h2>
+          <p>Dear ${customer.name},</p>
+          <p>Thank you for your payment. This email confirms that we have received your payment.</p>
+          <p>Receipt Number: ${payment.receiptNumber}</p>
+          <p>Date: ${new Date(payment.paymentDate).toLocaleDateString()}</p>
+          <p>Amount: ${formatter.format(payment.amount)}</p>
+          <p>Payment Method: ${paymentMethods[payment.paymentMethod] || payment.paymentMethod}</p>
+          ${payment.transactionId ? `<p>Transaction ID: ${payment.transactionId}</p>` : ''}
+          <p>Description: ${payment.description || 'Payment received'}</p>
+          <p>If you have any questions about this payment, please don't hesitate to contact us.</p>
+          <p>Best regards,<br>${companySettings?.name || 'Our Company'}</p>
+        `,
+        // Skip attachments for now since we need to generate PDFs server-side
+      });
+      
+      if (emailResult) {
+        res.status(200).json({ success: true, message: "Email sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send email" });
+      }
+    } catch (error: any) {
+      console.error("Error sending payment receipt email:", error);
+      res.status(500).json({ message: error.message || "Server error" });
+    }
+  });
 
   app.post("/api/email/test-connection", async (req, res) => {
     try {
