@@ -36,6 +36,10 @@ export class EmailService {
           user: this.settings.smtpUser,
           pass: this.settings.smtpPassword,
         },
+        tls: {
+          // Do not fail on invalid certs
+          rejectUnauthorized: false,
+        },
       });
       
       this.initialized = true;

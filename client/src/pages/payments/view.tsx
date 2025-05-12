@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import PaymentReceipt, { StaticReceipt } from "@/components/payments/PaymentReceipt";
-import { ArrowLeft, Download, Edit, Loader2, Printer, Mail } from "lucide-react";
+import { ArrowLeft, Download, Edit, Loader2, Printer, Mail, User } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
