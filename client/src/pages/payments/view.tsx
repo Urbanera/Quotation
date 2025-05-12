@@ -78,6 +78,52 @@ export default function ViewPaymentPage() {
   });
 
   const isLoading = isLoadingPayment || isLoadingCustomer;
+  
+  // Email payment receipt mutation
+  const emailReceiptMutation = useMutation({
+    mutationFn: async (email: string) => {
+      setSendingEmail(true);
+      
+      // Send email request to server
+      const response = await apiRequest(
+        "POST",
+        `/api/payments/${id}/email`,
+        { emailTo: email }
+      );
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Email Sent",
+        description: "The payment receipt has been sent via email successfully.",
+      });
+      setIsEmailDialogOpen(false);
+      setSendingEmail(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to send email: ${error.message}`,
+        variant: "destructive",
+      });
+      console.error("Failed to send payment receipt via email:", error);
+      setSendingEmail(false);
+    },
+  });
+  
+  const handleSendEmail = () => {
+    if (!emailTo) {
+      toast({
+        title: "Email Required",
+        description: "Please enter an email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    emailReceiptMutation.mutate(emailTo);
+  };
 
   function getPaymentMethodBadge(method: string) {
     const styles: Record<string, string> = {
@@ -168,6 +214,19 @@ export default function ViewPaymentPage() {
                 Print Receipt
               </Button>
             </Link>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                // Pre-fill email with customer's email if available
+                if (customer?.email) {
+                  setEmailTo(customer.email);
+                }
+                setIsEmailDialogOpen(true);
+              }}
+            >
+              <Mail className="mr-2 h-4 w-4" />
+              Email Receipt
+            </Button>
           </div>
         )}
       </div>
