@@ -188,7 +188,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { stage } = req.body;
       
-      if (!stage || !["new", "pipeline", "cold", "warm", "booked"].includes(stage)) {
+      if (!stage || !["new", "pipeline", "cold", "warm", "booked", "lost"].includes(stage)) {
         return res.status(400).json({ message: "Invalid stage value" });
       }
       

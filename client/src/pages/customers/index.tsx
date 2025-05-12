@@ -330,7 +330,7 @@ export default function CustomersList() {
   // Update customer stage mutation
   const updateCustomerStageMutation = useMutation({
     mutationFn: async ({ customerId, newStage }: { customerId: number, newStage: string }) => {
-      const response = await apiRequest("PATCH", `/api/customers/${customerId}`, { stage: newStage });
+      const response = await apiRequest("PUT", `/api/customers/${customerId}/stage`, { stage: newStage });
       return response.json();
     },
     onSuccess: (_, variables) => {
@@ -350,9 +350,22 @@ export default function CustomersList() {
       setEditingStageCustomer(null);
     },
     onError: (error: any) => {
+      console.error("Stage update error:", error);
+      let errorMessage = "Failed to update customer stage";
+      
+      // Try to extract message from error
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // If error message contains HTML, it's likely a server error
+      if (typeof errorMessage === 'string' && errorMessage.includes('<!DOCTYPE')) {
+        errorMessage = "Server error occurred. Please try again later.";
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to update customer stage",
+        description: errorMessage,
         variant: "destructive",
       });
     }
