@@ -142,10 +142,18 @@ export class EmailService {
       fs.writeFileSync(tempFilePath, pdfBuffer);
 
       // Generate email content
+      const host = process.env.APP_URL || 'http://localhost:5000';
+      const logoUrl = this.companySettings.logo ? 
+        `${host}${this.companySettings.logo}` : 
+        `${host}/assets/default-logo.png`;
+
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>
+            ${this.companySettings.logo ? 
+              `<img src="${logoUrl}" alt="${this.companySettings.name}" style="max-height: 60px; max-width: 180px; margin-bottom: 10px;" />` : 
+              `<h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>`
+            }
             <div style="height: 3px; background: linear-gradient(to right, #4CAF50, #8BC34A); margin: 15px auto; width: 150px;"></div>
           </div>
           
@@ -254,10 +262,18 @@ export class EmailService {
       fs.writeFileSync(tempFilePath, pdfBuffer);
 
       // Generate email content
+      const host = process.env.APP_URL || 'http://localhost:5000';
+      const logoUrl = this.companySettings.logo ? 
+        `${host}${this.companySettings.logo}` : 
+        `${host}/assets/default-logo.png`;
+
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>
+            ${this.companySettings.logo ? 
+              `<img src="${logoUrl}" alt="${this.companySettings.name}" style="max-height: 60px; max-width: 180px; margin-bottom: 10px;" />` : 
+              `<h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>`
+            }
             <div style="height: 3px; background: linear-gradient(to right, #4CAF50, #8BC34A); margin: 15px auto; width: 150px;"></div>
           </div>
           
@@ -349,10 +365,18 @@ export class EmailService {
       fs.writeFileSync(tempFilePath, pdfBuffer);
 
       // Generate email content
+      const host = process.env.APP_URL || 'http://localhost:5000';
+      const logoUrl = this.companySettings.logo ? 
+        `${host}${this.companySettings.logo}` : 
+        `${host}/assets/default-logo.png`;
+
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>
+            ${this.companySettings.logo ? 
+              `<img src="${logoUrl}" alt="${this.companySettings.name}" style="max-height: 60px; max-width: 180px; margin-bottom: 10px;" />` : 
+              `<h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>`
+            }
             <div style="height: 3px; background: linear-gradient(to right, #4CAF50, #8BC34A); margin: 15px auto; width: 150px;"></div>
           </div>
           
