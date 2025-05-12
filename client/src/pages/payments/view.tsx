@@ -52,33 +52,15 @@ export default function ViewPaymentPage() {
 
   // Fetch payment data
   const { data: payment, isLoading: isLoadingPayment, error } = useQuery<CustomerPayment>({
-    queryKey: [`/api/customer-payments/${id}`],
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to load payment details",
-        variant: "destructive",
-      });
-      console.error("Failed to load payment details:", error);
-    },
+    queryKey: [`/api/customer-payments/${id}`]
   });
 
   // Fetch customer data if payment data is available
   const { data: customer, isLoading: isLoadingCustomer } = useQuery<Customer>({
     queryKey: [`/api/customers/${payment?.customerId}`],
-    enabled: !!payment?.customerId,
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to load customer details",
-        variant: "destructive",
-      });
-      console.error("Failed to load customer details:", error);
-    },
+    enabled: !!payment?.customerId
   });
 
-  const isLoading = isLoadingPayment || isLoadingCustomer;
-  
   // Email payment receipt mutation
   const emailReceiptMutation = useMutation({
     mutationFn: async (email: string) => {
@@ -125,36 +107,40 @@ export default function ViewPaymentPage() {
     emailReceiptMutation.mutate(emailTo);
   };
 
+  const isLoading = isLoadingPayment || isLoadingCustomer;
+
   function getPaymentMethodBadge(method: string) {
     const styles: Record<string, string> = {
       cash: "bg-green-100 text-green-800 hover:bg-green-100",
-      bank_transfer: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-      check: "bg-purple-100 text-purple-800 hover:bg-purple-100",
-      card: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-      upi: "bg-indigo-100 text-indigo-800 hover:bg-indigo-100",
-      other: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+      check: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+      card: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+      netbanking: "bg-indigo-100 text-indigo-800 hover:bg-indigo-100",
+      upi: "bg-cyan-100 text-cyan-800 hover:bg-cyan-100",
+      wallet: "bg-pink-100 text-pink-800 hover:bg-pink-100",
+      other: "bg-gray-100 text-gray-800 hover:bg-gray-100"
     };
-
+    
     const labels: Record<string, string> = {
       cash: "Cash",
-      bank_transfer: "Bank Transfer",
       check: "Check",
       card: "Card",
+      netbanking: "Net Banking",
       upi: "UPI",
-      other: "Other",
+      wallet: "Wallet",
+      other: "Other"
     };
-
+    
     return <Badge className={styles[method] || ""}>{labels[method] || method}</Badge>;
   }
-
+  
   function getPaymentTypeBadge(type: string) {
     const styles: Record<string, string> = {
-      token_advance: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-      starting_production: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+      token_advance: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+      starting_production: "bg-orange-100 text-orange-800 hover:bg-orange-100",
       final_payment: "bg-green-100 text-green-800 hover:bg-green-100",
-      other: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+      other: "bg-gray-100 text-gray-800 hover:bg-gray-100"
     };
-
+    
     const labels: Record<string, string> = {
       token_advance: "Token Advance",
       starting_production: "Starting Production",
@@ -173,16 +159,11 @@ export default function ViewPaymentPage() {
             <CardTitle className="text-destructive">Error</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Failed to load payment details. The payment may not exist or has been deleted.</p>
+            <p>Failed to load payment details. Please try again later.</p>
+            <Button variant="outline" className="mt-4" asChild>
+              <Link href="/payments">Back to Payments</Link>
+            </Button>
           </CardContent>
-          <CardFooter>
-            <Link href="/payments">
-              <Button variant="outline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Payments
-              </Button>
-            </Link>
-          </CardFooter>
         </Card>
       </div>
     );
@@ -252,38 +233,84 @@ export default function ViewPaymentPage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Payment Method</h3>
-                  <div>{getPaymentMethodBadge(payment.paymentMethod)}</div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Payment Details</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Method</span>
+                      <span>{getPaymentMethodBadge(payment.paymentMethod)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Type</span>
+                      <span>{getPaymentTypeBadge(payment.paymentType || 'other')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Payment Date</span>
+                      <span>{format(new Date(payment.paymentDate), 'MMM dd, yyyy')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Created On</span>
+                      <span>{format(new Date(payment.createdAt), 'MMM dd, yyyy')}</span>
+                    </div>
+                  </div>
                 </div>
+                
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Payment Type</h3>
-                  <div>{getPaymentTypeBadge(payment.paymentType)}</div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Payment Date</h3>
-                  <p>{format(new Date(payment.paymentDate), 'dd MMM yyyy')}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Created On</h3>
-                  <p>{format(new Date(payment.createdAt), 'dd MMM yyyy, h:mm a')}</p>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Description</h3>
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="whitespace-pre-wrap">{payment.description || 'No description provided.'}</p>
+                  </div>
                 </div>
               </div>
-
-              <Separator />
               
-              {payment.description && (
+              {customer && (
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Payment Description</h3>
-                  <p className="whitespace-pre-wrap">{payment.description}</p>
+                  <Separator className="my-4" />
+                  <h3 className="text-sm font-medium text-muted-foreground mb-3">Customer Information</h3>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{customer.name}</p>
+                      {customer.email && (
+                        <p className="text-sm text-muted-foreground">{customer.email}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
+              
+              <div className="flex justify-end">
+                {companySettings && customer && (
+                  <Button asChild variant="outline" size="sm" className="ml-auto">
+                    <PDFDownloadLink
+                      document={
+                        <StaticReceipt
+                          payment={payment}
+                          customer={customer}
+                          companySettings={companySettings}
+                          appSettings={appSettings || undefined}
+                        />
+                      }
+                      fileName={`Receipt-${payment.receiptNumber}.pdf`}
+                    >
+                      {({ loading }) => (
+                        <>
+                          <Download className="h-4 w-4 mr-2" />
+                          {loading ? "Generating PDF..." : "Download PDF"}
+                        </>
+                      )}
+                    </PDFDownloadLink>
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
-
+          
           {customer && (
             <Card>
               <CardHeader>
-                <CardTitle>Customer Information</CardTitle>
+                <CardTitle>Customer Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -324,41 +351,41 @@ export default function ViewPaymentPage() {
           )}
         </div>
       )}
-    </div>
-    
-    {/* Email Dialog */}
-    <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Send Receipt via Email</DialogTitle>
-          <DialogDescription>
-            Enter the recipient's email address to send the payment receipt.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="recipient@example.com"
-              value={emailTo}
-              onChange={(e) => setEmailTo(e.target.value)}
-            />
+      
+      {/* Email Dialog */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Send Receipt via Email</DialogTitle>
+            <DialogDescription>
+              Enter the recipient's email address to send the payment receipt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="recipient@example.com"
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSendEmail} 
-            disabled={sendingEmail}
-          >
-            {sendingEmail ? 'Sending...' : 'Send Email'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSendEmail} 
+              disabled={sendingEmail}
+            >
+              {sendingEmail ? 'Sending...' : 'Send Email'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
