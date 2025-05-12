@@ -52,7 +52,8 @@ const storage_config = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+// For image uploads
+const imageUpload = multer({ 
   storage: storage_config,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB max file size
@@ -63,6 +64,27 @@ const upload = multer({
       cb(null, true);
     } else {
       cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
+// For CSV uploads
+const csvUpload = multer({ 
+  storage: storage_config,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept CSV files or Excel files that might be misidentified
+    if (
+      file.mimetype === 'text/csv' || 
+      file.mimetype === 'application/vnd.ms-excel' ||
+      file.mimetype === 'application/octet-stream' ||
+      file.originalname.toLowerCase().endsWith('.csv')
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV files are allowed'));
     }
   }
 });
@@ -354,7 +376,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
   
   // Import customers from CSV
-  app.post('/api/customers/import', upload.single('file'), async (req, res) => {
+  app.post('/api/customers/import', csvUpload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
@@ -1288,7 +1310,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.post("/api/rooms/:roomId/images", upload.single('image'), async (req, res) => {
+  app.post("/api/rooms/:roomId/images", imageUpload.single('image'), async (req, res) => {
     try {
       const roomId = parseInt(req.params.roomId);
       
@@ -1695,7 +1717,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.post("/api/accessory-catalog/bulk-import", upload.single('file'), async (req, res) => {
+  app.post("/api/accessory-catalog/bulk-import", csvUpload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file provided" });
@@ -1825,7 +1847,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
 
   // Logo upload route
-  app.post("/api/settings/company/logo", upload.single('logo'), async (req, res) => {
+  app.post("/api/settings/company/logo", imageUpload.single('logo'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No logo file provided" });
