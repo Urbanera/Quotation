@@ -443,12 +443,14 @@ export default function CustomersList() {
       
       // Process customer data to include follow-ups
       const customerFollowUps = new Map();
-      allFollowUps.forEach(followUp => {
-        if (!customerFollowUps.has(followUp.customerId)) {
-          customerFollowUps.set(followUp.customerId, []);
-        }
-        customerFollowUps.get(followUp.customerId).push(followUp);
-      });
+      if (allFollowUps && allFollowUps.length > 0) {
+        allFollowUps.forEach(followUp => {
+          if (!customerFollowUps.has(followUp.customerId)) {
+            customerFollowUps.set(followUp.customerId, []);
+          }
+          customerFollowUps.get(followUp.customerId).push(followUp);
+        });
+      }
       
       // Create CSV rows
       let csvContent = headers;
@@ -598,10 +600,6 @@ export default function CustomersList() {
           <Button onClick={handleExportCustomers} variant="outline" className="flex items-center gap-2">
             <Download className="h-4 w-4" />
             Export CSV
-          </Button>
-          <Button onClick={handleDebugExport} variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Debug Export
           </Button>
           <Button onClick={() => setImportDialogOpen(true)} variant="outline" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
