@@ -325,5 +325,40 @@ export default function ViewPaymentPage() {
         </div>
       )}
     </div>
+    
+    {/* Email Dialog */}
+    <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Send Receipt via Email</DialogTitle>
+          <DialogDescription>
+            Enter the recipient's email address to send the payment receipt.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="recipient@example.com"
+              value={emailTo}
+              onChange={(e) => setEmailTo(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSendEmail} 
+            disabled={sendingEmail}
+          >
+            {sendingEmail ? 'Sending...' : 'Send Email'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
