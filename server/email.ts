@@ -143,19 +143,35 @@ export class EmailService {
 
       // Generate email content
       const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px;">
-          <h2>Quotation: ${quotation.quotationNumber}</h2>
-          <p>Dear ${customer.name},</p>
-          <p>Please find attached our quotation for your interior design project.</p>
-          <p><strong>Quotation Details:</strong></p>
-          <ul>
-            <li><strong>Quotation Number:</strong> ${quotation.quotationNumber}</li>
-            <li><strong>Date:</strong> ${new Date(quotation.createdAt).toLocaleDateString()}</li>
-            ${quotation.title ? `<li><strong>Project:</strong> ${quotation.title}</li>` : ''}
-          </ul>
-          <p>If you have any questions regarding this quotation, please feel free to contact us.</p>
-          <p>Thank you for your interest in our services.</p>
-          <p>Best Regards,<br>${this.companySettings.name}</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>
+            <div style="height: 3px; background: linear-gradient(to right, #4CAF50, #8BC34A); margin: 15px auto; width: 150px;"></div>
+          </div>
+          
+          <h2 style="color: #4CAF50; border-bottom: 1px solid #eeeeee; padding-bottom: 10px;">Quotation: ${quotation.quotationNumber}</h2>
+          
+          <p style="font-size: 16px; color: #333;">Dear <strong>${customer.name}</strong>,</p>
+          
+          <p style="font-size: 16px; color: #333;">Thank you for your interest in our services. Please find attached our quotation for your interior design project.</p>
+          
+          <div style="background-color: #f9f9f9; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0;">
+            <h3 style="color: #2c3e50; margin-top: 0;">Quotation Details:</h3>
+            <ul style="padding-left: 20px;">
+              <li style="margin-bottom: 8px;"><strong>Quotation Number:</strong> ${quotation.quotationNumber}</li>
+              <li style="margin-bottom: 8px;"><strong>Date:</strong> ${new Date(quotation.createdAt).toLocaleDateString()}</li>
+              ${quotation.title ? `<li style="margin-bottom: 8px;"><strong>Project:</strong> ${quotation.title}</li>` : ''}
+            </ul>
+          </div>
+          
+          <p style="font-size: 16px; color: #333;">If you have any questions or would like to discuss this further, please don't hesitate to contact us.</p>
+          
+          <p style="font-size: 16px; color: #333;">Best regards,</p>
+          <p style="font-size: 16px; color: #333; font-weight: bold;">${this.companySettings.name}</p>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 14px; color: #666; text-align: center;">
+            <p>This email contains a quotation document attachment. Please review it at your convenience.</p>
+          </div>
         </div>
       `;
 
@@ -239,20 +255,40 @@ export class EmailService {
 
       // Generate email content
       const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px;">
-          <h2>Payment Receipt: ${payment.receiptNumber}</h2>
-          <p>Dear ${finalCustomer.name},</p>
-          <p>Thank you for your payment. Please find attached your payment receipt.</p>
-          <p><strong>Receipt Details:</strong></p>
-          <ul>
-            <li><strong>Receipt Number:</strong> ${payment.receiptNumber}</li>
-            <li><strong>Date:</strong> ${new Date(payment.paymentDate || payment.createdAt).toLocaleDateString()}</li>
-            <li><strong>Amount:</strong> ₹${payment.amount.toFixed(2)}</li>
-            <li><strong>Payment Method:</strong> ${payment.paymentMethod.replace('_', ' ').toUpperCase()}</li>
-          </ul>
-          <p>If you have any questions regarding this payment, please feel free to contact us.</p>
-          <p>Thank you for your business.</p>
-          <p>Best Regards,<br>${this.companySettings.name}</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>
+            <div style="height: 3px; background: linear-gradient(to right, #4CAF50, #8BC34A); margin: 15px auto; width: 150px;"></div>
+          </div>
+          
+          <h2 style="color: #4CAF50; border-bottom: 1px solid #eeeeee; padding-bottom: 10px;">Payment Receipt: ${payment.receiptNumber}</h2>
+          
+          <p style="font-size: 16px; color: #333;">Dear <strong>${finalCustomer.name}</strong>,</p>
+          
+          <p style="font-size: 16px; color: #333;">Thank you for your payment. Please find attached your payment receipt for your records.</p>
+          
+          <div style="background-color: #f9f9f9; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0;">
+            <h3 style="color: #2c3e50; margin-top: 0;">Receipt Details:</h3>
+            <ul style="padding-left: 20px;">
+              <li style="margin-bottom: 8px;"><strong>Receipt Number:</strong> ${payment.receiptNumber}</li>
+              <li style="margin-bottom: 8px;"><strong>Date:</strong> ${new Date(payment.paymentDate || payment.createdAt).toLocaleDateString()}</li>
+              <li style="margin-bottom: 8px;"><strong>Amount:</strong> <span style="color: #4CAF50; font-weight: bold;">₹${payment.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></li>
+              <li style="margin-bottom: 8px;"><strong>Payment Method:</strong> ${payment.paymentMethod.replace('_', ' ').toUpperCase()}</li>
+              ${payment.transactionId ? `<li style="margin-bottom: 8px;"><strong>Transaction ID:</strong> ${payment.transactionId}</li>` : ''}
+              ${payment.description ? `<li style="margin-bottom: 8px;"><strong>Description:</strong> ${payment.description}</li>` : ''}
+            </ul>
+          </div>
+          
+          <p style="font-size: 16px; color: #333;">If you have any questions regarding this payment, please don't hesitate to contact us.</p>
+          
+          <p style="font-size: 16px; color: #333;">Thank you for your business.</p>
+          
+          <p style="font-size: 16px; color: #333;">Best regards,</p>
+          <p style="font-size: 16px; color: #333; font-weight: bold;">${this.companySettings.name}</p>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 14px; color: #666; text-align: center;">
+            <p>This email contains a payment receipt attachment. Please keep it for your records.</p>
+          </div>
         </div>
       `;
 
@@ -314,20 +350,43 @@ export class EmailService {
 
       // Generate email content
       const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px;">
-          <h2>Invoice: ${invoice.invoiceNumber}</h2>
-          <p>Dear ${customer.name},</p>
-          <p>Please find attached the invoice for your interior design project.</p>
-          <p><strong>Invoice Details:</strong></p>
-          <ul>
-            <li><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</li>
-            <li><strong>Date:</strong> ${new Date(invoice.invoiceDate || invoice.createdAt).toLocaleDateString()}</li>
-            <li><strong>Amount:</strong> ₹${invoice.totalAmount.toFixed(2)}</li>
-            <li><strong>Due Date:</strong> ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Immediate'}</li>
-          </ul>
-          <p>If you have any questions regarding this invoice, please feel free to contact us.</p>
-          <p>Thank you for your business.</p>
-          <p>Best Regards,<br>${this.companySettings.name}</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>
+            <div style="height: 3px; background: linear-gradient(to right, #4CAF50, #8BC34A); margin: 15px auto; width: 150px;"></div>
+          </div>
+          
+          <h2 style="color: #4CAF50; border-bottom: 1px solid #eeeeee; padding-bottom: 10px;">Invoice: ${invoice.invoiceNumber}</h2>
+          
+          <p style="font-size: 16px; color: #333;">Dear <strong>${customer.name}</strong>,</p>
+          
+          <p style="font-size: 16px; color: #333;">Please find attached the invoice for your interior design project.</p>
+          
+          <div style="background-color: #f9f9f9; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0;">
+            <h3 style="color: #2c3e50; margin-top: 0;">Invoice Details:</h3>
+            <ul style="padding-left: 20px;">
+              <li style="margin-bottom: 8px;"><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</li>
+              <li style="margin-bottom: 8px;"><strong>Date:</strong> ${new Date(invoice.invoiceDate || invoice.createdAt).toLocaleDateString()}</li>
+              <li style="margin-bottom: 8px;"><strong>Amount:</strong> <span style="color: #4CAF50; font-weight: bold;">₹${invoice.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></li>
+              <li style="margin-bottom: 8px;"><strong>Due Date:</strong> <span style="color: ${invoice.dueDate ? '#e74c3c' : '#2c3e50'}; font-weight: ${invoice.dueDate ? 'bold' : 'normal'};">${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Immediate'}</span></li>
+            </ul>
+          </div>
+          
+          <div style="background-color: #FFEBEE; border-left: 4px solid #e74c3c; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; color: #e74c3c; font-weight: bold;">Payment Instructions</p>
+            <p style="margin-top: 8px; margin-bottom: 0;">Please ensure prompt payment according to the terms outlined in the invoice. For any payment-related queries, kindly contact our accounts department.</p>
+          </div>
+          
+          <p style="font-size: 16px; color: #333;">If you have any questions regarding this invoice, please don't hesitate to contact us.</p>
+          
+          <p style="font-size: 16px; color: #333;">Thank you for your business.</p>
+          
+          <p style="font-size: 16px; color: #333;">Best regards,</p>
+          <p style="font-size: 16px; color: #333; font-weight: bold;">${this.companySettings.name}</p>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 14px; color: #666; text-align: center;">
+            <p>This email contains an invoice attachment. Please process this payment according to the terms specified.</p>
+          </div>
         </div>
       `;
 
