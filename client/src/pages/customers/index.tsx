@@ -133,14 +133,71 @@ export default function CustomersList() {
     return { options, counts };
   }, [customers, appSettings?.leadSourceOptions]);
   
-  // Hardcoded follow-up counts for now - we'll implement the real counts later
-  const followUpCounts = {
-    all: 0,
-    today: 0,
-    yesterday: 0,
-    missed: 0,
-    future: 0
-  };
+  // Calculate follow-up counts based on the latest pending follow-up for each customer
+  const followUpCounts = useMemo(() => {
+    if (!allFollowUps || !customers) return {
+      all: 0,
+      today: 0,
+      yesterday: 0,
+      missed: 0,
+      future: 0
+    };
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Get all pending follow-ups (not completed)
+    const pendingFollowUps = allFollowUps.filter(f => !f.completed && !!f.nextFollowUpDate);
+    
+    // For each customer, find the earliest pending follow-up
+    const customerFollowUps = new Map<number, FollowUp>();
+    
+    // First, organize follow-ups by customer
+    pendingFollowUps.forEach(followUp => {
+      const existingFollowUp = customerFollowUps.get(followUp.customerId);
+      
+      // If we don't have a follow-up for this customer yet, or this follow-up is earlier, use it
+      if (!existingFollowUp || 
+          (followUp.nextFollowUpDate && existingFollowUp.nextFollowUpDate && 
+           new Date(followUp.nextFollowUpDate) < new Date(existingFollowUp.nextFollowUpDate))) {
+        customerFollowUps.set(followUp.customerId, followUp);
+      }
+    });
+    
+    // Now count the follow-ups by category
+    let todayCount = 0;
+    let yesterdayCount = 0;
+    let missedCount = 0;
+    let futureCount = 0;
+    
+    customerFollowUps.forEach(followUp => {
+      if (!followUp.nextFollowUpDate) return;
+      
+      const followUpDate = new Date(followUp.nextFollowUpDate);
+      followUpDate.setHours(0, 0, 0, 0);
+      
+      if (followUpDate.getTime() === today.getTime()) {
+        todayCount++;
+      } else if (followUpDate.getTime() === yesterday.getTime()) {
+        yesterdayCount++;
+      } else if (followUpDate < today) {
+        missedCount++;
+      } else {
+        futureCount++;
+      }
+    });
+    
+    return {
+      all: customerFollowUps.size,
+      today: todayCount,
+      yesterday: yesterdayCount,
+      missed: missedCount,
+      future: futureCount
+    };
+  }, [allFollowUps, customers]);
   
   // Sorted and filtered customers
   const filteredCustomers = useMemo(() => {
@@ -424,7 +481,7 @@ export default function CustomersList() {
                     className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "yesterday" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setFollowUpFilter(followUpFilter === "yesterday" ? "all" : "yesterday")}
                   >
-                    <div className="text-lg font-bold text-red-300">{followUpCounts.yesterday}</div>
+                    <div className="text-lg font-bold">{followUpCounts.yesterday}</div>
                     <div className="text-xs uppercase">YESTERDAY</div>
                   </div>
                   <div 
