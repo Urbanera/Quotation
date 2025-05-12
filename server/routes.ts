@@ -224,13 +224,23 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       const customers = await storage.getCustomers();
       console.log('DEBUG: Got customers:', customers?.length || 0);
       
+      // Add explicit check to make sure we're getting valid customer data
+      if (!customers || customers.length === 0) {
+        console.log('DEBUG: No customers found');
+        return res.status(200).json({
+          success: true,
+          customerCount: 0,
+          message: 'No customers found'
+        });
+      }
+      
       const followUps = await storage.getAllFollowUps();
       console.log('DEBUG: Got follow-ups:', followUps?.length || 0);
       
       // Create a detailed response for debugging
       return res.status(200).json({
         success: true,
-        customerCount: customers?.length || 0,
+        customerCount: customers.length,
         followUpCount: followUps?.length || 0,
         customers: customers,
         sampleFollowUps: followUps?.slice(0, 3) || []
@@ -250,7 +260,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       console.log('Exporting customers - starting export process');
       const customers = await storage.getCustomers();
       
-      console.log('Export found customers:', customers?.length || 0);
+      console.log('Export found customers:', customers?.length || 0, customers);
       
       // IMPORTANT: Even if there are no customers, return an empty CSV file
       // Don't return a 404 error which prevents the file download
@@ -258,8 +268,6 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         console.log('Customers array is null or undefined');
         return res.status(500).json({ message: 'Error retrieving customer data' });
       }
-      
-      // Continue even if customers array is empty - will create an empty CSV with headers
       
       console.log('Got customers:', customers.length);
       const followUps = await storage.getAllFollowUps();
