@@ -57,8 +57,9 @@ type FollowUpFilter = "all" | "today" | "yesterday" | "missed" | "future";
 
 export default function CustomersList() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<SortField>("name");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  // Default sort by createdAt in descending order (newest first)
+  const [sortField, setSortField] = useState<SortField>("createdAt");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
   const [followUpFilter, setFollowUpFilter] = useState<FollowUpFilter>("all");
   const [leadSourceFilter, setLeadSourceFilter] = useState<string>("all");
@@ -81,7 +82,9 @@ export default function CustomersList() {
     queryFn: async () => {
       const res = await fetch("/api/customers");
       return res.json();
-    }
+    },
+    // Decrease staleTime to refresh more quickly
+    staleTime: 1000, // 1 second
   });
 
   // Get all customer follow-ups for counting
@@ -90,7 +93,11 @@ export default function CustomersList() {
     queryFn: async () => {
       const res = await fetch("/api/follow-ups/all");
       return res.json();
-    }
+    },
+    // Decrease staleTime to refresh more quickly
+    staleTime: 1000, // 1 second
+    // Set refetchInterval to periodically check for updates
+    refetchInterval: 2000, // 2 seconds
   });
   
   // Computed values for badges and filter counts

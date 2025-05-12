@@ -129,7 +129,12 @@ export default function CustomerDetailPage() {
       return apiRequest("POST", "/api/follow-ups", data);
     },
     onSuccess: () => {
+      // Invalidate all follow-up related queries
       queryClient.invalidateQueries({ queryKey: ["/api/follow-ups", customerId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/follow-ups/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/follow-ups/all"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      
       toast({
         title: "Follow-up created",
         description: "The follow-up has been scheduled successfully.",
@@ -247,9 +252,13 @@ export default function CustomerDetailPage() {
       });
     },
     onSuccess: () => {
+      // Invalidate all follow-up related queries
       queryClient.invalidateQueries({ queryKey: ["/api/follow-ups", customerId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/follow-ups/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/follow-ups/all"] });
       queryClient.invalidateQueries({ queryKey: ["/api/customers", customerId] });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      
       toast({
         title: "Follow-up completed",
         description: updateStage 
