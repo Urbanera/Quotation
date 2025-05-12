@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { PDFDownloadLink } from "@react-pdf/renderer";
@@ -9,9 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import PaymentReceipt, { StaticReceipt } from "@/components/payments/PaymentReceipt";
-import { ArrowLeft, Download, Edit, Loader2, Printer } from "lucide-react";
+import { ArrowLeft, Download, Edit, Loader2, Printer, Mail } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ViewPaymentPage() {
   const [location] = useLocation();
@@ -19,6 +23,9 @@ export default function ViewPaymentPage() {
   const id = location.split("/").pop();
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
   const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
   
   // Fetch company and app settings for PDF generation
   useEffect(() => {

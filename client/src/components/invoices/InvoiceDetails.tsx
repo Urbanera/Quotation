@@ -35,6 +35,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface InvoiceDetailsProps {
   invoiceId: number;
@@ -374,6 +377,20 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
                     <Printer className="h-4 w-4 mr-2" />
                     Print Invoice
                   </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      // Pre-fill email with customer's email if available
+                      if (quotation?.customer?.email) {
+                        setEmailTo(quotation.customer.email);
+                      }
+                      setIsEmailDialogOpen(true);
+                    }}
+                  >
+                    <MailIcon className="h-4 w-4 mr-2" />
+                    Email Invoice
+                  </Button>
                 </div>
               </div>
             </div>
@@ -414,6 +431,41 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Email Dialog */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Send Invoice via Email</DialogTitle>
+            <DialogDescription>
+              Enter the recipient's email address to send the invoice.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="recipient@example.com"
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSendEmail} 
+              disabled={sendingEmail}
+            >
+              {sendingEmail ? 'Sending...' : 'Send Email'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
