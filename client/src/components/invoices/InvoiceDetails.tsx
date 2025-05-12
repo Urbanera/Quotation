@@ -17,7 +17,7 @@ import {
   CalendarClock,
   MapPin,
   Phone,
-  Mail as MailIcon,
+  Mail,
   Printer
 } from 'lucide-react';
 import { Invoice, QuotationWithDetails } from '@shared/schema';

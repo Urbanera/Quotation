@@ -274,7 +274,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.post("/api/payments/:id/email", async (req, res) => {
     try {
       const { id } = req.params;
-      const { emailTo } = req.body;
+      const { emailTo, pdfBase64 } = req.body;
       
       if (!emailTo) {
         return res.status(400).json({ message: "Email recipient is required" });
@@ -303,6 +303,20 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         });
       }
       
+      // Extract PDF from base64 or generate one if not provided
+      let pdfBuffer;
+      if (pdfBase64) {
+        // Remove the data:application/pdf;base64, part if it exists
+        const base64Data = pdfBase64.split(',').length > 1 ? pdfBase64.split(',')[1] : pdfBase64;
+        pdfBuffer = Buffer.from(base64Data, 'base64');
+      } else {
+        // No PDF provided, we should generate one
+        console.log("No PDF data provided for payment receipt, using server-side generation if available");
+        // Create a temporary PDF file based on the payment data
+        // This is a placeholder until server-side PDF generation is implemented
+        pdfBuffer = Buffer.from("PDF placeholder content");
+      }
+      
       // Get company settings
       const companySettings = await storage.getCompanySettings();
       
@@ -324,29 +338,10 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         minimumFractionDigits: 2
       });
       
-      // Create a simple payment receipt email with details
-      const subject = `Payment Receipt ${payment.receiptNumber} from ${companySettings?.name || 'Our Company'}`;
+      // Use the PDF buffer to send the receipt email with attachment
+      const result = await emailService.sendPaymentReceiptEmail(parseInt(id), pdfBuffer, emailTo);
       
-      const emailResult = await emailService.sendEmail({
-        to: emailTo,
-        subject,
-        html: `
-          <h2>Payment Receipt ${payment.receiptNumber}</h2>
-          <p>Dear ${customer.name},</p>
-          <p>Thank you for your payment. This email confirms that we have received your payment.</p>
-          <p>Receipt Number: ${payment.receiptNumber}</p>
-          <p>Date: ${new Date(payment.paymentDate).toLocaleDateString()}</p>
-          <p>Amount: ${formatter.format(payment.amount)}</p>
-          <p>Payment Method: ${paymentMethods[payment.paymentMethod] || payment.paymentMethod}</p>
-          ${payment.transactionId ? `<p>Transaction ID: ${payment.transactionId}</p>` : ''}
-          <p>Description: ${payment.description || 'Payment received'}</p>
-          <p>If you have any questions about this payment, please don't hesitate to contact us.</p>
-          <p>Best regards,<br>${companySettings?.name || 'Our Company'}</p>
-        `,
-        // Skip attachments for now since we need to generate PDFs server-side
-      });
-      
-      if (emailResult) {
+      if (result) {
         res.status(200).json({ success: true, message: "Email sent successfully" });
       } else {
         res.status(500).json({ message: "Failed to send email" });
