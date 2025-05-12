@@ -219,8 +219,11 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   // Export customers to CSV
   app.get('/api/customers/export', async (req, res) => {
     try {
+      console.log('Exporting customers - starting export process');
       const customers = await storage.getCustomers();
+      console.log('Got customers:', customers.length);
       const followUps = await storage.getAllFollowUps();
+      console.log('Got follow-ups:', followUps.length);
       
       // Create a map of customer ID to their follow-ups for easy lookup
       const customerFollowUps = new Map();
