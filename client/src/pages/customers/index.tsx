@@ -69,9 +69,17 @@ export default function CustomersList() {
   const [leadSourceFilter, setLeadSourceFilter] = useState<string>("all");
   const [deleteCustomerId, setDeleteCustomerId] = useState<number | null>(null);
   const [editingStageCustomer, setEditingStageCustomer] = useState<{ id: number, name: string, currentStage: string } | null>(null);
+  
+  // Import/Export functionality
   const [importDialogOpen, setImportDialogOpen] = useState<boolean>(false);
-  const [importStatus, setImportStatus] = useState<{ loading: boolean; success?: boolean; message?: string; results?: any }>({ loading: false });
+  const [importStatus, setImportStatus] = useState<{ 
+    loading: boolean; 
+    success?: boolean; 
+    message?: string; 
+    results?: any 
+  }>({ loading: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
@@ -331,7 +339,7 @@ export default function CustomersList() {
       
       return 0;
     });
-  }, [customers, searchTerm, sortField, sortOrder, stageFilter, followUpFilter, allFollowUps]);
+  }, [customers, searchTerm, sortField, sortOrder, stageFilter, followUpFilter, leadSourceFilter, allFollowUps]);
 
   // Update customer stage mutation
   const updateCustomerStageMutation = useMutation({
@@ -413,16 +421,95 @@ export default function CustomersList() {
     });
   };
 
+  // Export customers handler
+  const handleExportCustomers = () => {
+    // Use a direct window.location approach for file download
+    window.location.href = '/api/customers/export';
+    
+    toast({
+      title: "Export Started",
+      description: "Your customers data export has started",
+    });
+  };
+
+  // Import customers - file select handler
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file type - should be CSV
+    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+      toast({
+        title: "Invalid File",
+        description: "Please select a CSV file",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Process file upload
+    handleImportCustomers(file);
+  };
+  
+  // Import customers - actual upload handler
+  const handleImportCustomers = async (file: File) => {
+    setImportStatus({ loading: true });
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await fetch('/api/customers/import', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Import failed');
+      }
+      
+      // Update status with results
+      setImportStatus({
+        loading: false,
+        success: true,
+        message: result.message,
+        results: result.results
+      });
+      
+      // Invalidate customers query to refresh list
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      
+    } catch (error: any) {
+      setImportStatus({
+        loading: false,
+        success: false,
+        message: error.message || 'An error occurred during import'
+      });
+    }
+  };
+
   return (
     <div className="container p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Customers</h1>
-        <Button asChild>
-          <Link to="/customers/add">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Customer
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleExportCustomers} variant="outline" className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button onClick={() => setImportDialogOpen(true)} variant="outline" className="flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Import CSV
+          </Button>
+          <Button asChild>
+            <Link to="/customers/add">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Customer
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -449,89 +536,55 @@ export default function CustomersList() {
                     className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "new" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setStageFilter(stageFilter === "new" ? "all" : "new")}
                   >
-                    <div className="text-lg font-bold">{stageCounts.new}</div>
-                    <div className="text-xs uppercase">NEW</div>
-                  </div>
-                  <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "warm" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setStageFilter(stageFilter === "warm" ? "all" : "warm")}
-                  >
-                    <div className="text-lg font-bold">{stageCounts.warm}</div>
-                    <div className="text-xs uppercase">WARM</div>
+                    <div className="text-lg font-semibold">{stageCounts.new}</div>
+                    <div className="text-xs">New</div>
                   </div>
                   <div 
                     className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "pipeline" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setStageFilter(stageFilter === "pipeline" ? "all" : "pipeline")}
                   >
-                    <div className="text-lg font-bold">{stageCounts.pipeline}</div>
-                    <div className="text-xs uppercase">PIPE</div>
+                    <div className="text-lg font-semibold">{stageCounts.pipeline}</div>
+                    <div className="text-xs">Pipeline</div>
                   </div>
                   <div 
                     className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "cold" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setStageFilter(stageFilter === "cold" ? "all" : "cold")}
                   >
-                    <div className="text-lg font-bold">{stageCounts.cold}</div>
-                    <div className="text-xs uppercase">COLD</div>
+                    <div className="text-lg font-semibold">{stageCounts.cold}</div>
+                    <div className="text-xs">Cold</div>
+                  </div>
+                  <div 
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "warm" ? "ring-2 ring-white" : ""}`}
+                    onClick={() => setStageFilter(stageFilter === "warm" ? "all" : "warm")}
+                  >
+                    <div className="text-lg font-semibold">{stageCounts.warm}</div>
+                    <div className="text-xs">Warm</div>
                   </div>
                   <div 
                     className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "booked" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setStageFilter(stageFilter === "booked" ? "all" : "booked")}
+                    style={{ gridColumn: 'span 2' }}
                   >
-                    <div className="text-lg font-bold">{stageCounts.booked}</div>
-                    <div className="text-xs uppercase">BOOKED</div>
+                    <div className="text-lg font-semibold">{stageCounts.booked}</div>
+                    <div className="text-xs">Booked</div>
                   </div>
                   <div 
                     className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "lost" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setStageFilter(stageFilter === "lost" ? "all" : "lost")}
+                    style={{ gridColumn: 'span 2' }}
                   >
-                    <div className="text-lg font-bold">{stageCounts.lost}</div>
-                    <div className="text-xs uppercase">LOST</div>
+                    <div className="text-lg font-semibold">{stageCounts.lost}</div>
+                    <div className="text-xs">Lost</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
-            {/* Lead Source Stats Card */}
-            <Card className="bg-secondary text-white overflow-hidden">
+            
+            {/* Follow-up Stats Card */}
+            <Card className="bg-primary text-white overflow-hidden">
               <CardHeader className="pb-2">
                 <CardTitle className="text-white flex items-center">
-                  <span>Lead Source</span>
-                  <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <span>{leadSourcesData.options?.length || 0}</span>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className={`grid ${(leadSourcesData.options?.length || 0) > 4 ? 'grid-cols-3' : 'grid-cols-4'} gap-2 text-center`}>
-                  {(leadSourcesData.options || []).slice(0, 6).map((source: string) => {
-                    // Create abbreviated display name (first 4 chars or first word)
-                    // Make sure source is not undefined and is a string
-                    const displayName = source && typeof source === 'string'
-                      ? (source.includes(' ') 
-                          ? source.split(' ')[0].toUpperCase() 
-                          : source.slice(0, 4).toUpperCase())
-                      : 'N/A';
-                    
-                    return (
-                      <div 
-                        key={source}
-                        className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${leadSourceFilter === source ? "ring-2 ring-white" : ""}`}
-                        onClick={() => setLeadSourceFilter(leadSourceFilter === source ? "all" : source)}
-                      >
-                        <div className="text-lg font-bold">{leadSourcesData.counts[source] || 0}</div>
-                        <div className="text-xs uppercase">{displayName}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Follow Up Stats Card */}
-            <Card className="bg-green-600 text-white overflow-hidden">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-white flex items-center">
-                  <span>Follow Up</span>
+                  <span>Follow-ups</span>
                   <div className="ml-auto h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
                     <span>{followUpCounts.all}</span>
                   </div>
@@ -543,227 +596,376 @@ export default function CustomersList() {
                     className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "today" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setFollowUpFilter(followUpFilter === "today" ? "all" : "today")}
                   >
-                    <div className="text-lg font-bold">{followUpCounts.today}</div>
-                    <div className="text-xs uppercase">TODAY</div>
+                    <div className="text-lg font-semibold">{followUpCounts.today}</div>
+                    <div className="text-xs">Today</div>
                   </div>
                   <div 
                     className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "yesterday" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setFollowUpFilter(followUpFilter === "yesterday" ? "all" : "yesterday")}
                   >
-                    <div className="text-lg font-bold">{followUpCounts.yesterday}</div>
-                    <div className="text-xs uppercase">YESTERDAY</div>
+                    <div className="text-lg font-semibold">{followUpCounts.yesterday}</div>
+                    <div className="text-xs">Yesterday</div>
                   </div>
                   <div 
                     className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "missed" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setFollowUpFilter(followUpFilter === "missed" ? "all" : "missed")}
                   >
-                    <div className="text-lg font-bold">{followUpCounts.missed}</div>
-                    <div className="text-xs uppercase">MISSED</div>
+                    <div className="text-lg font-semibold">{followUpCounts.missed}</div>
+                    <div className="text-xs">Missed</div>
                   </div>
                   <div 
                     className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "future" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setFollowUpFilter(followUpFilter === "future" ? "all" : "future")}
                   >
-                    <div className="text-lg font-bold">{followUpCounts.future}</div>
-                    <div className="text-xs uppercase">FUTURE</div>
+                    <div className="text-lg font-semibold">{followUpCounts.future}</div>
+                    <div className="text-xs">Future</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Active Filters Display */}
+            {/* Lead Source Stats Card */}
+            <Card className="bg-primary text-white overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white flex items-center">
+                  <span>Lead Sources</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2 text-center max-h-[120px] overflow-y-auto">
+                  {leadSourcesData.options.length > 0 ? (
+                    leadSourcesData.options.map((source: string) => (
+                      <div 
+                        key={source}
+                        className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${leadSourceFilter === source ? "ring-2 ring-white" : ""}`}
+                        onClick={() => setLeadSourceFilter(leadSourceFilter === source ? "all" : source)}
+                      >
+                        <div className="text-lg font-semibold">{leadSourcesData.counts[source] || 0}</div>
+                        <div className="text-xs truncate">{source}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-center py-4 text-sm">
+                      No lead sources defined
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Active Filters Area */}
           <div className="flex flex-wrap gap-2 items-center">
             {stageFilter !== "all" && (
-              <Badge variant="outline" className="py-1 px-3">
-                Stage: {stageFilter && typeof stageFilter === 'string' ? (stageFilter.charAt(0).toUpperCase() + stageFilter.slice(1)) : 'All'}
-                <X className="ml-1 h-3 w-3 cursor-pointer" onClick={() => setStageFilter("all")} />
+              <Badge variant="outline" className="flex items-center gap-1 py-1 px-3">
+                Stage: {stageFilter.charAt(0).toUpperCase() + stageFilter.slice(1)}
+                <X 
+                  className="h-3 w-3 ml-1 cursor-pointer" 
+                  onClick={() => setStageFilter("all")}
+                />
               </Badge>
             )}
+            
             {followUpFilter !== "all" && (
-              <Badge variant="outline" className="py-1 px-3">
+              <Badge variant="outline" className="flex items-center gap-1 py-1 px-3">
                 Follow-up: {followUpFilter && typeof followUpFilter === 'string' ? (followUpFilter.charAt(0).toUpperCase() + followUpFilter.slice(1)) : 'All'}
-                <X className="ml-1 h-3 w-3 cursor-pointer" onClick={() => setFollowUpFilter("all")} />
+                <X 
+                  className="h-3 w-3 ml-1 cursor-pointer" 
+                  onClick={() => setFollowUpFilter("all")}
+                />
               </Badge>
             )}
+            
             {leadSourceFilter !== "all" && (
-              <Badge variant="outline" className="py-1 px-3">
-                Source: {leadSourceFilter && typeof leadSourceFilter === 'string' 
-                  ? (leadSourceFilter.charAt(0).toUpperCase() + leadSourceFilter.slice(1)) 
-                  : 'Unknown'}
-                <X className="ml-1 h-3 w-3 cursor-pointer" onClick={() => setLeadSourceFilter("all")} />
+              <Badge variant="outline" className="flex items-center gap-1 py-1 px-3">
+                Source: {leadSourceFilter}
+                <X 
+                  className="h-3 w-3 ml-1 cursor-pointer" 
+                  onClick={() => setLeadSourceFilter("all")}
+                />
               </Badge>
             )}
+            
             {(stageFilter !== "all" || followUpFilter !== "all" || leadSourceFilter !== "all") && (
               <Button 
                 variant="ghost" 
                 size="sm" 
+                className="h-7 px-2"
                 onClick={() => {
                   setStageFilter("all");
                   setFollowUpFilter("all");
                   setLeadSourceFilter("all");
                 }}
-                className="h-7"
               >
-                Clear all
+                Clear All
               </Button>
             )}
           </div>
-
-          {/* Customer Table View */}
-          <Card>
-            <CardHeader className="pb-3 flex flex-row justify-between items-center">
-              <div>
-                <CardTitle>Customers</CardTitle>
-                <CardDescription>
-                  {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''} found
-                </CardDescription>
-              </div>
-              <div className="relative w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search customers..."
-                  className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+          
+          {/* Search Bar and Sorting */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, email, or phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searchTerm && (
+                <X
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
+                  onClick={() => setSearchTerm("")}
                 />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
+              )}
+            </div>
+            
+            <Select 
+              value={sortField} 
+              onValueChange={(value) => setSortField(value as SortField)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <span className="flex items-center">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Sort by
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="createdAt">Date added</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            >
+              {sortOrder === "asc" ? (
+                <SortAsc className="h-4 w-4" />
+              ) : (
+                <SortDesc className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+          
+          {/* Customers List Table */}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Stage</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCustomers.length === 0 ? (
                   <TableRow>
-                    <TableHead 
-                      className="cursor-pointer hover:text-primary"
-                      onClick={() => {
-                        if (sortField === "name") {
-                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                        } else {
-                          setSortField("name");
-                          setSortOrder("asc");
-                        }
-                      }}
-                    >
-                      Name 
-                      {sortField === "name" && (
-                        sortOrder === "asc" ? <SortAsc className="inline ml-1 h-4 w-4" /> : <SortDesc className="inline ml-1 h-4 w-4" />
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      {searchTerm || stageFilter !== "all" || followUpFilter !== "all" || leadSourceFilter !== "all" ? (
+                        <>No customers match your filters. Try adjusting your search or filters.</>
+                      ) : (
+                        <>No customers found. Add a customer to get started.</>
                       )}
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:text-primary"
-                      onClick={() => {
-                        if (sortField === "email") {
-                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                        } else {
-                          setSortField("email");
-                          setSortOrder("asc");
-                        }
-                      }}
-                    >
-                      Email 
-                      {sortField === "email" && (
-                        sortOrder === "asc" ? <SortAsc className="inline ml-1 h-4 w-4" /> : <SortDesc className="inline ml-1 h-4 w-4" />
-                      )}
-                    </TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Stage</TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:text-primary"
-                      onClick={() => {
-                        if (sortField === "createdAt") {
-                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                        } else {
-                          setSortField("createdAt");
-                          setSortOrder("asc");
-                        }
-                      }}
-                    >
-                      Created At 
-                      {sortField === "createdAt" && (
-                        sortOrder === "asc" ? <SortAsc className="inline ml-1 h-4 w-4" /> : <SortDesc className="inline ml-1 h-4 w-4" />
-                      )}
-                    </TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCustomers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                        No customers found. Try changing your filters or create a new customer.
+                ) : (
+                  filteredCustomers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell className="font-medium">{customer.name}</TableCell>
+                      <TableCell>{customer.email}</TableCell>
+                      <TableCell>{customer.phone}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          className={`${
+                            customer.stage === "new" ? "bg-blue-100 text-blue-800" : 
+                            customer.stage === "pipeline" ? "bg-purple-100 text-purple-800" : 
+                            customer.stage === "cold" ? "bg-gray-100 text-gray-800" : 
+                            customer.stage === "warm" ? "bg-orange-100 text-orange-800" : 
+                            customer.stage === "booked" ? "bg-green-100 text-green-800" : 
+                            "bg-red-100 text-red-800"
+                          } cursor-pointer hover:opacity-80 transition-opacity`}
+                          onClick={() => setEditingStageCustomer({ 
+                            id: customer.id, 
+                            name: customer.name,
+                            currentStage: customer.stage
+                          })}
+                        >
+                          {customer.stage && typeof customer.stage === 'string' ? (customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1)) : 'Unknown'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            asChild
+                          >
+                            <Link to={`/customers/${customer.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            asChild
+                          >
+                            <Link to={`/customers/edit/${customer.id}`}>
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => setDeleteCustomerId(customer.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    filteredCustomers.map((customer) => (
-                      <TableRow key={customer.id} className="hover:bg-accent/50">
-                        <TableCell className="font-medium">{customer.name}</TableCell>
-                        <TableCell>{customer.email}</TableCell>
-                        <TableCell>{customer.phone}</TableCell>
-                        <TableCell>
-                          <Badge 
-                            className={`${
-                              customer.stage === "new" ? "bg-blue-100 text-blue-800" : 
-                              customer.stage === "pipeline" ? "bg-purple-100 text-purple-800" : 
-                              customer.stage === "cold" ? "bg-gray-100 text-gray-800" : 
-                              customer.stage === "warm" ? "bg-orange-100 text-orange-800" : 
-                              customer.stage === "booked" ? "bg-green-100 text-green-800" : 
-                              "bg-red-100 text-red-800"
-                            } cursor-pointer hover:opacity-80 transition-opacity`}
-                            onClick={() => setEditingStageCustomer({ 
-                              id: customer.id, 
-                              name: customer.name,
-                              currentStage: customer.stage
-                            })}
-                          >
-                            {customer.stage && typeof customer.stage === 'string' ? (customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1)) : 'Unknown'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(customer.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end">
-                            <Button variant="ghost" size="icon" asChild>
-                              <Link to={`/customers/view/${customer.id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            <Button variant="ghost" size="icon" asChild>
-                              <Link to={`/customers/edit/${customer.id}`}>
-                                <Edit className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => setDeleteCustomerId(customer.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          
+      {/* Import Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Customers</DialogTitle>
+            <DialogDescription>
+              Upload a CSV file with customer data. The file should include the following columns:
+              Name, Email, Phone, Address, City, Current Stage, Lead Source, Notes.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {!importStatus.loading && !importStatus.success && !importStatus.message && (
+            <div className="grid w-full max-w-sm items-center gap-1.5 mx-auto mt-4">
+              <label htmlFor="customer-csv" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <FileText className="w-10 h-10 mb-3 text-gray-400" />
+                  <p className="mb-2 text-sm text-center text-gray-500 dark:text-gray-400">
+                    <span className="font-semibold">Click to upload</span> or drag and drop
+                  </p>
+                  <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+                    CSV file only (.csv)
+                  </p>
+                </div>
+                <input 
+                  id="customer-csv" 
+                  type="file" 
+                  accept=".csv" 
+                  className="hidden" 
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                />
+              </label>
+            </div>
+          )}
+          
+          {importStatus.loading && (
+            <div className="flex flex-col items-center justify-center gap-4 py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-center text-sm text-gray-500">
+                Uploading and processing your customer data...
+              </p>
+            </div>
+          )}
+          
+          {importStatus.message && (
+            <div className={`rounded-lg p-4 ${importStatus.success ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300' : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300'}`}>
+              <div className="flex items-start">
+                {importStatus.success ? (
+                  <FileText className="h-5 w-5 mr-2 flex-shrink-0" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
+                )}
+                <div>
+                  <p className="font-medium">{importStatus.message}</p>
+                  
+                  {importStatus.results && (
+                    <div className="mt-2 text-sm">
+                      <p>Total: {importStatus.results.total}</p>
+                      <p>Created: {importStatus.results.created}</p>
+                      <p>Skipped: {importStatus.results.skipped}</p>
+                      
+                      {importStatus.results.errors && importStatus.results.errors.length > 0 && (
+                        <div className="mt-2">
+                          <p className="font-medium">Errors:</p>
+                          <ul className="list-disc list-inside mt-1">
+                            {importStatus.results.errors.slice(0, 5).map((error: string, index: number) => (
+                              <li key={index} className="text-xs">{error}</li>
+                            ))}
+                            {importStatus.results.errors.length > 5 && (
+                              <li className="text-xs">...and {importStatus.results.errors.length - 5} more</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setImportDialogOpen(false);
+                setImportStatus({ loading: false });
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = '';
+                }
+              }}
+            >
+              Close
+            </Button>
+            
+            {importStatus.success && (
+              <Button
+                type="button"
+                onClick={() => {
+                  setImportStatus({ loading: false });
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                    fileInputRef.current.click();
+                  }
+                }}
+              >
+                Upload Another
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
         </div>
       )}
-
-      {/* Delete confirmation dialog */}
+      
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteCustomerId !== null} onOpenChange={() => setDeleteCustomerId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will permanently delete this customer and all associated data. This cannot be undone.
+              This action cannot be undone. This will permanently delete the customer
+              and all related data including quotations, sales orders, and payment records.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
+              className="bg-red-600 hover:bg-red-700"
               onClick={handleDeleteCustomer}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>
@@ -771,82 +973,70 @@ export default function CustomersList() {
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* Change customer stage dialog */}
+      {/* Stage Update Dialog */}
       <Dialog open={editingStageCustomer !== null} onOpenChange={(open) => !open && setEditingStageCustomer(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Change Customer Stage</DialogTitle>
+            <DialogTitle>Update Customer Stage</DialogTitle>
             <DialogDescription>
               Update the stage for customer <span className="font-semibold">{editingStageCustomer?.name}</span>
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid grid-cols-3 gap-3 py-4">
-            <Button 
-              variant="outline" 
-              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'new' ? 'bg-blue-100 border-blue-300' : ''}`}
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div 
               onClick={() => handleUpdateCustomerStage('new')}
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'new' ? 'bg-blue-100 border-blue-300' : ''}`}
+              style={{ cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: '0.375rem' }}
             >
-              <div className="rounded-full bg-blue-100 text-blue-800 p-2 mb-1">
-                <span className="text-xs">New</span>
-              </div>
-              <span className="text-xs">New Lead</span>
-            </Button>
+              <div className="font-medium mb-1">New</div>
+              <div className="text-xs text-gray-500">Initial contact</div>
+            </div>
             
-            <Button 
-              variant="outline" 
-              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'warm' ? 'bg-orange-100 border-orange-300' : ''}`}
+            <div 
               onClick={() => handleUpdateCustomerStage('warm')}
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'warm' ? 'bg-orange-100 border-orange-300' : ''}`}
+              style={{ cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: '0.375rem' }}
             >
-              <div className="rounded-full bg-orange-100 text-orange-800 p-2 mb-1">
-                <span className="text-xs">Warm</span>
-              </div>
-              <span className="text-xs">Warming Up</span>
-            </Button>
+              <div className="font-medium mb-1">Warm</div>
+              <div className="text-xs text-gray-500">Interested</div>
+            </div>
             
-            <Button 
-              variant="outline" 
-              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'pipeline' ? 'bg-purple-100 border-purple-300' : ''}`}
+            <div 
               onClick={() => handleUpdateCustomerStage('pipeline')}
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'pipeline' ? 'bg-purple-100 border-purple-300' : ''}`}
+              style={{ cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: '0.375rem' }}
             >
-              <div className="rounded-full bg-purple-100 text-purple-800 p-2 mb-1">
-                <span className="text-xs">Pipeline</span>
-              </div>
-              <span className="text-xs">In Pipeline</span>
-            </Button>
+              <div className="font-medium mb-1">Pipeline</div>
+              <div className="text-xs text-gray-500">Actively engaged</div>
+            </div>
             
-            <Button 
-              variant="outline" 
-              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'cold' ? 'bg-gray-100 border-gray-300' : ''}`}
+            <div 
               onClick={() => handleUpdateCustomerStage('cold')}
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'cold' ? 'bg-gray-100 border-gray-300' : ''}`}
+              style={{ cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: '0.375rem' }}
             >
-              <div className="rounded-full bg-gray-100 text-gray-800 p-2 mb-1">
-                <span className="text-xs">Cold</span>
-              </div>
-              <span className="text-xs">Cold Lead</span>
-            </Button>
+              <div className="font-medium mb-1">Cold</div>
+              <div className="text-xs text-gray-500">Needs nurturing</div>
+            </div>
             
-            <Button 
-              variant="outline" 
-              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'booked' ? 'bg-green-100 border-green-300' : ''}`}
+            <div 
               onClick={() => handleUpdateCustomerStage('booked')}
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'booked' ? 'bg-green-100 border-green-300' : ''}`}
+              style={{ cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: '0.375rem' }}
             >
-              <div className="rounded-full bg-green-100 text-green-800 p-2 mb-1">
-                <span className="text-xs">Booked</span>
-              </div>
-              <span className="text-xs">Deal Booked</span>
-            </Button>
+              <div className="font-medium mb-1">Booked</div>
+              <div className="text-xs text-gray-500">Confirmed order</div>
+            </div>
             
-            <Button 
-              variant="outline" 
-              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'lost' ? 'bg-red-100 border-red-300' : ''}`}
+            <div 
               onClick={() => handleUpdateCustomerStage('lost')}
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'lost' ? 'bg-red-100 border-red-300' : ''}`}
+              style={{ cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: '0.375rem' }}
             >
-              <div className="rounded-full bg-red-100 text-red-800 p-2 mb-1">
-                <span className="text-xs">Lost</span>
-              </div>
-              <span className="text-xs">Deal Lost</span>
-            </Button>
+              <div className="font-medium mb-1">Lost</div>
+              <div className="text-xs text-gray-500">Not proceeding</div>
+            </div>
           </div>
           
           <DialogFooter>
