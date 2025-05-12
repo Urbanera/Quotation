@@ -237,23 +237,23 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         
         // Sort follow-ups by date desc and get the latest one
         const sortedFollowUps = [...customerFollowUpsList].sort((a, b) => 
-          new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime()
+          new Date(b.interactionDate).getTime() - new Date(a.interactionDate).getTime()
         );
         
         const latestFollowUp = sortedFollowUps[0] || null;
-        const lastFollowUpDate = latestFollowUp?.scheduledDate || '';
+        const lastFollowUpDate = latestFollowUp?.interactionDate || '';
         const nextFollowUpDate = latestFollowUp?.completed ? 
-          (latestFollowUp.nextFollowUpDate || '') : latestFollowUp?.scheduledDate || '';
+          (latestFollowUp.nextFollowUpDate || '') : latestFollowUp?.interactionDate || '';
         
         return {
           name: customer.name,
           email: customer.email,
           phone: customer.phone,
           address: customer.address,
-          city: customer.city || '',
+          city: '', // customer schema doesn't have city field
           currentStage: customer.stage,
           leadSource: customer.leadSource || '',
-          notes: customer.notes || '',
+          notes: '', // customer schema doesn't have notes field
           lastFollowUpDate,
           nextFollowUpDate
         };
@@ -292,7 +292,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       
       res.end();
     } catch (error) {
-      res.status(500).json({ message: 'Error exporting customers' });
+      console.error('Error exporting customers:', error);
+      res.status(500).json({ message: 'Error exporting customers: ' + (error instanceof Error ? error.message : String(error)) });
     }
   });
   
