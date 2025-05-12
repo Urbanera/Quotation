@@ -444,7 +444,7 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
                       setIsEmailDialogOpen(true);
                     }}
                   >
-                    <MailIcon className="h-4 w-4 mr-2" />
+                    <Mail className="h-4 w-4 mr-2" />
                     Email Invoice
                   </Button>
                 </div>

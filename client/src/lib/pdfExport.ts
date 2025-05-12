@@ -6,12 +6,15 @@ import jsPDF from 'jspdf';
  * @param element The HTML element to convert to PDF
  * @param filename The name of the downloaded file
  * @param isPresentationQuote Whether this is a presentation quote (special handling)
+ * @param returnBlob If true, returns the PDF as a Blob instead of saving it
+ * @returns Void or Blob depending on returnBlob parameter
  */
 export const exportToPdf = async (
   element: HTMLElement, 
   filename: string, 
-  isPresentationQuote: boolean = false
-): Promise<void> => {
+  isPresentationQuote: boolean = false,
+  returnBlob: boolean = false
+): Promise<void | Blob> => {
   try {
     // Create a PDF in A4 format
     const pdf = new jsPDF('portrait', 'mm', 'a4');
@@ -125,8 +128,13 @@ export const exportToPdf = async (
     // For single page documents
     if (pageCount <= 1) {
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-      pdf.save(`${filename}.pdf`);
-      return;
+      
+      if (returnBlob) {
+        return pdf.output('blob');
+      } else {
+        pdf.save(`${filename}.pdf`);
+        return;
+      }
     }
     
     // For multi-page documents
@@ -192,8 +200,9 @@ async function generatePresentationPdf(
   pdf: jsPDF, 
   coverPages: NodeListOf<HTMLElement>, 
   contentPage: HTMLElement, 
-  filename: string
-): Promise<void> {
+  filename: string,
+  returnBlob: boolean = false
+): Promise<void | Blob> {
   // Add each cover page as a separate page
   for (let i = 0; i < coverPages.length; i++) {
     if (i > 0) {
@@ -293,6 +302,10 @@ async function generatePresentationPdf(
     position += (pageHeight - 20);
   }
   
-  // Save the PDF
-  pdf.save(`${filename}.pdf`);
+  // Save or return the PDF based on the parameter
+  if (returnBlob) {
+    return pdf.output('blob');
+  } else {
+    pdf.save(`${filename}.pdf`);
+  }
 }

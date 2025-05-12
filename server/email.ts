@@ -291,7 +291,7 @@ export class EmailService {
               <li style="margin-bottom: 8px;"><strong>Amount:</strong> <span style="color: #4CAF50; font-weight: bold;">₹${payment.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></li>
               <li style="margin-bottom: 8px;"><strong>Payment Method:</strong> ${payment.paymentMethod.replace('_', ' ').toUpperCase()}</li>
               ${payment.transactionId ? `<li style="margin-bottom: 8px;"><strong>Transaction ID:</strong> ${payment.transactionId}</li>` : ''}
-              ${payment.description ? `<li style="margin-bottom: 8px;"><strong>Description:</strong> ${payment.description}</li>` : ''}
+              ${payment.notes ? `<li style="margin-bottom: 8px;"><strong>Notes:</strong> ${payment.notes}</li>` : ''}
             </ul>
           </div>
           
