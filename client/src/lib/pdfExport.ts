@@ -97,8 +97,8 @@ export const exportToPdf = async (
       const contentPages = clone.querySelector<HTMLElement>(':scope > div:nth-child(3)');
       
       if (coverPages.length > 0 && contentPages) {
-        await generatePresentationPdf(pdf, coverPages, contentPages, filename);
-        return;
+        const result = await generatePresentationPdf(pdf, coverPages, contentPages, filename, returnBlob);
+        return result;
       }
     }
     
@@ -250,8 +250,13 @@ async function generatePresentationPdf(
   // For single page content
   if (imgHeight <= pageHeight - 20) {
     pdf.addImage(contentCanvas.toDataURL('image/png'), 'PNG', 10, 10, imgWidth, imgHeight);
-    pdf.save(`${filename}.pdf`);
-    return;
+    
+    if (returnBlob) {
+      return pdf.output('blob');
+    } else {
+      pdf.save(`${filename}.pdf`);
+      return;
+    }
   }
   
   // For multi-page content

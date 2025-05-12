@@ -153,7 +153,8 @@ export default function ViewQuotation() {
       if (activeTab === "basic" && basicQuoteRef.current) {
         try {
           // Convert the current PDF to base64
-          const blob = await exportToPdf(basicQuoteRef.current, true);
+          const filename = `Quotation-${quotation?.quotationNumber || id}`;
+          const blob = await exportToPdf(basicQuoteRef.current, filename, false, true) as Blob;
           pdfBase64 = await new Promise<string>((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
@@ -165,7 +166,8 @@ export default function ViewQuotation() {
       } else if (activeTab === "presentation" && presentationQuoteRef.current) {
         try {
           // Convert the current PDF to base64
-          const blob = await exportToPdf(presentationQuoteRef.current, true);
+          const filename = `Quotation-${quotation?.quotationNumber || id}`;
+          const blob = await exportToPdf(presentationQuoteRef.current, filename, true, true) as Blob;
           pdfBase64 = await new Promise<string>((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
@@ -237,7 +239,7 @@ export default function ViewQuotation() {
       const filename = `Quotation-${quotation?.quotationNumber || id}`;
       
       // Export to PDF with type information
-      await exportToPdf(quoteElement, filename, activeTab === 'presentation');
+      await exportToPdf(quoteElement, filename, activeTab === 'presentation', false);
       
       toast({
         title: "PDF Generated",
