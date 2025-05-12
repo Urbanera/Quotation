@@ -109,7 +109,7 @@ export default function Topbar({ onToggleMobileSidebar }: TopbarProps) {
                 <DropdownMenuItem
                   onClick={() => navigate("/profile/change-password")}
                 >
-                  <User className="mr-2 h-4 w-4" />
+                  <KeyIcon className="mr-2 h-4 w-4" />
                   <span>Change Password</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

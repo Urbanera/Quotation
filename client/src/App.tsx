@@ -30,6 +30,9 @@ import UsersPage from "./pages/users/UsersPage";
 import TeamsPage from "./pages/teams/TeamsPage";
 import TeamDetailsPage from "./pages/teams/TeamDetailsPage";
 import SettingsPage from "./pages/settings";
+import ProfilePage from "./pages/profile";
+import EditProfilePage from "./pages/profile/edit";
+import ChangePasswordPage from "./pages/profile/change-password";
 import NotFound from "./pages/not-found";
 
 function App() {
@@ -83,6 +86,12 @@ function App() {
               <Route path="/teams" component={TeamsPage} />
               <Route path="/teams/:id" component={TeamDetailsPage} />
               <Route path="/settings" component={SettingsPage} />
+              
+              {/* Profile Routes */}
+              <Route path="/profile" component={ProfilePage} />
+              <Route path="/profile/edit" component={EditProfilePage} />
+              <Route path="/profile/change-password" component={ChangePasswordPage} />
+              
               <Route component={NotFound} />
             </Switch>
           </MainLayout>
