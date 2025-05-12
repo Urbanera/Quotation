@@ -147,11 +147,43 @@ export default function ViewQuotation() {
     mutationFn: async (email: string) => {
       setSendingEmail(true);
       
+      // Generate PDF for attachment
+      let pdfBase64 = null;
+      
+      if (activeTab === "basic" && basicQuoteRef.current) {
+        try {
+          // Convert the current PDF to base64
+          const blob = await exportToPdf(basicQuoteRef.current, true);
+          pdfBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.error("Error generating PDF:", error);
+        }
+      } else if (activeTab === "presentation" && presentationQuoteRef.current) {
+        try {
+          // Convert the current PDF to base64
+          const blob = await exportToPdf(presentationQuoteRef.current, true);
+          pdfBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.error("Error generating PDF:", error);
+        }
+      }
+      
       // Send email request to server
       const response = await apiRequest(
         "POST",
         `/api/quotations/${id}/email`,
-        { emailTo: email }
+        { 
+          emailTo: email,
+          pdfBase64: pdfBase64
+        }
       );
       
       return await response.json();

@@ -87,11 +87,67 @@ export default function InvoiceDetails({ invoiceId }: InvoiceDetailsProps) {
     mutationFn: async (email: string) => {
       setSendingEmail(true);
       
+      // Generate PDF for attachment
+      let pdfBase64 = null;
+      
+      try {
+        // Navigate to the print page to get the PDF content
+        const printUrl = `/invoices/print/${invoiceId}`;
+        const printWindow = window.open(printUrl, '_blank');
+        
+        if (printWindow) {
+          // Wait for the print page to load and render
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Try to capture the content as PDF
+          const documentElement = printWindow.document.documentElement;
+          
+          if (documentElement) {
+            // Use html2canvas to capture the content
+            const canvas = await import('html2canvas').then(module => 
+              module.default(documentElement, { 
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                windowWidth: 1140
+              })
+            );
+            
+            // Convert to PDF using jsPDF
+            const { jsPDF } = await import('jspdf');
+            const pdf = new jsPDF({
+              orientation: 'portrait',
+              unit: 'mm',
+              format: 'a4'
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = 210; // A4 width in mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            
+            // Convert PDF to base64
+            pdfBase64 = pdf.output('datauristring');
+            
+            // Close the print window
+            printWindow.close();
+          } else {
+            printWindow.close();
+          }
+        }
+      } catch (error) {
+        console.error("Error generating PDF:", error);
+      }
+      
       // Send email request to server
       const response = await apiRequest(
         "POST",
         `/api/invoices/${invoiceId}/email`,
-        { emailTo: email }
+        { 
+          emailTo: email,
+          pdfBase64: pdfBase64
+        }
       );
       
       return await response.json();
