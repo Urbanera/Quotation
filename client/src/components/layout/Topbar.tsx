@@ -1,7 +1,16 @@
 import { useState } from "react";
-import { User, Bell, Menu } from "lucide-react";
+import { User, Bell, Menu, LogOut, Settings, UserIcon, KeyIcon, LockIcon } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import Sidebar from "./Sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useLocation } from "wouter";
 
 interface TopbarProps {
   onToggleMobileSidebar: () => void;
@@ -9,6 +18,7 @@ interface TopbarProps {
 
 export default function Topbar({ onToggleMobileSidebar }: TopbarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [, navigate] = useLocation();
 
   return (
     <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white shadow">
@@ -61,20 +71,60 @@ export default function Topbar({ onToggleMobileSidebar }: TopbarProps) {
           </button>
 
           <div className="ml-3 relative">
-            <div>
-              <button
-                type="button"
-                className="max-w-xs bg-white rounded-full flex items-center text-sm focus:outline-none"
-                id="user-menu"
-                aria-expanded="false"
-                aria-haspopup="true"
-              >
-                <span className="sr-only">Open user menu</span>
-                <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <User className="h-5 w-5 text-gray-500" />
-                </div>
-              </button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="max-w-xs bg-white rounded-full flex items-center text-sm focus:outline-none"
+                  id="user-menu"
+                >
+                  <span className="sr-only">Open user menu</span>
+                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <User className="h-5 w-5 text-gray-500" />
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">Admin User</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      admin@designquotes.com
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => navigate("/profile")}
+                >
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>View Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate("/profile/edit")}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Edit Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate("/profile/change-password")}
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Change Password</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={() => {
+                    console.log("Logging out...");
+                    navigate("/");
+                  }}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
