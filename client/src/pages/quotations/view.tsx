@@ -127,78 +127,7 @@ export default function ViewQuotation() {
   const [activeTab, setActiveTab] = useState<string>("basic");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   
-  // Email quotation mutation
-  const emailQuotationMutation = useMutation({
-    mutationFn: async (email: string) => {
-      // First generate the PDF on the client
-      setIsGeneratingPdf(true);
-      
-      // Get the appropriate quote element based on the active tab
-      const quoteElement = activeTab === 'basic' 
-        ? basicQuoteRef.current
-        : presentationQuoteRef.current;
-      
-      if (!quoteElement) {
-        throw new Error('Quote element not found');
-      }
-      
-      // Generate PDF blob
-      const pdfBlob = await exportToPdf(quoteElement, {
-        filename: `Quotation-${quotation?.quotationNumber}.pdf`,
-        returnBlob: true,
-      }) as Blob;
-      
-      setIsGeneratingPdf(false);
-      setSendingEmail(true);
-      
-      // Now upload the PDF for email sending
-      const formData = new FormData();
-      formData.append('pdf', pdfBlob, `quotation-${id}.pdf`);
-      formData.append('emailTo', email);
-      
-      const response = await fetch(`/api/quotations/${id}/email`, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send email');
-      }
-      
-      return await response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Email Sent",
-        description: "The quotation has been sent via email successfully.",
-      });
-      setIsEmailDialogOpen(false);
-      setSendingEmail(false);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: `Failed to send email: ${error.message}`,
-        variant: "destructive",
-      });
-      console.error("Failed to send quotation via email:", error);
-      setSendingEmail(false);
-    },
-  });
-  
-  const handleSendEmail = () => {
-    if (!emailTo) {
-      toast({
-        title: "Email Required",
-        description: "Please enter an email address.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    emailQuotationMutation.mutate(emailTo);
-  };
+
   
   const handlePrint = () => {
     if (window.print) {
@@ -247,6 +176,8 @@ export default function ViewQuotation() {
       setIsGeneratingPdf(false);
     }
   };
+  
+
 
   if (isLoading) {
     return (

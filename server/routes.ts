@@ -149,6 +149,64 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       fileSize: 5 * 1024 * 1024 // 5MB limit
     }
   });
+  
+  // Email quotation endpoint
+  app.post("/api/quotations/:id/email", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { emailTo } = req.body;
+      
+      if (!emailTo) {
+        return res.status(400).json({ message: "Email recipient is required" });
+      }
+      
+      // Get quotation details
+      const quotation = await storage.getQuotationWithDetails(parseInt(id));
+      
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      
+      // First check if email service is configured
+      const isConfigured = await emailService.isConfigured();
+      
+      if (!isConfigured) {
+        return res.status(400).json({ 
+          message: "Email service is not configured. Please configure email settings first." 
+        });
+      }
+      
+      // Generate PDF here on the server
+      // For now, we'll use a simplified approach - regenerate the PDF
+      // In a production app, we might want to cache PDFs or accept uploaded PDFs from client
+      
+      // Create a simple quotation email with details
+      const subject = `Quotation ${quotation.quotationNumber} from ${(await storage.getCompanySettings())?.name || 'Our Company'}`;
+      
+      const emailResult = await emailService.sendEmail({
+        to: emailTo,
+        subject,
+        html: `
+          <h2>Quotation ${quotation.quotationNumber}</h2>
+          <p>Dear ${quotation.customer.name},</p>
+          <p>Thank you for your interest in our services. Please find details below about your quotation.</p>
+          <p>If you have any questions or would like to discuss this further, please don't hesitate to contact us.</p>
+          <p>Best regards,<br>${(await storage.getCompanySettings())?.name || 'Our Company'}</p>
+        `,
+        // Skip attachments for now since we need to generate PDFs server-side
+        // This will be implemented in the future when we have server-side PDF generation
+      });
+      
+      if (emailResult) {
+        res.status(200).json({ success: true, message: "Email sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send email" });
+      }
+    } catch (error: any) {
+      console.error("Error sending quotation email:", error);
+      res.status(500).json({ message: error.message || "Server error" });
+    }
+  });
 
   app.post("/api/email/test-connection", async (req, res) => {
     try {
