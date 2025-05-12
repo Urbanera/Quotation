@@ -581,7 +581,11 @@ export class MemStorage implements IStorage {
 
   // Customer operations
   async getCustomers(): Promise<Customer[]> {
-    return Array.from(this.customers.values());
+    console.log('Getting customers from Map, size:', this.customers.size);
+    console.log('Customer Map keys:', Array.from(this.customers.keys()));
+    const customersList = Array.from(this.customers.values());
+    console.log('Returning customers:', customersList);
+    return customersList;
   }
   
   async getCustomersByStage(stage: string): Promise<Customer[]> {
