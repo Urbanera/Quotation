@@ -28,11 +28,12 @@ export interface IStorage {
   updateCompanyLogo(logoUrl: string): Promise<CompanySettings>;
   getAppSettings(): Promise<AppSettings | undefined>;
   updateAppSettings(settings: Partial<InsertAppSettings>): Promise<AppSettings>;
-
+  
   // Customer operations
   getCustomers(): Promise<Customer[]>;
   getCustomersByStage(stage: string): Promise<Customer[]>;
   getCustomer(id: number): Promise<Customer | undefined>;
+  getCustomerByEmailOrPhone(email: string, phone: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: number, customer: InsertCustomer): Promise<Customer | undefined>;
   updateCustomerStage(id: number, stage: string): Promise<Customer | undefined>;
@@ -594,6 +595,12 @@ export class MemStorage implements IStorage {
   
   async getCustomer(id: number): Promise<Customer | undefined> {
     return this.customers.get(id);
+  }
+  
+  async getCustomerByEmailOrPhone(email: string, phone: string): Promise<Customer | undefined> {
+    return Array.from(this.customers.values()).find(
+      c => c.email.toLowerCase() === email.toLowerCase() || c.phone === phone
+    );
   }
   
   async createCustomer(customer: InsertCustomer): Promise<Customer> {

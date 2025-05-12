@@ -216,6 +216,234 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
   
+  // Export customers to CSV
+  app.get('/api/customers/export', async (req, res) => {
+    try {
+      const customers = await storage.getCustomers();
+      const followUps = await storage.getAllFollowUps();
+      
+      // Create a map of customer ID to their follow-ups for easy lookup
+      const customerFollowUps = new Map();
+      followUps.forEach(followUp => {
+        if (!customerFollowUps.has(followUp.customerId)) {
+          customerFollowUps.set(followUp.customerId, []);
+        }
+        customerFollowUps.get(followUp.customerId).push(followUp);
+      });
+      
+      // Process each customer and add their latest follow-up info
+      const processedCustomers = customers.map(customer => {
+        const customerFollowUpsList = customerFollowUps.get(customer.id) || [];
+        
+        // Sort follow-ups by date desc and get the latest one
+        const sortedFollowUps = [...customerFollowUpsList].sort((a, b) => 
+          new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime()
+        );
+        
+        const latestFollowUp = sortedFollowUps[0] || null;
+        const lastFollowUpDate = latestFollowUp?.scheduledDate || '';
+        const nextFollowUpDate = latestFollowUp?.completed ? 
+          (latestFollowUp.nextFollowUpDate || '') : latestFollowUp?.scheduledDate || '';
+        
+        return {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          address: customer.address,
+          city: customer.city || '',
+          currentStage: customer.stage,
+          leadSource: customer.leadSource || '',
+          notes: customer.notes || '',
+          lastFollowUpDate,
+          nextFollowUpDate
+        };
+      });
+      
+      // Set the CSV headers
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=customers.csv');
+      
+      // Create CSV header line
+      const headers = [
+        'Name', 'Email', 'Phone', 'Address', 'City', 'Current Stage', 
+        'Lead Source', 'Notes', 'Last Follow-up Date', 'Next Follow-up Date'
+      ].join(',') + '\n';
+      
+      // Write the headers
+      res.write(headers);
+      
+      // Write each customer row
+      processedCustomers.forEach(customer => {
+        const row = [
+          `"${(customer.name || '').replace(/"/g, '""')}"`,
+          `"${(customer.email || '').replace(/"/g, '""')}"`,
+          `"${(customer.phone || '').replace(/"/g, '""')}"`,
+          `"${(customer.address || '').replace(/"/g, '""')}"`,
+          `"${(customer.city || '').replace(/"/g, '""')}"`,
+          `"${(customer.currentStage || '').replace(/"/g, '""')}"`,
+          `"${(customer.leadSource || '').replace(/"/g, '""')}"`,
+          `"${(customer.notes || '').replace(/"/g, '""')}"`,
+          `"${customer.lastFollowUpDate ? new Date(customer.lastFollowUpDate).toISOString().split('T')[0] : ''}"`,
+          `"${customer.nextFollowUpDate ? new Date(customer.nextFollowUpDate).toISOString().split('T')[0] : ''}"`
+        ].join(',') + '\n';
+        
+        res.write(row);
+      });
+      
+      res.end();
+    } catch (error) {
+      res.status(500).json({ message: 'Error exporting customers' });
+    }
+  });
+  
+  // Import customers from CSV
+  app.post('/api/customers/import', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+      
+      const fileContent = fs.readFileSync(req.file.path, 'utf8');
+      const lines = fileContent.split('\n');
+      
+      // Parse header line to get column indices
+      const headers = lines[0].split(',').map(header => header.trim());
+      
+      const nameIndex = headers.findIndex(h => h.toLowerCase() === 'name');
+      const emailIndex = headers.findIndex(h => h.toLowerCase() === 'email');
+      const phoneIndex = headers.findIndex(h => h.toLowerCase() === 'phone');
+      const addressIndex = headers.findIndex(h => h.toLowerCase() === 'address');
+      const cityIndex = headers.findIndex(h => h.toLowerCase() === 'city');
+      const stageIndex = headers.findIndex(h => h.toLowerCase() === 'current stage');
+      const leadSourceIndex = headers.findIndex(h => h.toLowerCase() === 'lead source');
+      const notesIndex = headers.findIndex(h => h.toLowerCase() === 'notes');
+      const nextFollowUpDateIndex = headers.findIndex(h => h.toLowerCase() === 'next follow-up date');
+      
+      if (nameIndex === -1 || emailIndex === -1 || phoneIndex === -1) {
+        return res.status(400).json({ message: 'CSV file must contain at least Name, Email, and Phone columns' });
+      }
+      
+      const importResults = {
+        total: 0,
+        created: 0,
+        skipped: 0,
+        errors: [] as string[]
+      };
+      
+      // Process each line (skip header)
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue; // Skip empty lines
+        
+        importResults.total++;
+        
+        try {
+          // Parse the CSV line, handling quoted values with commas
+          const values = [];
+          let inQuotes = false;
+          let currentValue = '';
+          
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            
+            if (char === '"') {
+              if (inQuotes && j < line.length - 1 && line[j + 1] === '"') {
+                // Handle escaped quotes (double quotes)
+                currentValue += '"';
+                j++; // Skip the next quote
+              } else {
+                // Toggle quote state
+                inQuotes = !inQuotes;
+              }
+            } else if (char === ',' && !inQuotes) {
+              // End of field
+              values.push(currentValue);
+              currentValue = '';
+            } else {
+              currentValue += char;
+            }
+          }
+          
+          // Add the last value
+          values.push(currentValue);
+          
+          // Extract customer data
+          const customerData = {
+            name: nameIndex >= 0 ? values[nameIndex].trim() : '',
+            email: emailIndex >= 0 ? values[emailIndex].trim() : '',
+            phone: phoneIndex >= 0 ? values[phoneIndex].trim() : '',
+            address: addressIndex >= 0 ? values[addressIndex].trim() : '',
+            city: cityIndex >= 0 ? values[cityIndex].trim() : '',
+            stage: (stageIndex >= 0 ? values[stageIndex].trim().toLowerCase() : 'new') as "new" | "pipeline" | "cold" | "warm" | "booked" | "lost",
+            leadSource: leadSourceIndex >= 0 ? values[leadSourceIndex].trim() : '',
+            notes: notesIndex >= 0 ? values[notesIndex].trim() : ''
+          };
+          
+          // Validate required fields
+          if (!customerData.name || !customerData.email || !customerData.phone) {
+            importResults.errors.push(`Row ${i}: Missing required fields (name, email, or phone)`);
+            importResults.skipped++;
+            continue;
+          }
+          
+          // Check if customer with this email or phone already exists
+          const existingCustomer = await storage.getCustomerByEmailOrPhone(customerData.email, customerData.phone);
+          
+          if (existingCustomer) {
+            importResults.errors.push(`Row ${i}: Customer with email ${customerData.email} or phone ${customerData.phone} already exists`);
+            importResults.skipped++;
+            continue;
+          }
+          
+          // Create the customer
+          const newCustomer = await storage.createCustomer(customerData);
+          
+          // Create a follow-up if next follow-up date is provided
+          if (nextFollowUpDateIndex >= 0 && values[nextFollowUpDateIndex].trim()) {
+            const nextFollowUpDate = values[nextFollowUpDateIndex].trim();
+            
+            try {
+              const date = new Date(nextFollowUpDate);
+              
+              if (!isNaN(date.getTime())) {
+                await storage.createFollowUp({
+                  customerId: newCustomer.id,
+                  notes: 'Follow-up from import',
+                  scheduledDate: date.toISOString(),
+                  createdBy: 'System',
+                  completed: false
+                });
+              }
+            } catch (error) {
+              importResults.errors.push(`Row ${i}: Invalid follow-up date format`);
+            }
+          }
+          
+          importResults.created++;
+        } catch (error) {
+          importResults.errors.push(`Row ${i}: ${error.message}`);
+          importResults.skipped++;
+        }
+      }
+      
+      // Clean up the uploaded file
+      fs.unlinkSync(req.file.path);
+      
+      res.status(200).json({
+        message: `Import completed: ${importResults.created} customers created, ${importResults.skipped} skipped`,
+        results: importResults
+      });
+      
+    } catch (error) {
+      // Clean up the uploaded file if it exists
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      res.status(500).json({ message: 'Error importing customers: ' + error.message });
+    }
+  });
+  
   // Customer ledger - combined sales orders and payments
   app.get("/api/customers/:id/ledger", async (req, res) => {
     try {
