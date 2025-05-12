@@ -806,7 +806,7 @@ export default function CustomersList() {
                             size="icon"
                             asChild
                           >
-                            <Link to={`/customers/${customer.id}`}>
+                            <Link to={`/customers/view/${customer.id}`}>
                               <Eye className="h-4 w-4" />
                             </Link>
                           </Button>
