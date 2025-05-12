@@ -127,6 +127,79 @@ export default function ViewQuotation() {
   const [activeTab, setActiveTab] = useState<string>("basic");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   
+  // Email quotation mutation
+  const emailQuotationMutation = useMutation({
+    mutationFn: async (email: string) => {
+      // First generate the PDF on the client
+      setIsGeneratingPdf(true);
+      
+      // Get the appropriate quote element based on the active tab
+      const quoteElement = activeTab === 'basic' 
+        ? basicQuoteRef.current
+        : presentationQuoteRef.current;
+      
+      if (!quoteElement) {
+        throw new Error('Quote element not found');
+      }
+      
+      // Generate PDF blob
+      const pdfBlob = await exportToPdf(quoteElement, {
+        filename: `Quotation-${quotation?.quotationNumber}.pdf`,
+        returnBlob: true,
+      }) as Blob;
+      
+      setIsGeneratingPdf(false);
+      setSendingEmail(true);
+      
+      // Now upload the PDF for email sending
+      const formData = new FormData();
+      formData.append('pdf', pdfBlob, `quotation-${id}.pdf`);
+      formData.append('emailTo', email);
+      
+      const response = await fetch(`/api/quotations/${id}/email`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send email');
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Email Sent",
+        description: "The quotation has been sent via email successfully.",
+      });
+      setIsEmailDialogOpen(false);
+      setSendingEmail(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to send email: ${error.message}`,
+        variant: "destructive",
+      });
+      console.error("Failed to send quotation via email:", error);
+      setSendingEmail(false);
+    },
+  });
+  
+  const handleSendEmail = () => {
+    if (!emailTo) {
+      toast({
+        title: "Email Required",
+        description: "Please enter an email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    emailQuotationMutation.mutate(emailTo);
+  };
+  
   const handlePrint = () => {
     if (window.print) {
       // Simply trigger the print dialog - our CSS will handle the styling
@@ -246,6 +319,22 @@ export default function ViewQuotation() {
               >
                 <Download className="mr-2 h-4 w-4" />
                 {isGeneratingPdf ? "Generating PDF..." : "Download PDF"}
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  // Pre-fill with customer email if available
+                  if (quotation && quotation.customer) {
+                    setEmailTo(quotation.customer.email);
+                  }
+                  setIsEmailDialogOpen(true);
+                }}
+                disabled={isGeneratingPdf || sendingEmail}
+                className="bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-300"
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                {sendingEmail ? "Sending..." : "Email Quote"}
               </Button>
               
               {/* Show these buttons only if quotation is not approved */}
@@ -453,6 +542,55 @@ export default function ViewQuotation() {
             quotationId={parseInt(id || "0")} 
             onClose={() => setIsConvertToInvoiceDialogOpen(false)} 
           />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Email Dialog */}
+      <Dialog
+        open={isEmailDialogOpen}
+        onOpenChange={setIsEmailDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Email Quotation</DialogTitle>
+            <DialogDescription>
+              Send this quotation via email. The PDF will be attached to the email.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="emailTo" className="text-right">
+                Email To
+              </Label>
+              <Input
+                id="emailTo"
+                placeholder="recipient@example.com"
+                className="col-span-3"
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEmailDialogOpen(false)}
+              disabled={emailQuotationMutation.isPending || sendingEmail}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendEmail}
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={emailQuotationMutation.isPending || sendingEmail}
+            >
+              {(emailQuotationMutation.isPending || sendingEmail) 
+                ? "Sending..." 
+                : "Send Email"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

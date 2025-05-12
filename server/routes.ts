@@ -117,6 +117,38 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ configured: false, error: "Error checking email configuration" });
     }
   });
+  
+  // Set up multer for PDF uploads
+  const pdfStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      // Create uploads directory if it doesn't exist
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+      // Use original filename with timestamp to avoid collisions
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+  
+  const pdfUpload = multer({ 
+    storage: pdfStorage,
+    fileFilter: function (req, file, callback) {
+      // Only accept PDF files
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (ext !== '.pdf') {
+        return callback(new Error('Only PDF files are allowed'));
+      }
+      callback(null, true);
+    },
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+  });
 
   app.post("/api/email/test-connection", async (req, res) => {
     try {
