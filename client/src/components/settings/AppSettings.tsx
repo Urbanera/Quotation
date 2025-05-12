@@ -388,7 +388,7 @@ export function AppSettingsForm() {
                         </div>
                         <FormControl>
                           <Switch
-                            checked={field.value}
+                            checked={field.value || false}
                             onCheckedChange={field.onChange}
                           />
                         </FormControl>
@@ -455,7 +455,7 @@ export function AppSettingsForm() {
                         </div>
                         <FormControl>
                           <Switch
-                            checked={field.value}
+                            checked={field.value || false}
                             onCheckedChange={field.onChange}
                           />
                         </FormControl>

@@ -353,6 +353,16 @@ export const appSettingsFormSchema = z.object({
     .describe("Comma-separated list of required accessories to check in quotation validation"),
   leadSourceOptions: z.string().default("walk-in,website,referral,social media,other")
     .describe("Comma-separated list of lead sources"),
+  // Email settings
+  smtpHost: z.string().optional().or(z.literal("")),
+  smtpPort: z.number().int().nonnegative("Port must be a positive number").default(587),
+  smtpSecure: z.boolean().default(false),
+  smtpUser: z.string().optional().or(z.literal("")),
+  smtpPassword: z.string().optional().or(z.literal("")),
+  emailFrom: z.string().email("Must be a valid email address").optional().or(z.literal("")),
+  emailReplyTo: z.string().email("Must be a valid email address").optional().or(z.literal("")),
+  emailFooter: z.string().optional().or(z.literal("")),
+  emailEnabled: z.boolean().default(false),
 });
 
 export const roomFormSchema = z.object({
