@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Edit, Trash2, Eye, SortAsc, SortDesc, Filter, X } from "lucide-react";
 import { Customer, FollowUp } from "@shared/schema";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -64,6 +65,7 @@ export default function CustomersList() {
   const [followUpFilter, setFollowUpFilter] = useState<FollowUpFilter>("all");
   const [leadSourceFilter, setLeadSourceFilter] = useState<string>("all");
   const [deleteCustomerId, setDeleteCustomerId] = useState<number | null>(null);
+  const [editingStageCustomer, setEditingStageCustomer] = useState<{ id: number, name: string, currentStage: string } | null>(null);
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
@@ -325,6 +327,37 @@ export default function CustomersList() {
     });
   }, [customers, searchTerm, sortField, sortOrder, stageFilter, followUpFilter, allFollowUps]);
 
+  // Update customer stage mutation
+  const updateCustomerStageMutation = useMutation({
+    mutationFn: async ({ customerId, newStage }: { customerId: number, newStage: string }) => {
+      const response = await apiRequest("PATCH", `/api/customers/${customerId}`, { stage: newStage });
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/follow-ups/all"] });
+      
+      // Format stage name with first letter capitalized
+      const formattedStage = variables.newStage.charAt(0).toUpperCase() + variables.newStage.slice(1);
+      
+      toast({
+        title: "Stage Updated",
+        description: `Customer stage has been updated successfully to ${formattedStage}`,
+      });
+      
+      // Close the dialog
+      setEditingStageCustomer(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update customer stage",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Delete customer handler
   const handleDeleteCustomer = async () => {
     if (!deleteCustomerId) return;
@@ -349,6 +382,16 @@ export default function CustomersList() {
         variant: "destructive",
       });
     }
+  };
+  
+  // Update customer stage handler
+  const handleUpdateCustomerStage = (newStage: string) => {
+    if (!editingStageCustomer) return;
+    
+    updateCustomerStageMutation.mutate({
+      customerId: editingStageCustomer.id,
+      newStage
+    });
   };
 
   return (
@@ -646,7 +689,12 @@ export default function CustomersList() {
                               customer.stage === "warm" ? "bg-orange-100 text-orange-800" : 
                               customer.stage === "booked" ? "bg-green-100 text-green-800" : 
                               "bg-red-100 text-red-800"
-                            }`}
+                            } cursor-pointer hover:opacity-80 transition-opacity`}
+                            onClick={() => setEditingStageCustomer({ 
+                              id: customer.id, 
+                              name: customer.name,
+                              currentStage: customer.stage
+                            })}
                           >
                             {customer.stage && typeof customer.stage === 'string' ? (customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1)) : 'Unknown'}
                           </Badge>
@@ -703,6 +751,90 @@ export default function CustomersList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Change customer stage dialog */}
+      <Dialog open={editingStageCustomer !== null} onOpenChange={(open) => !open && setEditingStageCustomer(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Customer Stage</DialogTitle>
+            <DialogDescription>
+              Update the stage for customer <span className="font-semibold">{editingStageCustomer?.name}</span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-3 gap-3 py-4">
+            <Button 
+              variant="outline" 
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'new' ? 'bg-blue-100 border-blue-300' : ''}`}
+              onClick={() => handleUpdateCustomerStage('new')}
+            >
+              <div className="rounded-full bg-blue-100 text-blue-800 p-2 mb-1">
+                <span className="text-xs">New</span>
+              </div>
+              <span className="text-xs">New Lead</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'warm' ? 'bg-orange-100 border-orange-300' : ''}`}
+              onClick={() => handleUpdateCustomerStage('warm')}
+            >
+              <div className="rounded-full bg-orange-100 text-orange-800 p-2 mb-1">
+                <span className="text-xs">Warm</span>
+              </div>
+              <span className="text-xs">Warming Up</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'pipeline' ? 'bg-purple-100 border-purple-300' : ''}`}
+              onClick={() => handleUpdateCustomerStage('pipeline')}
+            >
+              <div className="rounded-full bg-purple-100 text-purple-800 p-2 mb-1">
+                <span className="text-xs">Pipeline</span>
+              </div>
+              <span className="text-xs">In Pipeline</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'cold' ? 'bg-gray-100 border-gray-300' : ''}`}
+              onClick={() => handleUpdateCustomerStage('cold')}
+            >
+              <div className="rounded-full bg-gray-100 text-gray-800 p-2 mb-1">
+                <span className="text-xs">Cold</span>
+              </div>
+              <span className="text-xs">Cold Lead</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'booked' ? 'bg-green-100 border-green-300' : ''}`}
+              onClick={() => handleUpdateCustomerStage('booked')}
+            >
+              <div className="rounded-full bg-green-100 text-green-800 p-2 mb-1">
+                <span className="text-xs">Booked</span>
+              </div>
+              <span className="text-xs">Deal Booked</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className={`flex flex-col items-center justify-center h-20 ${editingStageCustomer?.currentStage === 'lost' ? 'bg-red-100 border-red-300' : ''}`}
+              onClick={() => handleUpdateCustomerStage('lost')}
+            >
+              <div className="rounded-full bg-red-100 text-red-800 p-2 mb-1">
+                <span className="text-xs">Lost</span>
+              </div>
+              <span className="text-xs">Deal Lost</span>
+            </Button>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingStageCustomer(null)}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
