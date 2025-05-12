@@ -142,6 +142,52 @@ export default function ViewQuotation() {
     }
   };
   
+  // Email quotation mutation
+  const emailQuotationMutation = useMutation({
+    mutationFn: async (email: string) => {
+      setSendingEmail(true);
+      
+      // Send email request to server
+      const response = await apiRequest(
+        "POST",
+        `/api/quotations/${id}/email`,
+        { emailTo: email }
+      );
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Email Sent",
+        description: "The quotation has been sent via email successfully.",
+      });
+      setIsEmailDialogOpen(false);
+      setSendingEmail(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to send email: ${error.message}`,
+        variant: "destructive",
+      });
+      console.error("Failed to send quotation via email:", error);
+      setSendingEmail(false);
+    },
+  });
+  
+  const handleSendEmail = () => {
+    if (!emailTo) {
+      toast({
+        title: "Email Required",
+        description: "Please enter an email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    emailQuotationMutation.mutate(emailTo);
+  };
+  
   const handleDownloadPdf = async () => {
     try {
       setIsGeneratingPdf(true);
