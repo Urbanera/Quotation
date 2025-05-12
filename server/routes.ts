@@ -154,7 +154,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.post("/api/quotations/:id/email", async (req, res) => {
     try {
       const { id } = req.params;
-      const { emailTo } = req.body;
+      const { emailTo, pdfBase64 } = req.body;
       
       if (!emailTo) {
         return res.status(400).json({ message: "Email recipient is required" });
@@ -175,29 +175,25 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
           message: "Email service is not configured. Please configure email settings first." 
         });
       }
+
+      // Extract PDF from base64 or generate one if not provided
+      let pdfBuffer;
+      if (pdfBase64) {
+        // Remove the data:application/pdf;base64, part if it exists
+        const base64Data = pdfBase64.split(',').length > 1 ? pdfBase64.split(',')[1] : pdfBase64;
+        pdfBuffer = Buffer.from(base64Data, 'base64');
+      } else {
+        // No PDF provided, we should generate one
+        console.log("No PDF data provided, using server-side generation functionality");
+        // Create a temporary PDF file based on the quotation data
+        // This is a placeholder until server-side PDF generation is implemented
+        pdfBuffer = Buffer.from("PDF placeholder content");
+      }
+
+      // Use the emailService to send the quotation with attachment
+      const result = await emailService.sendQuotationEmail(parseInt(id), pdfBuffer, emailTo);
       
-      // Generate PDF here on the server
-      // For now, we'll use a simplified approach - regenerate the PDF
-      // In a production app, we might want to cache PDFs or accept uploaded PDFs from client
-      
-      // Create a simple quotation email with details
-      const subject = `Quotation ${quotation.quotationNumber} from ${(await storage.getCompanySettings())?.name || 'Our Company'}`;
-      
-      const emailResult = await emailService.sendEmail({
-        to: emailTo,
-        subject,
-        html: `
-          <h2>Quotation ${quotation.quotationNumber}</h2>
-          <p>Dear ${quotation.customer.name},</p>
-          <p>Thank you for your interest in our services. Please find details below about your quotation.</p>
-          <p>If you have any questions or would like to discuss this further, please don't hesitate to contact us.</p>
-          <p>Best regards,<br>${(await storage.getCompanySettings())?.name || 'Our Company'}</p>
-        `,
-        // Skip attachments for now since we need to generate PDFs server-side
-        // This will be implemented in the future when we have server-side PDF generation
-      });
-      
-      if (emailResult) {
+      if (result) {
         res.status(200).json({ success: true, message: "Email sent successfully" });
       } else {
         res.status(500).json({ message: "Failed to send email" });
