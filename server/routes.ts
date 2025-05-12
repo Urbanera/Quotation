@@ -107,6 +107,59 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   // Serve static files from the uploads directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+  // Email routes
+  app.get("/api/email/status", async (req, res) => {
+    try {
+      const isConfigured = await emailService.isConfigured();
+      res.json({ configured: isConfigured });
+    } catch (error) {
+      console.error("Error checking email configuration status:", error);
+      res.status(500).json({ configured: false, error: "Error checking email configuration" });
+    }
+  });
+
+  app.post("/api/email/test-connection", async (req, res) => {
+    try {
+      // First check if the service is properly configured
+      const isInitialized = await emailService.initialize();
+      
+      if (!isInitialized) {
+        return res.json({ 
+          success: false, 
+          message: "Email settings are incomplete. Please configure SMTP settings and enable email functionality."
+        });
+      }
+      
+      // We don't actually send a test email here to avoid unnecessary emails
+      // Just check if the connection can be established
+      const transporter = emailService["transporter"];
+      
+      if (!transporter) {
+        return res.json({ 
+          success: false, 
+          message: "Email transporter could not be initialized."
+        });
+      }
+      
+      try {
+        // Verify SMTP connection configuration
+        await transporter.verify();
+        return res.json({ success: true });
+      } catch (smtpError: any) {
+        return res.json({ 
+          success: false, 
+          message: `SMTP connection failed: ${smtpError.message}`
+        });
+      }
+    } catch (error: any) {
+      console.error("Error testing email connection:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: `Error testing email connection: ${error.message}`
+      });
+    }
+  });
+
   // Customer routes
   app.get("/api/customers", async (req, res) => {
     try {

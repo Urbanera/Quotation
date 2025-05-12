@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart, FileText as FileInvoice } from "lucide-react";
+import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart, FileText as FileInvoice, Mail } from "lucide-react";
 import { QuotationWithDetails } from "@shared/schema";
 import BasicQuote from "@/components/PDFQuotes/BasicQuote";
 import PresentationQuote from "@/components/PDFQuotes/PresentationQuote";
@@ -47,6 +47,9 @@ export default function ViewQuotation() {
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
   const [isConvertToInvoiceDialogOpen, setIsConvertToInvoiceDialogOpen] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date>(
     addWeeks(new Date(), 4)
   );
