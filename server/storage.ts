@@ -355,6 +355,9 @@ export class MemStorage implements IStorage {
       email: "demo@example.com",
       phone: "9988776655",
       address: "123 Demo Street",
+      gstNumber: null,
+      leadSource: null,
+      stage: "new",
       createdAt: new Date(),
     };
     this.customers.set(customer.id, customer);

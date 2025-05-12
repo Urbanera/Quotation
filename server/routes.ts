@@ -222,10 +222,18 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     try {
       console.log('DEBUG: Fetching customers');
       const customers = await storage.getCustomers();
-      console.log('DEBUG: Got customers:', customers);
+      console.log('DEBUG: Got customers:', customers?.length || 0);
+      
+      const followUps = await storage.getAllFollowUps();
+      console.log('DEBUG: Got follow-ups:', followUps?.length || 0);
+      
+      // Create a detailed response for debugging
       return res.status(200).json({
         success: true,
-        customers
+        customerCount: customers?.length || 0,
+        followUpCount: followUps?.length || 0,
+        customers: customers,
+        sampleFollowUps: followUps?.slice(0, 3) || []
       });
     } catch (error) {
       console.error('DEBUG Error exporting customers:', error);
@@ -242,10 +250,16 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       console.log('Exporting customers - starting export process');
       const customers = await storage.getCustomers();
       
-      if (!customers || customers.length === 0) {
-        console.log('No customers found for export');
-        return res.status(404).json({ message: 'No customers found to export' });
+      console.log('Export found customers:', customers?.length || 0);
+      
+      // IMPORTANT: Even if there are no customers, return an empty CSV file
+      // Don't return a 404 error which prevents the file download
+      if (!customers) {
+        console.log('Customers array is null or undefined');
+        return res.status(500).json({ message: 'Error retrieving customer data' });
       }
+      
+      // Continue even if customers array is empty - will create an empty CSV with headers
       
       console.log('Got customers:', customers.length);
       const followUps = await storage.getAllFollowUps();
