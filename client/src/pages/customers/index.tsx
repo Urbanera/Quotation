@@ -431,6 +431,27 @@ export default function CustomersList() {
       description: "Your customers data export has started",
     });
   };
+  
+  // Debug export function for troubleshooting
+  const handleDebugExport = async () => {
+    try {
+      const response = await fetch('/api/customers/export-debug');
+      const data = await response.json();
+      console.log('Debug Export Response:', data);
+      
+      toast({
+        title: "Debug Export Response",
+        description: `Found ${data.customers?.length || 0} customers. Check console for details.`,
+      });
+    } catch (error) {
+      console.error('Debug export error:', error);
+      toast({
+        title: "Debug Export Failed",
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive"
+      });
+    }
+  };
 
   // Import customers - file select handler
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -498,6 +519,10 @@ export default function CustomersList() {
           <Button onClick={handleExportCustomers} variant="outline" className="flex items-center gap-2">
             <Download className="h-4 w-4" />
             Export CSV
+          </Button>
+          <Button onClick={handleDebugExport} variant="outline" className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Debug Export
           </Button>
           <Button onClick={() => setImportDialogOpen(true)} variant="outline" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />

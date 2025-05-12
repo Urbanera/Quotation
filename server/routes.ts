@@ -217,10 +217,36 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
   
   // Export customers to CSV
+  // New debug endpoint for exporting customers as JSON
+  app.get('/api/customers/export-debug', async (req, res) => {
+    try {
+      console.log('DEBUG: Fetching customers');
+      const customers = await storage.getCustomers();
+      console.log('DEBUG: Got customers:', customers);
+      return res.status(200).json({
+        success: true,
+        customers
+      });
+    } catch (error) {
+      console.error('DEBUG Error exporting customers:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: 'Error exporting customers: ' + (error instanceof Error ? error.message : String(error)) 
+      });
+    }
+  });
+
+  // Original export endpoint for CSV
   app.get('/api/customers/export', async (req, res) => {
     try {
       console.log('Exporting customers - starting export process');
       const customers = await storage.getCustomers();
+      
+      if (!customers || customers.length === 0) {
+        console.log('No customers found for export');
+        return res.status(404).json({ message: 'No customers found to export' });
+      }
+      
       console.log('Got customers:', customers.length);
       const followUps = await storage.getAllFollowUps();
       console.log('Got follow-ups:', followUps.length);
@@ -233,6 +259,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         }
         customerFollowUps.get(followUp.customerId).push(followUp);
       });
+      
+      console.log('Processed follow-ups map. Processing customers...');
       
       // Process each customer and add their latest follow-up info
       const processedCustomers = customers.map(customer => {
@@ -261,6 +289,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
           nextFollowUpDate
         };
       });
+      
+      console.log('Customers processed:', processedCustomers.length);
       
       // Set the CSV headers
       res.setHeader('Content-Type', 'text/csv');
@@ -293,6 +323,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         res.write(row);
       });
       
+      console.log('Finished writing CSV data');
       res.end();
     } catch (error) {
       console.error('Error exporting customers:', error);
