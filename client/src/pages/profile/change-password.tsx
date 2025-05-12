@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import MainLayout from "@/components/layout/MainLayout";
 
 // Form schema
 const passwordFormSchema = z
@@ -74,90 +73,88 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <MainLayout>
-      <div className="container mx-auto py-8">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/profile")}
-            className="mr-4"
-          >
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-2xl font-semibold text-gray-900">Change Password</h1>
-        </div>
-
-        <div className="max-w-3xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Change Your Password</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="currentPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Current Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Enter your current password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="newPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Enter new password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Confirm new password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="mr-4"
-                      onClick={() => navigate("/profile")}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      <Save className="h-4 w-4 mr-2" />
-                      Update Password
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
+    <div className="container mx-auto py-8">
+      <div className="flex items-center mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/profile")}
+          className="mr-4"
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <h1 className="text-2xl font-semibold text-gray-900">Change Password</h1>
       </div>
-    </MainLayout>
+
+      <div className="max-w-3xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle>Change Your Password</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="currentPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Current Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Enter your current password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Enter new password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Confirm new password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mr-4"
+                    onClick={() => navigate("/profile")}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    <Save className="h-4 w-4 mr-2" />
+                    Update Password
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
