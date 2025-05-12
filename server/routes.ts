@@ -2432,6 +2432,91 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  // Email functionality routes
+  
+  // Send quotation via email
+  app.post('/api/quotations/:id/send-email', async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.id);
+      const { pdfBase64, email } = req.body;
+      
+      if (!pdfBase64) {
+        return res.status(400).json({ message: 'PDF data is required' });
+      }
+      
+      const pdfBuffer = Buffer.from(pdfBase64.split(',')[1], 'base64');
+      const result = await emailService.sendQuotationEmail(quotationId, pdfBuffer, email);
+      
+      if (result) {
+        res.json({ success: true, message: 'Quotation sent successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to send quotation email' });
+      }
+    } catch (error) {
+      console.error('Error sending quotation email:', error);
+      res.status(500).json({ message: 'Error sending quotation email' });
+    }
+  });
+  
+  // Send payment receipt via email
+  app.post('/api/payments/:id/send-email', async (req, res) => {
+    try {
+      const paymentId = parseInt(req.params.id);
+      const { pdfBase64, email } = req.body;
+      
+      if (!pdfBase64) {
+        return res.status(400).json({ message: 'PDF data is required' });
+      }
+      
+      const pdfBuffer = Buffer.from(pdfBase64.split(',')[1], 'base64');
+      const result = await emailService.sendPaymentReceiptEmail(paymentId, pdfBuffer, email);
+      
+      if (result) {
+        res.json({ success: true, message: 'Payment receipt sent successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to send payment receipt email' });
+      }
+    } catch (error) {
+      console.error('Error sending payment receipt email:', error);
+      res.status(500).json({ message: 'Error sending payment receipt email' });
+    }
+  });
+  
+  // Send invoice via email
+  app.post('/api/invoices/:id/send-email', async (req, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const { pdfBase64, email } = req.body;
+      
+      if (!pdfBase64) {
+        return res.status(400).json({ message: 'PDF data is required' });
+      }
+      
+      const pdfBuffer = Buffer.from(pdfBase64.split(',')[1], 'base64');
+      const result = await emailService.sendInvoiceEmail(invoiceId, pdfBuffer, email);
+      
+      if (result) {
+        res.json({ success: true, message: 'Invoice sent successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to send invoice email' });
+      }
+    } catch (error) {
+      console.error('Error sending invoice email:', error);
+      res.status(500).json({ message: 'Error sending invoice email' });
+    }
+  });
+  
+  // Check email configuration
+  app.get('/api/email/status', async (req, res) => {
+    try {
+      const isConfigured = await emailService.isConfigured();
+      res.json({ configured: isConfigured });
+    } catch (error) {
+      console.error('Error checking email status:', error);
+      res.status(500).json({ message: 'Error checking email configuration' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

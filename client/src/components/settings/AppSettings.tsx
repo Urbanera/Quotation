@@ -48,6 +48,16 @@ export function AppSettingsForm() {
       presentationTemplateId: "default",
       requiredAccessories: "skirting,handles,sliding mechanism,t profile",
       leadSourceOptions: "walk-in,website,referral,social media,other",
+      // Email settings
+      smtpHost: "",
+      smtpPort: 587,
+      smtpSecure: false,
+      smtpUser: "",
+      smtpPassword: "",
+      emailFrom: "",
+      emailReplyTo: "",
+      emailFooter: "",
+      emailEnabled: false,
     },
     values: settings || undefined,
   });
