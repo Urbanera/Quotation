@@ -179,9 +179,19 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       // Extract PDF from base64 or generate one if not provided
       let pdfBuffer;
       if (pdfBase64) {
-        // Remove the data:application/pdf;base64, part if it exists
-        const base64Data = pdfBase64.split(',').length > 1 ? pdfBase64.split(',')[1] : pdfBase64;
-        pdfBuffer = Buffer.from(base64Data, 'base64');
+        try {
+          // Remove the data:application/pdf;base64, part if it exists
+          const base64Data = pdfBase64.split(',').length > 1 ? pdfBase64.split(',')[1] : pdfBase64;
+          pdfBuffer = Buffer.from(base64Data, 'base64');
+          
+          // Quick validation to ensure it's a valid PDF
+          if (pdfBuffer.length < 100) {
+            console.warn("PDF buffer seems too small, may not be a valid PDF");
+          }
+        } catch (e) {
+          console.error("Error processing PDF data:", e);
+          return res.status(400).json({ message: "Invalid PDF data provided" });
+        }
       } else {
         // No PDF provided, we should generate one
         console.log("No PDF data provided, using server-side generation functionality");
@@ -196,11 +206,23 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       if (result) {
         res.status(200).json({ success: true, message: "Email sent successfully" });
       } else {
-        res.status(500).json({ message: "Failed to send email" });
+        res.status(500).json({ message: "Failed to send email. Please check your email settings and try again." });
       }
     } catch (error: any) {
       console.error("Error sending quotation email:", error);
-      res.status(500).json({ message: error.message || "Server error" });
+      // Provide more user-friendly error message
+      let errorMessage = "Failed to send email";
+      
+      // Check for common error patterns
+      if (error.code === 'ESOCKET' || error.code === 'ECONNECTION') {
+        errorMessage = "Connection to email server failed. Please verify your SMTP settings.";
+      } else if (error.code === 'EAUTH') {
+        errorMessage = "Email authentication failed. Please check your username and password.";
+      } else if (error.message && error.message.includes('SSL')) {
+        errorMessage = "SSL/TLS negotiation failed. Try changing the security settings in your email configuration.";
+      }
+      
+      res.status(500).json({ message: errorMessage });
     }
   });
   

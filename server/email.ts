@@ -27,7 +27,7 @@ export class EmailService {
         return false;
       }
 
-      // Create transporter
+      // Create transporter with enhanced TLS options
       this.transporter = nodemailer.createTransport({
         host: this.settings.smtpHost,
         port: this.settings.smtpPort || 587,
@@ -37,9 +37,13 @@ export class EmailService {
           pass: this.settings.smtpPassword,
         },
         tls: {
-          // Do not fail on invalid certs
-          rejectUnauthorized: false,
+          // Enhanced TLS options to handle various server configurations
+          rejectUnauthorized: false, // Don't fail on invalid certs
+          minVersion: 'TLSv1', // Support older TLS versions
+          maxVersion: 'TLSv1.3', // Support up to the latest TLS
+          ciphers: 'HIGH:MEDIUM:!aNULL:!MD5:!RC4', // Flexible cipher suite
         },
+        debug: true, // Enable debugging
       });
       
       this.initialized = true;
@@ -62,7 +66,7 @@ export class EmailService {
   }
 
   /**
-   * Send an email
+   * Send an email with retry mechanism
    */
   async sendEmail(options: {
     to: string;
@@ -70,47 +74,73 @@ export class EmailService {
     html: string;
     attachments?: { filename: string; path: string; contentType?: string }[];
   }): Promise<boolean> {
-    try {
-      if (!await this.isConfigured()) {
-        console.log('Email service not configured or disabled');
-        return false;
+    // Maximum number of retries
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        if (!await this.isConfigured()) {
+          console.log('Email service not configured or disabled');
+          return false;
+        }
+
+        // If this isn't the first attempt, reinitialize the transporter
+        if (attempt > 1) {
+          console.log(`Retry attempt ${attempt}/${maxRetries} - Reinitializing email transporter`);
+          await this.initialize();
+        }
+
+        const emailFrom = this.settings.emailFrom || this.companySettings.email;
+        const replyTo = this.settings.emailReplyTo || emailFrom;
+        
+        // Add email footer if configured
+        let htmlContent = options.html;
+        if (this.settings.emailFooter) {
+          htmlContent += `<br/><br/><div style="border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px; color: #666;">${this.settings.emailFooter}</div>`;
+        }
+
+        // Add company info footer
+        htmlContent += `<div style="margin-top: 10px; font-size: 12px; color: #888;">
+          <p>${this.companySettings.name}<br>
+          ${this.companySettings.address}<br>
+          Phone: ${this.companySettings.phone}<br>
+          Email: ${this.companySettings.email}<br>
+          ${this.companySettings.website ? `Website: ${this.companySettings.website}` : ''}
+          </p>
+        </div>`;
+        
+        // Try different connection methods if we're retrying
+        let mailOptions: any = {
+          from: `"${this.companySettings.name}" <${emailFrom}>`,
+          to: options.to,
+          replyTo: replyTo,
+          subject: options.subject,
+          html: htmlContent,
+          attachments: options.attachments || [],
+        };
+        
+        // Send email
+        const info = await this.transporter!.sendMail(mailOptions);
+        
+        console.log('Email sent successfully:', info.messageId);
+        return true;
+      } catch (error) {
+        console.error(`Email attempt ${attempt}/${maxRetries} failed:`, error);
+        
+        // If we've exhausted all retries, give up and return false
+        if (attempt === maxRetries) {
+          console.error('Maximum email retries reached, giving up');
+          return false;
+        }
+        
+        // Wait before the next retry attempt (exponential backoff)
+        const delayMs = 1000 * Math.pow(2, attempt - 1); // 1s, 2s, 4s, etc.
+        console.log(`Waiting ${delayMs}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
       }
-
-      const emailFrom = this.settings.emailFrom || this.companySettings.email;
-      const replyTo = this.settings.emailReplyTo || emailFrom;
-      
-      // Add email footer if configured
-      let htmlContent = options.html;
-      if (this.settings.emailFooter) {
-        htmlContent += `<br/><br/><div style="border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px; color: #666;">${this.settings.emailFooter}</div>`;
-      }
-
-      // Add company info footer
-      htmlContent += `<div style="margin-top: 10px; font-size: 12px; color: #888;">
-        <p>${this.companySettings.name}<br>
-        ${this.companySettings.address}<br>
-        Phone: ${this.companySettings.phone}<br>
-        Email: ${this.companySettings.email}<br>
-        ${this.companySettings.website ? `Website: ${this.companySettings.website}` : ''}
-        </p>
-      </div>`;
-      
-      // Send email
-      const info = await this.transporter!.sendMail({
-        from: `"${this.companySettings.name}" <${emailFrom}>`,
-        to: options.to,
-        replyTo: replyTo,
-        subject: options.subject,
-        html: htmlContent,
-        attachments: options.attachments || [],
-      });
-
-      console.log('Email sent:', info.messageId);
-      return true;
-    } catch (error) {
-      console.error('Failed to send email:', error);
-      return false;
     }
+    
+    return false; // This line should never be reached, but TypeScript requires it
   }
 
   /**
