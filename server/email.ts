@@ -96,6 +96,9 @@ export class EmailService {
         if (attempt > 1) {
           console.log(`Retry attempt ${attempt}/${maxRetries} - Reinitializing email transporter`);
           await this.initialize();
+        } else {
+          // Always get the latest company settings before sending email
+          this.companySettings = await storage.getCompanySettings();
         }
 
         const emailFrom = this.settings.emailFrom || this.companySettings.email;
