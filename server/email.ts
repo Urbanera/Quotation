@@ -3,6 +3,14 @@ import { storage } from './storage';
 import fs from 'fs';
 import path from 'path';
 
+// Extended attachment type to include content buffer
+interface ExtendedAttachment {
+  filename: string;
+  content?: Buffer;
+  path?: string;
+  contentType?: string;
+}
+
 // Email service for sending emails
 export class EmailService {
   private transporter: nodemailer.Transporter | null = null;
@@ -167,10 +175,6 @@ export class EmailService {
         return false;
       }
 
-      // Create temp file for attachment
-      const tempFilePath = path.join(process.cwd(), 'uploads', `quotation-${quotationId}-${Date.now()}.pdf`);
-      fs.writeFileSync(tempFilePath, pdfBuffer);
-
       // Generate email content
       const host = process.env.APP_URL || 'http://localhost:5000';
       const logoUrl = this.companySettings.logo ? 
@@ -213,7 +217,15 @@ export class EmailService {
         </div>
       `;
 
-      // Send email with attachment
+      // Verify that the PDF buffer is valid
+      if (!pdfBuffer || pdfBuffer.length < 100) {
+        console.error('PDF buffer is invalid or too small', pdfBuffer?.length);
+        return false;
+      }
+
+      console.log(`Sending quotation email with PDF buffer size: ${pdfBuffer.length} bytes`);
+      
+      // Send email with attachment directly from buffer (no temp file)
       const result = await this.sendEmail({
         to: recipientEmail,
         subject: `Quotation: ${quotation.quotationNumber}`,
@@ -221,18 +233,11 @@ export class EmailService {
         attachments: [
           {
             filename: `Quotation-${quotation.quotationNumber}.pdf`,
-            path: tempFilePath,
+            content: pdfBuffer,
             contentType: 'application/pdf',
           },
         ],
       });
-
-      // Delete temp file
-      try {
-        fs.unlinkSync(tempFilePath);
-      } catch (err) {
-        console.error('Failed to delete temp file:', err);
-      }
 
       return result;
     } catch (error) {
@@ -287,15 +292,19 @@ export class EmailService {
         return false;
       }
 
-      // Create temp file for attachment
-      const tempFilePath = path.join(process.cwd(), 'uploads', `receipt-${paymentId}-${Date.now()}.pdf`);
-      fs.writeFileSync(tempFilePath, pdfBuffer);
-
       // Generate email content
       const host = process.env.APP_URL || 'http://localhost:5000';
       const logoUrl = this.companySettings.logo ? 
         `${host}${this.companySettings.logo}` : 
         `${host}/assets/default-logo.png`;
+        
+      // Verify that the PDF buffer is valid
+      if (!pdfBuffer || pdfBuffer.length < 100) {
+        console.error('PDF buffer is invalid or too small', pdfBuffer?.length);
+        return false;
+      }
+      
+      console.log(`Sending receipt email with PDF buffer size: ${pdfBuffer.length} bytes`);
 
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
