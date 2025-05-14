@@ -153,7 +153,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
       </div>
       
-      {/* Second Page - Our Features - Second Fixed Page */}
+      {/* Second Page - Configurable Content - Second Fixed Page */}
       <div className="h-[1100px] bg-white flex flex-col overflow-hidden page-container" 
            style={{ pageBreakInside: 'avoid', pageBreakAfter: 'always', breakAfter: 'page', position: 'relative' }}>
         {/* Logo Area */}
@@ -170,12 +170,33 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           )}
         </div>
         
-        {/* Introduction */}
-        <div className="px-10 mb-8">
-          <h2 className="text-2xl font-bold text-[#009245] mb-4">About Us</h2>
-          <p className="text-gray-700 leading-relaxed">
-            {`${companyName} specializes in creating elegant, functional interior spaces tailored to your unique lifestyle and preferences. Our team of skilled designers and craftsmen work closely with you to transform your vision into reality, ensuring every detail is perfect.`}
-          </p>
+        {/* Configurable Content */}
+        <div className="px-10 mb-8 flex-1 overflow-auto">
+          {appSettings?.presentationSecondPageContent ? (
+            <div
+              className="text-gray-700 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: appSettings.presentationSecondPageContent }}
+            />
+          ) : (
+            <div>
+              <h2 className="text-2xl font-bold text-[#009245] mb-4">About Us</h2>
+              <p className="text-gray-700 leading-relaxed">
+                {`${companyName} specializes in creating elegant, functional interior spaces tailored to your unique lifestyle and preferences. Our team of skilled designers and craftsmen work closely with you to transform your vision into reality, ensuring every detail is perfect.`}
+              </p>
+            </div>
+          )}
+        </div>
+        
+        {/* Page Footer */}
+        <div className="mt-auto px-10 py-4 border-t border-gray-200">
+          <div className="flex justify-between items-center">
+            <div className="text-xs text-gray-500">
+              {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
+            </div>
+            <div className="text-xs text-gray-500">
+              Page 2 of {safeQuotation.rooms.length + 4}
+            </div>
+          </div>
         </div>
         
         {/* Our Features */}
