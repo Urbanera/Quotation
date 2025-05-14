@@ -274,7 +274,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
           <p>Please find attached the invoice for your order. Details are provided below:</p>
           <p>Invoice Number: ${invoice.invoiceNumber}</p>
           <p>Date: ${new Date(invoice.createdAt).toLocaleDateString()}</p>
-          <p>Amount: ₹${invoice.amount.toFixed(2)}</p>
+          <p>Amount: ₹${invoice.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
           <p>If you have any questions about this invoice, please don't hesitate to contact us.</p>
           <p>Best regards,<br>${companySettings?.name || 'Our Company'}</p>
         `,
@@ -284,11 +284,23 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       if (emailResult) {
         res.status(200).json({ success: true, message: "Email sent successfully" });
       } else {
-        res.status(500).json({ message: "Failed to send email" });
+        res.status(500).json({ message: "Failed to send email. Please check your email settings and try again." });
       }
     } catch (error: any) {
       console.error("Error sending invoice email:", error);
-      res.status(500).json({ message: error.message || "Server error" });
+      // Provide more user-friendly error message
+      let errorMessage = "Failed to send email";
+      
+      // Check for common error patterns
+      if (error.code === 'ESOCKET' || error.code === 'ECONNECTION') {
+        errorMessage = "Connection to email server failed. Please verify your SMTP settings.";
+      } else if (error.code === 'EAUTH') {
+        errorMessage = "Email authentication failed. Please check your username and password.";
+      } else if (error.message && error.message.includes('SSL')) {
+        errorMessage = "SSL/TLS negotiation failed. Try changing the security settings in your email configuration.";
+      }
+      
+      res.status(500).json({ message: errorMessage });
     }
   });
   
@@ -366,11 +378,23 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       if (result) {
         res.status(200).json({ success: true, message: "Email sent successfully" });
       } else {
-        res.status(500).json({ message: "Failed to send email" });
+        res.status(500).json({ message: "Failed to send email. Please check your email settings and try again." });
       }
     } catch (error: any) {
       console.error("Error sending payment receipt email:", error);
-      res.status(500).json({ message: error.message || "Server error" });
+      // Provide more user-friendly error message
+      let errorMessage = "Failed to send email";
+      
+      // Check for common error patterns
+      if (error.code === 'ESOCKET' || error.code === 'ECONNECTION') {
+        errorMessage = "Connection to email server failed. Please verify your SMTP settings.";
+      } else if (error.code === 'EAUTH') {
+        errorMessage = "Email authentication failed. Please check your username and password.";
+      } else if (error.message && error.message.includes('SSL')) {
+        errorMessage = "SSL/TLS negotiation failed. Try changing the security settings in your email configuration.";
+      }
+      
+      res.status(500).json({ message: errorMessage });
     }
   });
 
@@ -400,18 +424,43 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       try {
         // Verify SMTP connection configuration
         await transporter.verify();
-        return res.json({ success: true });
+        return res.json({ success: true, message: "SMTP connection successful!" });
       } catch (smtpError: any) {
+        // Provide more user-friendly error message
+        let errorMessage = "SMTP connection failed";
+        
+        // Check for common error patterns
+        if (smtpError.code === 'ESOCKET' || smtpError.code === 'ECONNECTION') {
+          errorMessage = "Connection to email server failed. Please verify your SMTP host and port.";
+        } else if (smtpError.code === 'EAUTH') {
+          errorMessage = "Authentication failed. Please check your username and password.";
+        } else if (smtpError.message && smtpError.message.includes('SSL')) {
+          errorMessage = "SSL/TLS negotiation failed. Try changing the security settings.";
+        } else if (smtpError.message) {
+          errorMessage = `${errorMessage}: ${smtpError.message}`;
+        }
+        
         return res.json({ 
           success: false, 
-          message: `SMTP connection failed: ${smtpError.message}`
+          message: errorMessage
         });
       }
     } catch (error: any) {
       console.error("Error testing email connection:", error);
+      
+      // Provide more user-friendly error message
+      let errorMessage = "Failed to test email connection";
+      
+      // Check for specific patterns
+      if (error.code === 'ENOENT') {
+        errorMessage = "Email settings could not be loaded. Please check if the settings exist.";
+      } else if (error.message) {
+        errorMessage = `${errorMessage}: ${error.message}`;
+      }
+      
       res.status(500).json({ 
         success: false, 
-        message: `Error testing email connection: ${error.message}`
+        message: errorMessage
       });
     }
   });
