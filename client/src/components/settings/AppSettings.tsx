@@ -52,6 +52,8 @@ export function AppSettingsForm() {
       defaultGstPercentage: 18,
       defaultTermsAndConditions: "",
       receiptTermsAndConditions: "",
+      presentationTermsAndConditions: "",
+      presentationSecondPageContent: "",
       quotationTemplateId: "default",
       presentationTemplateId: "default",
       requiredAccessories: "skirting,handles,sliding mechanism,t profile",
@@ -339,6 +341,29 @@ export function AppSettingsForm() {
                       </FormControl>
                       <FormDescription>
                         These terms will appear on the last page of presentation quotations. They will be displayed in a formatted section and should include detailed scope of work, payment terms, delivery terms, and other legal information.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="presentationSecondPageContent"
+                  render={({ field }) => (
+                    <FormItem className="border p-4 rounded-md bg-muted/30">
+                      <FormLabel className="text-lg font-medium">Presentation Quotation Second Page Content</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Enter content for the second page of presentation quotations"
+                          className="min-h-40"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        This content will appear on the second page of all presentation quotations. You can use HTML formatting to style the content. 
+                        The content should fit on a single A4 page. This page will appear after the cover page and before the room details.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

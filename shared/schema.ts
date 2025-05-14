@@ -38,6 +38,7 @@ export const appSettings = pgTable("app_settings", {
   defaultTermsAndConditions: text("default_terms_and_conditions"),
   receiptTermsAndConditions: text("receipt_terms_and_conditions"),
   presentationTermsAndConditions: text("presentation_terms_and_conditions"),
+  presentationSecondPageContent: text("presentation_second_page_content"),
   quotationTemplateId: text("quotation_template_id").default("default"),
   presentationTemplateId: text("presentation_template_id").default("default"),
   requiredAccessories: text("required_accessories").default("skirting,handles,sliding mechanism,t profile"),
