@@ -80,7 +80,7 @@ export class EmailService {
     to: string;
     subject: string;
     html: string;
-    attachments?: { filename: string; path: string; contentType?: string }[];
+    attachments?: ExtendedAttachment[];
   }): Promise<boolean> {
     // Maximum number of retries
     const maxRetries = 3;
@@ -347,7 +347,7 @@ export class EmailService {
         </div>
       `;
 
-      // Send email with attachment
+      // Send email with attachment directly from buffer (no temp file)
       const result = await this.sendEmail({
         to: recipientEmail,
         subject: `Payment Receipt: ${payment.receiptNumber}`,
@@ -355,18 +355,11 @@ export class EmailService {
         attachments: [
           {
             filename: `Receipt-${payment.receiptNumber}.pdf`,
-            path: tempFilePath,
+            content: pdfBuffer,
             contentType: 'application/pdf',
           },
         ],
       });
-
-      // Delete temp file
-      try {
-        fs.unlinkSync(tempFilePath);
-      } catch (err) {
-        console.error('Failed to delete temp file:', err);
-      }
 
       return result;
     } catch (error) {
@@ -398,10 +391,6 @@ export class EmailService {
         console.log('No recipient email provided');
         return false;
       }
-
-      // Create temp file for attachment
-      const tempFilePath = path.join(process.cwd(), 'uploads', `invoice-${invoiceId}-${Date.now()}.pdf`);
-      fs.writeFileSync(tempFilePath, pdfBuffer);
 
       // Generate email content
       const host = process.env.APP_URL || 'http://localhost:5000';
@@ -453,7 +442,15 @@ export class EmailService {
         </div>
       `;
 
-      // Send email with attachment
+      // Verify that the PDF buffer is valid
+      if (!pdfBuffer || pdfBuffer.length < 100) {
+        console.error('PDF buffer is invalid or too small', pdfBuffer?.length);
+        return false;
+      }
+      
+      console.log(`Sending invoice email with PDF buffer size: ${pdfBuffer.length} bytes`);
+      
+      // Send email with attachment directly from buffer (no temp file)
       const result = await this.sendEmail({
         to: recipientEmail,
         subject: `Invoice: ${invoice.invoiceNumber}`,
@@ -461,18 +458,11 @@ export class EmailService {
         attachments: [
           {
             filename: `Invoice-${invoice.invoiceNumber}.pdf`,
-            path: tempFilePath,
+            content: pdfBuffer,
             contentType: 'application/pdf',
           },
         ],
       });
-
-      // Delete temp file
-      try {
-        fs.unlinkSync(tempFilePath);
-      } catch (err) {
-        console.error('Failed to delete temp file:', err);
-      }
 
       return result;
     } catch (error) {
