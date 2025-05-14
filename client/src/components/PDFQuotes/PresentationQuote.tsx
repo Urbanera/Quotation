@@ -642,9 +642,10 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           <h3 className="text-xl font-bold mb-6 text-[#009245]">Terms & Conditions</h3>
           
           {appSettings?.presentationTermsAndConditions ? (
-            <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
-              {appSettings.presentationTermsAndConditions}
-            </div>
+            <div 
+              className="text-sm leading-relaxed text-gray-700"
+              dangerouslySetInnerHTML={{ __html: appSettings.presentationTermsAndConditions }}
+            />
           ) : (
             <div className="text-sm leading-relaxed text-gray-700">
               <p className="mb-3">1. <strong>Scope of Work:</strong> {companyName} agrees to perform the production and services outlined in our individual quotation and this agreement according to the terms and conditions contained herein.</p>

@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { CompanySettings, QuotationWithDetails } from "@shared/schema";
+import { AppSettings, CompanySettings, QuotationWithDetails } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 
 interface BasicQuoteProps {
@@ -10,6 +10,12 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
   // Fetch company settings
   const { data: companySettings } = useQuery<CompanySettings>({
     queryKey: ["/api/settings/company"],
+    retry: 1,
+  });
+  
+  // Fetch app settings for terms and conditions
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ["/api/settings/app"],
     retry: 1,
   });
 
@@ -246,14 +252,21 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
       {/* Terms and conditions */}
       <div className="mb-3 avoid-break">
         <h3 className="text-lg font-semibold mb-1 text-[#009245] print:text-sm print:mb-0.5">Terms & Conditions</h3>
-        <ul className="list-disc pl-5 text-sm text-gray-600 space-y-0.5 print:pl-4 print:text-xs print:space-y-0">
-          <li>Quotation is valid for 15 days from the date of issue.</li>
-          <li>50% advance payment required to start the work.</li>
-          <li>Delivery time: 4-6 weeks from date of order confirmation.</li>
-          <li>Warranty: 1 year on manufacturing defects.</li>
-          <li>Transportation and installation included in the price.</li>
-          <li>Colors may vary slightly from the samples shown.</li>
-        </ul>
+        {appSettings?.defaultTermsAndConditions ? (
+          <div 
+            className="text-sm text-gray-600 print:text-xs"
+            dangerouslySetInnerHTML={{ __html: appSettings.defaultTermsAndConditions }}
+          />
+        ) : (
+          <ul className="list-disc pl-5 text-sm text-gray-600 space-y-0.5 print:pl-4 print:text-xs print:space-y-0">
+            <li>Quotation is valid for 15 days from the date of issue.</li>
+            <li>50% advance payment required to start the work.</li>
+            <li>Delivery time: 4-6 weeks from date of order confirmation.</li>
+            <li>Warranty: 1 year on manufacturing defects.</li>
+            <li>Transportation and installation included in the price.</li>
+            <li>Colors may vary slightly from the samples shown.</li>
+          </ul>
+        )}
       </div>
 
       {/* Footer */}
