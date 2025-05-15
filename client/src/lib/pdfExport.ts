@@ -25,7 +25,7 @@ export const exportToPdf = async (
     if (!(element instanceof HTMLElement)) {
       // Handle React PDF elements
       try {
-        const pdfDoc = await pdf(element as ReactNode).toBlob();
+        const pdfDoc = await reactPdf(element as ReactNode).toBlob();
         
         if (returnBlob) {
           return pdfDoc;
@@ -50,11 +50,11 @@ export const exportToPdf = async (
     // If we get here, it's an HTML element
     // Create a PDF in A4 format
     const htmlElement = element as HTMLElement;
-    const pdf = new jsPDF('portrait', 'mm', 'a4');
+    const pdfDoc = new jsPDF('portrait', 'mm', 'a4');
     
     // Get page dimensions
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+    const pageWidth = pdfDoc.internal.pageSize.getWidth();
+    const pageHeight = pdfDoc.internal.pageSize.getHeight();
     
     // Add styling to fix page breaks and layout
     const style = document.createElement('style');

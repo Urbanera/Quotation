@@ -11,6 +11,7 @@ import { ProjectTimeline } from "@/components/quotations/timeline/ProjectTimelin
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { exportToPdf } from "@/lib/pdfExport";
+import { exportReactPdf } from "@/lib/reactPdfExport";
 import { format, addWeeks } from "date-fns";
 import {
   Tabs,
@@ -204,7 +205,8 @@ export default function ViewQuotation() {
             />
           );
           
-          const blob = await exportToPdf(LandscapeDocument, filename, false, true) as Blob;
+          // Use the React-PDF export function instead
+          const blob = await exportReactPdf(LandscapeDocument, filename, true) as Blob;
           pdfBase64 = await new Promise<string>((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
@@ -286,8 +288,8 @@ export default function ViewQuotation() {
           />
         );
         
-        // Export the landscape format
-        await exportToPdf(LandscapeDocument, filename, false, false);
+        // Export the landscape format using React-PDF
+        await exportReactPdf(LandscapeDocument, filename);
       } else {
         // For basic and presentation formats
         const quoteElement = activeTab === 'basic' 
