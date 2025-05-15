@@ -5,6 +5,14 @@ import { AppSettings, InsertAppSettings, appSettingsFormSchema } from "@shared/s
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 import {
   Form,
@@ -361,10 +369,114 @@ export function AppSettingsForm() {
                           value={field.value || ""}
                         />
                       </FormControl>
-                      <FormDescription>
+                      <FormDescription className="mb-2">
                         This content will appear on the second page of all presentation quotations. You can use HTML formatting to style the content. 
                         The content should fit on a single A4 page. This page will appear after the cover page and before the room details.
                       </FormDescription>
+                      <div className="flex space-x-2 mb-2">
+                        <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={() => {
+                            const templateHTML = `<div style="padding: 20px; font-family: Arial, sans-serif;">
+  <h2 style="color: #009245; margin-bottom: 20px; font-size: 24px;">Our Features</h2>
+  
+  <div style="display: flex; align-items: center; margin-bottom: 25px;">
+    <div style="margin-right: 15px; width: 60px; height: 60px;">
+      <img src="/attached_assets/Picture1.png" alt="Quality" style="width: 100%; height: 100%;" />
+    </div>
+    <div>
+      <h3 style="margin: 0 0 5px 0; font-size: 18px;">Best Quality Materials</h3>
+      <p style="margin: 0; color: #555;">Premium raw materials and fittings to ensure durability and elegance.</p>
+    </div>
+  </div>
+  
+  <div style="display: flex; align-items: center; margin-bottom: 25px;">
+    <div style="margin-right: 15px; width: 60px; height: 60px;">
+      <img src="/attached_assets/Picture2.png" alt="Delivery" style="width: 100%; height: 100%;" />
+    </div>
+    <div>
+      <h3 style="margin: 0 0 5px 0; font-size: 18px;">Fast Delivery</h3>
+      <p style="margin: 0; color: #555;">Prompt project execution with strict timeline adherence.</p>
+    </div>
+  </div>
+  
+  <div style="display: flex; align-items: center; margin-bottom: 25px;">
+    <div style="margin-right: 15px; width: 60px; height: 60px;">
+      <img src="/attached_assets/Picture3.png" alt="Installation" style="width: 100%; height: 100%;" />
+    </div>
+    <div>
+      <h3 style="margin: 0 0 5px 0; font-size: 18px;">Hassle-Free Installation</h3>
+      <p style="margin: 0; color: #555;">Expert installation team ensures minimal disruption to your routine.</p>
+    </div>
+  </div>
+  
+  <div style="display: flex; align-items: center; margin-bottom: 25px;">
+    <div style="margin-right: 15px; width: 60px; height: 60px;">
+      <img src="/attached_assets/Picture5.png" alt="Eco-Friendly" style="width: 100%; height: 100%;" />
+    </div>
+    <div>
+      <h3 style="margin: 0 0 5px 0; font-size: 18px;">Eco-Friendly Options</h3>
+      <p style="margin: 0; color: #555;">Sustainable materials that care for both your home and the environment.</p>
+    </div>
+  </div>
+  
+  <div style="margin-top: 40px; border-left: 4px solid #009245; padding-left: 15px;">
+    <h2 style="color: #009245; margin-bottom: 20px; font-size: 24px;">What Our Clients Say</h2>
+    
+    <div style="display: flex; align-items: center; margin-bottom: 15px;">
+      <div style="margin-right: 10px; display: flex; align-items: center;">
+        <img src="/attached_assets/Picture1.png" alt="Quality Badge" style="width: 40px; height: 40px;" />
+        <img src="/attached_assets/Picture2.png" alt="Delivery Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
+        <img src="/attached_assets/Picture3.png" alt="Installation Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
+        <img src="/attached_assets/Picture5.png" alt="Eco Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
+        <img src="/attached_assets/Picture6.png" alt="EMI Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
+      </div>
+    </div>
+    
+    <p style="font-style: italic; color: #555;">"Their attention to detail and quality exceeded my expectations. Our kitchen renovation was completed on time and looks amazing!"</p>
+    <p style="font-weight: bold;">- Satisfied Client</p>
+  </div>
+</div>`;
+                            
+                            field.onChange(templateHTML);
+                          }}
+                        >
+                          Insert Template
+                        </Button>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              type="button" 
+                              variant="secondary"
+                            >
+                              Preview Content
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl">
+                            <DialogHeader>
+                              <DialogTitle>Content Preview</DialogTitle>
+                              <DialogDescription>
+                                Preview how the second page content will appear in the PDF
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="border rounded-md p-4 bg-white" style={{minHeight: "500px"}}>
+                              <div 
+                                className="print-content" 
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  border: "1px solid #eee",
+                                  padding: "20px",
+                                  backgroundColor: "white"
+                                }}
+                                dangerouslySetInnerHTML={{ __html: field.value || "" }}
+                              />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
