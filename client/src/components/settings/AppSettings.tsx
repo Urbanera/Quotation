@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+
 // Import the same assets used in the PDF component
 import bestQualityImg from "@assets/Picture1.png";
 import fastDeliveryImg from "@assets/Picture2.png";
@@ -361,9 +362,138 @@ export function AppSettingsForm() {
                           value={field.value || ""}
                         />
                       </FormControl>
-                      <FormDescription>
-                        These terms will appear on the last page of presentation quotations. They will be displayed in a formatted section and should include detailed scope of work, payment terms, delivery terms, and other legal information.
+                      <FormDescription className="mb-2 flex items-start gap-1">
+                        <span>
+                          These terms will appear on the last page of presentation quotations. They will be displayed in a formatted section and should include detailed scope of work, payment terms, delivery terms, and other legal information.
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-muted-foreground">
+                                <Info className="h-4 w-4" />
+                                <span className="sr-only">More information</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-96 p-4">
+                              <div className="space-y-2 text-xs">
+                                <p><strong>Tip:</strong> For proper formatting:</p>
+                                <ol className="list-decimal pl-4 space-y-1">
+                                  <li>Use HTML formatting to create clear sections</li>
+                                  <li>Use numbered lists with proper indentation</li>
+                                  <li>Keep text concise to ensure it fits on a single page</li>
+                                  <li>Click 'Insert Template' to get a properly formatted template</li>
+                                </ol>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </FormDescription>
+                      
+                      <div className="flex space-x-2 mb-2">
+                        <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={() => {
+                            const formattedTerms = `<div style="font-family: Arial, sans-serif; font-size: 10px; line-height: 1.4;">
+  <ol style="list-style-type: decimal; padding-left: 20px; margin: 0;">
+    <li style="margin-bottom: 8px;">
+      <strong>Scope of Work:</strong> Lecco Cucina agrees to perform the production and services outlined in our individual product closing document. 
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Taxes:</strong> Applicable taxes will be charged in accordance with Government regulations in effect at the time of signing.
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Order Confirmation:</strong> 
+      <ol style="list-style-type: lower-alpha; padding-left: 15px; margin: 4px 0;">
+        <li>This offer should be reviewed in conjunction with the designs and specifications considered at the time of confirmation.</li>
+        <li>Any modifications to the designs, finishes or additional selections of accessories will result in a revised quote.</li>
+        <li>A final agreement document must be signed by both Lecco Cucina Experience Centre and the client to confirm the order.</li>
+      </ol>
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Design Agreement:</strong> 
+      <ol style="list-style-type: lower-alpha; padding-left: 15px; margin: 4px 0;">
+        <li>In the event of any disagreement post-order finalization, this document will be deemed as the final agreement.</li>
+        <li>No changes or alterations to the design, finishes or addition of accessories will be permitted after order confirmation.</li>
+        <li>The order cannot be cancelled once confirmed, the customer is required to remit 100% payment towards the order placed with Lecco Cucina Experience Centre.</li>
+      </ol>
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Product Colors:</strong> May vary within a range of ±7 to 10% due to differences in production batches or intentional use of similar shades. Such variations will not be considered as material defects.
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Payment Terms:</strong>
+      <ol style="list-style-type: lower-alpha; padding-left: 15px; margin: 4px 0;">
+        <li><strong>Token Advance Payment:</strong> 20% of the total amount including taxes is required for the order confirmation.</li>
+        <li><strong>Order Punching Payment:</strong> 30% of the total amount (excluding 20% token advance payment), including taxes is due at the time of order punching.</li>
+        <li><strong>Final Payment:</strong> 50% of the total amount, including taxes is to be paid 10 days before the dispatch of the order.</li>
+      </ol>
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Appliances & Kitchen Accessories:</strong> Pro, dado Track, Sink, Faucets and others: 100% payment is required during order finalization.
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Urban Ladder Products:</strong> 100% payment is required during order confirmation.
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Quotation Deliverables:</strong> Special packing, Transportation, freight, insurance and unloading charges will be applicable.
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Travel, boarding and lodging charges</strong> for the installation team for all outstation executions will be billed on an actual basis.
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Production Timeline:</strong> Plain laminate, Grain laminate & High Gloss Finishes delivered in 30 days. Soft Extra Matte & Classic Lacquer delivered in 45 days.
+    </li>
+    <li style="margin-bottom: 8px;">
+      <strong>Delivery & Installation Terms:</strong>
+      <ol style="list-style-type: lower-alpha; padding-left: 15px; margin: 4px 0;">
+        <li><strong>Delivery Period:</strong> The estimated product delivery period is 30 to 45 days, depending on the finish.</li>
+        <li><strong>Delivery Acceptance:</strong> Delivery date must be confirmed and accepted within the first 14 days following the notification of the scheduled dispatch date.</li>
+        <li><strong>Warehousing:</strong> Free warehousing for the material is provided only for up to 14 days following the notification of the scheduled dispatch date. Any additional storage days required beyond this period will incur additional charges, which will be communicated via email and will be at the client's risk.</li>
+      </ol>
+    </li>
+  </ol>
+</div>`;
+                            
+                            field.onChange(formattedTerms);
+                          }}
+                        >
+                          Insert Template
+                        </Button>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              type="button" 
+                              variant="secondary"
+                            >
+                              Preview Terms
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl">
+                            <DialogHeader>
+                              <DialogTitle>Terms & Conditions Preview</DialogTitle>
+                              <DialogDescription>
+                                Preview how terms and conditions will appear in the PDF
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="border rounded-md p-4 bg-white" style={{minHeight: "500px"}}>
+                              <div 
+                                className="print-content" 
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  border: "1px solid #eee",
+                                  padding: "20px",
+                                  backgroundColor: "white"
+                                }}
+                                dangerouslySetInnerHTML={{ __html: field.value || "" }}
+                              />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      
                       <FormMessage />
                     </FormItem>
                   )}

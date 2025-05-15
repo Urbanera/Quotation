@@ -645,7 +645,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       </div>
       
       {/* Terms and Conditions Page */}
-      <div className="h-[1100px] bg-white p-8 flex flex-col page-container">
+      <div className="h-[1100px] bg-white p-8 flex flex-col page-container" 
+           style={{ pageBreakInside: 'avoid', pageBreakAfter: 'avoid', breakAfter: 'avoid' }}>
         {/* Page Header with Logo */}
         <div className="flex items-start mb-6 border-b border-gray-200 pb-4">
           <div className="logo-container">
