@@ -953,7 +953,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   // Follow-up routes
   app.get("/api/follow-ups/all", async (req, res) => {
     try {
-      const allFollowUps = await storage.getAllFollowUps();
+      const allFollowUps = await storage.getAllFollowUps() || [];
       
       // Enhance follow-ups with user information
       const enhancedFollowUps = await Promise.all(

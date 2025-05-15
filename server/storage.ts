@@ -689,7 +689,12 @@ export class MemStorage implements IStorage {
   // Customer Follow-up operations
   async getAllFollowUps(): Promise<FollowUp[]> {
     return Array.from(this.followUps.values())
-      .sort((a, b) => b.interactionDate.getTime() - a.interactionDate.getTime()); // Most recent first
+      .sort((a, b) => {
+        // Safely handle missing interaction dates
+        const dateA = a.interactionDate?.getTime() || 0;
+        const dateB = b.interactionDate?.getTime() || 0;
+        return dateB - dateA; // Most recent first
+      });
   }
   
   async getFollowUps(customerId: number): Promise<FollowUp[]> {
