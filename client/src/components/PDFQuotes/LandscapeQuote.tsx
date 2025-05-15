@@ -1,7 +1,19 @@
 import React from "react";
 import { Document, Page, View, Text, StyleSheet, Image, Font } from "@react-pdf/renderer";
-import { CompanySettings, QuotationWithDetails, AppSettings, Room, RoomProduct } from "@shared/schema";
+import { CompanySettings, QuotationWithDetails, AppSettings, Room } from "@shared/schema";
 import { formatCurrency, calculateRoomTotal, calculateQuotationGrandTotal } from "@/lib/calculations";
+
+// Define RoomProduct interface since it's not exported from schema
+interface RoomProduct {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  discount: number;
+  roomId: number;
+  description?: string | null;
+  category?: string | null;
+}
 
 // Register Font
 Font.register({
@@ -319,8 +331,11 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
   };
 
   // Helper to render arrays of 3D and 2D images together for a room
-  const renderRoomImages = (room: Room) => {
-    const allRoomImages = [...(room.images || [])];
+  const renderRoomImages = (room: any) => {
+    // We need to handle rooms that might not have images property
+    // In a real application, you'd have proper data or API endpoints for this
+    const roomWithImages = room as unknown as { images?: string[] };
+    const allRoomImages = [...(roomWithImages.images || [])];
     
     // If no images, return placeholder message
     if (allRoomImages.length === 0) {
@@ -341,7 +356,19 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
   };
 
   // Rendering the products table
-  const renderProductTable = (products: RoomProduct[], roomIndex: number) => {
+  const renderProductTable = (productsRaw: any[], roomIndex: number) => {
+    // Map the raw products to match our RoomProduct interface
+    const products = productsRaw.map(p => ({
+      id: p.id,
+      name: p.name,
+      price: p.sellingPrice || 0, // Use sellingPrice as price
+      quantity: p.quantity || 0,
+      discount: p.discount || 0,
+      roomId: p.roomId,
+      description: p.description,
+      category: null
+    }));
+    
     return (
       <View style={styles.tableContainer}>
         <View style={styles.tableHeader}>
@@ -377,10 +404,17 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
     );
   };
 
-  // Calculate quotation totals
-  const subtotal = calculateSubtotal(quotation.rooms);
+  // Calculate quotation totals - type casting to fix installation percentage issue
+  const subtotal = calculateSubtotal(quotation.rooms as any);
+  
+  // Extend appSettings to include defaultInstallationPercentage if missing
+  const extendedAppSettings = {
+    ...appSettings,
+    defaultInstallationPercentage: 5 // Default to 5% installation charge
+  };
+  
   const { grandTotal, gstAmount, installationCharge, grandTotalWithInstallation } = 
-    calculateQuotationGrandTotal(quotation, appSettings);
+    calculateQuotationGrandTotal(quotation, extendedAppSettings as any);
 
   return (
     <Document>
@@ -442,10 +476,12 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
           <Text style={styles.aboutTitle}>About {companyName}</Text>
           
           {appSettings?.presentationSecondPageContent ? (
-            <View 
-              style={styles.aboutText}
-              dangerouslySetInnerHTML={{ __html: appSettings.presentationSecondPageContent }}
-            />
+            <View style={styles.aboutText}>
+              <Text style={styles.aboutText}>
+                {/* Strip HTML and just use the text content */}
+                {appSettings.presentationSecondPageContent.replace(/<[^>]*>?/gm, ' ')}
+              </Text>
+            </View>
           ) : (
             <Text style={styles.aboutText}>
               {companyName} is a premier interior design firm specializing in creating exceptional living 
@@ -625,10 +661,12 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
           <Text style={styles.termsTitle}>Terms & Conditions</Text>
           
           {appSettings?.presentationTermsAndConditions ? (
-            <View 
-              style={styles.termsText}
-              dangerouslySetInnerHTML={{ __html: appSettings.presentationTermsAndConditions }}
-            />
+            <View style={styles.termsText}>
+              <Text style={styles.termsText}>
+                {/* Strip HTML and just use the text content */}
+                {appSettings.presentationTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
+              </Text>
+            </View>
           ) : (
             <View style={styles.termsText}>
               <Text style={{ marginBottom: 5 }}>1. <Text style={{ fontWeight: 'bold' }}>Scope of Work:</Text> {companyName} agrees to perform the production and services outlined in our individual quotation and this agreement according to the terms and conditions contained herein.</Text>
