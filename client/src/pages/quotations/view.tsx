@@ -442,12 +442,13 @@ export default function ViewQuotation() {
             
             <TabsContent value="landscape" className="mt-6">
               <div className="bg-white shadow rounded-lg p-6">
-                <LandscapeQuote 
-                  ref={landscapeQuoteRef}
-                  quotation={quotation} 
-                  companySettings={companySettings}
-                  appSettings={appSettings}
-                />
+                {quotation && companySettings && appSettings && (
+                  <LandscapeQuote 
+                    quotation={quotation} 
+                    companySettings={companySettings}
+                    appSettings={appSettings}
+                  />
+                )}
               </div>
             </TabsContent>
             
