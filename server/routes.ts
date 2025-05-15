@@ -20,6 +20,7 @@ import {
   installationFormSchema as installationChargeFormSchema,
   productAccessoryFormSchema as accessoryFormSchema,
   InsertInvoice,
+  imageTypeEnum,
 } from "@shared/schema";
 
 // Create search filters schema
@@ -1730,7 +1731,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       };
       
       // Save the updated image
-      await storage.images.set(id, updatedImage);
+      await storage.updateImage(id, updatedImage);
       
       res.json(updatedImage);
     } catch (error) {
