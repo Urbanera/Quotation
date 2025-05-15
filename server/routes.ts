@@ -1681,6 +1681,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         roomId,
         path: `/uploads/${req.file.filename}`,
         filename: req.file.filename,
+        type: req.body.type || 'OTHER',
         order: parseInt(req.body.order) || 0
       });
       
@@ -1700,6 +1701,40 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.json(image);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch image" });
+    }
+  });
+
+  app.patch("/api/images/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      
+      // Validate image type if provided
+      if (updates.type && !Object.values(imageTypeEnum.enumValues).includes(updates.type)) {
+        return res.status(400).json({ 
+          message: "Invalid image type", 
+          validTypes: Object.values(imageTypeEnum.enumValues)
+        });
+      }
+      
+      // Get the existing image
+      const existingImage = await storage.getImage(id);
+      if (!existingImage) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+      
+      // Update the image
+      const updatedImage = {
+        ...existingImage,
+        ...updates
+      };
+      
+      // Save the updated image
+      await storage.images.set(id, updatedImage);
+      
+      res.json(updatedImage);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update image" });
     }
   });
 

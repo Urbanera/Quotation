@@ -3,7 +3,15 @@ import { useDropzone } from "react-dropzone";
 import { useMutation } from "@tanstack/react-query";
 import { Image, Upload, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Image as ImageType } from "@shared/schema";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Image as ImageType, imageTypeEnum } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -25,6 +33,9 @@ interface ImageUploadProps {
 export default function ImageUpload({ roomId, images }: ImageUploadProps) {
   const [imageToDelete, setImageToDelete] = useState<ImageType | null>(null);
   const { toast } = useToast();
+  
+  // Get the image type options
+  const imageTypes = Object.values(imageTypeEnum.enumValues);
 
   // Upload image mutation
   const uploadMutation = useMutation({
@@ -56,6 +67,27 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
       toast({
         title: "Error",
         description: `Failed to upload image: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Update image type mutation
+  const updateImageMutation = useMutation({
+    mutationFn: async ({ id, type }: { id: number; type: string }) => {
+      return await apiRequest("PATCH", `/api/images/${id}`, { type });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      toast({
+        title: "Image updated",
+        description: "Image type has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update image: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -137,10 +169,10 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
 
       {images.length > 0 && (
         <div className="mt-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-6">
             {images.map((image) => (
               <div key={image.id} className="relative group">
-                <div className="aspect-w-1 aspect-h-1 rounded-md overflow-hidden bg-gray-100">
+                <div className="aspect-w-1 aspect-h-1 rounded-md overflow-hidden bg-gray-100 mb-2">
                   <img 
                     src={image.path} 
                     alt={image.filename} 
@@ -159,6 +191,28 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
+                </div>
+                <div className="mb-4">
+                  <Label htmlFor={`image-type-${image.id}`} className="mb-1 block text-sm font-medium">
+                    Image Type
+                  </Label>
+                  <Select
+                    value={image.type || 'OTHER'}
+                    onValueChange={(value) => 
+                      updateImageMutation.mutate({ id: image.id, type: value })
+                    }
+                  >
+                    <SelectTrigger id={`image-type-${image.id}`} className="w-full">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {imageTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             ))}

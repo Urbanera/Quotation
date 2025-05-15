@@ -167,11 +167,28 @@ export const insertAccessorySchema = createInsertSchema(accessories).omit({
 });
 
 // Image schema
+export const imageTypeEnum = pgEnum('image_type', [
+  'TOP VIEW 3D',
+  'TOP VIEW 2D',
+  'VIEW 1 3D',
+  'VIEW 1 2D',
+  'VIEW 2 3D',
+  'VIEW 2 2D',
+  'VIEW 3 3D',
+  'VIEW 3 2D',
+  'VIEW 4 3D',
+  'VIEW 4 2D',
+  'WARDROBE 3D',
+  'WARDROBE 2D',
+  'OTHER'
+]);
+
 export const images = pgTable("images", {
   id: serial("id").primaryKey(),
   roomId: integer("room_id").notNull(),
   filename: text("filename").notNull(),
   path: text("path").notNull(),
+  type: imageTypeEnum("type").default('OTHER'),
   order: integer("order").notNull().default(0),
 });
 
