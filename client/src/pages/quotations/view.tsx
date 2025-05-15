@@ -161,11 +161,11 @@ export default function ViewQuotation() {
       
       // Generate PDF for attachment
       let pdfBase64 = null;
+      let filename = `Quotation-${quotation?.quotationNumber || id}`;
       
       if (activeTab === "basic" && basicQuoteRef.current) {
         try {
           // Convert the current PDF to base64
-          const filename = `Quotation-${quotation?.quotationNumber || id}`;
           const blob = await exportToPdf(basicQuoteRef.current, filename, false, true) as Blob;
           pdfBase64 = await new Promise<string>((resolve) => {
             const reader = new FileReader();
@@ -178,7 +178,7 @@ export default function ViewQuotation() {
       } else if (activeTab === "presentation" && presentationQuoteRef.current) {
         try {
           // Convert the current PDF to base64
-          const filename = `Quotation-${quotation?.quotationNumber || id}`;
+          filename = `Presentation-${quotation?.quotationNumber || id}`;
           const blob = await exportToPdf(presentationQuoteRef.current, filename, true, true) as Blob;
           pdfBase64 = await new Promise<string>((resolve) => {
             const reader = new FileReader();
@@ -187,6 +187,31 @@ export default function ViewQuotation() {
           });
         } catch (error) {
           console.error("Error generating PDF:", error);
+        }
+      } else if (activeTab === "landscape") {
+        try {
+          // For landscape format
+          if (!quotation || !companySettings || !appSettings) {
+            throw new Error('Required data not loaded');
+          }
+          
+          filename = `Landscape-${quotation?.quotationNumber || id}`;
+          const LandscapeDocument = (
+            <LandscapeQuote 
+              quotation={quotation} 
+              companySettings={companySettings}
+              appSettings={appSettings}
+            />
+          );
+          
+          const blob = await exportToPdf(LandscapeDocument, filename, false, true) as Blob;
+          pdfBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.error("Error generating landscape PDF:", error);
         }
       }
       
@@ -238,20 +263,44 @@ export default function ViewQuotation() {
     try {
       setIsGeneratingPdf(true);
       
-      // Get the appropriate quote element based on the active tab
-      const quoteElement = activeTab === 'basic' 
-        ? basicQuoteRef.current
-        : presentationQuoteRef.current;
-      
-      if (!quoteElement) {
-        throw new Error('Quote element not found');
+      // Generate the filename based on active tab
+      let filename = `Quotation-${quotation?.quotationNumber || id}`;
+      if (activeTab === 'presentation') {
+        filename = `Presentation-${quotation?.quotationNumber || id}`;
+      } else if (activeTab === 'landscape') {
+        filename = `Landscape-${quotation?.quotationNumber || id}`;
       }
       
-      // Generate the filename
-      const filename = `Quotation-${quotation?.quotationNumber || id}`;
-      
-      // Export to PDF with type information
-      await exportToPdf(quoteElement, filename, activeTab === 'presentation', false);
+      if (activeTab === 'landscape') {
+        // For landscape quotations, we need to create the document first
+        if (!quotation || !companySettings || !appSettings) {
+          throw new Error('Required data not loaded');
+        }
+        
+        // Create landscape document
+        const LandscapeDocument = (
+          <LandscapeQuote 
+            quotation={quotation} 
+            companySettings={companySettings}
+            appSettings={appSettings}
+          />
+        );
+        
+        // Export the landscape format
+        await exportToPdf(LandscapeDocument, filename, false, false);
+      } else {
+        // For basic and presentation formats
+        const quoteElement = activeTab === 'basic' 
+          ? basicQuoteRef.current
+          : presentationQuoteRef.current;
+        
+        if (!quoteElement) {
+          throw new Error('Quote element not found');
+        }
+        
+        // Export to PDF with type information
+        await exportToPdf(quoteElement, filename, activeTab === 'presentation', false);
+      }
       
       toast({
         title: "PDF Generated",

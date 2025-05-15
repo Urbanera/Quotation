@@ -1,22 +1,55 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { ReactNode } from 'react';
+import ReactDOM from 'react-dom';
+import { pdf as reactPdf } from '@react-pdf/renderer';
+
+type ElementType = HTMLElement | ReactNode;
 
 /**
  * A simplified PDF generation approach that works more reliably
- * @param element The HTML element to convert to PDF
+ * @param element The HTML element or React PDF element to convert to PDF
  * @param filename The name of the downloaded file
  * @param isPresentationQuote Whether this is a presentation quote (special handling)
  * @param returnBlob If true, returns the PDF as a Blob instead of saving it
  * @returns Void or Blob depending on returnBlob parameter
  */
 export const exportToPdf = async (
-  element: HTMLElement, 
+  element: ElementType, 
   filename: string, 
   isPresentationQuote: boolean = false,
   returnBlob: boolean = false
 ): Promise<void | Blob> => {
   try {
+    // Check if the element is a React PDF element
+    if (!(element instanceof HTMLElement)) {
+      // Handle React PDF elements
+      try {
+        const pdfDoc = await pdf(element as ReactNode).toBlob();
+        
+        if (returnBlob) {
+          return pdfDoc;
+        } else {
+          // Create a download link for the blob
+          const blobUrl = URL.createObjectURL(pdfDoc);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = `${filename}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+          return;
+        }
+      } catch (reactPdfError) {
+        console.error('Error generating React PDF:', reactPdfError);
+        throw reactPdfError;
+      }
+    }
+    
+    // If we get here, it's an HTML element
     // Create a PDF in A4 format
+    const htmlElement = element as HTMLElement;
     const pdf = new jsPDF('portrait', 'mm', 'a4');
     
     // Get page dimensions
@@ -68,7 +101,7 @@ export const exportToPdf = async (
     `;
     
     // Create a clone to avoid modifying the original
-    const clone = element.cloneNode(true) as HTMLElement;
+    const clone = htmlElement.cloneNode(true) as HTMLElement;
     
     // Apply data attributes to help with PDF generation
     const roomSections = clone.querySelectorAll('.room-section');
