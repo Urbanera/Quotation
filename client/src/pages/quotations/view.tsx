@@ -3,7 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart, FileText as FileInvoice, Mail, Layout } from "lucide-react";
-import { QuotationWithDetails } from "@shared/schema";
+import { QuotationWithDetails, CompanySettings, AppSettings } from "@shared/schema";
 import BasicQuote from "@/components/PDFQuotes/BasicQuote";
 import PresentationQuote from "@/components/PDFQuotes/PresentationQuote";
 import LandscapeQuote from "@/components/PDFQuotes/LandscapeQuote";
@@ -45,6 +45,7 @@ export default function ViewQuotation() {
   const { toast } = useToast();
   const basicQuoteRef = useRef<any>(null);
   const presentationQuoteRef = useRef<any>(null);
+  const landscapeQuoteRef = useRef<any>(null);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
   const [isConvertToInvoiceDialogOpen, setIsConvertToInvoiceDialogOpen] = useState(false);
@@ -55,6 +56,16 @@ export default function ViewQuotation() {
     addWeeks(new Date(), 4)
   );
   const [orderNotes, setOrderNotes] = useState("");
+
+  // Get company settings
+  const { data: companySettings } = useQuery<CompanySettings>({
+    queryKey: ['/api/settings/company'],
+  });
+
+  // Get app settings
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ['/api/settings/app'],
+  });
 
   const { data: quotation, isLoading } = useQuery<QuotationWithDetails>({
     queryKey: [`/api/quotations/${id}/details`],
@@ -432,6 +443,7 @@ export default function ViewQuotation() {
             <TabsContent value="landscape" className="mt-6">
               <div className="bg-white shadow rounded-lg p-6">
                 <LandscapeQuote 
+                  ref={landscapeQuoteRef}
                   quotation={quotation} 
                   companySettings={companySettings}
                   appSettings={appSettings}
