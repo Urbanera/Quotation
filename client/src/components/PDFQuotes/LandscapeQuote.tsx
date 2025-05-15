@@ -8,6 +8,7 @@ const styles = StyleSheet.create({
   page: {
     padding: 30,
     backgroundColor: '#FFFFFF',
+    orientation: 'landscape',
   },
   section: {
     margin: 10,
@@ -206,7 +207,7 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
   return (
     <Document>
       {/* First page - Cover with logo and customer info */}
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
           <Text style={styles.title}>Landscape Quotation</Text>
           
