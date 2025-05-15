@@ -24,7 +24,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ImageUploadProps {
   roomId: number;
@@ -138,7 +137,7 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
     }
   };
 
-  // Handle type change using radio buttons instead of select
+  // Handle type change with dropdown select
   const handleTypeChange = (imageId: number, newType: string) => {
     updateImageMutation.mutate({ id: imageId, type: newType });
   };
@@ -175,7 +174,7 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
 
       {images.length > 0 && (
         <div className="mt-6">
-          <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {images.map((image) => (
               <div key={image.id} className="relative border rounded-lg p-4 bg-white shadow-sm">
                 <div className="relative aspect-w-16 aspect-h-9 rounded-md overflow-hidden bg-gray-100 mb-4">
@@ -195,25 +194,33 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
                   </div>
                 </div>
                 
-                <div className="mb-2">
-                  <Label className="text-sm font-medium mb-2 block">
+                <div className="mb-2 z-50">
+                  <Label htmlFor={`image-type-${image.id}`} className="text-sm font-medium mb-2 block">
                     Image Type
                   </Label>
                   
-                  <RadioGroup 
-                    value={image.type || 'OTHER'} 
-                    onValueChange={(value) => handleTypeChange(image.id, value)}
-                    className="grid grid-cols-2 gap-2"
-                  >
-                    {imageTypes.map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <RadioGroupItem value={type} id={`${image.id}-${type}`} />
-                        <Label htmlFor={`${image.id}-${type}`} className="text-sm">
-                          {type}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  <div className="relative z-50">
+                    <Select
+                      value={image.type || 'OTHER'}
+                      onValueChange={(value) => handleTypeChange(image.id, value)}
+                    >
+                      <SelectTrigger id={`image-type-${image.id}`} className="w-full">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent 
+                        position="popper" 
+                        className="z-[1000] w-[200px]"
+                        align="start"
+                        sideOffset={5}
+                      >
+                        {imageTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             ))}
