@@ -663,29 +663,54 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
         
         {/* Terms and Conditions Content */}
-        <div className="flex-1">
-          <h3 className="text-xl font-bold mb-6 text-[#009245]">Terms & Conditions</h3>
+        <div className="flex-1 overflow-auto" style={{ maxHeight: "calc(100% - 200px)" }}>
+          <h3 className="text-xl font-bold mb-4 text-[#009245]">Terms & Conditions</h3>
           
           {appSettings?.presentationTermsAndConditions ? (
             <div 
-              className="text-sm leading-relaxed text-gray-700"
+              className="text-sm leading-relaxed text-gray-700 terms-container"
+              style={{ fontSize: '10px', fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}
               dangerouslySetInnerHTML={{ __html: appSettings.presentationTermsAndConditions }}
             />
           ) : (
-            <div className="text-sm leading-relaxed text-gray-700">
-              <p className="mb-3">1. <strong>Scope of Work:</strong> {companyName} agrees to perform the production and services outlined in our individual quotation and this agreement according to the terms and conditions contained herein.</p>
-              <p className="mb-3">2. <strong>Quotation Validity:</strong> This quotation is valid for 30 days from the date of issue. Prices and availability of materials are subject to change after this period.</p>
-              <p className="mb-3">3. <strong>Measurement & Design:</strong> All product dimensions and designs are agreed upon in advance. Any changes after production begins may incur additional charges and delay delivery.</p>
-              <p className="mb-3">4. <strong>Payment Terms:</strong> The payment schedule is as follows:<br />
-                • 50% advance upon acceptance of quotation<br />
-                • 40% upon delivery of materials<br />
-                • 10% upon completion of installation</p>
-              <p className="mb-3">5. <strong>Cancellation:</strong> In the event of cancellation after production has begun, the client shall be liable for costs incurred up to the point of cancellation, including materials, labor, and a 15% administration fee.</p>
-              <p className="mb-3">6. <strong>Delivery:</strong> Standard delivery timeline is 6-8 weeks from confirmation of order unless otherwise specified. We're not responsible for delays due to circumstances beyond our control.</p>
-              <p className="mb-3">7. <strong>Site Readiness:</strong> The installation site must be clean, accessible, and with electrical connections available. Additional charges may apply if our team needs to prepare the site.</p>
-              <p className="mb-3">8. <strong>Warranty:</strong> All products come with a 1-year warranty against manufacturing defects. This excludes damage from misuse, normal wear and tear, or unauthorized modifications.</p>
-              <p className="mb-3">9. <strong>Returns & Refunds:</strong> Custom-made products cannot be returned or refunded except in cases of manufacturing defects. Defective items will be repaired or replaced at our discretion.</p>
-              <p className="mb-3">10. <strong>Ownership:</strong> All goods remain the property of {companyName} until payment has been received in full.</p>
+            <div className="text-sm leading-relaxed text-gray-700" style={{ fontSize: '10px', fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}>
+              <ol style={{ listStyleType: 'decimal', paddingLeft: '20px', margin: 0 }}>
+                <li style={{ marginBottom: '8px' }}>
+                  <strong>Scope of Work:</strong> {companyName} agrees to perform the production and services outlined in our individual quotation and this agreement according to the terms and conditions contained herein.
+                </li>
+                <li style={{ marginBottom: '8px' }}>
+                  <strong>Quotation Validity:</strong> This quotation is valid for 30 days from the date of issue. Prices and availability of materials are subject to change after this period.
+                </li>
+                <li style={{ marginBottom: '8px' }}>
+                  <strong>Measurement & Design:</strong> All product dimensions and designs are agreed upon in advance. Any changes after production begins may incur additional charges and delay delivery.
+                </li>
+                <li style={{ marginBottom: '8px' }}>
+                  <strong>Payment Terms:</strong> The payment schedule is as follows:
+                  <ol style={{ listStyleType: 'lower-alpha', paddingLeft: '15px', margin: '4px 0' }}>
+                    <li>50% advance upon acceptance of quotation</li>
+                    <li>40% upon delivery of materials</li>
+                    <li>10% upon completion of installation</li>
+                  </ol>
+                </li>
+                <li style={{ marginBottom: '8px' }}>
+                  <strong>Cancellation:</strong> In the event of cancellation after production has begun, the client shall be liable for costs incurred up to the point of cancellation, including materials, labor, and a 15% administration fee.
+                </li>
+                <li style={{ marginBottom: '8px' }}>
+                  <strong>Delivery:</strong> Standard delivery timeline is 6-8 weeks from confirmation of order unless otherwise specified. We're not responsible for delays due to circumstances beyond our control.
+                </li>
+                <li style={{ marginBottom: '8px' }}>
+                  <strong>Site Readiness:</strong> The installation site must be clean, accessible, and with electrical connections available. Additional charges may apply if our team needs to prepare the site.
+                </li>
+                <li style={{ marginBottom: '8px' }}>
+                  <strong>Warranty:</strong> All products come with a 1-year warranty against manufacturing defects. This excludes damage from misuse, normal wear and tear, or unauthorized modifications.
+                </li>
+                <li style={{ marginBottom: '8px' }}>
+                  <strong>Returns & Refunds:</strong> Custom-made products cannot be returned or refunded except in cases of manufacturing defects. Defective items will be repaired or replaced at our discretion.
+                </li>
+                <li style={{ marginBottom: '8px' }}>
+                  <strong>Ownership:</strong> All goods remain the property of {companyName} until payment has been received in full.
+                </li>
+              </ol>
             </div>
           )}
         </div>
