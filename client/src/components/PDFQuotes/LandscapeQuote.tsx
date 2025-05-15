@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   roomImage: {
-    width: '31%',
+    width: '23%',
     margin: '1%',
     height: 150,
     objectFit: 'cover',
@@ -209,7 +209,7 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
       {/* First page - Cover with logo and customer info */}
       <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
-          <Text style={styles.title}>Landscape Quotation</Text>
+          <Text style={styles.title}>Modular Interior Quotation</Text>
           
           <View style={styles.headerSection}>
             <View style={styles.logoSection}>
@@ -314,7 +314,7 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
       
       {/* Room image pages - one page per room */}
       {quotation.rooms.map((room, roomIndex) => (
-        <Page key={roomIndex} size="A4" style={styles.page}>
+        <Page key={roomIndex} size="A4" orientation="landscape" style={styles.page}>
           <View style={styles.section}>
             <View style={styles.headerSection}>
               <View style={styles.logoSection}>
@@ -453,7 +453,7 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
       </Page>
       
       {/* Terms and conditions page */}
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
           <View style={styles.headerSection}>
             <View style={styles.logoSection}>
