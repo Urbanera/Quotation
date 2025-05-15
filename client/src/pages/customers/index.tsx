@@ -173,7 +173,10 @@ export default function CustomersList() {
     yesterday.setDate(yesterday.getDate() - 1);
     
     // Get all pending follow-ups (not completed)
-    const pendingFollowUps = allFollowUps.filter(f => !f.completed && !!f.nextFollowUpDate);
+    // Make sure allFollowUps is an array before filtering
+    const pendingFollowUps = Array.isArray(allFollowUps) 
+      ? allFollowUps.filter(f => !f.completed && !!f.nextFollowUpDate)
+      : [];
     
     // For each customer, find the earliest pending follow-up
     const customerFollowUps = new Map<number, FollowUp>();
