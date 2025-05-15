@@ -378,64 +378,77 @@ export function AppSettingsForm() {
                           type="button" 
                           variant="outline"
                           onClick={() => {
-                            const templateHTML = `<div style="padding: 20px; font-family: Arial, sans-serif;">
-  <h2 style="color: #009245; margin-bottom: 20px; font-size: 24px;">Our Features</h2>
-  
-  <div style="display: flex; align-items: center; margin-bottom: 25px;">
-    <div style="margin-right: 15px; width: 60px; height: 60px;">
-      <img src="/attached_assets/Picture1.png" alt="Quality" style="width: 100%; height: 100%;" />
-    </div>
-    <div>
-      <h3 style="margin: 0 0 5px 0; font-size: 18px;">Best Quality Materials</h3>
-      <p style="margin: 0; color: #555;">Premium raw materials and fittings to ensure durability and elegance.</p>
-    </div>
-  </div>
-  
-  <div style="display: flex; align-items: center; margin-bottom: 25px;">
-    <div style="margin-right: 15px; width: 60px; height: 60px;">
-      <img src="/attached_assets/Picture2.png" alt="Delivery" style="width: 100%; height: 100%;" />
-    </div>
-    <div>
-      <h3 style="margin: 0 0 5px 0; font-size: 18px;">Fast Delivery</h3>
-      <p style="margin: 0; color: #555;">Prompt project execution with strict timeline adherence.</p>
-    </div>
-  </div>
-  
-  <div style="display: flex; align-items: center; margin-bottom: 25px;">
-    <div style="margin-right: 15px; width: 60px; height: 60px;">
-      <img src="/attached_assets/Picture3.png" alt="Installation" style="width: 100%; height: 100%;" />
-    </div>
-    <div>
-      <h3 style="margin: 0 0 5px 0; font-size: 18px;">Hassle-Free Installation</h3>
-      <p style="margin: 0; color: #555;">Expert installation team ensures minimal disruption to your routine.</p>
-    </div>
-  </div>
-  
-  <div style="display: flex; align-items: center; margin-bottom: 25px;">
-    <div style="margin-right: 15px; width: 60px; height: 60px;">
-      <img src="/attached_assets/Picture5.png" alt="Eco-Friendly" style="width: 100%; height: 100%;" />
-    </div>
-    <div>
-      <h3 style="margin: 0 0 5px 0; font-size: 18px;">Eco-Friendly Options</h3>
-      <p style="margin: 0; color: #555;">Sustainable materials that care for both your home and the environment.</p>
-    </div>
-  </div>
-  
-  <div style="margin-top: 40px; border-left: 4px solid #009245; padding-left: 15px;">
-    <h2 style="color: #009245; margin-bottom: 20px; font-size: 24px;">What Our Clients Say</h2>
+                            const templateHTML = `<div style="padding: 0; font-family: Arial, sans-serif;">
+  <!-- Page Content -->
+  <div style="margin-bottom: 40px; padding: 0 40px;">
+    <h2 style="color: #009245; margin-bottom: 30px; font-size: 24px;">Our Features</h2>
     
-    <div style="display: flex; align-items: center; margin-bottom: 15px;">
-      <div style="margin-right: 10px; display: flex; align-items: center;">
+    <div style="display: flex; margin-bottom: 30px;">
+      <div style="margin-right: 20px; min-width: 60px; display: flex; justify-content: center; align-items: center;">
+        <img src="/attached_assets/Picture1.png" alt="Quality" style="max-width: 60px; max-height: 60px;" />
+      </div>
+      <div>
+        <h3 style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold;">Best Quality Materials</h3>
+        <p style="margin: 0; color: #555; font-size: 14px;">Premium raw materials and fittings to ensure durability and elegance.</p>
+      </div>
+    </div>
+    
+    <div style="display: flex; margin-bottom: 30px;">
+      <div style="margin-right: 20px; min-width: 60px; display: flex; justify-content: center; align-items: center;">
+        <img src="/attached_assets/Picture2.png" alt="Delivery" style="max-width: 60px; max-height: 60px;" />
+      </div>
+      <div>
+        <h3 style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold;">Fast Delivery</h3>
+        <p style="margin: 0; color: #555; font-size: 14px;">Prompt project execution with strict timeline adherence.</p>
+      </div>
+    </div>
+    
+    <div style="display: flex; margin-bottom: 30px;">
+      <div style="margin-right: 20px; min-width: 60px; display: flex; justify-content: center; align-items: center;">
+        <img src="/attached_assets/Picture3.png" alt="Installation" style="max-width: 60px; max-height: 60px;" />
+      </div>
+      <div>
+        <h3 style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold;">Hassle-Free Installation</h3>
+        <p style="margin: 0; color: #555; font-size: 14px;">Expert installation team ensures minimal disruption to your routine.</p>
+      </div>
+    </div>
+    
+    <div style="display: flex; margin-bottom: 30px;">
+      <div style="margin-right: 20px; min-width: 60px; display: flex; justify-content: center; align-items: center;">
+        <img src="/attached_assets/Picture5.png" alt="Eco-Friendly" style="max-width: 60px; max-height: 60px;" />
+      </div>
+      <div>
+        <h3 style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold;">Eco-Friendly Options</h3>
+        <p style="margin: 0; color: #555; font-size: 14px;">Sustainable materials that care for both your home and the environment.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- What Our Clients Say Section -->  
+  <div style="margin: 40px 0; padding: 0 40px;">
+    <div style="border-left: 4px solid #009245; padding-left: 20px;">
+      <h2 style="color: #009245; margin-bottom: 15px; font-size: 24px;">What Our Clients Say</h2>
+      
+      <div style="display: flex; align-items: center; margin-bottom: 15px;">
         <img src="/attached_assets/Picture1.png" alt="Quality Badge" style="width: 40px; height: 40px;" />
         <img src="/attached_assets/Picture2.png" alt="Delivery Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
         <img src="/attached_assets/Picture3.png" alt="Installation Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
         <img src="/attached_assets/Picture5.png" alt="Eco Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
         <img src="/attached_assets/Picture6.png" alt="EMI Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
       </div>
+      
+      <p style="font-style: italic; color: #555; font-size: 14px;">"Their attention to detail and quality exceeded my expectations. Our kitchen renovation was completed on time and looks amazing!"</p>
+      <p style="font-weight: bold; font-size: 14px;">- Satisfied Client</p>
     </div>
-    
-    <p style="font-style: italic; color: #555;">"Their attention to detail and quality exceeded my expectations. Our kitchen renovation was completed on time and looks amazing!"</p>
-    <p style="font-weight: bold;">- Satisfied Client</p>
+  </div>
+  
+  <!-- Footer Icons Row - Will be displayed at the bottom of the page -->
+  <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 60px; padding: 0 40px;">
+    <img src="/attached_assets/Picture1.png" alt="Quality Badge" style="width: 50px; height: 50px;" />
+    <img src="/attached_assets/Picture2.png" alt="Delivery Badge" style="width: 50px; height: 50px;" />
+    <img src="/attached_assets/Picture3.png" alt="Installation Badge" style="width: 50px; height: 50px;" />
+    <img src="/attached_assets/Picture5.png" alt="Eco Badge" style="width: 50px; height: 50px;" />
+    <img src="/attached_assets/Picture6.png" alt="EMI Badge" style="width: 50px; height: 50px;" />
   </div>
 </div>`;
                             

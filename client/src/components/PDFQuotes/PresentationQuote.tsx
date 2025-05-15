@@ -178,12 +178,64 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               dangerouslySetInnerHTML={{ __html: appSettings.presentationSecondPageContent }}
             />
           ) : (
-            <div>
-              <h2 className="text-2xl font-bold text-[#009245] mb-4">About Us</h2>
-              <p className="text-gray-700 leading-relaxed">
-                {`${companyName} specializes in creating elegant, functional interior spaces tailored to your unique lifestyle and preferences. Our team of skilled designers and craftsmen work closely with you to transform your vision into reality, ensuring every detail is perfect.`}
-              </p>
-            </div>
+            <>
+              <div>
+                <h2 className="text-2xl font-bold text-[#009245] mb-4">Our Features</h2>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="feature-item flex items-start">
+                    <div className="feature-icon mr-4">
+                      <img src={bestQualityImg} alt="Best Quality Materials" className="w-16 h-16 object-contain" />
+                    </div>
+                    <div className="feature-text">
+                      <h3 className="text-lg font-bold text-gray-800">Best Quality Materials</h3>
+                      <p className="text-gray-600">Premium raw materials and fittings to ensure durability and elegance.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="feature-item flex items-start">
+                    <div className="feature-icon mr-4">
+                      <img src={fastDeliveryImg} alt="Fast Delivery" className="w-16 h-16 object-contain" />
+                    </div>
+                    <div className="feature-text">
+                      <h3 className="text-lg font-bold text-gray-800">Fast Delivery</h3>
+                      <p className="text-gray-600">Prompt project execution with strict timeline adherence.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="feature-item flex items-start">
+                    <div className="feature-icon mr-4">
+                      <img src={hassleFreeImg} alt="Hassle-Free Installation" className="w-16 h-16 object-contain" />
+                    </div>
+                    <div className="feature-text">
+                      <h3 className="text-lg font-bold text-gray-800">Hassle-Free Installation</h3>
+                      <p className="text-gray-600">Expert installation team ensures minimal disruption to your routine.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="feature-item flex items-start">
+                    <div className="feature-icon mr-4">
+                      <img src={ecoFriendlyImg} alt="Eco-Friendly Options" className="w-16 h-16 object-contain" />
+                    </div>
+                    <div className="feature-text">
+                      <h3 className="text-lg font-bold text-gray-800">Eco-Friendly Options</h3>
+                      <p className="text-gray-600">Sustainable materials that care for both your home and the environment.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Client Testimonial */}
+              <div className="mt-8">
+                <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-[#009245]">
+                  <h2 className="text-xl font-bold text-[#009245] mb-2">What Our Clients Say</h2>
+                  <p className="text-gray-700 italic">
+                    "The team's attention to detail and commitment to quality exceeded our expectations. Our home has been completely transformed!"
+                  </p>
+                  <p className="text-gray-600 mt-2">- Recent Client</p>
+                </div>
+              </div>
+            </>
           )}
         </div>
         
@@ -199,80 +251,24 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           </div>
         </div>
         
-        {/* Our Features */}
-        <div className="px-10 mb-8">
-          <h2 className="text-2xl font-bold text-[#009245] mb-4">Our Features</h2>
-          
-          <div className="grid grid-cols-2 gap-6">
-            <div className="feature-item flex items-start">
-              <div className="feature-icon mr-4">
-                <img src={bestQualityImg} alt="Best Quality Materials" className="w-16 h-16 object-contain" />
-              </div>
-              <div className="feature-text">
-                <h3 className="text-lg font-bold text-gray-800">Best Quality Materials</h3>
-                <p className="text-gray-600">Premium raw materials and fittings to ensure durability and elegance.</p>
-              </div>
-            </div>
-            
-            <div className="feature-item flex items-start">
-              <div className="feature-icon mr-4">
-                <img src={fastDeliveryImg} alt="Fast Delivery" className="w-16 h-16 object-contain" />
-              </div>
-              <div className="feature-text">
-                <h3 className="text-lg font-bold text-gray-800">Fast Delivery</h3>
-                <p className="text-gray-600">Prompt project execution with strict timeline adherence.</p>
-              </div>
-            </div>
-            
-            <div className="feature-item flex items-start">
-              <div className="feature-icon mr-4">
-                <img src={hassleFreeImg} alt="Hassle-Free Installation" className="w-16 h-16 object-contain" />
-              </div>
-              <div className="feature-text">
-                <h3 className="text-lg font-bold text-gray-800">Hassle-Free Installation</h3>
-                <p className="text-gray-600">Expert installation team ensures minimal disruption to your routine.</p>
-              </div>
-            </div>
-            
-            <div className="feature-item flex items-start">
-              <div className="feature-icon mr-4">
-                <img src={ecoFriendlyImg} alt="Eco-Friendly Options" className="w-16 h-16 object-contain" />
-              </div>
-              <div className="feature-text">
-                <h3 className="text-lg font-bold text-gray-800">Eco-Friendly Options</h3>
-                <p className="text-gray-600">Sustainable materials that care for both your home and the environment.</p>
-              </div>
+        {/* Feature icons in a row - only show when not using custom content */}
+        {!appSettings?.presentationSecondPageContent && (
+          <div style={{ 
+            position: 'absolute', 
+            bottom: '60px', 
+            left: 0, 
+            right: 0,
+            padding: '0 10px'
+          }}>
+            <div className="flex justify-around items-center">
+              <img src={bestQualityImg} alt="Best Quality" className="h-14 object-contain" />
+              <img src={fastDeliveryImg} alt="Fast Delivery" className="h-14 object-contain" />
+              <img src={hassleFreeImg} alt="Hassle-Free" className="h-14 object-contain" />
+              <img src={ecoFriendlyImg} alt="Eco-Friendly" className="h-14 object-contain" />
+              <img src={emiAvailableImg} alt="EMI Available" className="h-14 object-contain" />
             </div>
           </div>
-        </div>
-        
-        {/* Client Testimonial */}
-        <div className="px-10 mb-8">
-          <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-[#009245]">
-            <h2 className="text-xl font-bold text-[#009245] mb-2">What Our Clients Say</h2>
-            <p className="text-gray-700 italic">
-              "The team's attention to detail and commitment to quality exceeded our expectations. Our home has been completely transformed!"
-            </p>
-            <p className="text-gray-600 mt-2">- Recent Client</p>
-          </div>
-        </div>
-        
-        {/* Feature icons in a row */}
-        <div style={{ 
-          position: 'absolute', 
-          bottom: '60px', 
-          left: 0, 
-          right: 0,
-          padding: '0 10px'
-        }}>
-          <div className="flex justify-around items-center">
-            <img src={bestQualityImg} alt="Best Quality" className="h-14 object-contain" />
-            <img src={fastDeliveryImg} alt="Fast Delivery" className="h-14 object-contain" />
-            <img src={hassleFreeImg} alt="Hassle-Free" className="h-14 object-contain" />
-            <img src={ecoFriendlyImg} alt="Eco-Friendly" className="h-14 object-contain" />
-            <img src={emiAvailableImg} alt="EMI Available" className="h-14 object-contain" />
-          </div>
-        </div>
+        )}
         
         {/* Footer */}
         <div className="bg-[#009245] text-white p-4 text-center" style={{ 
