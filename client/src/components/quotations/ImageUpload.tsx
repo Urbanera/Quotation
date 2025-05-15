@@ -169,7 +169,7 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
 
       {images.length > 0 && (
         <div className="mt-4">
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {images.map((image) => (
               <div key={image.id} className="relative group">
                 <div className="aspect-w-1 aspect-h-1 rounded-md overflow-hidden bg-gray-100 mb-2">
@@ -192,7 +192,7 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
                     </Button>
                   </div>
                 </div>
-                <div className="mb-4">
+                <div className="mb-4 relative">
                   <Label htmlFor={`image-type-${image.id}`} className="mb-1 block text-sm font-medium">
                     Image Type
                   </Label>
@@ -205,7 +205,12 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
                     <SelectTrigger id={`image-type-${image.id}`} className="w-full">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent 
+                      position="popper" 
+                      sideOffset={5}
+                      className="z-[100] overflow-auto max-h-[300px] w-fit min-w-[200px]"
+                      align="start"
+                    >
                       {imageTypes.map((type) => (
                         <SelectItem key={type} value={type}>
                           {type}
