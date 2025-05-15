@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ImageUploadProps {
   roomId: number;
@@ -137,6 +138,11 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
     }
   };
 
+  // Handle type change using radio buttons instead of select
+  const handleTypeChange = (imageId: number, newType: string) => {
+    updateImageMutation.mutate({ id: imageId, type: newType });
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -168,56 +174,46 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
       </div>
 
       {images.length > 0 && (
-        <div className="mt-4">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mt-6">
+          <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-8">
             {images.map((image) => (
-              <div key={image.id} className="relative group">
-                <div className="aspect-w-1 aspect-h-1 rounded-md overflow-hidden bg-gray-100 mb-2">
+              <div key={image.id} className="relative border rounded-lg p-4 bg-white shadow-sm">
+                <div className="relative aspect-w-16 aspect-h-9 rounded-md overflow-hidden bg-gray-100 mb-4">
                   <img 
                     src={image.path} 
                     alt={image.filename} 
-                    className="object-cover w-full h-full"
+                    className="object-contain w-full h-full"
                   />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center">
+                  <div className="absolute top-2 right-2">
                     <Button 
                       variant="destructive" 
-                      size="sm" 
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImageToDelete(image);
-                      }}
+                      size="sm"
+                      onClick={() => setImageToDelete(image)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-                <div className="mb-4 relative">
-                  <Label htmlFor={`image-type-${image.id}`} className="mb-1 block text-sm font-medium">
+                
+                <div className="mb-2">
+                  <Label className="text-sm font-medium mb-2 block">
                     Image Type
                   </Label>
-                  <Select
-                    value={image.type || 'OTHER'}
-                    onValueChange={(value) => 
-                      updateImageMutation.mutate({ id: image.id, type: value })
-                    }
+                  
+                  <RadioGroup 
+                    value={image.type || 'OTHER'} 
+                    onValueChange={(value) => handleTypeChange(image.id, value)}
+                    className="grid grid-cols-2 gap-2"
                   >
-                    <SelectTrigger id={`image-type-${image.id}`} className="w-full">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent 
-                      position="popper" 
-                      sideOffset={5}
-                      className="z-[100] overflow-auto max-h-[300px] w-fit min-w-[200px]"
-                      align="start"
-                    >
-                      {imageTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
+                    {imageTypes.map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <RadioGroupItem value={type} id={`${image.id}-${type}`} />
+                        <Label htmlFor={`${image.id}-${type}`} className="text-sm">
                           {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
                 </div>
               </div>
             ))}

@@ -1710,8 +1710,12 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const updates = req.body;
       
+      console.log(`Updating image ${id} with:`, updates);
+      
       // Validate image type if provided
       if (updates.type && !Object.values(imageTypeEnum.enumValues).includes(updates.type)) {
+        console.log("Invalid image type:", updates.type);
+        console.log("Valid types:", Object.values(imageTypeEnum.enumValues));
         return res.status(400).json({ 
           message: "Invalid image type", 
           validTypes: Object.values(imageTypeEnum.enumValues)
@@ -1721,8 +1725,11 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       // Get the existing image
       const existingImage = await storage.getImage(id);
       if (!existingImage) {
+        console.log(`Image with id ${id} not found`);
         return res.status(404).json({ message: "Image not found" });
       }
+      
+      console.log("Existing image:", existingImage);
       
       // Update the image
       const updatedImage = {
@@ -1730,11 +1737,20 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         ...updates
       };
       
+      console.log("Updated image:", updatedImage);
+      
       // Save the updated image
-      await storage.updateImage(id, updatedImage);
+      const result = await storage.updateImage(id, updatedImage);
+      
+      console.log("Update result:", result);
+      
+      if (!result) {
+        return res.status(500).json({ message: "Failed to update image in storage" });
+      }
       
       res.json(updatedImage);
     } catch (error) {
+      console.error("Error updating image:", error);
       res.status(500).json({ message: "Failed to update image" });
     }
   });

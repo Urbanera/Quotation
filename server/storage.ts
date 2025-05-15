@@ -2206,11 +2206,29 @@ export class MemStorage implements IStorage {
   }
   
   async updateImage(id: number, image: Image): Promise<boolean> {
+    console.log(`Trying to update image with id ${id}`);
+    console.log("Has image?", this.images.has(id));
+    
     if (!this.images.has(id)) {
+      console.log("Image not found in map");
       return false;
     }
-    this.images.set(id, image);
-    return true;
+    
+    try {
+      this.images.set(id, { 
+        id,
+        roomId: image.roomId,
+        filename: image.filename,
+        path: image.path,
+        type: image.type,
+        order: image.order
+      });
+      console.log("Image updated successfully");
+      return true;
+    } catch (error) {
+      console.error("Error updating image:", error);
+      return false;
+    }
   }
   
   async createImage(image: InsertImage): Promise<Image> {
