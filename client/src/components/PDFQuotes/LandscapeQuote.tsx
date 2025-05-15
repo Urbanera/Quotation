@@ -1,6 +1,7 @@
 import React from "react";
 import { Document, Page, View, Text, StyleSheet, Image } from "@react-pdf/renderer";
 import { CompanySettings, QuotationWithDetails, AppSettings } from "@shared/schema";
+import { formatCurrency } from "@/lib/calculations";
 
 // Create styles
 const styles = StyleSheet.create({
