@@ -14,6 +14,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+// Import the same assets used in the PDF component
+import bestQualityImg from "@assets/Picture1.png";
+import fastDeliveryImg from "@assets/Picture2.png";
+import hassleFreeImg from "@assets/Picture3.png";
+import ecoFriendlyImg from "@assets/Picture5.png";
+import emiAvailableImg from "@assets/Picture6.png";
+
 import {
   Form,
   FormControl,
@@ -27,6 +34,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -369,23 +383,49 @@ export function AppSettingsForm() {
                           value={field.value || ""}
                         />
                       </FormControl>
-                      <FormDescription className="mb-2">
-                        This content will appear on the second page of all presentation quotations. You can use HTML formatting to style the content. 
-                        The content should fit on a single A4 page. This page will appear after the cover page and before the room details.
+                      <FormDescription className="mb-2 flex items-start gap-1">
+                        <span>
+                          This content will appear on the second page of all presentation quotations. You can use HTML formatting to style the content. 
+                          The content should fit on a single A4 page. This page will appear after the cover page and before the room details.
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-muted-foreground">
+                                <Info className="h-4 w-4" />
+                                <span className="sr-only">More information</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-96 p-4">
+                              <div className="space-y-2 text-xs">
+                                <p><strong>Tip:</strong> If you want to modify this template later, you can:</p>
+                                <ol className="list-decimal pl-4 space-y-1">
+                                  <li>Click "Insert Template" to get the base HTML</li>
+                                  <li>The template uses image variables like <code>${'${bestQualityImg}'}</code> which will be replaced with actual images</li>
+                                  <li>You can edit the text, styling, and layout as needed</li>
+                                  <li>Use "Preview Content" to check how it will look</li>
+                                </ol>
+                                <p>The images, colors, and layout should match your brand guidelines.</p>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </FormDescription>
                       <div className="flex space-x-2 mb-2">
                         <Button 
                           type="button" 
                           variant="outline"
                           onClick={() => {
-                            const templateHTML = `<div style="padding: 0; font-family: Arial, sans-serif;">
+                            // Create the HTML template with dynamically inserted image URLs
+                          const createFeatureSectionHTML = () => {
+                            return `<div style="padding: 0; font-family: Arial, sans-serif;">
   <!-- Page Content -->
   <div style="margin-bottom: 40px; padding: 0 40px;">
     <h2 style="color: #009245; margin-bottom: 30px; font-size: 24px;">Our Features</h2>
     
     <div style="display: flex; margin-bottom: 30px;">
       <div style="margin-right: 20px; min-width: 60px; display: flex; justify-content: center; align-items: center;">
-        <img src="/attached_assets/Picture1.png" alt="Quality" style="max-width: 60px; max-height: 60px;" />
+        <img src="${bestQualityImg}" alt="Quality" style="max-width: 60px; max-height: 60px;" />
       </div>
       <div>
         <h3 style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold;">Best Quality Materials</h3>
@@ -395,7 +435,7 @@ export function AppSettingsForm() {
     
     <div style="display: flex; margin-bottom: 30px;">
       <div style="margin-right: 20px; min-width: 60px; display: flex; justify-content: center; align-items: center;">
-        <img src="/attached_assets/Picture2.png" alt="Delivery" style="max-width: 60px; max-height: 60px;" />
+        <img src="${fastDeliveryImg}" alt="Delivery" style="max-width: 60px; max-height: 60px;" />
       </div>
       <div>
         <h3 style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold;">Fast Delivery</h3>
@@ -405,7 +445,7 @@ export function AppSettingsForm() {
     
     <div style="display: flex; margin-bottom: 30px;">
       <div style="margin-right: 20px; min-width: 60px; display: flex; justify-content: center; align-items: center;">
-        <img src="/attached_assets/Picture3.png" alt="Installation" style="max-width: 60px; max-height: 60px;" />
+        <img src="${hassleFreeImg}" alt="Installation" style="max-width: 60px; max-height: 60px;" />
       </div>
       <div>
         <h3 style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold;">Hassle-Free Installation</h3>
@@ -415,7 +455,7 @@ export function AppSettingsForm() {
     
     <div style="display: flex; margin-bottom: 30px;">
       <div style="margin-right: 20px; min-width: 60px; display: flex; justify-content: center; align-items: center;">
-        <img src="/attached_assets/Picture5.png" alt="Eco-Friendly" style="max-width: 60px; max-height: 60px;" />
+        <img src="${ecoFriendlyImg}" alt="Eco-Friendly" style="max-width: 60px; max-height: 60px;" />
       </div>
       <div>
         <h3 style="margin: 0 0 5px 0; font-size: 18px; font-weight: bold;">Eco-Friendly Options</h3>
@@ -430,11 +470,11 @@ export function AppSettingsForm() {
       <h2 style="color: #009245; margin-bottom: 15px; font-size: 24px;">What Our Clients Say</h2>
       
       <div style="display: flex; align-items: center; margin-bottom: 15px;">
-        <img src="/attached_assets/Picture1.png" alt="Quality Badge" style="width: 40px; height: 40px;" />
-        <img src="/attached_assets/Picture2.png" alt="Delivery Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
-        <img src="/attached_assets/Picture3.png" alt="Installation Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
-        <img src="/attached_assets/Picture5.png" alt="Eco Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
-        <img src="/attached_assets/Picture6.png" alt="EMI Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
+        <img src="${bestQualityImg}" alt="Quality Badge" style="width: 40px; height: 40px;" />
+        <img src="${fastDeliveryImg}" alt="Delivery Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
+        <img src="${hassleFreeImg}" alt="Installation Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
+        <img src="${ecoFriendlyImg}" alt="Eco Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
+        <img src="${emiAvailableImg}" alt="EMI Badge" style="width: 40px; height: 40px; margin-left: 10px;" />
       </div>
       
       <p style="font-style: italic; color: #555; font-size: 14px;">"Their attention to detail and quality exceeded my expectations. Our kitchen renovation was completed on time and looks amazing!"</p>
@@ -444,13 +484,17 @@ export function AppSettingsForm() {
   
   <!-- Footer Icons Row - Will be displayed at the bottom of the page -->
   <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 60px; padding: 0 40px;">
-    <img src="/attached_assets/Picture1.png" alt="Quality Badge" style="width: 50px; height: 50px;" />
-    <img src="/attached_assets/Picture2.png" alt="Delivery Badge" style="width: 50px; height: 50px;" />
-    <img src="/attached_assets/Picture3.png" alt="Installation Badge" style="width: 50px; height: 50px;" />
-    <img src="/attached_assets/Picture5.png" alt="Eco Badge" style="width: 50px; height: 50px;" />
-    <img src="/attached_assets/Picture6.png" alt="EMI Badge" style="width: 50px; height: 50px;" />
+    <img src="${bestQualityImg}" alt="Quality Badge" style="width: 50px; height: 50px;" />
+    <img src="${fastDeliveryImg}" alt="Delivery Badge" style="width: 50px; height: 50px;" />
+    <img src="${hassleFreeImg}" alt="Installation Badge" style="width: 50px; height: 50px;" />
+    <img src="${ecoFriendlyImg}" alt="Eco Badge" style="width: 50px; height: 50px;" />
+    <img src="${emiAvailableImg}" alt="EMI Badge" style="width: 50px; height: 50px;" />
   </div>
 </div>`;
+                          };
+                          
+                          // Generate the template with the actual image URLs
+                          const templateHTML = createFeatureSectionHTML();
                             
                             field.onChange(templateHTML);
                           }}
@@ -484,7 +528,13 @@ export function AppSettingsForm() {
                                   padding: "20px",
                                   backgroundColor: "white"
                                 }}
-                                dangerouslySetInnerHTML={{ __html: field.value || "" }}
+                                dangerouslySetInnerHTML={{ 
+                                  __html: field.value?.replace(/\${bestQualityImg}/g, bestQualityImg)
+                                    .replace(/\${fastDeliveryImg}/g, fastDeliveryImg)
+                                    .replace(/\${hassleFreeImg}/g, hassleFreeImg)
+                                    .replace(/\${ecoFriendlyImg}/g, ecoFriendlyImg)
+                                    .replace(/\${emiAvailableImg}/g, emiAvailableImg) || "" 
+                                }}
                               />
                             </div>
                           </DialogContent>

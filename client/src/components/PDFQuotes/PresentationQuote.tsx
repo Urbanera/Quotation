@@ -175,7 +175,14 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           {appSettings?.presentationSecondPageContent ? (
             <div
               className="text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: appSettings.presentationSecondPageContent }}
+              dangerouslySetInnerHTML={{ 
+                __html: appSettings.presentationSecondPageContent
+                  .replace(/\${bestQualityImg}/g, bestQualityImg)
+                  .replace(/\${fastDeliveryImg}/g, fastDeliveryImg)
+                  .replace(/\${hassleFreeImg}/g, hassleFreeImg)
+                  .replace(/\${ecoFriendlyImg}/g, ecoFriendlyImg)
+                  .replace(/\${emiAvailableImg}/g, emiAvailableImg)
+              }}
             />
           ) : (
             <>
