@@ -2166,13 +2166,51 @@ export class MemStorage implements IStorage {
   
   // Image operations
   async getImages(roomId: number): Promise<Image[]> {
+    // Define the priority ordering of image types
+    const typeOrderPriority: Record<string, number> = {
+      'TOP VIEW 3D': 1,
+      'TOP VIEW 2D': 2,
+      'VIEW 1 3D': 3,
+      'VIEW 1 2D': 4,
+      'VIEW 2 3D': 5,
+      'VIEW 2 2D': 6,
+      'VIEW 3 3D': 7,
+      'VIEW 3 2D': 8,
+      'VIEW 4 3D': 9,
+      'VIEW 4 2D': 10,
+      'WARDROBE 3D': 11,
+      'WARDROBE 2D': 12,
+      'OTHER': 13,
+      // If type is null, put it at the end
+      'null': 14
+    };
+
     return Array.from(this.images.values())
       .filter(image => image.roomId === roomId)
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => {
+        // First sort by type priority
+        const aTypePriority = typeOrderPriority[a.type || 'null'] || 999;
+        const bTypePriority = typeOrderPriority[b.type || 'null'] || 999;
+        
+        if (aTypePriority !== bTypePriority) {
+          return aTypePriority - bTypePriority;
+        }
+        
+        // If same type, then sort by order field
+        return a.order - b.order;
+      });
   }
   
   async getImage(id: number): Promise<Image | undefined> {
     return this.images.get(id);
+  }
+  
+  async updateImage(id: number, image: Image): Promise<boolean> {
+    if (!this.images.has(id)) {
+      return false;
+    }
+    this.images.set(id, image);
+    return true;
   }
   
   async createImage(image: InsertImage): Promise<Image> {
@@ -2189,6 +2227,7 @@ export class MemStorage implements IStorage {
       roomId: image.roomId,
       filename: image.filename,
       path: image.path,
+      type: image.type || null,
       order: image.order ?? maxOrder + 1
     };
     this.images.set(id, newImage);
