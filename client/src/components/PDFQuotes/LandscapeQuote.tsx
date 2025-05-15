@@ -340,7 +340,7 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
                 room.images.map((image, imageIndex) => (
                   <Image 
                     key={imageIndex}
-                    src={image.path}
+                    src={typeof image === 'string' ? image : image.path}
                     style={styles.roomImage}
                   />
                 ))

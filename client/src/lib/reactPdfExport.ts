@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
 import { pdf } from '@react-pdf/renderer';
-import { Document } from '@react-pdf/renderer';
+import { Document, PDFDownloadLink } from '@react-pdf/renderer';
 
 /**
  * Export a React-PDF Document element to PDF
