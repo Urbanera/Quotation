@@ -1622,9 +1622,8 @@ export class MemStorage implements IStorage {
     const roomAccessories = Array.from(this.accessories.values())
       .filter(accessory => accessory.roomId === id);
     
-    const roomImages = Array.from(this.images.values())
-      .filter(image => image.roomId === id)
-      .sort((a, b) => a.order - b.order);
+    // Get images and sort them by type priority first, then by order
+    const roomImages = await this.getImages(id);
     
     const roomInstallationCharges = Array.from(this.installationCharges.values())
       .filter(charge => charge.roomId === id);
