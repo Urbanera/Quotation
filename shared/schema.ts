@@ -348,6 +348,7 @@ export const appSettingsFormSchema = z.object({
   defaultTermsAndConditions: z.string().optional().or(z.literal("")),
   receiptTermsAndConditions: z.string().optional().or(z.literal("")),
   presentationTermsAndConditions: z.string().optional().or(z.literal("")),
+  presentationSecondPageContent: z.string().optional().or(z.literal("")),
   quotationTemplateId: z.string().default("default"),
   presentationTemplateId: z.string().default("default"),
   requiredAccessories: z.string().default("skirting,handles,sliding mechanism,t profile")
