@@ -445,10 +445,13 @@ export const quotationFormSchema = z.object({
 export const customerFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(8, "Phone number must be at least 8 digits"),
+  phone: z.string()
+    .min(10, "Phone number must be exactly 10 digits")
+    .max(10, "Phone number must be exactly 10 digits")
+    .regex(/^\d{10}$/, "Phone number must contain only digits"),
   address: z.string().min(1, "Address is required"),
   gstNumber: z.string().optional(),
-  leadSource: z.string().optional(),
+  leadSource: z.string().min(1, "Lead source is required"),
   stage: z.enum(['new', 'pipeline', 'cold', 'warm', 'booked', 'lost']).default('new'),
 });
 

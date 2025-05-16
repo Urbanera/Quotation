@@ -97,10 +97,19 @@ export default function CustomerForm({
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone</FormLabel>
+                <FormLabel className="flex items-center">
+                  Phone <span className="text-red-500 ml-1">*</span>
+                </FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Phone number" 
+                    placeholder="10-digit phone number" 
+                    maxLength={10}
+                    onKeyPress={(e) => {
+                      // Allow only numeric input
+                      if (!/[0-9]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     {...field} 
                   />
                 </FormControl>
@@ -131,14 +140,16 @@ export default function CustomerForm({
             name="leadSource"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Lead Source</FormLabel>
+                <FormLabel className="flex items-center">
+                  Lead Source <span className="text-red-500 ml-1">*</span>
+                </FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select lead source" />
+                      <SelectValue placeholder="How did they find us? (required)" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>

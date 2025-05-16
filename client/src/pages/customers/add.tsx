@@ -22,12 +22,17 @@ export default function AddCustomer() {
         throw new Error(errorData.message || "Failed to create customer");
       }
       
+      // Get the created customer data
+      const customerData = await response.json();
+      
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       toast({
         title: "Success",
         description: "Customer created successfully",
       });
-      navigate("/customers");
+      
+      // Redirect to follow-up creation page for this new customer
+      navigate(`/customers/${customerData.id}/follow-ups/add`);
     } catch (error: any) {
       toast({
         title: "Error",
