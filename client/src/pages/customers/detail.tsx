@@ -408,9 +408,17 @@ export default function CustomerDetailPage() {
           <Button 
             onClick={() => {
               setShowFollowUpReminder(false);
-              const element = document.getElementById('add-follow-up-tab');
-              if (element) {
-                element.click();
+              // Switch to the Follow-ups tab
+              const tabsElement = document.querySelector('button[value="follow-ups"]');
+              if (tabsElement) {
+                (tabsElement as HTMLButtonElement).click();
+                // Focus on the Add Follow-up button after a short delay
+                setTimeout(() => {
+                  const addButton = document.querySelector('.add-follow-up-button');
+                  if (addButton) {
+                    (addButton as HTMLButtonElement).click();
+                  }
+                }, 100);
               }
             }}
           >

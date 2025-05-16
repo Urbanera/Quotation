@@ -33,8 +33,8 @@ export default function AddCustomer() {
         description: "Customer created successfully",
       });
       
-      // Redirect to the customer detail page
-      navigate(`/customers/${customerData.id}`);
+      // Redirect to the customer detail page - using correct URL format
+      navigate(`/customers/view/${customerData.id}`);
       
       // Show follow-up reminder toast after a short delay
       setTimeout(() => {
