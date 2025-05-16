@@ -55,6 +55,7 @@ function App() {
               <Route path="/customers" component={CustomersList} />
               <Route path="/customers/add" component={AddCustomer} />
               <Route path="/customers/edit/:id" component={EditCustomer} />
+              <Route path="/customers/:id/follow-ups/add" component={CustomerDetailPage} />
               <Route path="/customers/view/:id" component={CustomerDetailPage} />
               
               {/* Quotation Routes */}
