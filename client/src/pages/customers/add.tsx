@@ -26,13 +26,25 @@ export default function AddCustomer() {
       const customerData = await response.json();
       
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      
+      // Display success toast
       toast({
         title: "Success",
         description: "Customer created successfully",
       });
       
-      // Redirect to follow-up creation page for this new customer
-      navigate(`/customers/${customerData.id}/follow-ups/add`);
+      // Redirect to the customer detail page
+      navigate(`/customers/${customerData.id}`);
+      
+      // Show follow-up reminder toast after a short delay
+      setTimeout(() => {
+        toast({
+          title: "Reminder",
+          description: "Don't forget to create a follow-up for this customer",
+          variant: "destructive",
+          duration: 6000, // Show for 6 seconds
+        });
+      }, 1000);
     } catch (error: any) {
       toast({
         title: "Error",

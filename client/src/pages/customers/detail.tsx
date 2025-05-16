@@ -94,6 +94,7 @@ export default function CustomerDetailPage() {
   const [completingId, setCompletingId] = useState<number | null>(null);
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
   const [quotationToDuplicate, setQuotationToDuplicate] = useState<Quotation | null>(null);
+  const [showFollowUpReminder, setShowFollowUpReminder] = useState(true);
   const customerId = parseInt(id);
 
   const { data: customer, isLoading: isLoadingCustomer } = useQuery<Customer>({
@@ -384,9 +385,54 @@ export default function CustomerDetailPage() {
     );
   }
 
+  // Follow-up reminder dialog component
+  const FollowUpReminderDialog = () => (
+    <Dialog open={showFollowUpReminder} onOpenChange={setShowFollowUpReminder}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center">
+            <CalendarClock className="h-5 w-5 mr-2 text-primary" />
+            Create a Follow-up
+          </DialogTitle>
+          <DialogDescription>
+            Would you like to create a follow-up for this customer now?
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-muted-foreground">
+            Regular follow-ups increase customer engagement and conversion rates. 
+            It's recommended to schedule your first follow-up within a few days.
+          </p>
+        </div>
+        <DialogFooter className="sm:justify-between flex flex-row-reverse sm:flex-row gap-2">
+          <Button 
+            onClick={() => {
+              setShowFollowUpReminder(false);
+              const element = document.getElementById('add-follow-up-tab');
+              if (element) {
+                element.click();
+              }
+            }}
+          >
+            <CalendarClock className="h-4 w-4 mr-2" />
+            Create Follow-up Now
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowFollowUpReminder(false)}
+          >
+            Remind Me Later
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <div className="py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+        {/* Render the follow-up reminder dialog */}
+        <FollowUpReminderDialog />
         <div className="flex items-center mb-5">
           <Link href="/customers">
             <Button variant="outline" size="sm" className="mr-4">
