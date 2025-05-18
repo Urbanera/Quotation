@@ -228,7 +228,7 @@ export default function PrintReceiptPage() {
             <p className="text-sm">GSTIN: {companyInfo.gstin}</p>
             <p className="text-sm">State: {companyInfo.state}</p>
           </div>
-          <div className="w-1/4 flex justify-end items-start logo-container">
+          <div className="w-1/4 flex justify-center items-center ms-start-logo-container">
             {companyInfo.logo ? (
               <img src={companyInfo.logo} alt="Company Logo" className="h-16 object-contain" />
             ) : (
