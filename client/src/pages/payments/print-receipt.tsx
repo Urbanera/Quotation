@@ -10,13 +10,14 @@ const printStyles = `
 @media print {
   @page {
     size: A4;
-    margin: 15mm;
+    margin: 10mm;
   }
   
   body {
     background: white;
     font-size: 12pt;
     font-family: 'Arial', sans-serif;
+    width: 100%;
   }
   
   .print\\:hidden,
@@ -36,16 +37,20 @@ const printStyles = `
   }
   
   .container {
+    width: 100% !important;
     max-width: 100% !important;
     padding: 0 !important;
-    margin: 0 !important;
-    margin-top: 10mm !important;
+    margin: 0 auto !important;
     box-shadow: none !important;
     border: none !important;
-    /* Apply 80% scale to match the user's preferred scale */
-    transform: scale(0.8);
-    transform-origin: top center;
+    transform: none;
   }
+  
+  /* Fix the width of the receipt content to fill the page */
+  .flex {
+    width: 100% !important;
+  }
+}
 
   .terms-conditions {
     margin-top: 8mm;
@@ -218,9 +223,9 @@ export default function PrintReceiptPage() {
       </div>
 
       {/* Printable receipt */}
-      <div className="container mx-auto p-8 print:p-6 max-w-4xl bg-white shadow-md print:shadow-none border rounded-md print:border-none">
+      <div className="container mx-auto p-8 print:p-6 max-w-4xl bg-white shadow-md print:shadow-none border rounded-md print:border-none" style={{ width: '100%' }}>
         {/* Company Header */}
-        <div className="flex justify-between mb-6 border-b pb-6">
+        <div className="flex justify-between mb-6 border-b pb-6 print:w-full">
           <div className="w-3/4">
             <h1 className="text-2xl font-bold">{companyInfo.name}</h1>
             <p className="text-sm">{companyInfo.address}</p>
