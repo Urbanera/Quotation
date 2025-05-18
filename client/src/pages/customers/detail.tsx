@@ -94,7 +94,7 @@ export default function CustomerDetailPage() {
   const [completingId, setCompletingId] = useState<number | null>(null);
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
   const [quotationToDuplicate, setQuotationToDuplicate] = useState<Quotation | null>(null);
-  const [showFollowUpReminder, setShowFollowUpReminder] = useState(true);
+  const [showFollowUpReminder, setShowFollowUpReminder] = useState(false);
   const customerId = parseInt(id);
 
   const { data: customer, isLoading: isLoadingCustomer } = useQuery<Customer>({
@@ -107,6 +107,14 @@ export default function CustomerDetailPage() {
     queryKey: ["/api/follow-ups", customerId],
     queryFn: () => fetch(`/api/follow-ups?customerId=${customerId}`).then((res) => res.json()),
     enabled: !isNaN(customerId),
+    onSuccess: (data) => {
+      // Only show the follow-up reminder if the customer has no follow-ups
+      if (data && data.length === 0) {
+        setShowFollowUpReminder(true);
+      } else {
+        setShowFollowUpReminder(false);
+      }
+    },
   });
 
   const { data: quotations, isLoading: isLoadingQuotations } = useQuery<Quotation[]>({
