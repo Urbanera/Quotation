@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Customer } from "@shared/schema";
 import { Link } from "wouter";
 import { formatDate } from "@/lib/utils";
@@ -11,13 +11,18 @@ interface CustomerStageFilterProps {
   customers: Customer[];
 }
 
-export default function CustomerStageFilter({ customers }: CustomerStageFilterProps) {
-  const [activeTab, setActiveTab] = useState<string>("all");
+// Define the available stages
+const STAGES = ["new", "pipeline", "cold", "warm", "booked", "lost"] as const;
+type Stage = (typeof STAGES)[number];
 
-  // Filter customers by stage
-  const filteredCustomers = activeTab === "all" 
-    ? customers 
-    : customers.filter(customer => customer.stage === activeTab);
+export default function CustomerStageFilter({ customers }: CustomerStageFilterProps) {
+  // Track selected stages in an array
+  const [selectedStages, setSelectedStages] = useState<Stage[]>([]);
+
+  // Filter customers by selected stages
+  const filteredCustomers = selectedStages.length === 0
+    ? customers // If no stages selected, show all
+    : customers.filter(customer => selectedStages.includes(customer.stage as Stage));
 
   // Filter out lost customers for the total count
   const activeCustomers = customers.filter(c => c.stage !== "lost");
@@ -43,91 +48,140 @@ export default function CustomerStageFilter({ customers }: CustomerStageFilterPr
     lost: "bg-red-100 text-red-800 hover:bg-red-200",
   };
 
+  // Handle checkbox changes
+  const handleStageToggle = (stage: Stage) => {
+    setSelectedStages(prev => {
+      if (prev.includes(stage)) {
+        // Remove stage if already selected
+        return prev.filter(s => s !== stage);
+      } else {
+        // Add stage if not selected
+        return [...prev, stage];
+      }
+    });
+  };
+
+  // Clear all selected filters
+  const clearFilters = () => {
+    setSelectedStages([]);
+  };
+
   return (
     <Card className="shadow-md">
       <CardHeader className="pb-3">
-        <CardTitle className="text-xl font-bold">Customers by Stage</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-xl font-bold">Customers by Stage</CardTitle>
+          {selectedStages.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearFilters} 
+              className="text-gray-500 hover:text-gray-700"
+            >
+              Clear Filters
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
-        <Tabs 
-          defaultValue="all" 
-          value={activeTab} 
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList className="w-full grid grid-cols-7 mb-6">
-            <TabsTrigger value="all" className="text-sm">
-              All
-              <Badge className="ml-2 bg-gray-100 text-gray-800">{stageCounts.all}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="new" className="text-sm">
-              New
-              <Badge className="ml-2 bg-blue-100 text-blue-800">{stageCounts.new}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="pipeline" className="text-sm">
-              Pipeline
-              <Badge className="ml-2 bg-purple-100 text-purple-800">{stageCounts.pipeline}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="cold" className="text-sm">
-              Cold
-              <Badge className="ml-2 bg-gray-100 text-gray-800">{stageCounts.cold}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="warm" className="text-sm">
-              Warm
-              <Badge className="ml-2 bg-orange-100 text-orange-800">{stageCounts.warm}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="booked" className="text-sm">
-              Booked
-              <Badge className="ml-2 bg-green-100 text-green-800">{stageCounts.booked}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="lost" className="text-sm">
-              Lost
-              <Badge className="ml-2 bg-red-100 text-red-800">{stageCounts.lost}</Badge>
-            </TabsTrigger>
-          </TabsList>
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2 mb-4">
+            {STAGES.map((stage) => (
+              <div 
+                key={stage} 
+                className={`flex items-center space-x-2 border rounded-lg px-3 py-2 cursor-pointer ${
+                  selectedStages.includes(stage) 
+                    ? (stage === 'new' 
+                        ? 'bg-blue-100 border-blue-300' 
+                        : stage === 'pipeline' 
+                          ? 'bg-purple-100 border-purple-300' 
+                          : stage === 'cold' 
+                            ? 'bg-gray-100 border-gray-300' 
+                            : stage === 'warm' 
+                              ? 'bg-orange-100 border-orange-300' 
+                              : stage === 'booked' 
+                                ? 'bg-green-100 border-green-300' 
+                                : 'bg-red-100 border-red-300')
+                    : 'bg-white'
+                }`}
+                onClick={() => handleStageToggle(stage)}
+              >
+                <Checkbox 
+                  id={`stage-${stage}`} 
+                  checked={selectedStages.includes(stage)}
+                  onCheckedChange={() => handleStageToggle(stage)}
+                  className="data-[state=checked]:bg-indigo-600"
+                />
+                <label 
+                  htmlFor={`stage-${stage}`}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  {stage.charAt(0).toUpperCase() + stage.slice(1)}
+                </label>
+                <Badge className={`ml-2 ${stageColors[stage]}`}>
+                  {stageCounts[stage]}
+                </Badge>
+              </div>
+            ))}
+          </div>
 
-          <TabsContent value={activeTab} className="m-0">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredCustomers.length > 0 ? (
-                filteredCustomers.map((customer) => (
-                  <Card key={customer.id} className="overflow-hidden">
-                    <CardHeader className="p-4 pb-2 flex flex-row justify-between items-center">
-                      <CardTitle className="text-base font-medium truncate">
-                        {customer.name}
-                      </CardTitle>
-                      <Badge className={stageColors[customer.stage || "new"] || ""}>
-                        {customer.stage ? customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1) : "New"}
-                      </Badge>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-2 space-y-2">
-                      <div className="text-sm">
-                        <span className="font-medium text-gray-500">Email: </span>
-                        {customer.email}
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium text-gray-500">Phone: </span>
-                        {customer.phone}
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium text-gray-500">Added: </span>
-                        {formatDate(customer.createdAt)}
-                      </div>
-                      <div className="pt-3 flex justify-end">
-                        <Link href={`/customers/view/${customer.id}`}>
-                          <Button size="sm" variant="outline">View Details</Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-8 text-gray-500">
-                  No customers found in this stage.
-                </div>
-              )}
+          {selectedStages.length > 0 && (
+            <div className="flex gap-1 flex-wrap mt-2">
+              <span className="text-sm text-gray-500">Filtering by:</span>
+              {selectedStages.map(stage => (
+                <Badge 
+                  key={stage} 
+                  className={stageColors[stage]}
+                  onClick={() => handleStageToggle(stage)}
+                >
+                  {stage.charAt(0).toUpperCase() + stage.slice(1)}
+                </Badge>
+              ))}
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredCustomers.length > 0 ? (
+            filteredCustomers.map((customer) => (
+              <Card key={customer.id} className="overflow-hidden">
+                <CardHeader className="p-4 pb-2 flex flex-row justify-between items-center">
+                  <CardTitle className="text-base font-medium truncate">
+                    {customer.name}
+                  </CardTitle>
+                  <Badge className={stageColors[customer.stage || "new"] || ""}>
+                    {customer.stage ? customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1) : "New"}
+                  </Badge>
+                </CardHeader>
+                <CardContent className="p-4 pt-2 space-y-2">
+                  <div className="text-sm">
+                    <span className="font-medium text-gray-500">Email: </span>
+                    {customer.email}
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-medium text-gray-500">Phone: </span>
+                    {customer.phone}
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-medium text-gray-500">Added: </span>
+                    {formatDate(customer.createdAt)}
+                  </div>
+                  <div className="pt-3 flex justify-end">
+                    <Link href={`/customers/view/${customer.id}`}>
+                      <Button size="sm" variant="outline">View Details</Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8 text-gray-500">
+              {selectedStages.length > 0 
+                ? "No customers found with the selected stages." 
+                : "No customers found."}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
