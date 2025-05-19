@@ -148,8 +148,9 @@ export const exportToPdf = async (
     // Clean up
     document.body.removeChild(container);
     
-    // Calculate dimensions
-    const imgWidth = pageWidth - 20; // 10mm margins
+    // Calculate dimensions with improved margins (20mm margins on each side)
+    const margin = 20; // Increased from 10mm to 20mm for better printing
+    const imgWidth = pageWidth - (margin * 2);
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
     // Get image data (use lower quality JPEG for email attachments to reduce size)
@@ -162,7 +163,7 @@ export const exportToPdf = async (
     
     // For single page documents
     if (pageCount <= 1) {
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
       
       if (returnBlob) {
         return pdf.output('blob');
@@ -176,10 +177,11 @@ export const exportToPdf = async (
     let heightLeft = imgHeight;
     let position = 0;
     
-    // Add first page
-    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, Math.min(pageHeight - 20, imgHeight));
-    heightLeft -= (pageHeight - 20);
-    position += (pageHeight - 20);
+    // Add first page with improved margins
+    const pdfDoc = pdfDoc; // Use the correct variable name
+    pdfDoc.addImage(imgData, 'PNG', margin, margin, imgWidth, Math.min(pageHeight - (margin * 2), imgHeight));
+    heightLeft -= (pageHeight - (margin * 2));
+    position += (pageHeight - (margin * 2));
     
     // Add subsequent pages
     while (heightLeft > 0) {
