@@ -175,12 +175,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    height: '80%',
-    width: '100%',
+    height: '85%',
+    width: '95%',
+    margin: 'auto',
   },
   singleRoomImage: {
-    maxWidth: '100%',
-    maxHeight: '100%',
+    width: '100%',
+    height: '100%',
     objectFit: 'contain',
   },
   roomImageTitle: {
@@ -418,7 +419,7 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
         <View style={styles.section}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
             <View style={{ width: '65%' }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245' }}>Quotation Summary</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#009245', marginBottom: 15 }}>Project Cost Summary</Text>
             </View>
             <View style={{ width: '25%', alignItems: 'flex-end' }}>
               {companySettings?.logo && (
@@ -430,105 +431,124 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             </View>
           </View>
           
-          <View style={styles.tableContainer}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.slNoCell]}>No.</Text>
-              <Text style={[styles.descriptionCell]}>Description</Text>
-              <Text style={[styles.quantityCell]}>Qty</Text>
-              <Text style={[styles.unitCell]}>Unit Price</Text>
-              <Text style={[styles.discountCell]}>Disc%</Text>
-              <Text style={[styles.amountCell]}>Amount</Text>
+          {/* Cost Summary Table - Matching the screenshot */}
+          <View style={{ marginVertical: 20 }}>
+            {/* Table Header */}
+            <View style={{ flexDirection: 'row', backgroundColor: '#e8f5e9', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
+              <Text style={{ flex: 2, fontWeight: 'bold', color: '#009245' }}>PRODUCT DESCRIPTION</Text>
+              <Text style={{ flex: 1, fontWeight: 'bold', color: '#009245', textAlign: 'right' }}>SELLING PRICE</Text>
+              <Text style={{ flex: 1, fontWeight: 'bold', color: '#009245', textAlign: 'right' }}>DISCOUNTED PRICE ({quotation.globalDiscount}%)</Text>
             </View>
             
-            {/* Map through each room and its products */}
-            {sortedRooms.map((room, roomIndex) => (
-              <React.Fragment key={roomIndex}>
-                {/* Room header row */}
-                <View style={[styles.tableRow, { backgroundColor: '#f5f5f5', fontWeight: 'bold' }]}>
-                  <Text style={[{ width: '100%', padding: 5, fontWeight: 'bold' }]}>
-                    Room: {room.name} {room.description ? `- ${room.description}` : ''}
-                  </Text>
-                </View>
-                
-                {/* Products for this room */}
-                {room.products && room.products.map((product, index) => {
-                  const unitPrice = product.sellingPrice || 0;
-                  const quantity = product.quantity || 0;
-                  const discount = product.discount || 0;
-                  const discountedPrice = unitPrice * (1 - discount / 100);
-                  const totalPrice = discountedPrice * quantity;
-                  
-                  return (
-                    <View key={index} style={[
-                      styles.tableRow,
-                      index % 2 === 0 ? styles.tableRowEven : {}
-                    ]}>
-                      <Text style={[styles.slNoCell]}>{index + 1}</Text>
-                      <Text style={[styles.descriptionCell]}>{product.name}</Text>
-                      <Text style={[styles.quantityCell]}>{product.quantity}</Text>
-                      <Text style={[styles.unitCell]}>{formatCurrency(unitPrice)}</Text>
-                      <Text style={[styles.discountCell]}>{product.discount}%</Text>
-                      <Text style={[styles.amountCell]}>{formatCurrency(totalPrice)}</Text>
-                    </View>
-                  );
-                })}
-                
-                {/* Room subtotal row */}
-                <View style={[styles.tableRow, { backgroundColor: '#f5f5f5' }]}>
-                  <Text style={{ width: '85%', padding: 5, textAlign: 'right', fontWeight: 'bold' }}>
-                    Room Total:
-                  </Text>
-                  <Text style={{ width: '15%', padding: 5, textAlign: 'right', fontWeight: 'bold' }}>
-                    {formatCurrency(room.sellingPrice || 0)}
-                  </Text>
-                </View>
-              </React.Fragment>
+            {/* Room Rows */}
+            {sortedRooms.map((room, index) => (
+              <View key={index} style={{ flexDirection: 'row', backgroundColor: index % 2 === 0 ? '#f5f5f5' : 'white', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
+                <Text style={{ flex: 2, fontWeight: 'bold' }}>{room.name.toUpperCase()}</Text>
+                <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(room.sellingPrice || 0)}</Text>
+                <Text style={{ flex: 1, textAlign: 'right', color: 'red' }}>
+                  {formatCurrency((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
+                </Text>
+              </View>
             ))}
-          </View>
-          
-          <View style={styles.totalSection}>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Subtotal:</Text>
-              <Text style={styles.totalValue}>{formatCurrency(quotation.totalSellingPrice)}</Text>
-            </View>
             
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Discount ({quotation.globalDiscount}%):</Text>
-              <Text style={styles.totalValue}>
-                -{formatCurrency(quotation.totalSellingPrice * (quotation.globalDiscount / 100))}
+            {/* Total Row */}
+            <View style={{ flexDirection: 'row', backgroundColor: '#f5f5f5', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
+              <Text style={{ flex: 2, fontWeight: 'bold' }}>Total Of All Items</Text>
+              <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(quotation.totalSellingPrice)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right', color: 'red' }}>
+                {formatCurrency(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))}
               </Text>
             </View>
             
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Installation:</Text>
-              <Text style={styles.totalValue}>{formatCurrency(quotation.totalInstallationCharges)}</Text>
+            {/* Installation Row */}
+            <View style={{ flexDirection: 'row', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
+              <Text style={{ flex: 2, fontWeight: 'bold' }}>Installation and Handling</Text>
+              <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(quotation.totalInstallationCharges)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(quotation.totalInstallationCharges)}</Text>
             </View>
             
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>GST ({quotation.gstPercentage}%):</Text>
-              <Text style={styles.totalValue}>{formatCurrency(quotation.gstAmount)}</Text>
+            {/* GST Row */}
+            <View style={{ flexDirection: 'row', backgroundColor: '#f5f5f5', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
+              <Text style={{ flex: 2, fontWeight: 'bold' }}>GST {quotation.gstPercentage}%</Text>
+              <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(quotation.gstAmount)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right' }}>
+                {formatCurrency(quotation.gstAmount * (1 - quotation.globalDiscount / 100))}
+              </Text>
             </View>
             
-            <View style={[styles.totalRow, { borderTopWidth: 1, borderTopColor: '#EEEEEE', paddingTop: 5 }]}>
-              <Text style={[styles.totalLabel, { fontWeight: 'bold' }]}>Total:</Text>
-              <Text style={[styles.totalValue, { fontWeight: 'bold', color: '#009245' }]}>
-                {formatCurrency(quotation.finalPrice)}
+            {/* Final Price Row */}
+            <View style={{ flexDirection: 'row', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
+              <Text style={{ flex: 2, fontWeight: 'bold' }}>Final Price</Text>
+              <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(quotation.finalPrice)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold', color: 'red' }}>
+                {formatCurrency(quotation.finalPrice * (1 - quotation.globalDiscount / 100) + quotation.totalInstallationCharges)}
               </Text>
             </View>
           </View>
+        </View>
+        
+        <View style={styles.footer}>
+          <Text>Page {totalPages - 1} of {totalPages}</Text>
+          <Text>{companySettings?.website || ""}</Text>
+        </View>
+      </Page>
+      
+      {/* Terms and Conditions Page */}
+      <Page size="A4" orientation="landscape" style={styles.page}>
+        <View style={styles.section}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+            <View style={{ width: '65%' }}>
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245' }}>Terms & Conditions</Text>
+            </View>
+            <View style={{ width: '25%', alignItems: 'flex-end' }}>
+              {companySettings?.logo && (
+                <Image 
+                  src={companySettings.logo} 
+                  style={{ width: 120, objectFit: 'contain' }} 
+                />
+              )}
+            </View>
+          </View>
           
-          <View style={{ marginTop: 'auto', borderTopWidth: 1, borderTopColor: '#EEEEEE', paddingTop: 10 }}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5 }}>Terms & Conditions</Text>
+          <View style={{ marginTop: 20 }}>
             {appSettings?.defaultTermsAndConditions ? (
-              <Text style={{ fontSize: 9, color: '#666666' }}>
+              <Text style={{ fontSize: 12, lineHeight: 1.5, color: '#333333' }}>
                 {appSettings.defaultTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
               </Text>
             ) : (
-              <Text style={{ fontSize: 9, color: '#666666' }}>
-                • Quotation is valid for 30 days from the date of issue.
-                • Payment terms: 50% advance, 50% before delivery.
-                • Delivery time: 4-6 weeks from date of order confirmation.
-              </Text>
+              <View>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>1. Scope of Services</Text>
+                <Text style={{ fontSize: 12, marginBottom: 15, lineHeight: 1.5 }}>
+                  This quotation covers the design, supply, and installation of modular interior solutions as specified in the project details.
+                  Any modifications to the scope will require a revised quotation.
+                </Text>
+                
+                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>2. Pricing and Payment</Text>
+                <Text style={{ fontSize: 12, marginBottom: 15, lineHeight: 1.5 }}>
+                  • All prices are in Indian Rupees (INR) and valid for 30 days from the date of issue.
+                  • Payment terms: 50% advance with order confirmation, 40% before delivery, and 10% upon completion.
+                  • GST and other applicable taxes will be charged as per government regulations.
+                </Text>
+                
+                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>3. Timeline</Text>
+                <Text style={{ fontSize: 12, marginBottom: 15, lineHeight: 1.5 }}>
+                  • Manufacturing will commence upon receipt of advance payment and signed approval of designs.
+                  • Standard delivery time is 4-6 weeks from order confirmation, subject to material availability.
+                  • Installation timeline will be provided in the project schedule and may vary based on site conditions.
+                </Text>
+                
+                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>4. Warranty</Text>
+                <Text style={{ fontSize: 12, marginBottom: 15, lineHeight: 1.5 }}>
+                  • All products carry a 12-month warranty against manufacturing defects under normal use.
+                  • Warranty excludes damage caused by misuse, improper maintenance, or unauthorized modifications.
+                </Text>
+                
+                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>5. Cancellation and Changes</Text>
+                <Text style={{ fontSize: 12, marginBottom: 15, lineHeight: 1.5 }}>
+                  • Orders cannot be cancelled after production begins. Cancellation before production starts will incur a 10% fee.
+                  • Changes to the design after approval may result in additional costs and timeline extensions.
+                </Text>
+              </View>
             )}
           </View>
         </View>
