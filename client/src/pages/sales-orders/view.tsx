@@ -137,6 +137,35 @@ export default function ViewSalesOrder() {
     enabled: !!salesOrder?.customerId
   });
 
+  // Revert to quotation mutation
+  const revertToQuotationMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        "POST",
+        `/api/sales-orders/${orderId}/revert-to-quotation`,
+        {}
+      );
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Sales order reverted",
+        description: "The sales order has been successfully reverted to a quotation.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      // Navigate to the quotation
+      navigate(`/quotations/view/${data.id}`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to revert sales order to quotation.",
+        variant: "destructive",
+      });
+    },
+  });
+  
   // Update order status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async (status: string) => {

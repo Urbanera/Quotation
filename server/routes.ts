@@ -2369,6 +2369,41 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: "Failed to cancel sales order" });
     }
   });
+  
+  // Revert sales order back to quotation
+  app.post("/api/sales-orders/:id/revert-to-quotation", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const salesOrder = await storage.getSalesOrder(id);
+      
+      if (!salesOrder) {
+        return res.status(404).json({ message: "Sales order not found" });
+      }
+      
+      // Check if the order has payments or has been changed to a status that shouldn't be reverted
+      if (salesOrder.amountPaid > 0) {
+        return res.status(400).json({ 
+          message: "Cannot revert a sales order with payments. Please refund payments first." 
+        });
+      }
+      
+      if (['completed', 'delivered', 'cancelled'].includes(salesOrder.status)) {
+        return res.status(400).json({
+          message: `Cannot revert a sales order with status '${salesOrder.status}'.`
+        });
+      }
+      
+      // Revert the sales order back to quotation
+      const quotation = await storage.revertSalesOrderToQuotation(id);
+      res.json(quotation);
+    } catch (error) {
+      console.error("Error reverting sales order to quotation:", error);
+      res.status(500).json({ 
+        message: "Failed to revert sales order to quotation", 
+        error: error.message 
+      });
+    }
+  });
 
   // Payment routes
   app.get("/api/sales-orders/:salesOrderId/payments", async (req, res) => {
