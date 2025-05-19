@@ -80,11 +80,12 @@ export default function CustomerStageFilter({ customers }: CustomerStageFilterPr
 
   // Apply all filters to customers
   const filteredCustomers = customers.filter(customer => {
-    // Filter by stage
+    // Only filter by stage if there are selected stages
+    // When using multiple stages, show customers that match ANY of the selected stages (not ALL)
     const stageMatch = selectedStages.length === 0 || 
-      selectedStages.includes(customer.stage as Stage);
+      (customer.stage && selectedStages.includes(customer.stage as Stage));
     
-    // Filter by lead source
+    // Filter by lead source - only if there are selected lead sources
     const leadSourceMatch = selectedLeadSources.length === 0 || 
       (customer.leadSource && selectedLeadSources.includes(customer.leadSource));
     
