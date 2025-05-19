@@ -239,6 +239,45 @@ export default function SalesOrdersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Revert to Quotation confirmation dialog */}
+      <AlertDialog open={!!orderToRevert} onOpenChange={(open) => !open && setOrderToRevert(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revert to Quotation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to revert this sales order back to a quotation?
+              {orderToRevert && (
+                <div className="mt-2 p-2 bg-muted rounded-md">
+                  <div><span className="font-medium">Order #:</span> {orderToRevert.orderNumber}</div>
+                  <div><span className="font-medium">Customer:</span> {getCustomerName(orderToRevert.customerId)}</div>
+                  <div><span className="font-medium">Amount:</span> {formatCurrency(orderToRevert.totalAmount)}</div>
+                </div>
+              )}
+              <p className="mt-2 text-amber-600 font-medium">
+                This action cannot be undone and all sales order specific information will be lost.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRevertToQuotation}
+              disabled={revertToQuotationMutation.isPending}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {revertToQuotationMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Reverting...
+                </>
+              ) : (
+                'Revert to Quotation'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
