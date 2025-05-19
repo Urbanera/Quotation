@@ -773,22 +773,22 @@ export default function CustomersList() {
             </Card>
 
             {/* Lead Source Stats Card */}
-            <Card className="bg-primary text-white overflow-hidden">
+            <Card className="bg-primary text-white overflow-hidden h-[190px]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-white flex items-center">
                   <span>Lead Sources</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-2 text-center">
+              <CardContent className="p-2">
+                <div className="grid grid-cols-2 gap-2 text-center h-[120px]">
                   {leadSourcesData.options.length > 0 ? (
                     leadSourcesData.options.map((source: string) => (
                       <div 
                         key={source}
-                        className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${leadSourceFilter === source ? "ring-2 ring-white" : ""}`}
+                        className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${leadSourceFilter === source ? "ring-2 ring-white" : ""}`}
                         onClick={() => setLeadSourceFilter(leadSourceFilter === source ? "all" : source)}
                       >
-                        <div className="text-lg font-semibold">{leadSourcesData.counts[source] || 0}</div>
+                        <div className="text-sm font-semibold">{leadSourcesData.counts[source] || 0}</div>
                         <div className="text-xs truncate">{source}</div>
                       </div>
                     ))
