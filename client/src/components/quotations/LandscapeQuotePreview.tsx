@@ -1,14 +1,23 @@
 import React from 'react';
+import { formatCurrency } from "@/lib/calculations";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Download } from "lucide-react";
-import { formatCurrency } from "@/lib/calculations";
 import LandscapeQuote from "@/components/PDFQuotes/LandscapeQuote";
+import { QuotationWithDetails, CompanySettings, AppSettings } from "@shared/schema";
 
-const LandscapePreview = ({ quotation, companySettings, appSettings, id }) => {
-  if (!quotation || !companySettings || !appSettings) {
-    return <p className="text-center">Loading quotation data...</p>;
-  }
+interface LandscapeQuotePreviewProps {
+  quotation: QuotationWithDetails;
+  companySettings: CompanySettings;
+  appSettings: AppSettings;
+  id: string;
+}
 
+const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({ 
+  quotation, 
+  companySettings, 
+  appSettings,
+  id
+}) => {
   return (
     <div className="flex flex-col">
       <div className="overflow-auto mb-6" style={{ maxHeight: '70vh' }}>
@@ -306,4 +315,4 @@ const LandscapePreview = ({ quotation, companySettings, appSettings, id }) => {
   );
 };
 
-export default LandscapePreview;
+export default LandscapeQuotePreview;
