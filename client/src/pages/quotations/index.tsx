@@ -393,7 +393,10 @@ export default function QuotationsList() {
                   <div className="px-4 py-4 flex items-center sm:px-6">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center">
-                        <h3 className="text-sm font-medium text-indigo-600 truncate">
+                        <h3 
+                          className="text-sm font-medium text-indigo-600 truncate cursor-pointer hover:underline"
+                          onClick={() => window.location.href = `/quotations/view/${quotation.id}`}
+                        >
                           Quotation #{quotation.id}
                         </h3>
                         <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
