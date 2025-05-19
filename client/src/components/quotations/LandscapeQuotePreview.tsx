@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { formatCurrency } from "@/lib/calculations";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Download } from "lucide-react";
@@ -18,6 +18,53 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
   appSettings,
   id
 }) => {
+  // Sort room images by order or type
+  const sortedRooms = useMemo(() => {
+    if (!quotation.rooms) return [];
+    
+    return quotation.rooms.map(room => {
+      const sortedImages = [...(room.images || [])].sort((a, b) => {
+        // First sort by order, then by type
+        if (a.order !== b.order) {
+          return a.order - b.order;
+        }
+        return (a.type || "").localeCompare(b.type || "");
+      });
+      
+      return {
+        ...room,
+        images: sortedImages
+      };
+    });
+  }, [quotation.rooms]);
+
+  // Calculate page counts for footer
+  const getTotalPages = () => {
+    let pageCount = 2; // Cover page + Features page
+    
+    // Count room image pages
+    sortedRooms.forEach(room => {
+      pageCount += room.images?.length || 0;
+    });
+    
+    // Add summary page
+    pageCount += 1;
+    
+    return pageCount;
+  };
+  
+  const totalPages = getTotalPages();
+  
+  // Generate footer with page number and company website
+  const renderFooter = (pageNumber: number) => (
+    <div className="absolute bottom-2 left-0 right-0 text-center text-xs text-gray-500 border-t pt-2">
+      <div className="flex justify-between px-8">
+        <span>Page {pageNumber} of {totalPages}</span>
+        <span>{companySettings?.website || ""}</span>
+      </div>
+    </div>
+  );
+  
   return (
     <div className="flex flex-col">
       <div className="overflow-auto mb-6" style={{ maxHeight: '70vh' }}>
@@ -27,20 +74,22 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
             Page 1 - Cover
           </div>
           <div className="flex flex-col h-full">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-800">Modular Interior Quotation</h2>
-            </div>
-            
-            <div className="flex justify-between mb-8">
-              <div className="w-1/3">
+            <div className="flex justify-between items-start mb-4">
+              <div className="text-center flex-grow">
+                <h2 className="text-2xl font-bold text-gray-800">Modular Interior Quotation</h2>
+              </div>
+              <div className="w-1/4 text-right">
                 {companySettings?.logo && (
                   <img 
                     src={companySettings.logo} 
                     alt={companySettings.name}
-                    className="max-h-16 object-contain" 
+                    className="max-h-16 max-w-full object-contain ml-auto" 
                   />
                 )}
               </div>
+            </div>
+            
+            <div className="flex justify-between mb-8 mt-4">
               <div className="w-2/3">
                 <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
                 <p className="text-gray-600">{companySettings?.address || "Address"}</p>
@@ -71,6 +120,7 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
               </div>
             </div>
           </div>
+          {renderFooter(1)}
         </div>
         
         {/* Features Page Preview */}
@@ -80,17 +130,17 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
           </div>
           <div className="flex flex-col h-full">
             <div className="flex justify-between mb-6">
-              <div className="w-1/3">
+              <div className="w-2/3">
+                <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
+              </div>
+              <div className="w-1/4 text-right">
                 {companySettings?.logo && (
                   <img 
                     src={companySettings.logo} 
                     alt={companySettings.name}
-                    className="max-h-12 object-contain" 
+                    className="max-h-12 max-w-full object-contain ml-auto" 
                   />
                 )}
-              </div>
-              <div className="w-2/3">
-                <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
               </div>
             </div>
             
@@ -135,55 +185,61 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
               </div>
             </div>
           </div>
+          {renderFooter(2)}
         </div>
         
         {/* Room Images - one page per image */}
-        {quotation.rooms && quotation.rooms.map((room, roomIndex) => 
-          room.images && room.images.map((image, imageIndex) => (
-            <div 
-              key={`${roomIndex}-${imageIndex}`} 
-              className="border rounded-lg p-8 mb-8 bg-white" 
-              style={{ width: '100%', aspectRatio: '1.77 / 1', position: 'relative' }}
-            >
-              <div className="absolute top-0 right-0 bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded-bl-md">
-                Page {3 + roomIndex + imageIndex} - {room.name}
-              </div>
-              
-              <div className="flex flex-col h-full">
-                <div className="flex justify-between mb-4">
-                  <div className="w-1/3">
-                    {companySettings?.logo && (
-                      <img 
-                        src={companySettings.logo} 
-                        alt={companySettings.name}
-                        className="max-h-10 object-contain" 
-                      />
+        {sortedRooms.map((room, roomIndex) => 
+          room.images && room.images.map((image, imageIndex) => {
+            const pageNumber = 3 + roomIndex + imageIndex;
+            return (
+              <div 
+                key={`${roomIndex}-${imageIndex}`} 
+                className="border rounded-lg p-8 mb-8 bg-white" 
+                style={{ width: '100%', aspectRatio: '1.77 / 1', position: 'relative' }}
+              >
+                <div className="absolute top-0 right-0 bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded-bl-md">
+                  Page {pageNumber} - {room.name}
+                </div>
+                
+                <div className="flex flex-col h-full">
+                  <div className="flex justify-between mb-4">
+                    <div className="w-2/3">
+                      <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
+                    </div>
+                    <div className="w-1/4 text-right">
+                      {companySettings?.logo && (
+                        <img 
+                          src={companySettings.logo} 
+                          alt={companySettings.name}
+                          className="max-h-10 max-w-full object-contain ml-auto" 
+                        />
+                      )}
+                    </div>
+                  </div>
+                  
+                  <h4 className="text-lg font-bold text-[#009245] mb-4">{image.type || "Room Image"}</h4>
+                  
+                  <div className="flex-grow flex items-center justify-center mb-4 overflow-hidden" style={{ height: '350px' }}>
+                    <img 
+                      src={image.path} 
+                      alt={`${room.name} - ${image.type || "Image"}`} 
+                      className="max-h-full max-w-full object-contain border shadow-sm" 
+                      style={{ objectFit: 'contain', height: '100%', width: '100%' }}
+                    />
+                  </div>
+                  
+                  <div className="text-center mt-auto mb-0">
+                    <p className="text-gray-700 font-medium">{room.name}</p>
+                    {room.description && (
+                      <p className="text-gray-600 text-sm mt-1">{room.description}</p>
                     )}
                   </div>
-                  <div className="w-2/3">
-                    <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
-                  </div>
                 </div>
-                
-                <h4 className="text-lg font-bold text-[#009245] mb-4">{image.type || "Room Image"}</h4>
-                
-                <div className="flex-grow flex items-center justify-center mb-4">
-                  <img 
-                    src={image.path} 
-                    alt={`${room.name} - ${image.type || "Image"}`} 
-                    className="max-h-[calc(100%-2rem)] max-w-full object-contain border shadow-sm" 
-                  />
-                </div>
-                
-                <div className="text-center mt-auto mb-0">
-                  <p className="text-gray-700 font-medium">{room.name}</p>
-                  {room.description && (
-                    <p className="text-gray-600 text-sm mt-1">{room.description}</p>
-                  )}
-                </div>
+                {renderFooter(pageNumber)}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
         
         {/* Summary Page */}
@@ -194,17 +250,17 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
           
           <div className="flex flex-col h-full">
             <div className="flex justify-between mb-4">
-              <div className="w-1/3">
+              <div className="w-2/3">
+                <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
+              </div>
+              <div className="w-1/4 text-right">
                 {companySettings?.logo && (
                   <img 
                     src={companySettings.logo} 
                     alt={companySettings.name}
-                    className="max-h-10 object-contain" 
+                    className="max-h-10 max-w-full object-contain ml-auto" 
                   />
                 )}
-              </div>
-              <div className="w-2/3">
-                <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
               </div>
             </div>
             
@@ -226,7 +282,7 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {quotation.rooms && quotation.rooms.map((room, index) => (
+                  {sortedRooms.map((room, index) => (
                     <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                       <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                         {room.name}
@@ -281,6 +337,7 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
               </div>
             </div>
           </div>
+          {renderFooter(totalPages)}
         </div>
       </div>
       
