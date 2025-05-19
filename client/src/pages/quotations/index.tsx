@@ -51,7 +51,7 @@ export default function QuotationsList() {
   const [quotationToDuplicate, setQuotationToDuplicate] = useState<Quotation | null>(null);
   const [quotationToApprove, setQuotationToApprove] = useState<Quotation | null>(null);
   const [quotationToConvert, setQuotationToConvert] = useState<Quotation | null>(null);
-  const [quotationToConvertToInvoice, setQuotationToConvertToInvoice] = useState<Quotation | null>(null);
+  // Removed quotationToConvertToInvoice state as quotations can only be converted to sales orders
   const [duplicateForSameCustomer, setDuplicateForSameCustomer] = useState(true);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<SortField>("createdAt");
@@ -259,10 +259,7 @@ export default function QuotationsList() {
     convertMutation.mutate(quotationToConvert.id);
   };
   
-  const handleConvertToInvoice = () => {
-    if (!quotationToConvertToInvoice) return;
-    convertToInvoiceMutation.mutate(quotationToConvertToInvoice.id);
-  };
+  // Removed handleConvertToInvoice method as quotations can only be converted to sales orders
   
   // Get customer name by ID
   const getCustomerName = (customerId: number): string => {
@@ -660,36 +657,7 @@ export default function QuotationsList() {
         </AlertDialogContent>
       </AlertDialog>
       
-      <AlertDialog
-        open={!!quotationToConvertToInvoice}
-        onOpenChange={(open) => !open && setQuotationToConvertToInvoice(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Convert to Invoice</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to convert Quotation #{quotationToConvertToInvoice?.id} for {getCustomerName(quotationToConvertToInvoice?.customerId || 0)} to an invoice?
-              This will create a new invoice and mark the quotation as converted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConvertToInvoice}
-              className="bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-600"
-            >
-              {convertToInvoiceMutation.isPending ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
-                  Converting...
-                </>
-              ) : (
-                "Convert to Invoice"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Convert to Invoice dialog has been removed as quotations can only be converted to sales orders */}
     </div>
   );
 }

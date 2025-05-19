@@ -50,7 +50,7 @@ export default function ViewQuotation() {
   const landscapeQuoteRef = useRef<any>(null);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
-  const [isConvertToInvoiceDialogOpen, setIsConvertToInvoiceDialogOpen] = useState(false);
+  // Removed isConvertToInvoiceDialogOpen state as quotations can only be converted to sales orders
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailTo, setEmailTo] = useState("");
@@ -443,13 +443,7 @@ export default function ViewQuotation() {
                     <ShoppingCart className="mr-2 h-4 w-4" />
                     Convert to Sales Order
                   </Button>
-                  <Button
-                    onClick={() => setIsConvertToInvoiceDialogOpen(true)}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    <FileInvoice className="mr-2 h-4 w-4" />
-                    Convert to Invoice
-                  </Button>
+
                 </>
               )}
             </div>
@@ -648,25 +642,7 @@ export default function ViewQuotation() {
         </DialogContent>
       </Dialog>
       
-      {/* Convert to Invoice Dialog */}
-      <Dialog
-        open={isConvertToInvoiceDialogOpen}
-        onOpenChange={setIsConvertToInvoiceDialogOpen}
-      >
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Convert to Invoice</DialogTitle>
-            <DialogDescription>
-              Create an invoice based on this approved quotation. You can set the due date and add any special notes.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <ConvertToInvoiceForm 
-            quotationId={parseInt(id || "0")} 
-            onClose={() => setIsConvertToInvoiceDialogOpen(false)} 
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Convert to Invoice Dialog has been removed as quotations can only be converted to sales orders */}
       
       {/* Email Dialog */}
       <Dialog
