@@ -74,6 +74,9 @@ export default function ViewQuotation() {
     enabled: !!id,
   });
   
+  // Check if quotation has been converted to a sales order
+  const isQuotationConverted = quotation?.status === 'converted';
+  
   // Approve quotation mutation
   const approveQuotationMutation = useMutation({
     mutationFn: async () => {
@@ -412,8 +415,8 @@ export default function ViewQuotation() {
                 {sendingEmail ? "Sending..." : "Email Quote"}
               </Button>
               
-              {/* Show these buttons only if quotation is not approved */}
-              {quotation.status !== "approved" && (
+              {/* Show these buttons only if quotation is not approved and not converted */}
+              {quotation.status !== "approved" && quotation.status !== "converted" && (
                 <>
                   <Button 
                     onClick={() => navigate(`/quotations/edit/${id}`)}
