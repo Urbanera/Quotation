@@ -87,7 +87,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
   const quotationNumber = quotation?.quotationNumber || `Q-${new Date().getFullYear()}-${String(quotation?.id || 0).padStart(4, '0')}`;
 
   return (
-    <div ref={ref} className="max-w-4xl mx-auto bg-white p-8 print:p-8" id="basic-quote">
+    <div ref={ref} className="max-w-4xl mx-auto bg-white p-4 print:p-0" id="basic-quote" style={{ maxWidth: '170mm' }}>
       {/* Header - avoid page break after header */}
       <div className="flex justify-between items-center mb-4 border-b border-[#009245] pb-3 avoid-break print:mb-2 print:pb-2">
         <div className="flex items-center">
