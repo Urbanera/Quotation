@@ -13,6 +13,8 @@ const styles = StyleSheet.create({
   section: {
     margin: 10,
     padding: 10,
+    height: '90%',
+    position: 'relative',
   },
   title: {
     fontSize: 24,
@@ -29,7 +31,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logoSection: {
-    width: '30%',
+    width: '25%',
+    alignItems: 'flex-end',
   },
   infoSection: {
     width: '65%',
@@ -140,12 +143,17 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: 'absolute',
-    bottom: 30,
-    left: 30,
-    right: 30,
+    bottom: 10,
+    left: 0,
+    right: 0,
     textAlign: 'center',
-    fontSize: 10,
+    padding: '10 30',
+    fontSize: 9,
     color: '#666666',
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   aboutSection: {
     marginTop: 20,
@@ -163,11 +171,16 @@ const styles = StyleSheet.create({
     color: '#333333',
     textAlign: 'justify',
   },
-  imageGrid: {
+  imageContainer: {
     marginTop: 20,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '60%',
+  },
+  singleRoomImage: {
+    maxWidth: '90%',
+    maxHeight: '90%',
+    objectFit: 'contain',
   },
   roomImageTitle: {
     fontSize: 14,
@@ -176,11 +189,28 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 20,
   },
-  roomImage: {
-    width: '23%',
+  featureGrid: {
+    marginTop: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+  },
+  featureBox: {
+    width: '48%',
     margin: '1%',
-    height: 150,
-    objectFit: 'cover',
+    padding: 10,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 5,
+  },
+  featureTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#009245',
+    marginBottom: 5,
+  },
+  featureText: {
+    fontSize: 10,
+    color: '#666666',
   },
 });
 
@@ -195,32 +225,60 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
   companySettings,
   appSettings
 }) => {
-  // Helper function to format currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-    }).format(amount);
+  // Sort room images by order or type (same as in the preview component)
+  const sortedRooms = quotation.rooms ? quotation.rooms.map(room => {
+    const sortedImages = [...(room.images || [])].sort((a, b) => {
+      // First sort by order, then by type
+      if (a.order !== b.order) {
+        return a.order - b.order;
+      }
+      return (a.type || "").localeCompare(b.type || "");
+    });
+    
+    return {
+      ...room,
+      images: sortedImages
+    };
+  }) : [];
+
+  // Calculate total pages for footer
+  const getTotalPages = () => {
+    let pageCount = 2; // Cover page + Features page
+    
+    // Count room image pages
+    sortedRooms.forEach(room => {
+      pageCount += room.images?.length || 0;
+    });
+    
+    // Add summary page
+    pageCount += 1;
+    
+    return pageCount;
   };
+  
+  const totalPages = getTotalPages();
 
   return (
     <Document>
       {/* First page - Cover with logo and customer info */}
       <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
-          <Text style={styles.title}>Modular Interior Quotation</Text>
-          
-          <View style={styles.headerSection}>
-            <View style={styles.logoSection}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+            <View style={{ width: '70%', alignItems: 'center' }}>
+              <Text style={styles.title}>Modular Interior Quotation</Text>
+            </View>
+            <View style={{ width: '25%', alignItems: 'flex-end' }}>
               {companySettings?.logo && (
                 <Image 
                   src={companySettings.logo} 
-                  style={{ width: '100%', maxHeight: 80 }} 
+                  style={{ maxWidth: '100%', maxHeight: 60 }} 
                 />
               )}
             </View>
-            <View style={styles.infoSection}>
+          </View>
+          
+          <View style={{ flexDirection: 'row', marginTop: 20 }}>
+            <View style={{ width: '65%' }}>
               <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
               <Text style={styles.text}>{companySettings?.address || "Address"}</Text>
               <Text style={styles.text}>Phone: {companySettings?.phone || "Phone"}</Text>
@@ -228,63 +286,55 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             </View>
           </View>
           
-          <View style={styles.customerInfo}>
-            <Text style={styles.label}>Customer:</Text>
-            <Text style={styles.value}>{quotation?.customer?.name || "Customer Name"}</Text>
-            
-            <Text style={styles.label}>Address:</Text>
-            <Text style={styles.value}>{quotation?.customer?.address || "Address"}</Text>
-            
-            <Text style={styles.label}>Phone:</Text>
-            <Text style={styles.value}>{quotation?.customer?.phone || "Phone"}</Text>
-            
-            <Text style={styles.label}>Email:</Text>
-            <Text style={styles.value}>{quotation?.customer?.email || "Email"}</Text>
-            
-            <Text style={styles.quotationNumber}>
-              Quotation #: {quotation?.quotationNumber || "QT-0000"}
-            </Text>
-          </View>
-          
-          <View style={styles.termsContainer}>
-            <Text style={styles.termsTitle}>Terms & Conditions</Text>
-            <Text style={styles.termsText}>
-              1. This quotation is valid for 30 days from the date of issue.
-            </Text>
-            <Text style={styles.termsText}>
-              2. Payment terms: 50% advance, 50% before delivery.
-            </Text>
-            <Text style={styles.termsText}>
-              3. Delivery time: 4-6 weeks from the date of order confirmation.
-            </Text>
+          <View style={{ borderTopWidth: 1, borderTopColor: '#EEEEEE', paddingTop: 20, marginTop: 30 }}>
+            <View style={{ flexDirection: 'row' }}>
+              <View style={{ width: '50%' }}>
+                <Text style={styles.label}>Customer:</Text>
+                <Text style={styles.value}>{quotation?.customer?.name || "Customer Name"}</Text>
+                
+                <Text style={styles.label}>Address:</Text>
+                <Text style={styles.value}>{quotation?.customer?.address || "Address"}</Text>
+              </View>
+              <View style={{ width: '50%' }}>
+                <Text style={styles.label}>Phone:</Text>
+                <Text style={styles.value}>{quotation?.customer?.phone || "Phone"}</Text>
+                
+                <Text style={styles.label}>Email:</Text>
+                <Text style={styles.value}>{quotation?.customer?.email || "Email"}</Text>
+                
+                <Text style={styles.label}>Quotation #:</Text>
+                <Text style={styles.value}>{quotation?.quotationNumber || "QT-0000"}</Text>
+              </View>
+            </View>
           </View>
         </View>
         
         <View style={styles.footer}>
-          <Text>{companySettings?.name || "Company Name"} © {new Date().getFullYear()}</Text>
+          <Text>Page 1 of {totalPages}</Text>
+          <Text>{companySettings?.website || ""}</Text>
         </View>
       </Page>
       
-      {/* Second page - About the company */}
-      <Page size="A4" style={styles.page}>
+      {/* Second page - Features */}
+      <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
-          <View style={styles.headerSection}>
-            <View style={styles.logoSection}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+            <View style={{ width: '65%' }}>
+              <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
+            </View>
+            <View style={{ width: '25%', alignItems: 'flex-end' }}>
               {companySettings?.logo && (
                 <Image 
                   src={companySettings.logo} 
-                  style={{ width: '100%', maxHeight: 60 }} 
+                  style={{ maxWidth: '100%', maxHeight: 50 }} 
                 />
               )}
             </View>
-            <View style={styles.infoSection}>
-              <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
-            </View>
           </View>
           
-          <View style={styles.aboutSection}>
-            <Text style={styles.aboutTitle}>About {companySettings?.name || "Our Company"}</Text>
-            
+          <Text style={styles.aboutTitle}>About {companySettings?.name || "Our Company"}</Text>
+          
+          <View style={{ marginTop: 10 }}>
             {appSettings?.presentationSecondPageContent ? (
               <Text style={styles.aboutText}>
                 {appSettings.presentationSecondPageContent.replace(/<[^>]*>?/gm, ' ')}
@@ -293,127 +343,124 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
               <Text style={styles.aboutText}>
                 {companySettings?.name} is a premier interior design firm specializing in creating exceptional living 
                 and working spaces that reflect our clients' unique styles and needs. With a dedicated team 
-                of designers and craftsmen, we combine innovative design with functionality to transform your 
-                space into a beautiful, practical environment.
+                of designers and craftsmen, we combine innovative design with functionality.
                 
                 Our process begins with understanding your vision, lifestyle, and requirements before crafting 
-                customized solutions that blend aesthetics with practicality. We work with high-quality materials 
-                and trusted suppliers to ensure durability and elegance in every project.
-                
-                From concept to completion, we manage every aspect of your project with attention to detail, 
-                transparent communication, and commitment to excellence.
+                customized solutions that blend aesthetics with practicality.
               </Text>
             )}
+          </View>
+          
+          <View style={styles.featureGrid}>
+            <View style={styles.featureBox}>
+              <Text style={styles.featureTitle}>Quality Materials</Text>
+              <Text style={styles.featureText}>We use only the highest quality materials sourced from trusted suppliers.</Text>
+            </View>
+            <View style={styles.featureBox}>
+              <Text style={styles.featureTitle}>Expert Craftsmen</Text>
+              <Text style={styles.featureText}>Our skilled team ensures precise execution of your design vision.</Text>
+            </View>
+            <View style={styles.featureBox}>
+              <Text style={styles.featureTitle}>Timely Delivery</Text>
+              <Text style={styles.featureText}>We commit to delivering your project within the agreed timeframe.</Text>
+            </View>
+            <View style={styles.featureBox}>
+              <Text style={styles.featureTitle}>After-Sales Support</Text>
+              <Text style={styles.featureText}>Our service doesn't end with installation - we provide ongoing support.</Text>
+            </View>
           </View>
         </View>
         
         <View style={styles.footer}>
-          <Text>{companySettings?.name || "Company Name"} © {new Date().getFullYear()}</Text>
+          <Text>Page 2 of {totalPages}</Text>
+          <Text>{companySettings?.website || ""}</Text>
         </View>
       </Page>
       
-      {/* Room image pages - one page per room */}
-      {quotation.rooms.map((room, roomIndex) => (
-        <Page key={roomIndex} size="A4" orientation="landscape" style={styles.page}>
-          <View style={styles.section}>
-            <View style={styles.headerSection}>
-              <View style={styles.logoSection}>
-                {companySettings?.logo && (
+      {/* Room Images - one page per image */}
+      {sortedRooms.map((room, roomIndex) => 
+        room.images && room.images.map((image, imageIndex) => {
+          const pageNumber = 3 + roomIndex + imageIndex;
+          return (
+            <Page key={`${roomIndex}-${imageIndex}`} size="A4" orientation="landscape" style={styles.page}>
+              <View style={styles.section}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+                  <View style={{ width: '65%' }}>
+                    <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
+                  </View>
+                  <View style={{ width: '25%', alignItems: 'flex-end' }}>
+                    {companySettings?.logo && (
+                      <Image 
+                        src={companySettings.logo} 
+                        style={{ maxWidth: '100%', maxHeight: 50 }} 
+                      />
+                    )}
+                  </View>
+                </View>
+                
+                <Text style={styles.roomImageTitle}>{image.type || "Room Image"}</Text>
+                
+                <View style={styles.imageContainer}>
                   <Image 
-                    src={companySettings.logo} 
-                    style={{ width: '100%', maxHeight: 50 }} 
+                    src={image.path} 
+                    style={styles.singleRoomImage}
                   />
-                )}
+                </View>
+                
+                <View style={{ marginTop: 20, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold' }}>{room.name}</Text>
+                  {room.description && (
+                    <Text style={{ fontSize: 10, color: '#666666', marginTop: 5 }}>{room.description}</Text>
+                  )}
+                </View>
               </View>
-              <View style={styles.infoSection}>
-                <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
+              
+              <View style={styles.footer}>
+                <Text>Page {pageNumber} of {totalPages}</Text>
+                <Text>{companySettings?.website || ""}</Text>
               </View>
-            </View>
-            
-            <Text style={styles.roomImageTitle}>{room.name}</Text>
-            
-            {room.description && (
-              <Text style={styles.aboutText}>{room.description}</Text>
-            )}
-            
-            <View style={styles.imageGrid}>
-              {room.images && room.images.length > 0 ? (
-                room.images.map((image, imageIndex) => (
-                  <Image 
-                    key={imageIndex}
-                    src={typeof image === 'string' ? image : image.path}
-                    style={styles.roomImage}
-                  />
-                ))
-              ) : (
-                <Text style={{ color: '#666666', fontStyle: 'italic', marginTop: 10 }}>No images available</Text>
-              )}
-            </View>
-          </View>
-          
-          <View style={styles.footer}>
-            <Text>{companySettings?.name || "Company Name"} - Room {roomIndex + 1}: {room.name}</Text>
-          </View>
-        </Page>
-      ))}
+            </Page>
+          );
+        })
+      )}
       
-      {/* Price table page */}
-      <Page size="A4" style={styles.page}>
+      {/* Summary Page */}
+      <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
-          <View style={styles.headerSection}>
-            <View style={styles.logoSection}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+            <View style={{ width: '65%' }}>
+              <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
+            </View>
+            <View style={{ width: '25%', alignItems: 'flex-end' }}>
               {companySettings?.logo && (
                 <Image 
                   src={companySettings.logo} 
-                  style={{ width: '100%', maxHeight: 50 }} 
+                  style={{ maxWidth: '100%', maxHeight: 50 }} 
                 />
               )}
             </View>
-            <View style={styles.infoSection}>
-              <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
-            </View>
           </View>
           
-          <Text style={styles.aboutTitle}>Quotation Summary</Text>
+          <Text style={styles.roomImageTitle}>Quotation Summary</Text>
           
-          {quotation.rooms.map((room, roomIndex) => (
-            <View key={roomIndex} style={{ marginBottom: 20 }}>
-              <Text style={styles.roomImageTitle}>{room.name}</Text>
-              
-              <View style={styles.tableContainer}>
-                <View style={styles.tableHeader}>
-                  <Text style={[styles.slNoCell]}>No.</Text>
-                  <Text style={[styles.descriptionCell]}>Description</Text>
-                  <Text style={[styles.quantityCell]}>Qty</Text>
-                  <Text style={[styles.unitCell]}>Unit Price</Text>
-                  <Text style={[styles.discountCell]}>Disc%</Text>
-                  <Text style={[styles.amountCell]}>Amount</Text>
-                </View>
-                
-                {room.products.map((product, index) => {
-                  const unitPrice = product.sellingPrice || 0;
-                  const quantity = product.quantity || 0;
-                  const discount = product.discount || 0;
-                  const discountedPrice = unitPrice * (1 - discount / 100);
-                  const totalPrice = discountedPrice * quantity;
-                  
-                  return (
-                    <View key={index} style={[
-                      styles.tableRow,
-                      index % 2 === 0 ? styles.tableRowEven : {}
-                    ]}>
-                      <Text style={[styles.slNoCell]}>{index + 1}</Text>
-                      <Text style={[styles.descriptionCell]}>{product.name}</Text>
-                      <Text style={[styles.quantityCell]}>{product.quantity}</Text>
-                      <Text style={[styles.unitCell]}>{formatCurrency(unitPrice)}</Text>
-                      <Text style={[styles.discountCell]}>{product.discount}%</Text>
-                      <Text style={[styles.amountCell]}>{formatCurrency(totalPrice)}</Text>
-                    </View>
-                  );
-                })}
-              </View>
+          <View style={styles.tableContainer}>
+            <View style={styles.tableHeader}>
+              <Text style={{ width: '40%', padding: 5 }}>Room</Text>
+              <Text style={{ width: '40%', padding: 5 }}>Description</Text>
+              <Text style={{ width: '20%', padding: 5, textAlign: 'right' }}>Amount</Text>
             </View>
-          ))}
+            
+            {sortedRooms.map((room, index) => (
+              <View key={index} style={[
+                styles.tableRow,
+                index % 2 === 0 ? styles.tableRowEven : {}
+              ]}>
+                <Text style={{ width: '40%', padding: 5 }}>{room.name}</Text>
+                <Text style={{ width: '40%', padding: 5 }}>{room.description || `${room.products?.length || 0} products`}</Text>
+                <Text style={{ width: '20%', padding: 5, textAlign: 'right' }}>{formatCurrency(room.sellingPrice || 0)}</Text>
+              </View>
+            ))}
+          </View>
           
           <View style={styles.totalSection}>
             <View style={styles.totalRow}>
@@ -424,13 +471,8 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Discount ({quotation.globalDiscount}%):</Text>
               <Text style={styles.totalValue}>
-                {formatCurrency(quotation.totalSellingPrice * (quotation.globalDiscount / 100))}
+                -{formatCurrency(quotation.totalSellingPrice * (quotation.globalDiscount / 100))}
               </Text>
-            </View>
-            
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>GST ({quotation.gstPercentage}%):</Text>
-              <Text style={styles.totalValue}>{formatCurrency(quotation.gstAmount)}</Text>
             </View>
             
             <View style={styles.totalRow}>
@@ -438,72 +480,38 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
               <Text style={styles.totalValue}>{formatCurrency(quotation.totalInstallationCharges)}</Text>
             </View>
             
-            <View style={[styles.totalRow, { backgroundColor: '#009245' }]}>
-              <Text style={[styles.totalLabel, { color: 'white', fontWeight: 'bold' }]}>Total:</Text>
-              <Text style={[styles.totalValue, { color: 'white', fontWeight: 'bold' }]}>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>GST ({quotation.gstPercentage}%):</Text>
+              <Text style={styles.totalValue}>{formatCurrency(quotation.gstAmount)}</Text>
+            </View>
+            
+            <View style={[styles.totalRow, { borderTopWidth: 1, borderTopColor: '#EEEEEE', paddingTop: 5 }]}>
+              <Text style={[styles.totalLabel, { fontWeight: 'bold' }]}>Total:</Text>
+              <Text style={[styles.totalValue, { fontWeight: 'bold', color: '#009245' }]}>
                 {formatCurrency(quotation.finalPrice)}
               </Text>
             </View>
           </View>
-        </View>
-        
-        <View style={styles.footer}>
-          <Text>{companySettings?.name || "Company Name"} - Quotation Summary</Text>
-        </View>
-      </Page>
-      
-      {/* Terms and conditions page */}
-      <Page size="A4" orientation="landscape" style={styles.page}>
-        <View style={styles.section}>
-          <View style={styles.headerSection}>
-            <View style={styles.logoSection}>
-              {companySettings?.logo && (
-                <Image 
-                  src={companySettings.logo} 
-                  style={{ width: '100%', maxHeight: 50 }} 
-                />
-              )}
-            </View>
-            <View style={styles.infoSection}>
-              <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
-            </View>
+          
+          <View style={{ marginTop: 'auto', borderTopWidth: 1, borderTopColor: '#EEEEEE', paddingTop: 10 }}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5 }}>Terms & Conditions</Text>
+            {appSettings?.defaultTermsAndConditions ? (
+              <Text style={{ fontSize: 9, color: '#666666' }}>
+                {appSettings.defaultTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
+              </Text>
+            ) : (
+              <Text style={{ fontSize: 9, color: '#666666' }}>
+                • Quotation is valid for 30 days from the date of issue.
+                • Payment terms: 50% advance, 50% before delivery.
+                • Delivery time: 4-6 weeks from date of order confirmation.
+              </Text>
+            )}
           </View>
-          
-          <Text style={styles.aboutTitle}>Terms and Conditions</Text>
-          
-          {appSettings?.presentationTermsAndConditions ? (
-            <Text style={styles.aboutText}>
-              {appSettings.presentationTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
-            </Text>
-          ) : (
-            <>
-              <Text style={styles.termsText}>
-                1. <Text style={{ fontWeight: 'bold' }}>Scope of Work:</Text> {companySettings?.name} agrees to perform the production and services outlined in our individual quotation and this agreement according to the terms and conditions contained herein.
-              </Text>
-              <Text style={styles.termsText}>
-                2. <Text style={{ fontWeight: 'bold' }}>Quotation Validity:</Text> This quotation is valid for 30 days from the date of issue. Prices and availability of materials are subject to change after this period.
-              </Text>
-              <Text style={styles.termsText}>
-                3. <Text style={{ fontWeight: 'bold' }}>Measurement & Design:</Text> All product dimensions and designs are agreed upon in advance. Any changes after production begins may incur additional charges and delay delivery.
-              </Text>
-              <Text style={styles.termsText}>
-                4. <Text style={{ fontWeight: 'bold' }}>Payment Terms:</Text> A 50% advance payment is required to begin production. The remaining 50% must be paid before delivery and installation.
-              </Text>
-              <Text style={styles.termsText}>
-                5. <Text style={{ fontWeight: 'bold' }}>Delivery & Installation:</Text> Estimated delivery dates are approximate. We will coordinate with you for installation scheduling.
-              </Text>
-              <Text style={styles.termsText}>
-                6. <Text style={{ fontWeight: 'bold' }}>Changes & Cancellations:</Text> Any changes to the order must be made in writing. Cancellations after production has begun will incur charges proportional to the work completed.
-              </Text>
-              <Text style={styles.termsText}>
-                7. <Text style={{ fontWeight: 'bold' }}>Warranty:</Text> All products come with a limited warranty against manufacturing defects for a period of 1 year from the installation date. Normal wear and tear, improper use, or damage caused by external factors are not covered.
-              </Text>
-            </>
-          )}
         </View>
         
         <View style={styles.footer}>
-          <Text>{companySettings?.name || "Company Name"} - Terms & Conditions</Text>
+          <Text>Page {totalPages} of {totalPages}</Text>
+          <Text>{companySettings?.website || ""}</Text>
         </View>
       </Page>
     </Document>
