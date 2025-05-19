@@ -975,7 +975,14 @@ export default function CustomersList() {
                 ) : (
                   filteredCustomers.map((customer) => (
                     <TableRow key={customer.id}>
-                      <TableCell className="font-medium">{customer.name}</TableCell>
+                      <TableCell>
+                        <div 
+                          className="font-medium cursor-pointer hover:text-primary hover:underline"
+                          onClick={() => navigate(`/customers/${customer.id}`)}
+                        >
+                          {customer.name}
+                        </div>
+                      </TableCell>
                       <TableCell>{customer.email}</TableCell>
                       <TableCell>{customer.phone}</TableCell>
                       <TableCell>
