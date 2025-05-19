@@ -11,10 +11,22 @@ import {
   teams, Team, InsertTeam,
   teamMembers, TeamMember, InsertTeamMember,
   followUps, FollowUp, InsertFollowUp,
-  accessoryCatalog, AccessoryCatalog, InsertAccessoryCatalog
+  accessoryCatalog, AccessoryCatalog, InsertAccessoryCatalog,
+  salesOrders, SalesOrder, InsertSalesOrder
 } from "@shared/schema";
 
 export interface IStorage {
+  // Sales Order operations
+  getSalesOrders(): Promise<SalesOrder[]>;
+  getSalesOrder(id: number): Promise<SalesOrder | undefined>;
+  getSalesOrderWithDetails(id: number): Promise<any>;
+  getSalesOrdersByCustomer(customerId: number): Promise<SalesOrder[]>;
+  createSalesOrderFromQuotation(quotationId: number, data: any): Promise<SalesOrder>;
+  updateSalesOrder(id: number, salesOrder: Partial<SalesOrder>): Promise<SalesOrder | undefined>;
+  cancelSalesOrder(id: number): Promise<SalesOrder | undefined>;
+  revertSalesOrderToQuotation(id: number): Promise<Quotation | undefined>;
+  getSalesOrderByQuotation(quotationId: number): Promise<SalesOrder | undefined>;
+  
   // Customer operations
   getCustomers(): Promise<Customer[]>;
   getCustomer(id: number): Promise<Customer | undefined>;

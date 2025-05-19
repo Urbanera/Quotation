@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { 
@@ -93,6 +93,7 @@ interface SalesOrderResponse {
 export default function ViewSalesOrder() {
   const { id } = useParams();
   const orderId = parseInt(id || "0");
+  const [, navigate] = useLocation();
   const { toast } = useToast();
 
   // Fetch the sales order with all details
@@ -442,6 +443,25 @@ export default function ViewSalesOrder() {
               </div>
               
               <div className="pt-4 border-t">
+                <Button
+                  className="w-full mb-4"
+                  variant="outline"
+                  onClick={() => revertToQuotationMutation.mutate()}
+                  disabled={revertToQuotationMutation.isPending || salesOrder.amountPaid > 0 || ['completed', 'delivered', 'cancelled'].includes(salesOrder.status)}
+                >
+                  {revertToQuotationMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Reverting...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Revert to Quotation
+                    </>
+                  )}
+                </Button>
+                
                 <Button
                   className="w-full"
                   variant="outline"
