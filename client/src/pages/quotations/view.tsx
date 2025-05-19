@@ -518,45 +518,16 @@ export default function ViewQuotation() {
             
             <TabsContent value="landscape" className="mt-6">
               <div className="bg-white shadow rounded-lg p-6">
-                <p className="text-center mb-4 text-gray-600">
-                  Landscape format is available for direct download using the button below.
-                </p>
-                
-                <div className="flex items-center justify-center">
-                  {quotation && companySettings && appSettings ? (
-                    <div className="flex flex-col items-center">
-                      <PDFDownloadLink 
-                        document={
-                          <LandscapeQuote 
-                            quotation={quotation} 
-                            companySettings={companySettings}
-                            appSettings={appSettings}
-                          />
-                        } 
-                        fileName={`Landscape-${quotation?.quotationNumber || id}.pdf`}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center"
-                      >
-                        {({ blob, url, loading, error }) => 
-                          loading ? 
-                            <>
-                              <div className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              Preparing PDF...
-                            </> : 
-                            <>
-                              <Download className="mr-2 h-4 w-4" />
-                              Download Landscape PDF
-                            </>
-                        }
-                      </PDFDownloadLink>
-                      
-                      <p className="text-xs text-gray-500 mt-2">
-                        (This might take a few seconds to prepare)
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-gray-500">Loading data...</div>
-                  )}
-                </div>
+                {quotation && companySettings && appSettings ? (
+                  <LandscapeQuotePreview 
+                    quotation={quotation}
+                    companySettings={companySettings}
+                    appSettings={appSettings}
+                    id={id || ""}
+                  />
+                ) : (
+                  <p className="text-center">Loading quotation data...</p>
+                )}
               </div>
             </TabsContent>
             
