@@ -1041,8 +1041,8 @@ export class MemStorage implements IStorage {
     const quotation = await this.getQuotation(salesOrder.quotationId);
     if (!quotation) return undefined;
     
-    // Update the quotation status back to 'pending'
-    const updatedQuotation = await this.updateQuotationStatus(quotation.id, "pending");
+    // Update the quotation status back to 'draft'
+    const updatedQuotation = await this.updateQuotationStatus(quotation.id, "draft");
     
     // Remove the sales order
     this.salesOrders.delete(id);
