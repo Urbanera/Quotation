@@ -476,10 +476,7 @@ export default function QuotationsList() {
                                 <Check className="mr-2 h-4 w-4 text-blue-500" />
                                 <span>Convert to Sales Order</span>
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setQuotationToConvertToInvoice(quotation)}>
-                                <Check className="mr-2 h-4 w-4 text-indigo-500" />
-                                <span>Convert to Invoice</span>
-                              </DropdownMenuItem>
+
                             </>
                           )}
                           {quotation.status === 'converted' && (
