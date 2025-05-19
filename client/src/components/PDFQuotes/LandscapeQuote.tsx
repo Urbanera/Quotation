@@ -172,14 +172,15 @@ const styles = StyleSheet.create({
     textAlign: 'justify',
   },
   imageContainer: {
-    marginTop: 20,
+    marginTop: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    height: '60%',
+    height: '80%',
+    width: '100%',
   },
   singleRoomImage: {
-    maxWidth: '90%',
-    maxHeight: '90%',
+    maxWidth: '100%',
+    maxHeight: '100%',
     objectFit: 'contain',
   },
   roomImageTitle: {
@@ -264,26 +265,23 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
       <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-            <View style={{ width: '70%', alignItems: 'center' }}>
+            <View style={{ width: '70%' }}>
               <Text style={styles.title}>Modular Interior Quotation</Text>
             </View>
             <View style={{ width: '25%', alignItems: 'flex-end' }}>
               {companySettings?.logo && (
                 <Image 
                   src={companySettings.logo} 
-                  style={{ maxWidth: '100%', maxHeight: 60 }} 
+                  style={{ width: 120, objectFit: 'contain' }} 
                 />
               )}
             </View>
           </View>
           
-          <View style={{ flexDirection: 'row', marginTop: 20 }}>
-            <View style={{ width: '65%' }}>
-              <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
-              <Text style={styles.text}>{companySettings?.address || "Address"}</Text>
-              <Text style={styles.text}>Phone: {companySettings?.phone || "Phone"}</Text>
-              <Text style={styles.text}>Email: {companySettings?.email || "Email"}</Text>
-            </View>
+          <View style={{ marginTop: 20 }}>
+            <Text style={styles.text}>{companySettings?.address || "Address"}</Text>
+            <Text style={styles.text}>Phone: {companySettings?.phone || "Phone"}</Text>
+            <Text style={styles.text}>Email: {companySettings?.email || "Email"}</Text>
           </View>
           
           <View style={{ borderTopWidth: 1, borderTopColor: '#EEEEEE', paddingTop: 20, marginTop: 30 }}>
@@ -318,21 +316,19 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
       {/* Second page - Features */}
       <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
             <View style={{ width: '65%' }}>
-              <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245' }}>About Our Company</Text>
             </View>
             <View style={{ width: '25%', alignItems: 'flex-end' }}>
               {companySettings?.logo && (
                 <Image 
                   src={companySettings.logo} 
-                  style={{ maxWidth: '100%', maxHeight: 50 }} 
+                  style={{ width: 120, objectFit: 'contain' }} 
                 />
               )}
             </View>
           </View>
-          
-          <Text style={styles.aboutTitle}>About {companySettings?.name || "Our Company"}</Text>
           
           <View style={{ marginTop: 10 }}>
             {appSettings?.presentationSecondPageContent ? (
@@ -384,34 +380,27 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
           return (
             <Page key={`${roomIndex}-${imageIndex}`} size="A4" orientation="landscape" style={styles.page}>
               <View style={styles.section}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
                   <View style={{ width: '65%' }}>
-                    <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245' }}>
+                      {room.name} - {image.type || "Room Image"}
+                    </Text>
                   </View>
                   <View style={{ width: '25%', alignItems: 'flex-end' }}>
                     {companySettings?.logo && (
                       <Image 
                         src={companySettings.logo} 
-                        style={{ maxWidth: '100%', maxHeight: 50 }} 
+                        style={{ width: 120, objectFit: 'contain' }} 
                       />
                     )}
                   </View>
                 </View>
-                
-                <Text style={styles.roomImageTitle}>{image.type || "Room Image"}</Text>
                 
                 <View style={styles.imageContainer}>
                   <Image 
                     src={image.path} 
                     style={styles.singleRoomImage}
                   />
-                </View>
-                
-                <View style={{ marginTop: 20, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold' }}>{room.name}</Text>
-                  {room.description && (
-                    <Text style={{ fontSize: 10, color: '#666666', marginTop: 5 }}>{room.description}</Text>
-                  )}
                 </View>
               </View>
               
@@ -427,38 +416,73 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
       {/* Summary Page */}
       <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
             <View style={{ width: '65%' }}>
-              <Text style={styles.companyName}>{companySettings?.name || "Company Name"}</Text>
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245' }}>Quotation Summary</Text>
             </View>
             <View style={{ width: '25%', alignItems: 'flex-end' }}>
               {companySettings?.logo && (
                 <Image 
                   src={companySettings.logo} 
-                  style={{ maxWidth: '100%', maxHeight: 50 }} 
+                  style={{ width: 120, objectFit: 'contain' }} 
                 />
               )}
             </View>
           </View>
           
-          <Text style={styles.roomImageTitle}>Quotation Summary</Text>
-          
           <View style={styles.tableContainer}>
             <View style={styles.tableHeader}>
-              <Text style={{ width: '40%', padding: 5 }}>Room</Text>
-              <Text style={{ width: '40%', padding: 5 }}>Description</Text>
-              <Text style={{ width: '20%', padding: 5, textAlign: 'right' }}>Amount</Text>
+              <Text style={[styles.slNoCell]}>No.</Text>
+              <Text style={[styles.descriptionCell]}>Description</Text>
+              <Text style={[styles.quantityCell]}>Qty</Text>
+              <Text style={[styles.unitCell]}>Unit Price</Text>
+              <Text style={[styles.discountCell]}>Disc%</Text>
+              <Text style={[styles.amountCell]}>Amount</Text>
             </View>
             
-            {sortedRooms.map((room, index) => (
-              <View key={index} style={[
-                styles.tableRow,
-                index % 2 === 0 ? styles.tableRowEven : {}
-              ]}>
-                <Text style={{ width: '40%', padding: 5 }}>{room.name}</Text>
-                <Text style={{ width: '40%', padding: 5 }}>{room.description || `${room.products?.length || 0} products`}</Text>
-                <Text style={{ width: '20%', padding: 5, textAlign: 'right' }}>{formatCurrency(room.sellingPrice || 0)}</Text>
-              </View>
+            {/* Map through each room and its products */}
+            {sortedRooms.map((room, roomIndex) => (
+              <React.Fragment key={roomIndex}>
+                {/* Room header row */}
+                <View style={[styles.tableRow, { backgroundColor: '#f5f5f5', fontWeight: 'bold' }]}>
+                  <Text style={[{ width: '100%', padding: 5, fontWeight: 'bold' }]}>
+                    Room: {room.name} {room.description ? `- ${room.description}` : ''}
+                  </Text>
+                </View>
+                
+                {/* Products for this room */}
+                {room.products && room.products.map((product, index) => {
+                  const unitPrice = product.sellingPrice || 0;
+                  const quantity = product.quantity || 0;
+                  const discount = product.discount || 0;
+                  const discountedPrice = unitPrice * (1 - discount / 100);
+                  const totalPrice = discountedPrice * quantity;
+                  
+                  return (
+                    <View key={index} style={[
+                      styles.tableRow,
+                      index % 2 === 0 ? styles.tableRowEven : {}
+                    ]}>
+                      <Text style={[styles.slNoCell]}>{index + 1}</Text>
+                      <Text style={[styles.descriptionCell]}>{product.name}</Text>
+                      <Text style={[styles.quantityCell]}>{product.quantity}</Text>
+                      <Text style={[styles.unitCell]}>{formatCurrency(unitPrice)}</Text>
+                      <Text style={[styles.discountCell]}>{product.discount}%</Text>
+                      <Text style={[styles.amountCell]}>{formatCurrency(totalPrice)}</Text>
+                    </View>
+                  );
+                })}
+                
+                {/* Room subtotal row */}
+                <View style={[styles.tableRow, { backgroundColor: '#f5f5f5' }]}>
+                  <Text style={{ width: '85%', padding: 5, textAlign: 'right', fontWeight: 'bold' }}>
+                    Room Total:
+                  </Text>
+                  <Text style={{ width: '15%', padding: 5, textAlign: 'right', fontWeight: 'bold' }}>
+                    {formatCurrency(room.sellingPrice || 0)}
+                  </Text>
+                </View>
+              </React.Fragment>
             ))}
           </View>
           
