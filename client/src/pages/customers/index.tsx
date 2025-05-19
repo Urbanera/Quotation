@@ -53,22 +53,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import StageCheckbox from "@/components/StageCheckbox";
 
 type SortField = "name" | "email" | "createdAt";
 type SortOrder = "asc" | "desc";
-// Define available stages as a readonly array for type checking
+type FollowUpFilter = "all" | "today" | "yesterday" | "missed" | "future";
+
+// Define available stages
 const STAGES = ["new", "pipeline", "cold", "warm", "booked", "lost"] as const;
 type Stage = (typeof STAGES)[number];
-// StageFilter now becomes an array of stages for multi-select
-type StageFilter = Stage[];
-type FollowUpFilter = "all" | "today" | "yesterday" | "missed" | "future";
 
 export default function CustomersList() {
   const [searchTerm, setSearchTerm] = useState("");
   // Default sort by createdAt in descending order (newest first)
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
-  const [stageFilter, setStageFilter] = useState<StageFilter>([]);
+  const [selectedStages, setSelectedStages] = useState<Stage[]>([]);
   const [followUpFilter, setFollowUpFilter] = useState<FollowUpFilter>("all");
   const [leadSourceFilter, setLeadSourceFilter] = useState<string>("all");
   const [deleteCustomerId, setDeleteCustomerId] = useState<number | null>(null);
