@@ -188,36 +188,38 @@ export default function SalesOrdersPage() {
                         {order.paymentStatus.replace("_", " ")}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Link href={`/sales-orders/view/${order.id}`}>
-                        <Button variant="ghost" size="icon">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Link href={`/sales-orders/${order.id}/payments`}>
-                        <Button variant="ghost" size="icon">
-                          <CreditCard className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end items-center space-x-1">
+                        <Link href={`/sales-orders/view/${order.id}`}>
                           <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setOrderToRevert(order)}
-                            disabled={order.amountPaid > 0 || ['completed', 'delivered', 'cancelled'].includes(order.status)}
-                            className={order.amountPaid > 0 || ['completed', 'delivered', 'cancelled'].includes(order.status) ? 'text-muted-foreground' : ''}
-                          >
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Revert to Quotation
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        </Link>
+                        <Link href={`/sales-orders/${order.id}/payments`}>
+                          <Button variant="ghost" size="icon">
+                            <CreditCard className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setOrderToRevert(order)}
+                              disabled={order.amountPaid > 0 || ['completed', 'delivered', 'cancelled'].includes(order.status)}
+                              className={order.amountPaid > 0 || ['completed', 'delivered', 'cancelled'].includes(order.status) ? 'text-muted-foreground' : ''}
+                            >
+                              <ArrowLeft className="mr-2 h-4 w-4" />
+                              Revert to Quotation
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
