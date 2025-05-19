@@ -780,7 +780,7 @@ export default function CustomersList() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-2">
-                <div className="grid grid-cols-2 gap-2 text-center h-[120px]">
+                <div className="grid grid-cols-3 gap-2 text-center h-[120px]">
                   {leadSourcesData.options.length > 0 ? (
                     leadSourcesData.options.map((source: string) => (
                       <div 
