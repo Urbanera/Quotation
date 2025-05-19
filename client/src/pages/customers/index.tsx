@@ -915,7 +915,7 @@ export default function CustomersList() {
                 {filteredCustomers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      {searchTerm || stageFilter !== "all" || followUpFilter !== "all" || leadSourceFilter !== "all" ? (
+                      {searchTerm || selectedStages.length > 0 || followUpFilter !== "all" || leadSourceFilter !== "all" ? (
                         <>No customers match your filters. Try adjusting your search or filters.</>
                       ) : (
                         <>No customers found. Add a customer to get started.</>
