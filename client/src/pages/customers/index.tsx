@@ -978,7 +978,7 @@ export default function CustomersList() {
                       <TableCell>
                         <div 
                           className="font-medium cursor-pointer hover:text-primary hover:underline"
-                          onClick={() => navigate(`/customers/${customer.id}`)}
+                          onClick={() => navigate(`/customers/view/${customer.id}`)}
                         >
                           {customer.name}
                         </div>
