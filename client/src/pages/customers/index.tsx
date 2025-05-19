@@ -908,13 +908,15 @@ export default function CustomersList() {
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Stage</TableHead>
+                  <TableHead>Latest Follow-up</TableHead>
+                  <TableHead>Next Follow-up</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCustomers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       {searchTerm || selectedStages.length > 0 || followUpFilter !== "all" || leadSourceFilter !== "all" ? (
                         <>No customers match your filters. Try adjusting your search or filters.</>
                       ) : (
@@ -946,6 +948,40 @@ export default function CustomersList() {
                         >
                           {customer.stage && typeof customer.stage === 'string' ? (customer.stage.charAt(0).toUpperCase() + customer.stage.slice(1)) : 'Unknown'}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {getLatestFollowUp(customer.id) ? (
+                          <div>
+                            {getLatestFollowUp(customer.id)?.notes.length > 40 ? (
+                              <HoverCard>
+                                <HoverCardTrigger asChild>
+                                  <div className="cursor-pointer">
+                                    {getLatestFollowUp(customer.id)?.notes.substring(0, 40)}...
+                                  </div>
+                                </HoverCardTrigger>
+                                <HoverCardContent className="w-80">
+                                  <div className="space-y-1">
+                                    <h4 className="text-sm font-semibold">Follow-up Notes</h4>
+                                    <p className="text-sm">{getLatestFollowUp(customer.id)?.notes}</p>
+                                  </div>
+                                </HoverCardContent>
+                              </HoverCard>
+                            ) : (
+                              <span>{getLatestFollowUp(customer.id)?.notes}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">No follow-ups</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {getNextFollowUp(customer.id) ? (
+                          <span className={`${isOverdue(getNextFollowUp(customer.id)?.scheduledDate) ? 'text-red-600 font-medium' : ''}`}>
+                            {format(new Date(getNextFollowUp(customer.id)?.scheduledDate || ''), 'MMM dd, yyyy')}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">None scheduled</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
