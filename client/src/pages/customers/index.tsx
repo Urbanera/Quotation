@@ -998,38 +998,50 @@ export default function CustomersList() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {getLatestFollowUp(customer.id) ? (
-                          <div>
-                            {getLatestFollowUp(customer.id)?.notes.length > 40 ? (
-                              <HoverCard>
-                                <HoverCardTrigger asChild>
-                                  <div className="cursor-pointer">
-                                    {getLatestFollowUp(customer.id)?.notes.substring(0, 40)}...
-                                  </div>
-                                </HoverCardTrigger>
-                                <HoverCardContent className="w-80">
-                                  <div className="space-y-1">
-                                    <h4 className="text-sm font-semibold">Follow-up Notes</h4>
-                                    <p className="text-sm">{getLatestFollowUp(customer.id)?.notes}</p>
-                                  </div>
-                                </HoverCardContent>
-                              </HoverCard>
-                            ) : (
-                              <span>{getLatestFollowUp(customer.id)?.notes}</span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">No follow-ups</span>
-                        )}
+                        {(() => {
+                          const latestFollowUp = getLatestFollowUp(customer.id);
+                          if (latestFollowUp) {
+                            const notes = latestFollowUp.notes || '';
+                            if (notes.length > 40) {
+                              return (
+                                <HoverCard>
+                                  <HoverCardTrigger asChild>
+                                    <div className="cursor-pointer">
+                                      {notes.substring(0, 40)}...
+                                    </div>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent className="w-80">
+                                    <div className="space-y-1">
+                                      <h4 className="text-sm font-semibold">Follow-up Notes</h4>
+                                      <p className="text-sm">{notes}</p>
+                                    </div>
+                                  </HoverCardContent>
+                                </HoverCard>
+                              );
+                            } else {
+                              return <span>{notes}</span>;
+                            }
+                          }
+                          return <span className="text-muted-foreground text-sm">No follow-ups</span>;
+                        })()}
                       </TableCell>
                       <TableCell>
-                        {getNextFollowUp(customer.id) ? (
-                          <span className={`${isOverdue(getNextFollowUp(customer.id)?.scheduledDate) ? 'text-red-600 font-medium' : ''}`}>
-                            {format(new Date(getNextFollowUp(customer.id)?.scheduledDate || ''), 'MMM dd, yyyy')}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">None scheduled</span>
-                        )}
+                        {(() => {
+                          const nextFollowUp = getNextFollowUp(customer.id);
+                          if (nextFollowUp && nextFollowUp.nextFollowUpDate) {
+                            try {
+                              const date = new Date(nextFollowUp.nextFollowUpDate);
+                              return (
+                                <span className={`${isOverdue(nextFollowUp.nextFollowUpDate) ? 'text-red-600 font-medium' : ''}`}>
+                                  {format(date, 'MMM dd, yyyy')}
+                                </span>
+                              );
+                            } catch (e) {
+                              return <span className="text-muted-foreground text-sm">Invalid date</span>;
+                            }
+                          }
+                          return <span className="text-muted-foreground text-sm">None scheduled</span>;
+                        })()}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
