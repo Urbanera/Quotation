@@ -153,10 +153,16 @@ export default function ViewSalesOrder() {
         title: "Sales order reverted",
         description: "The sales order has been successfully reverted to a quotation.",
       });
+      // Invalidate and remove from cache
       queryClient.invalidateQueries({ queryKey: ["/api/sales-orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
-      // Navigate to the quotation
-      navigate(`/quotations/view/${data.id}`);
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${data.id}/details`] });
+      queryClient.removeQueries({ queryKey: [`/api/quotations/${data.id}/details`] });
+      
+      // Wait a moment before navigating to ensure the cache is cleared
+      setTimeout(() => {
+        navigate(`/quotations/view/${data.id}`);
+      }, 100);
     },
     onError: (error: any) => {
       toast({

@@ -69,20 +69,20 @@ export default function ViewQuotation() {
     queryKey: ['/api/settings/app'],
   });
 
-  const { data: quotation, isLoading } = useQuery<QuotationWithDetails>({
+  const { data: quotation, isLoading, refetch } = useQuery<QuotationWithDetails>({
     queryKey: [`/api/quotations/${id}/details`],
     enabled: !!id,
+    staleTime: 0 // Always refetch when the page is visited
   });
   
   // Check if quotation has been converted to a sales order
   const isQuotationConverted = quotation?.status === 'converted';
   
-  // Refetch quotation when status changes (like after revert)
+  // Refetch quotation when the component mounts to ensure fresh data after revert
   useEffect(() => {
-    if (quotation?.status) {
-      console.log("Quotation status:", quotation.status);
-    }
-  }, [quotation?.status]);
+    refetch();
+    console.log("Quotation view mounted, status:", quotation?.status);
+  }, [refetch]);
   
   // Approve quotation mutation
   const approveQuotationMutation = useMutation({
