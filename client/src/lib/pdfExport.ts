@@ -54,8 +54,8 @@ export const exportToPdf = async (
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     
-    // Define margins - increased for better printing
-    const margin = 25; // 25mm margins for better results
+    // Define margins - standard margins for consistent results
+    const margin = 15; // 15mm margins for better consistency
     
     // Add styling to fix page breaks and layout
     const style = document.createElement('style');

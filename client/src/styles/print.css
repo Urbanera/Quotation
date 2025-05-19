@@ -111,7 +111,7 @@
   /* Set up page for A4 */
   @page {
     size: A4 portrait;
-    margin: 25mm !important; /* Force larger margins for PDF export */
+    margin: 15mm !important; /* Standard margins for better consistency */
   }
   
   /* Hide UI elements */
