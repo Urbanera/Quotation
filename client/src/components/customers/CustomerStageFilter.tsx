@@ -252,7 +252,13 @@ export default function CustomerStageFilter({ customers }: CustomerStageFilterPr
                     <Checkbox 
                       id={`stage-${stage}`} 
                       checked={selectedStages.includes(stage)}
-                      onCheckedChange={() => handleStageToggle(stage)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedStages(prev => [...prev, stage]);
+                        } else {
+                          setSelectedStages(prev => prev.filter(s => s !== stage));
+                        }
+                      }}
                       className="data-[state=checked]:bg-indigo-600"
                     />
                     <label 
