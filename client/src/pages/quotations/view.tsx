@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,13 @@ export default function ViewQuotation() {
   
   // Check if quotation has been converted to a sales order
   const isQuotationConverted = quotation?.status === 'converted';
+  
+  // Refetch quotation when status changes (like after revert)
+  useEffect(() => {
+    if (quotation?.status) {
+      console.log("Quotation status:", quotation.status);
+    }
+  }, [quotation?.status]);
   
   // Approve quotation mutation
   const approveQuotationMutation = useMutation({

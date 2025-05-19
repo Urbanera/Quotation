@@ -428,12 +428,19 @@ export default function QuotationsList() {
                           <span className="sr-only">View</span>
                         </Button>
                       </Link>
-                      <Link href={`/quotations/edit/${quotation.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
+                      {quotation.status === 'converted' ? (
+                        <Button variant="outline" size="sm" disabled title="Cannot edit a converted quotation">
+                          <Edit className="h-4 w-4 text-gray-400" />
+                          <span className="sr-only">Edit (Disabled)</span>
                         </Button>
-                      </Link>
+                      ) : (
+                        <Link href={`/quotations/edit/${quotation.id}`}>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                            <span className="sr-only">Edit</span>
+                          </Button>
+                        </Link>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
