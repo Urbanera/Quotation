@@ -149,6 +149,7 @@ export interface IStorage {
   updateSalesOrderStatus(id: number, status: "pending" | "confirmed" | "in_production" | "ready_for_delivery" | "delivered" | "completed" | "cancelled"): Promise<SalesOrder | undefined>;
   updateSalesOrder(id: number, salesOrder: Partial<InsertSalesOrder>): Promise<SalesOrder | undefined>;
   cancelSalesOrder(id: number): Promise<SalesOrder | undefined>;
+  revertSalesOrderToQuotation(id: number): Promise<Quotation | undefined>;
   
   // Payment operations
   getPayments(salesOrderId: number): Promise<Payment[]>;
@@ -1020,6 +1021,33 @@ export class MemStorage implements IStorage {
 
   async cancelSalesOrder(id: number): Promise<SalesOrder | undefined> {
     return this.updateSalesOrderStatus(id, "cancelled");
+  }
+  
+  async revertSalesOrderToQuotation(id: number): Promise<Quotation | undefined> {
+    const salesOrder = this.salesOrders.get(id);
+    if (!salesOrder) return undefined;
+    
+    // Check if the sales order has payments
+    if (salesOrder.amountPaid > 0) {
+      throw new Error("Cannot revert a sales order with payments");
+    }
+    
+    // Check if the sales order is completed, delivered, or cancelled
+    if (['completed', 'delivered', 'cancelled'].includes(salesOrder.status)) {
+      throw new Error(`Cannot revert a sales order with status '${salesOrder.status}'`);
+    }
+    
+    // Get the associated quotation
+    const quotation = await this.getQuotation(salesOrder.quotationId);
+    if (!quotation) return undefined;
+    
+    // Update the quotation status back to 'pending'
+    const updatedQuotation = await this.updateQuotationStatus(quotation.id, "pending");
+    
+    // Remove the sales order
+    this.salesOrders.delete(id);
+    
+    return updatedQuotation;
   }
 
   // Payment operations
