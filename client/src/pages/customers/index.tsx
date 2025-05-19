@@ -684,7 +684,7 @@ export default function CustomersList() {
                     <div className="text-xs">Cold</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("warm") ? "ring-2 ring-white" : ""}`}
+                    className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("warm") ? "ring-2 ring-white" : ""}`}
                     onClick={() => {
                       setSelectedStages(prev => 
                         prev.includes("warm")
@@ -693,11 +693,11 @@ export default function CustomersList() {
                       );
                     }}
                   >
-                    <div className="text-lg font-semibold">{stageCounts.warm}</div>
+                    <div className="text-sm font-semibold">{stageCounts.warm}</div>
                     <div className="text-xs">Warm</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("booked") ? "ring-2 ring-white" : ""}`}
+                    className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("booked") ? "ring-2 ring-white" : ""}`}
                     onClick={() => {
                       setSelectedStages(prev => 
                         prev.includes("booked")
@@ -707,11 +707,11 @@ export default function CustomersList() {
                     }}
                     style={{ gridColumn: 'span 2' }}
                   >
-                    <div className="text-lg font-semibold">{stageCounts.booked}</div>
+                    <div className="text-sm font-semibold">{stageCounts.booked}</div>
                     <div className="text-xs">Booked</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("lost") ? "ring-2 ring-white" : ""}`}
+                    className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("lost") ? "ring-2 ring-white" : ""}`}
                     onClick={() => {
                       setSelectedStages(prev => 
                         prev.includes("lost")
@@ -721,7 +721,7 @@ export default function CustomersList() {
                     }}
                     style={{ gridColumn: 'span 2' }}
                   >
-                    <div className="text-lg font-semibold">{stageCounts.lost}</div>
+                    <div className="text-sm font-semibold">{stageCounts.lost}</div>
                     <div className="text-xs">Lost</div>
                   </div>
                 </div>
