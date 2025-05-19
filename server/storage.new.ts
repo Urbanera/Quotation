@@ -1293,6 +1293,133 @@ export class MemStorage implements IStorage {
   async deleteAccessoryCatalogItem(id: number): Promise<boolean> {
     return this.accessoryCatalog.delete(id);
   }
+
+  // Sales Order operations
+  async getSalesOrders(): Promise<SalesOrder[]> {
+    return Array.from(this.salesOrders.values());
+  }
+  
+  async getSalesOrder(id: number): Promise<SalesOrder | undefined> {
+    return this.salesOrders.get(id);
+  }
+  
+  async getSalesOrderWithDetails(id: number): Promise<any> {
+    const salesOrder = this.salesOrders.get(id);
+    if (!salesOrder) return undefined;
+    
+    const customer = await this.getCustomer(salesOrder.customerId);
+    const quotation = await this.getQuotationWithDetails(salesOrder.quotationId);
+    
+    return {
+      ...salesOrder,
+      customer,
+      quotation
+    };
+  }
+  
+  async getSalesOrdersByCustomer(customerId: number): Promise<SalesOrder[]> {
+    return Array.from(this.salesOrders.values())
+      .filter(order => order.customerId === customerId);
+  }
+  
+  async createSalesOrderFromQuotation(quotationId: number, data: any): Promise<SalesOrder> {
+    const quotation = await this.getQuotation(quotationId);
+    if (!quotation) {
+      throw new Error("Quotation not found");
+    }
+    
+    // Create a new sales order
+    const id = this.salesOrderIdCounter++;
+    const orderNumber = `SO-${new Date().getFullYear()}-${id.toString().padStart(3, '0')}`;
+    
+    const salesOrder: SalesOrder = {
+      id,
+      orderNumber,
+      quotationId,
+      customerId: quotation.customerId,
+      totalAmount: quotation.finalPrice,
+      amountPaid: 0,
+      amountDue: quotation.finalPrice,
+      status: "pending",
+      paymentStatus: "unpaid",
+      orderDate: new Date(),
+      expectedDeliveryDate: data.expectedDeliveryDate || new Date(Date.now() + 28 * 24 * 60 * 60 * 1000), // Default 28 days
+      notes: data.notes || "",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    // Update the quotation status to 'converted'
+    await this.updateQuotation(quotationId, { status: "converted" });
+    
+    // Save the sales order
+    this.salesOrders.set(id, salesOrder);
+    
+    return salesOrder;
+  }
+  
+  async updateSalesOrder(id: number, salesOrder: Partial<SalesOrder>): Promise<SalesOrder | undefined> {
+    const existingSalesOrder = this.salesOrders.get(id);
+    if (!existingSalesOrder) return undefined;
+    
+    const updatedSalesOrder = {
+      ...existingSalesOrder,
+      ...salesOrder,
+      updatedAt: new Date()
+    };
+    
+    this.salesOrders.set(id, updatedSalesOrder);
+    return updatedSalesOrder;
+  }
+  
+  async cancelSalesOrder(id: number): Promise<SalesOrder | undefined> {
+    const salesOrder = this.salesOrders.get(id);
+    if (!salesOrder) return undefined;
+    
+    const updatedSalesOrder = {
+      ...salesOrder,
+      status: "cancelled",
+      updatedAt: new Date()
+    };
+    
+    this.salesOrders.set(id, updatedSalesOrder);
+    return updatedSalesOrder;
+  }
+  
+  async revertSalesOrderToQuotation(id: number): Promise<Quotation | undefined> {
+    const salesOrder = this.salesOrders.get(id);
+    if (!salesOrder) return undefined;
+    
+    // Check if the sales order has payments
+    if (salesOrder.amountPaid > 0) {
+      throw new Error("Cannot revert a sales order with payments");
+    }
+    
+    // Check if the sales order is completed, delivered, or cancelled
+    if (['completed', 'delivered', 'cancelled'].includes(salesOrder.status)) {
+      throw new Error(`Cannot revert a sales order with status '${salesOrder.status}'`);
+    }
+    
+    // Get the associated quotation
+    const quotation = await this.getQuotation(salesOrder.quotationId);
+    if (!quotation) return undefined;
+    
+    // Update the quotation status back to 'pending'
+    const updatedQuotation = await this.updateQuotation(quotation.id, { 
+      status: "pending",
+      updatedAt: new Date()
+    });
+    
+    // Remove the sales order
+    this.salesOrders.delete(id);
+    
+    return updatedQuotation;
+  }
+  
+  async getSalesOrderByQuotation(quotationId: number): Promise<SalesOrder | undefined> {
+    const salesOrders = Array.from(this.salesOrders.values());
+    return salesOrders.find(order => order.quotationId === quotationId);
+  }
 }
 
 export const storage = new MemStorage();
