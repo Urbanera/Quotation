@@ -632,7 +632,7 @@ export default function CustomersList() {
           {/* Stats Cards Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Customer Stats Card */}
-            <Card className="bg-primary text-white overflow-hidden">
+            <Card className="bg-primary text-white overflow-hidden h-[190px]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-white flex items-center">
                   <span>Customer</span>
@@ -641,10 +641,10 @@ export default function CustomersList() {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-2">
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("new") ? "ring-2 ring-white" : ""}`}
+                    className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("new") ? "ring-2 ring-white" : ""}`}
                     onClick={() => {
                       // Toggle "new" in the selectedStages array
                       setSelectedStages(prev => 
@@ -654,11 +654,11 @@ export default function CustomersList() {
                       );
                     }}
                   >
-                    <div className="text-lg font-semibold">{stageCounts.new}</div>
+                    <div className="text-sm font-semibold">{stageCounts.new}</div>
                     <div className="text-xs">New</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("pipeline") ? "ring-2 ring-white" : ""}`}
+                    className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("pipeline") ? "ring-2 ring-white" : ""}`}
                     onClick={() => {
                       setSelectedStages(prev => 
                         prev.includes("pipeline")
@@ -667,11 +667,11 @@ export default function CustomersList() {
                       );
                     }}
                   >
-                    <div className="text-lg font-semibold">{stageCounts.pipeline}</div>
+                    <div className="text-sm font-semibold">{stageCounts.pipeline}</div>
                     <div className="text-xs">Pipeline</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("cold") ? "ring-2 ring-white" : ""}`}
+                    className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("cold") ? "ring-2 ring-white" : ""}`}
                     onClick={() => {
                       setSelectedStages(prev => 
                         prev.includes("cold")
@@ -680,7 +680,7 @@ export default function CustomersList() {
                       );
                     }}
                   >
-                    <div className="text-lg font-semibold">{stageCounts.cold}</div>
+                    <div className="text-sm font-semibold">{stageCounts.cold}</div>
                     <div className="text-xs">Cold</div>
                   </div>
                   <div 
@@ -729,7 +729,7 @@ export default function CustomersList() {
             </Card>
             
             {/* Follow-up Stats Card */}
-            <Card className="bg-primary text-white overflow-hidden">
+            <Card className="bg-primary text-white overflow-hidden h-[190px]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-white flex items-center">
                   <span>Follow-ups</span>
@@ -738,34 +738,34 @@ export default function CustomersList() {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-2">
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "today" ? "ring-2 ring-white" : ""}`}
+                    className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "today" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setFollowUpFilter(followUpFilter === "today" ? "all" : "today")}
                   >
-                    <div className="text-lg font-semibold">{followUpCounts.today}</div>
+                    <div className="text-sm font-semibold">{followUpCounts.today}</div>
                     <div className="text-xs">Today</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "yesterday" ? "ring-2 ring-white" : ""}`}
+                    className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "yesterday" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setFollowUpFilter(followUpFilter === "yesterday" ? "all" : "yesterday")}
                   >
-                    <div className="text-lg font-semibold">{followUpCounts.yesterday}</div>
+                    <div className="text-sm font-semibold">{followUpCounts.yesterday}</div>
                     <div className="text-xs">Yesterday</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "missed" ? "ring-2 ring-white" : ""}`}
+                    className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "missed" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setFollowUpFilter(followUpFilter === "missed" ? "all" : "missed")}
                   >
-                    <div className="text-lg font-semibold">{followUpCounts.missed}</div>
+                    <div className="text-sm font-semibold">{followUpCounts.missed}</div>
                     <div className="text-xs">Missed</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "future" ? "ring-2 ring-white" : ""}`}
+                    className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "future" ? "ring-2 ring-white" : ""}`}
                     onClick={() => setFollowUpFilter(followUpFilter === "future" ? "all" : "future")}
                   >
-                    <div className="text-lg font-semibold">{followUpCounts.future}</div>
+                    <div className="text-sm font-semibold">{followUpCounts.future}</div>
                     <div className="text-xs">Future</div>
                   </div>
                 </div>
