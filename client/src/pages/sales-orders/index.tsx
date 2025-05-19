@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -14,22 +14,68 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SalesOrder, Customer } from "@shared/schema";
-import { Loader2, Eye, ShoppingCart, CreditCard } from "lucide-react";
+import { 
+  Loader2, 
+  Eye, 
+  ShoppingCart, 
+  CreditCard, 
+  ArrowLeft, 
+  MoreHorizontal 
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCurrency } from "@/lib/utils";
 
 export default function SalesOrdersPage() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
+  const [orderToRevert, setOrderToRevert] = useState<SalesOrder | null>(null);
+
+  // Revert to quotation mutation
+  const revertToQuotationMutation = useMutation({
+    mutationFn: async (orderId: number) => {
+      const res = await apiRequest("POST", `/api/sales-orders/${orderId}/revert-to-quotation`);
+      return await res.json();
+    },
+    onSuccess: (quotation) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sales-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      toast({
+        title: "Sales order reverted",
+        description: `The sales order has been reverted to quotation #${quotation.quotationNumber}`,
+      });
+      // Navigate to the quotation view page
+      navigate(`/quotations/view/${quotation.id}`);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error reverting sales order",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const { data: salesOrders, isLoading } = useQuery<SalesOrder[]>({
     queryKey: ["/api/sales-orders"],
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to load sales orders",
-        variant: "destructive",
-      });
-      console.error("Failed to load sales orders:", error);
-    },
   });
 
   const { data: customers } = useQuery<Customer[]>({
@@ -72,6 +118,14 @@ export default function SalesOrdersPage() {
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  // Handle revert to quotation confirmation
+  const handleRevertToQuotation = () => {
+    if (orderToRevert) {
+      revertToQuotationMutation.mutate(orderToRevert.id);
+      setOrderToRevert(null);
     }
   };
 
@@ -145,6 +199,25 @@ export default function SalesOrdersPage() {
                           <CreditCard className="h-4 w-4" />
                         </Button>
                       </Link>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setOrderToRevert(order)}
+                            disabled={order.amountPaid > 0 || ['completed', 'delivered', 'cancelled'].includes(order.status)}
+                            className={order.amountPaid > 0 || ['completed', 'delivered', 'cancelled'].includes(order.status) ? 'text-muted-foreground' : ''}
+                          >
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Revert to Quotation
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
