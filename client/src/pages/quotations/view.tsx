@@ -7,6 +7,7 @@ import { QuotationWithDetails, CompanySettings, AppSettings } from "@shared/sche
 import BasicQuote from "@/components/PDFQuotes/BasicQuote";
 import PresentationQuote from "@/components/PDFQuotes/PresentationQuote";
 import LandscapeQuote from "@/components/PDFQuotes/LandscapeQuote";
+import LandscapeQuotePreview from "@/components/PDFQuotes/LandscapeQuotePreview";
 import { ProjectTimeline } from "@/components/quotations/timeline/ProjectTimeline";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
