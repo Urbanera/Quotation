@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useCallback } from "react";
+import { format, isSameDay, isBefore, isAfter, startOfDay, subDays } from "date-fns";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   Card,
   CardContent,
@@ -349,6 +355,48 @@ export default function CustomersList() {
       return 0;
     });
   }, [customers, searchTerm, sortField, sortOrder, selectedStages, followUpFilter, leadSourceFilter, allFollowUps]);
+
+  // Utility functions for follow-ups
+  const getLatestFollowUp = useCallback((customerId: number) => {
+    if (!allFollowUps || !Array.isArray(allFollowUps)) return null;
+    
+    const customerFollowUps = allFollowUps.filter(f => f.customerId === customerId);
+    if (customerFollowUps.length === 0) return null;
+    
+    // Sort by createdAt date descending and get the most recent
+    return customerFollowUps.sort((a, b) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    )[0];
+  }, [allFollowUps]);
+  
+  const getNextFollowUp = useCallback((customerId: number) => {
+    if (!allFollowUps || !Array.isArray(allFollowUps)) return null;
+    
+    const now = new Date();
+    const customerFollowUps = allFollowUps.filter(f => 
+      f.customerId === customerId && 
+      !f.completed &&
+      f.nextFollowUpDate
+    );
+    
+    if (customerFollowUps.length === 0) return null;
+    
+    // Sort by scheduled date ascending to get the next upcoming
+    return customerFollowUps.sort((a, b) => {
+      const dateA = new Date(a.nextFollowUpDate || 0).getTime();
+      const dateB = new Date(b.nextFollowUpDate || 0).getTime();
+      return dateA - dateB;
+    })[0];
+  }, [allFollowUps]);
+  
+  const isOverdue = useCallback((dateStr?: string | Date) => {
+    if (!dateStr) return false;
+    
+    const date = new Date(dateStr);
+    const now = new Date();
+    
+    return date < startOfDay(now);
+  }, []);
 
   // Update customer stage mutation
   const updateCustomerStageMutation = useMutation({
