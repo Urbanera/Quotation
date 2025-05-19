@@ -237,9 +237,9 @@ export default function CustomersList() {
     let filtered = [...customers];
     
     // Apply stage filter - multi-select support
-    if (stageFilter.length > 0) {
+    if (selectedStages.length > 0) {
       filtered = filtered.filter(customer => 
-        customer.stage && stageFilter.includes(customer.stage as Stage)
+        customer.stage && selectedStages.includes(customer.stage as Stage)
       );
     }
     
@@ -348,7 +348,7 @@ export default function CustomersList() {
       
       return 0;
     });
-  }, [customers, searchTerm, sortField, sortOrder, stageFilter, followUpFilter, leadSourceFilter, allFollowUps]);
+  }, [customers, searchTerm, sortField, sortOrder, selectedStages, followUpFilter, leadSourceFilter, allFollowUps]);
 
   // Update customer stage mutation
   const updateCustomerStageMutation = useMutation({
@@ -644,44 +644,81 @@ export default function CustomersList() {
               <CardContent>
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "new" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setStageFilter(stageFilter === "new" ? "all" : "new")}
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("new") ? "ring-2 ring-white" : ""}`}
+                    onClick={() => {
+                      // Toggle "new" in the selectedStages array
+                      setSelectedStages(prev => 
+                        prev.includes("new")
+                          ? prev.filter(s => s !== "new")
+                          : [...prev, "new"]
+                      );
+                    }}
                   >
                     <div className="text-lg font-semibold">{stageCounts.new}</div>
                     <div className="text-xs">New</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "pipeline" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setStageFilter(stageFilter === "pipeline" ? "all" : "pipeline")}
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("pipeline") ? "ring-2 ring-white" : ""}`}
+                    onClick={() => {
+                      setSelectedStages(prev => 
+                        prev.includes("pipeline")
+                          ? prev.filter(s => s !== "pipeline")
+                          : [...prev, "pipeline"]
+                      );
+                    }}
                   >
                     <div className="text-lg font-semibold">{stageCounts.pipeline}</div>
                     <div className="text-xs">Pipeline</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "cold" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setStageFilter(stageFilter === "cold" ? "all" : "cold")}
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("cold") ? "ring-2 ring-white" : ""}`}
+                    onClick={() => {
+                      setSelectedStages(prev => 
+                        prev.includes("cold")
+                          ? prev.filter(s => s !== "cold")
+                          : [...prev, "cold"]
+                      );
+                    }}
                   >
                     <div className="text-lg font-semibold">{stageCounts.cold}</div>
                     <div className="text-xs">Cold</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "warm" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setStageFilter(stageFilter === "warm" ? "all" : "warm")}
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("warm") ? "ring-2 ring-white" : ""}`}
+                    onClick={() => {
+                      setSelectedStages(prev => 
+                        prev.includes("warm")
+                          ? prev.filter(s => s !== "warm")
+                          : [...prev, "warm"]
+                      );
+                    }}
                   >
                     <div className="text-lg font-semibold">{stageCounts.warm}</div>
                     <div className="text-xs">Warm</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "booked" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setStageFilter(stageFilter === "booked" ? "all" : "booked")}
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("booked") ? "ring-2 ring-white" : ""}`}
+                    onClick={() => {
+                      setSelectedStages(prev => 
+                        prev.includes("booked")
+                          ? prev.filter(s => s !== "booked")
+                          : [...prev, "booked"]
+                      );
+                    }}
                     style={{ gridColumn: 'span 2' }}
                   >
                     <div className="text-lg font-semibold">{stageCounts.booked}</div>
                     <div className="text-xs">Booked</div>
                   </div>
                   <div 
-                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${stageFilter === "lost" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setStageFilter(stageFilter === "lost" ? "all" : "lost")}
+                    className={`bg-white/10 p-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${selectedStages.includes("lost") ? "ring-2 ring-white" : ""}`}
+                    onClick={() => {
+                      setSelectedStages(prev => 
+                        prev.includes("lost")
+                          ? prev.filter(s => s !== "lost")
+                          : [...prev, "lost"]
+                      );
+                    }}
                     style={{ gridColumn: 'span 2' }}
                   >
                     <div className="text-lg font-semibold">{stageCounts.lost}</div>
@@ -767,15 +804,15 @@ export default function CustomersList() {
           
           {/* Active Filters Area */}
           <div className="flex flex-wrap gap-2 items-center">
-            {stageFilter !== "all" && (
-              <Badge variant="outline" className="flex items-center gap-1 py-1 px-3">
-                Stage: {stageFilter.charAt(0).toUpperCase() + stageFilter.slice(1)}
+            {selectedStages.length > 0 && selectedStages.map(stage => (
+              <Badge key={stage} variant="outline" className="flex items-center gap-1 py-1 px-3">
+                Stage: {stage.charAt(0).toUpperCase() + stage.slice(1)}
                 <X 
                   className="h-3 w-3 ml-1 cursor-pointer" 
-                  onClick={() => setStageFilter("all")}
+                  onClick={() => setSelectedStages(prev => prev.filter(s => s !== stage))}
                 />
               </Badge>
-            )}
+            ))}
             
             {followUpFilter !== "all" && (
               <Badge variant="outline" className="flex items-center gap-1 py-1 px-3">
@@ -797,13 +834,13 @@ export default function CustomersList() {
               </Badge>
             )}
             
-            {(stageFilter !== "all" || followUpFilter !== "all" || leadSourceFilter !== "all") && (
+            {(selectedStages.length > 0 || followUpFilter !== "all" || leadSourceFilter !== "all") && (
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="h-7 px-2"
                 onClick={() => {
-                  setStageFilter("all");
+                  setSelectedStages([]);
                   setFollowUpFilter("all");
                   setLeadSourceFilter("all");
                 }}
