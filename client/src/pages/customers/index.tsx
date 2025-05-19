@@ -56,7 +56,11 @@ import {
 
 type SortField = "name" | "email" | "createdAt";
 type SortOrder = "asc" | "desc";
-type StageFilter = "all" | "new" | "pipeline" | "cold" | "warm" | "booked" | "lost";
+// Define available stages as a readonly array for type checking
+const STAGES = ["new", "pipeline", "cold", "warm", "booked", "lost"] as const;
+type Stage = (typeof STAGES)[number];
+// StageFilter now becomes an array of stages for multi-select
+type StageFilter = Stage[];
 type FollowUpFilter = "all" | "today" | "yesterday" | "missed" | "future";
 
 export default function CustomersList() {
@@ -64,7 +68,7 @@ export default function CustomersList() {
   // Default sort by createdAt in descending order (newest first)
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
-  const [stageFilter, setStageFilter] = useState<StageFilter>("all");
+  const [stageFilter, setStageFilter] = useState<StageFilter>([]);
   const [followUpFilter, setFollowUpFilter] = useState<FollowUpFilter>("all");
   const [leadSourceFilter, setLeadSourceFilter] = useState<string>("all");
   const [deleteCustomerId, setDeleteCustomerId] = useState<number | null>(null);
@@ -232,9 +236,11 @@ export default function CustomersList() {
     // First filter by stage and search term
     let filtered = [...customers];
     
-    // Apply stage filter
-    if (stageFilter !== 'all') {
-      filtered = filtered.filter(customer => customer.stage === stageFilter);
+    // Apply stage filter - multi-select support
+    if (stageFilter.length > 0) {
+      filtered = filtered.filter(customer => 
+        customer.stage && stageFilter.includes(customer.stage as Stage)
+      );
     }
     
     // Apply lead source filter

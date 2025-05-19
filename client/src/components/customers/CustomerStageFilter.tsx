@@ -283,33 +283,42 @@ export default function CustomerStageFilter({ customers }: CustomerStageFilterPr
             <TabsContent value="sources" className="mt-4">
               {availableLeadSources.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {availableLeadSources.map((source) => (
-                    <div 
-                      key={source} 
-                      className={`flex items-center space-x-2 border rounded-lg px-3 py-2 cursor-pointer ${
-                        selectedLeadSources.includes(source) 
-                          ? 'bg-sky-100 border-sky-300'
-                          : 'bg-white'
-                      }`}
-                      onClick={() => handleLeadSourceToggle(source)}
-                    >
-                      <Checkbox 
-                        id={`source-${source}`} 
-                        checked={selectedLeadSources.includes(source)}
-                        onCheckedChange={() => handleLeadSourceToggle(source)}
-                        className="data-[state=checked]:bg-indigo-600"
-                      />
-                      <label 
-                        htmlFor={`source-${source}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  {availableLeadSources.map((source) => {
+                    const isSelected = selectedLeadSources.includes(source);
+                    
+                    return (
+                      <div 
+                        key={source} 
+                        className={`flex items-center space-x-2 border rounded-lg px-3 py-2 cursor-pointer ${
+                          isSelected ? 'bg-sky-100 border-sky-300' : 'bg-white'
+                        }`}
+                        onClick={() => {
+                          // Simple toggle logic
+                          if (isSelected) {
+                            // If already selected, remove it
+                            setSelectedLeadSources(selectedLeadSources.filter(s => s !== source));
+                          } else {
+                            // If not selected, add it
+                            setSelectedLeadSources([...selectedLeadSources, source]);
+                          }
+                        }}
                       >
-                        {source.charAt(0).toUpperCase() + source.slice(1)}
-                      </label>
-                      <Badge className={`ml-2 ${leadSourceColor}`}>
-                        {leadSourceCounts[source] || 0}
-                      </Badge>
-                    </div>
-                  ))}
+                        <div className={`w-4 h-4 rounded border ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'} flex items-center justify-center`}>
+                          {isSelected && (
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-3 h-3 text-white">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium cursor-pointer">
+                          {source.charAt(0).toUpperCase() + source.slice(1)}
+                        </span>
+                        <Badge className={`ml-1 ${leadSourceColor}`}>
+                          {leadSourceCounts[source] || 0}
+                        </Badge>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-4 text-gray-500">
@@ -321,78 +330,41 @@ export default function CustomerStageFilter({ customers }: CustomerStageFilterPr
             {/* Follow-ups Filter Tab */}
             <TabsContent value="followups" className="mt-4">
               <div className="flex flex-wrap gap-2">
-                <div 
-                  className={`flex items-center space-x-2 border rounded-lg px-3 py-2 cursor-pointer ${
-                    followUpFilter === "all" 
-                      ? 'bg-indigo-100 border-indigo-300'
-                      : 'bg-white'
-                  }`}
-                  onClick={() => setFollowUpFilter("all")}
-                >
-                  <Checkbox 
-                    id="followup-all" 
-                    checked={followUpFilter === "all"}
-                    onCheckedChange={() => setFollowUpFilter("all")}
-                    className="data-[state=checked]:bg-indigo-600"
-                  />
-                  <label 
-                    htmlFor="followup-all"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    All
-                  </label>
-                  <Clock className="ml-2 h-4 w-4 text-gray-500" />
-                </div>
-                
-                <div 
-                  className={`flex items-center space-x-2 border rounded-lg px-3 py-2 cursor-pointer ${
-                    followUpFilter === "pending" 
-                      ? 'bg-amber-100 border-amber-300'
-                      : 'bg-white'
-                  }`}
-                  onClick={() => setFollowUpFilter(followUpFilter === "pending" ? "all" : "pending")}
-                >
-                  <Checkbox 
-                    id="followup-pending" 
-                    checked={followUpFilter === "pending"}
-                    onCheckedChange={() => setFollowUpFilter(followUpFilter === "pending" ? "all" : "pending")}
-                    className="data-[state=checked]:bg-indigo-600"
-                  />
-                  <label 
-                    htmlFor="followup-pending"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    Pending Follow-ups
-                  </label>
-                  <Badge className={`ml-2 ${followUpColors.pending}`}>
-                    {followUpCounts.pending}
-                  </Badge>
-                </div>
-                
-                <div 
-                  className={`flex items-center space-x-2 border rounded-lg px-3 py-2 cursor-pointer ${
-                    followUpFilter === "completed" 
-                      ? 'bg-emerald-100 border-emerald-300'
-                      : 'bg-white'
-                  }`}
-                  onClick={() => setFollowUpFilter(followUpFilter === "completed" ? "all" : "completed")}
-                >
-                  <Checkbox 
-                    id="followup-completed" 
-                    checked={followUpFilter === "completed"}
-                    onCheckedChange={() => setFollowUpFilter(followUpFilter === "completed" ? "all" : "completed")}
-                    className="data-[state=checked]:bg-indigo-600"
-                  />
-                  <label 
-                    htmlFor="followup-completed"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    Completed Follow-ups
-                  </label>
-                  <Badge className={`ml-2 ${followUpColors.completed}`}>
-                    {followUpCounts.completed}
-                  </Badge>
-                </div>
+                {/* Convert to use array of selected follow-up types instead of single selection */}
+                {[
+                  { id: "pending", label: "Pending Follow-ups", color: followUpColors.pending, count: followUpCounts.pending },
+                  { id: "completed", label: "Completed Follow-ups", color: followUpColors.completed, count: followUpCounts.completed }
+                ].map((followUpType) => {
+                  const isSelected = followUpFilter === followUpType.id;
+                  
+                  return (
+                    <div 
+                      key={followUpType.id} 
+                      className={`flex items-center space-x-2 border rounded-lg px-3 py-2 cursor-pointer ${
+                        isSelected ? 
+                          (followUpType.id === 'pending' ? 'bg-amber-100 border-amber-300' : 'bg-emerald-100 border-emerald-300') 
+                          : 'bg-white'
+                      }`}
+                      onClick={() => {
+                        setFollowUpFilter(isSelected ? "all" : followUpType.id);
+                      }}
+                    >
+                      <div className={`w-4 h-4 rounded border ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'} flex items-center justify-center`}>
+                        {isSelected && (
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-3 h-3 text-white">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium cursor-pointer">
+                        {followUpType.label}
+                      </span>
+                      <Badge className={`ml-1 ${followUpType.color}`}>
+                        {followUpType.count}
+                      </Badge>
+                    </div>
+                  );
+                })}
               </div>
             </TabsContent>
           </Tabs>
