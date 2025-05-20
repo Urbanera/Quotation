@@ -259,13 +259,25 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                   >
                     {room.name}
                   </button>
-                  <button 
-                    className="ml-1 invisible group-hover:visible text-red-500 hover:text-red-700 focus:outline-none"
-                    onClick={() => handleDeleteRoom(room)}
-                    title="Delete room"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex invisible group-hover:visible">
+                    <button 
+                      className="ml-1 text-gray-500 hover:text-indigo-600 focus:outline-none"
+                      onClick={() => {
+                        setRoomToEdit(room);
+                        setEditRoomDialogOpen(true);
+                      }}
+                      title="Edit room"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button 
+                      className="ml-1 text-red-500 hover:text-red-700 focus:outline-none"
+                      onClick={() => handleDeleteRoom(room)}
+                      title="Delete room"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -287,6 +299,32 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                   }}
                   isSubmitting={addRoomMutation.isPending}
                 />
+              </DialogContent>
+            </Dialog>
+            
+            {/* Edit Room Dialog */}
+            <Dialog open={editRoomDialogOpen} onOpenChange={(open) => {
+              setEditRoomDialogOpen(open);
+              if (!open) setRoomToEdit(null);
+            }}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Room</DialogTitle>
+                </DialogHeader>
+                {roomToEdit && (
+                  <RoomForm 
+                    onSubmit={(data) => {
+                      updateRoomMutation.mutate({ 
+                        roomId: roomToEdit.id, 
+                        name: data.name, 
+                        description: data.description || "" 
+                      });
+                    }}
+                    isSubmitting={updateRoomMutation.isPending}
+                    defaultValues={roomToEdit}
+                    isEdit={true}
+                  />
+                )}
               </DialogContent>
             </Dialog>
           </nav>
