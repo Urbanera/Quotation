@@ -29,6 +29,8 @@ interface RoomTabsProps {
 export default function RoomTabs({ quotationId }: RoomTabsProps) {
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
   const [addRoomDialogOpen, setAddRoomDialogOpen] = useState(false);
+  const [editRoomDialogOpen, setEditRoomDialogOpen] = useState(false);
+  const [roomToEdit, setRoomToEdit] = useState<Room | null>(null);
   const [editingInstallationId, setEditingInstallationId] = useState<number | null>(null);
   const [addingInstallation, setAddingInstallation] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -110,6 +112,32 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
     }
   });
   
+  // Update room mutation
+  const updateRoomMutation = useMutation({
+    mutationFn: async (data: { roomId: number, name: string, description: string }) => {
+      const { roomId, name, description } = data;
+      const response = await apiRequest("PUT", `/api/rooms/${roomId}`, { name, description });
+      return response.json();
+    },
+    onSuccess: (updatedRoom) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/rooms`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/rooms/${updatedRoom.id}`] });
+      setEditRoomDialogOpen(false);
+      setRoomToEdit(null);
+      toast({
+        title: "Room updated",
+        description: `${updatedRoom.name} has been updated.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update room.",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Delete room mutation
   const deleteRoomMutation = useMutation({
     mutationFn: async (roomId: number) => {
