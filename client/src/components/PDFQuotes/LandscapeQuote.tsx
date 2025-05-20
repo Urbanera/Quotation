@@ -1,7 +1,11 @@
 import React from "react";
 import { Document, Page, View, Text, StyleSheet, Image } from "@react-pdf/renderer";
 import { CompanySettings, QuotationWithDetails, AppSettings } from "@shared/schema";
-import { formatCurrency } from "@/lib/calculations";
+
+// Custom formatter for rupee symbol in PDF
+const formatRupeeForPDF = (amount: number): string => {
+  return `₹${amount.toLocaleString('en-IN')}`;
+};
 
 // Create styles
 const styles = StyleSheet.create({
@@ -444,9 +448,9 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             {sortedRooms.map((room, index) => (
               <View key={index} style={{ flexDirection: 'row', backgroundColor: index % 2 === 0 ? '#f5f5f5' : 'white', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
                 <Text style={{ flex: 2, fontWeight: 'bold' }}>{room.name.toUpperCase()}</Text>
-                <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(room.sellingPrice || 0)}</Text>
+                <Text style={{ flex: 1, textAlign: 'right' }}>{formatRupeeForPDF(room.sellingPrice || 0)}</Text>
                 <Text style={{ flex: 1, textAlign: 'right', color: 'red' }}>
-                  {formatCurrency((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
+                  {formatRupeeForPDF((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
                 </Text>
               </View>
             ))}
@@ -454,34 +458,34 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             {/* Total Row */}
             <View style={{ flexDirection: 'row', backgroundColor: '#f5f5f5', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
               <Text style={{ flex: 2, fontWeight: 'bold' }}>Total Of All Items</Text>
-              <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(quotation.totalSellingPrice)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right' }}>{formatRupeeForPDF(quotation.totalSellingPrice)}</Text>
               <Text style={{ flex: 1, textAlign: 'right', color: 'red' }}>
-                {formatCurrency(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))}
+                {formatRupeeForPDF(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))}
               </Text>
             </View>
             
             {/* Installation Row */}
             <View style={{ flexDirection: 'row', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
               <Text style={{ flex: 2, fontWeight: 'bold' }}>Installation and Handling</Text>
-              <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(quotation.totalInstallationCharges)}</Text>
-              <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(quotation.totalInstallationCharges)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right' }}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right' }}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
             </View>
             
             {/* GST Row */}
             <View style={{ flexDirection: 'row', backgroundColor: '#f5f5f5', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
               <Text style={{ flex: 2, fontWeight: 'bold' }}>GST {quotation.gstPercentage}%</Text>
-              <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(quotation.gstAmount)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right' }}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
               <Text style={{ flex: 1, textAlign: 'right' }}>
-                {formatCurrency(quotation.gstAmount * (1 - quotation.globalDiscount / 100))}
+                {formatRupeeForPDF(quotation.gstAmount * (1 - quotation.globalDiscount / 100))}
               </Text>
             </View>
             
             {/* Final Price Row */}
             <View style={{ flexDirection: 'row', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
               <Text style={{ flex: 2, fontWeight: 'bold' }}>Final Price</Text>
-              <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(quotation.finalPrice)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold' }}>{formatRupeeForPDF(quotation.finalPrice)}</Text>
               <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold', color: 'red' }}>
-                {formatCurrency(quotation.finalPrice * (1 - quotation.globalDiscount / 100) + quotation.totalInstallationCharges)}
+                {formatRupeeForPDF(quotation.finalPrice * (1 - quotation.globalDiscount / 100) + quotation.totalInstallationCharges)}
               </Text>
             </View>
           </View>
