@@ -205,35 +205,28 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
                 <div className="flex flex-col h-full">
                   <div className="flex justify-between mb-4">
                     <div className="w-2/3">
-                      <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
+                      <h3 className="text-lg font-bold text-[#009245]">
+                        {room.name} - {image.type || "Room Image"}
+                      </h3>
                     </div>
                     <div className="w-1/4 text-right">
                       {companySettings?.logo && (
                         <img 
                           src={companySettings.logo} 
                           alt={companySettings.name}
-                          className="max-h-10 max-w-full object-contain ml-auto" 
+                          className="w-[120px] object-contain ml-auto" 
                         />
                       )}
                     </div>
                   </div>
                   
-                  <h4 className="text-lg font-bold text-[#009245] mb-4">{image.type || "Room Image"}</h4>
-                  
-                  <div className="flex-grow flex items-center justify-center mb-4 overflow-hidden" style={{ height: '350px' }}>
+                  <div className="flex-grow flex items-center justify-center mb-4 overflow-hidden" style={{ height: '380px', width: '95%', margin: 'auto' }}>
                     <img 
                       src={image.path} 
                       alt={`${room.name} - ${image.type || "Image"}`} 
-                      className="max-h-full max-w-full object-contain border shadow-sm" 
-                      style={{ objectFit: 'contain', height: '100%', width: '100%' }}
+                      className="object-contain border shadow-sm" 
+                      style={{ width: '100%', height: '100%' }}
                     />
-                  </div>
-                  
-                  <div className="text-center mt-auto mb-0">
-                    <p className="text-gray-700 font-medium">{room.name}</p>
-                    {room.description && (
-                      <p className="text-gray-600 text-sm mt-1">{room.description}</p>
-                    )}
                   </div>
                 </div>
                 {renderFooter(pageNumber)}
@@ -242,99 +235,153 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
           })
         )}
         
-        {/* Summary Page */}
+        {/* Summary Page - Project Cost Summary */}
         <div className="border rounded-lg p-8 mb-8 bg-white" style={{ width: '100%', aspectRatio: '1.77 / 1', position: 'relative' }}>
           <div className="absolute top-0 right-0 bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded-bl-md">
-            Summary Page
+            Project Cost Summary
           </div>
           
           <div className="flex flex-col h-full">
             <div className="flex justify-between mb-4">
               <div className="w-2/3">
-                <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
+                <h3 className="text-xl font-bold text-[#009245] mb-4">Project Cost Summary</h3>
               </div>
               <div className="w-1/4 text-right">
                 {companySettings?.logo && (
                   <img 
                     src={companySettings.logo} 
                     alt={companySettings.name}
-                    className="max-h-10 max-w-full object-contain ml-auto" 
+                    className="w-[120px] object-contain ml-auto" 
                   />
                 )}
               </div>
             </div>
             
-            <h4 className="text-lg font-bold text-[#009245] mb-4">Quotation Summary</h4>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 mb-6">
-                <thead className="bg-[#009245] text-white">
-                  <tr>
-                    <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                      Room
-                    </th>
-                    <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th scope="col" className="px-3 py-2 text-right text-xs font-medium uppercase tracking-wider">
-                      Amount
-                    </th>
+            <div className="overflow-auto mt-4 mb-6">
+              <table className="min-w-full divide-y divide-gray-200">
+                {/* Table Header */}
+                <thead>
+                  <tr className="bg-[#e8f5e9]">
+                    <th className="px-4 py-3 text-left font-medium text-[#009245]">PRODUCT DESCRIPTION</th>
+                    <th className="px-4 py-3 text-right font-medium text-[#009245]">SELLING PRICE</th>
+                    <th className="px-4 py-3 text-right font-medium text-[#009245]">DISCOUNTED PRICE ({quotation.globalDiscount}%)</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                
+                <tbody>
+                  {/* Room Rows */}
                   {sortedRooms.map((room, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {room.name}
-                      </td>
-                      <td className="px-3 py-2 text-sm text-gray-500">
-                        {room.description || `${room.products?.length || 0} products`}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-900">
-                        {formatCurrency(room.sellingPrice || 0)}
+                    <tr key={index} className={index % 2 === 0 ? 'bg-[#f5f5f5]' : 'bg-white'}>
+                      <td className="px-4 py-3 font-medium">{room.name.toUpperCase()}</td>
+                      <td className="px-4 py-3 text-right">{formatCurrency(room.sellingPrice || 0)}</td>
+                      <td className="px-4 py-3 text-right text-red-600">
+                        {formatCurrency((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
                       </td>
                     </tr>
                   ))}
+                  
+                  {/* Total Row */}
+                  <tr className="bg-[#f5f5f5]">
+                    <td className="px-4 py-3 font-medium">Total Of All Items</td>
+                    <td className="px-4 py-3 text-right">{formatCurrency(quotation.totalSellingPrice)}</td>
+                    <td className="px-4 py-3 text-right text-red-600">
+                      {formatCurrency(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))}
+                    </td>
+                  </tr>
+                  
+                  {/* Installation Row */}
+                  <tr>
+                    <td className="px-4 py-3 font-medium">Installation and Handling</td>
+                    <td className="px-4 py-3 text-right">{formatCurrency(quotation.totalInstallationCharges)}</td>
+                    <td className="px-4 py-3 text-right">{formatCurrency(quotation.totalInstallationCharges)}</td>
+                  </tr>
+                  
+                  {/* GST Row */}
+                  <tr className="bg-[#f5f5f5]">
+                    <td className="px-4 py-3 font-medium">GST {quotation.gstPercentage}%</td>
+                    <td className="px-4 py-3 text-right">{formatCurrency(quotation.gstAmount)}</td>
+                    <td className="px-4 py-3 text-right">
+                      {formatCurrency(quotation.gstAmount * (1 - quotation.globalDiscount / 100))}
+                    </td>
+                  </tr>
+                  
+                  {/* Final Price Row */}
+                  <tr>
+                    <td className="px-4 py-3 font-medium">Final Price</td>
+                    <td className="px-4 py-3 text-right font-bold">{formatCurrency(quotation.finalPrice)}</td>
+                    <td className="px-4 py-3 text-right font-bold text-red-600">
+                      {formatCurrency(quotation.finalPrice * (1 - quotation.globalDiscount / 100) + quotation.totalInstallationCharges)}
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
-            
-            <div className="ml-auto w-2/5 border-t border-gray-200 pt-4">
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Subtotal:</span>
-                <span className="font-medium">{formatCurrency(quotation.totalSellingPrice)}</span>
+          </div>
+          {renderFooter(totalPages - 1)}
+        </div>
+        
+        {/* Terms and Conditions Page */}
+        <div className="border rounded-lg p-8 mb-8 bg-white" style={{ width: '100%', aspectRatio: '1.77 / 1', position: 'relative' }}>
+          <div className="absolute top-0 right-0 bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded-bl-md">
+            Terms & Conditions
+          </div>
+          
+          <div className="flex flex-col h-full">
+            <div className="flex justify-between mb-4">
+              <div className="w-2/3">
+                <h3 className="text-lg font-bold text-[#009245]">Terms & Conditions</h3>
               </div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Discount ({quotation.globalDiscount}%):</span>
-                <span className="font-medium text-red-600">-{formatCurrency(quotation.totalSellingPrice * (quotation.globalDiscount / 100))}</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Installation:</span>
-                <span className="font-medium">{formatCurrency(quotation.totalInstallationCharges)}</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">GST ({quotation.gstPercentage}%):</span>
-                <span className="font-medium">{formatCurrency(quotation.gstAmount)}</span>
-              </div>
-              <div className="flex justify-between font-bold pt-2 border-t border-gray-200">
-                <span>Total:</span>
-                <span className="text-[#009245]">{formatCurrency(quotation.finalPrice)}</span>
+              <div className="w-1/4 text-right">
+                {companySettings?.logo && (
+                  <img 
+                    src={companySettings.logo} 
+                    alt={companySettings.name}
+                    className="w-[120px] object-contain ml-auto" 
+                  />
+                )}
               </div>
             </div>
             
-            <div className="mt-auto pt-4 border-t border-gray-200">
-              <h5 className="font-bold text-gray-700 mb-2">Terms & Conditions</h5>
-              <div className="text-xs text-gray-600">
-                {appSettings?.defaultTermsAndConditions ? (
-                  <div className="line-clamp-3" dangerouslySetInnerHTML={{ __html: appSettings.defaultTermsAndConditions }} />
-                ) : (
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Quotation is valid for 30 days from the date of issue.</li>
-                    <li>Payment terms: 50% advance, 50% before delivery.</li>
-                    <li>Delivery time: 4-6 weeks from date of order confirmation.</li>
-                  </ul>
-                )}
-              </div>
+            <div className="overflow-auto mt-4 mb-auto">
+              {appSettings?.defaultTermsAndConditions ? (
+                <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: appSettings.defaultTermsAndConditions }} />
+              ) : (
+                <div className="text-sm text-gray-700 leading-relaxed space-y-4">
+                  <div>
+                    <h4 className="font-bold mb-2">1. Scope of Services</h4>
+                    <p>
+                      This quotation covers the design, supply, and installation of modular interior solutions as specified in the project details.
+                      Any modifications to the scope will require a revised quotation.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-bold mb-2">2. Pricing and Payment</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>All prices are in Indian Rupees (INR) and valid for 30 days from the date of issue.</li>
+                      <li>Payment terms: 50% advance with order confirmation, 40% before delivery, and 10% upon completion.</li>
+                      <li>GST and other applicable taxes will be charged as per government regulations.</li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-bold mb-2">3. Timeline</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Manufacturing will commence upon receipt of advance payment and signed approval of designs.</li>
+                      <li>Standard delivery time is 4-6 weeks from order confirmation, subject to material availability.</li>
+                      <li>Installation timeline will be provided in the project schedule and may vary based on site conditions.</li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-bold mb-2">4. Warranty</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>All products carry a 12-month warranty against manufacturing defects under normal use.</li>
+                      <li>Warranty excludes damage caused by misuse, improper maintenance, or unauthorized modifications.</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           {renderFooter(totalPages)}
