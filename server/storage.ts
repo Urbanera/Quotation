@@ -1666,10 +1666,21 @@ export class MemStorage implements IStorage {
   }
   
   async createRoom(room: InsertRoom): Promise<Room> {
+    // Check if room with the same name already exists in this quotation
+    const currentRooms = await this.getRooms(room.quotationId);
+    
+    // Case-insensitive check for duplicate room names
+    const isDuplicate = currentRooms.some(existingRoom => 
+      existingRoom.name.toLowerCase() === room.name.toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      throw new Error(`A room with the name "${room.name}" already exists in this quotation`);
+    }
+    
     const id = this.roomIdCounter++;
     
     // Get the current highest order value for rooms in this quotation
-    const currentRooms = await this.getRooms(room.quotationId);
     const maxOrder = currentRooms.length > 0 
       ? Math.max(...currentRooms.map(r => r.order))
       : -1;
