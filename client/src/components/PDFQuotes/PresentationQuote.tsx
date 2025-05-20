@@ -69,51 +69,14 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
     rooms: [],
   };
   
-  // Process rooms to filter for 3D images only and sort them properly
-  const processRoomsWithFilteredImages = () => {
-    if (!quotation?.rooms || !Array.isArray(quotation.rooms)) {
-      return [];
-    }
-    
-    return quotation.rooms.map(room => {
-      if (!room.images || !Array.isArray(room.images)) {
-        return { ...room, filteredImages: [] };
-      }
-      
-      // Filter to only include 3D images
-      const only3DImages = room.images.filter(img => 
-        img.type && img.type.toLowerCase().includes('3d')
-      );
-      
-      // Sort by order first, then by type
-      const sortedImages = [...only3DImages].sort((a, b) => {
-        // First sort by order
-        if (a.order !== b.order) {
-          return a.order - b.order;
-        }
-        // Then alphabetical by type
-        return (a.type || "").localeCompare(b.type || "");
-      });
-      
-      // Add the filtered images as a new property
-      return {
-        ...room,
-        filteredImages: sortedImages
-      };
-    });
-  };
-  
-  // Get rooms with filtered images
-  const roomsWithFilteredImages = processRoomsWithFilteredImages();
-  
   // Calculate installation charges from room-level installation charges
   const calculateInstallationCharges = () => {
     let totalInstallCharges = 0;
     
     // Only calculate if we have rooms with installation charges
-    if (safeQuotation.rooms && Array.isArray(safeQuotation.rooms)) {
+    if (safeQuotation.rooms) {
       for (const room of safeQuotation.rooms) {
-        if (room.installationCharges && Array.isArray(room.installationCharges)) {
+        if (room.installationCharges) {
           for (const charge of room.installationCharges) {
             if (charge && typeof charge.amount === 'number') {
               totalInstallCharges += charge.amount;
@@ -124,6 +87,28 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
     }
     
     return totalInstallCharges + safeQuotation.installationHandling;
+  };
+  
+  // Filter room images to only include 3D images and sort them by order
+  const get3DImagesForRoom = (room: any) => {
+    if (!room.images || !Array.isArray(room.images)) {
+      return [];
+    }
+    
+    // Filter to only include 3D images
+    const only3DImages = room.images.filter((img: {type?: string, path: string, order: number}) => 
+      img.type && img.type.toLowerCase().includes('3d')
+    );
+    
+    // Sort by order first, then by type
+    return [...only3DImages].sort((a, b) => {
+      // First sort by order
+      if (a.order !== b.order) {
+        return a.order - b.order;
+      }
+      // Then alphabetical by type
+      return (a.type || "").localeCompare(b.type || "");
+    });
   };
 
   // Calculations
@@ -326,252 +311,240 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       </div>
       
       {/* Room Pages - One page per room */}
-      {safeQuotation.rooms.map((room, index) => (
-        <div 
-          key={room.id} 
-          className="h-[1100px] bg-white p-8 flex flex-col page-container" 
-          style={{ pageBreakAfter: 'always', breakAfter: 'page' }}
-        >
-          {/* Room Header with Logo */}
-          <div className="flex items-start justify-between mb-6 border-b border-gray-200 pb-4">
-            <div className="logo-container">
-              {companySettings?.logo ? (
-                <img 
-                  src={companySettings.logo} 
-                  alt={companyName} 
-                  className="h-10" 
-                />
-              ) : (
-                <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
-              )}
-            </div>
-            <div className="bg-[#E6E6E6] px-4 py-2 rounded-md">
-              <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
-            </div>
-          </div>
-          
-          {/* Room Content Area */}
-          <div className="flex-1 overflow-auto">
-            {/* Inclusions Section */}
-            <div className="mb-6">
-              <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
-              <ul className="list-disc list-inside text-gray-600 space-y-1">
-                {room.products && room.products.map((product) => (
-                  <li key={product.id}>
-                    {product.name}
-                    {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
-                  </li>
-                ))}
-                {room.accessories && room.accessories.map((accessory) => (
-                  <li key={accessory.id}>
-                    {accessory.name}
-                    {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
-                  </li>
-                ))}
-              </ul>
+      {safeQuotation.rooms.map((room, index) => {
+        // Get 3D images only for this room
+        const images3D = get3DImagesForRoom(room);
+        
+        return (
+          <div 
+            key={room.id} 
+            className="h-[1100px] bg-white p-8 flex flex-col page-container" 
+            style={{ pageBreakAfter: 'always', breakAfter: 'page' }}
+          >
+            {/* Room Header with Logo */}
+            <div className="flex items-start justify-between mb-6 border-b border-gray-200 pb-4">
+              <div className="logo-container">
+                {companySettings?.logo ? (
+                  <img 
+                    src={companySettings.logo} 
+                    alt={companyName} 
+                    className="h-10" 
+                  />
+                ) : (
+                  <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
+                )}
+              </div>
+              <div className="bg-[#E6E6E6] px-4 py-2 rounded-md">
+                <h4 className="text-lg font-semibold text-[#009245]">{room.name || 'Unnamed Room'}</h4>
+              </div>
             </div>
             
-            {/* Design References with Images - ADAPTIVE LAYOUT: 2 IMAGES PER ROW (≤6) OR 3 IMAGES PER ROW (>6) */}
-            {(() => {
-              // Get the matching room with filtered images
-              const matchingRoom = roomsWithFilteredImages.find(r => r.id === room.id);
-              const filteredImages = matchingRoom?.filteredImages || [];
+            {/* Room Content Area */}
+            <div className="flex-1 overflow-auto">
+              {/* Inclusions Section */}
+              <div className="mb-6">
+                <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
+                <ul className="list-disc list-inside text-gray-600 space-y-1">
+                  {room.products && room.products.map((product) => (
+                    <li key={product.id}>
+                      {product.name}
+                      {product.description && <span className="text-gray-500 text-sm"> - {product.description}</span>}
+                    </li>
+                  ))}
+                  {room.accessories && room.accessories.map((accessory) => (
+                    <li key={accessory.id}>
+                      {accessory.name}
+                      {accessory.description && <span className="text-gray-500 text-sm"> - {accessory.description}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
               
-              // Only show if we have 3D images
-              return filteredImages.length > 0 ? (
+              {/* Design References with Images - ONLY 3D IMAGES */}
+              {images3D.length > 0 && (
                 <div className="mb-6">
                   <h5 className="font-medium text-gray-800 mb-3">3D Design References:</h5>
-                {filteredImages.length <= 6 ? (
-                  // For 6 or fewer images - 2 per row
-                  <table style={{width: '100%'}} cellPadding={10} cellSpacing={0} border={0}>
-                    <tbody>
-                      {Array.from({ length: Math.ceil(filteredImages.length / 2) }).map((_, rowIndex) => (
-                        <tr key={rowIndex}>
-                          {/* First column */}
-                          <td width="50%" align="center" valign="middle">
-                            {filteredImages[rowIndex * 2] && (
-                              <div style={{
-                                width: '100%',
-                                height: '200px',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '6px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                overflow: 'hidden'
-                              }}>
-                                <img 
-                                  src={filteredImages[rowIndex * 2].path} 
-                                  alt={`${room.name} - ${filteredImages[rowIndex * 2].type || 'Design'}`}
-                                  style={{
-                                    maxHeight: '190px',
-                                    maxWidth: '100%',
-                                    objectFit: 'contain'
-                                  }}
-                                />
-                              </div>
-                            )}
-                          </td>
-                          
-                          {/* Second column */}
-                          <td width="50%" align="center" valign="middle">
-                            {filteredImages[rowIndex * 2 + 1] && (
-                              <div style={{
-                                width: '100%',
-                                height: '200px',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '6px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                overflow: 'hidden'
-                              }}>
-                                <img 
-                                  src={filteredImages[rowIndex * 2 + 1].path} 
-                                  alt={`${room.name} - ${filteredImages[rowIndex * 2 + 1].type || 'Design'}`}
-                                  style={{
-                                    maxHeight: '190px',
-                                    maxWidth: '100%',
-                                    objectFit: 'contain'
-                                  }}
-                                />
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  // For more than 6 images - 3 per row
-                  <table style={{width: '100%'}} cellPadding={6} cellSpacing={0} border={0}>
-                    <tbody>
-                      {Array.from({ length: Math.ceil(filteredImages.length / 3) }).map((_, rowIndex) => (
-                        <tr key={rowIndex}>
-                          {/* First column */}
-                          <td width="33.33%" align="center" valign="middle">
-                            {filteredImages[rowIndex * 3] && (
-                              <div style={{
-                                width: '100%',
-                                height: '180px',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '6px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                overflow: 'hidden'
-                              }}>
-                                <img 
-                                  src={filteredImages[rowIndex * 3].path} 
-                                  alt={`${room.name} - ${filteredImages[rowIndex * 3].type || 'Design'}`}
-                                  style={{
-                                    maxHeight: '170px',
-                                    maxWidth: '100%',
-                                    objectFit: 'contain'
-                                  }}
-                                />
-                              </div>
-                            )}
-                          </td>
-                          
-                          {/* Second column */}
-                          <td width="33.33%" align="center" valign="middle">
-                            {filteredImages[rowIndex * 3 + 1] && (
-                              <div style={{
-                                width: '100%',
-                                height: '180px',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '6px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                overflow: 'hidden'
-                              }}>
-                                <img 
-                                  src={filteredImages[rowIndex * 3 + 1].path} 
-                                  alt={`${room.name} - ${filteredImages[rowIndex * 3 + 1].type || 'Design'}`}
-                                  style={{
-                                    maxHeight: '170px',
-                                    maxWidth: '100%',
-                                    objectFit: 'contain'
-                                  }}
-                                />
-                              </div>
-                            )}
-                          </td>
-                          
-                          {/* Third column */}
-                          <td width="33.33%" align="center" valign="middle">
-                            {filteredImages[rowIndex * 3 + 2] && (
-                              <div style={{
-                                width: '100%',
-                                height: '180px',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '6px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                overflow: 'hidden'
-                              }}>
-                                <img 
-                                  src={filteredImages[rowIndex * 3 + 2].path} 
-                                  alt={`${room.name} - ${filteredImages[rowIndex * 3 + 2].type || 'Design'}`}
-                                  style={{
-                                    maxHeight: '170px',
-                                    maxWidth: '100%',
-                                    objectFit: 'contain'
-                                  }}
-                                />
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            )}
-            
-            {/* Room Pricing */}
-            <div className="mb-6 mt-auto">
-              <h5 className="font-medium text-gray-800 mb-2">Room Pricing:</h5>
-              <div className="bg-gray-50 p-4 rounded-md">
+                  {images3D.length <= 6 ? (
+                    // For 6 or fewer images - 2 per row
+                    <table style={{width: '100%'}} cellPadding={10} cellSpacing={0} border={0}>
+                      <tbody>
+                        {Array.from({ length: Math.ceil(images3D.length / 2) }).map((_, rowIndex) => (
+                          <tr key={rowIndex}>
+                            {/* First column */}
+                            <td width="50%" align="center" valign="middle">
+                              {images3D[rowIndex * 2] && (
+                                <div style={{
+                                  width: '100%',
+                                  height: '220px',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  overflow: 'hidden'
+                                }}>
+                                  <img 
+                                    src={images3D[rowIndex * 2].path} 
+                                    alt={`${room.name} - ${images3D[rowIndex * 2].type || 'Design'}`}
+                                    style={{
+                                      maxHeight: '210px',
+                                      maxWidth: '100%',
+                                      objectFit: 'contain'
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </td>
+                            
+                            {/* Second column */}
+                            <td width="50%" align="center" valign="middle">
+                              {images3D[rowIndex * 2 + 1] && (
+                                <div style={{
+                                  width: '100%',
+                                  height: '220px',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  overflow: 'hidden'
+                                }}>
+                                  <img 
+                                    src={images3D[rowIndex * 2 + 1].path} 
+                                    alt={`${room.name} - ${images3D[rowIndex * 2 + 1].type || 'Design'}`}
+                                    style={{
+                                      maxHeight: '210px',
+                                      maxWidth: '100%',
+                                      objectFit: 'contain'
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    // For more than 6 images - 3 per row
+                    <table style={{width: '100%'}} cellPadding={6} cellSpacing={0} border={0}>
+                      <tbody>
+                        {Array.from({ length: Math.ceil(images3D.length / 3) }).map((_, rowIndex) => (
+                          <tr key={rowIndex}>
+                            {/* First column */}
+                            <td width="33.33%" align="center" valign="middle">
+                              {images3D[rowIndex * 3] && (
+                                <div style={{
+                                  width: '100%',
+                                  height: '180px',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  overflow: 'hidden'
+                                }}>
+                                  <img 
+                                    src={images3D[rowIndex * 3].path} 
+                                    alt={`${room.name} - ${images3D[rowIndex * 3].type || 'Design'}`}
+                                    style={{
+                                      maxHeight: '170px',
+                                      maxWidth: '100%',
+                                      objectFit: 'contain'
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </td>
+                            
+                            {/* Second column */}
+                            <td width="33.33%" align="center" valign="middle">
+                              {images3D[rowIndex * 3 + 1] && (
+                                <div style={{
+                                  width: '100%',
+                                  height: '180px',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  overflow: 'hidden'
+                                }}>
+                                  <img 
+                                    src={images3D[rowIndex * 3 + 1].path} 
+                                    alt={`${room.name} - ${images3D[rowIndex * 3 + 1].type || 'Design'}`}
+                                    style={{
+                                      maxHeight: '170px',
+                                      maxWidth: '100%',
+                                      objectFit: 'contain'
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </td>
+                            
+                            {/* Third column */}
+                            <td width="33.33%" align="center" valign="middle">
+                              {images3D[rowIndex * 3 + 2] && (
+                                <div style={{
+                                  width: '100%',
+                                  height: '180px',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  overflow: 'hidden'
+                                }}>
+                                  <img 
+                                    src={images3D[rowIndex * 3 + 2].path} 
+                                    alt={`${room.name} - ${images3D[rowIndex * 3 + 2].type || 'Design'}`}
+                                    style={{
+                                      maxHeight: '170px',
+                                      maxWidth: '100%',
+                                      objectFit: 'contain'
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+              
+              {/* Room Pricing */}
+              <div className="mt-auto pt-6 border-t border-gray-200">
                 <div className="flex justify-between">
                   <span className="font-semibold">Base Price:</span>
-                  <span>{formatCurrency(room.sellingPrice || 0)}</span>
+                  <span>{formatCurrency(room.sellingPrice)}</span>
                 </div>
-                {safeQuotation.globalDiscount > 0 && (
-                  <div className="flex justify-between mt-2">
-                    <span className="font-semibold">Discounted Price ({safeQuotation.globalDiscount}% Discount):</span>
-                    <span className="text-[#D81F28]">
-                      {formatCurrency((room.sellingPrice || 0) * (1 - safeQuotation.globalDiscount / 100))}
-                    </span>
-                  </div>
-                )}
+              </div>
+            </div>
+            
+            {/* Page Footer */}
+            <div className="mt-auto pt-4 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <div className="text-xs text-gray-500">
+                  {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Page {index + 3} of {safeQuotation.rooms.length + 4}
+                </div>
               </div>
             </div>
           </div>
-          
-          {/* Room Footer */}
-          <div className="mt-auto pt-4 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-              <div className="text-xs text-gray-500">
-                {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
-              </div>
-              <div className="text-xs text-gray-500">
-                Page {index + 3} of {safeQuotation.rooms.length + 4}
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
+        );
+      })}
       
-      {/* Project Cost Summary Page */}
+      {/* Summary Page - Last Fixed Page */}
       <div className="h-[1100px] bg-white p-8 flex flex-col page-container" 
-           style={{ pageBreakAfter: 'always', breakAfter: 'page' }}>
-        {/* Page Header with Logo */}
-        <div className="flex items-start mb-6 border-b border-gray-200 pb-4">
+           style={{ pageBreakInside: 'avoid' }}>
+        {/* Logo and Quotation Number */}
+        <div className="flex items-start justify-between mb-6 border-b border-gray-200 pb-4">
           <div className="logo-container">
             {companySettings?.logo ? (
               <img 
@@ -583,179 +556,64 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
             )}
           </div>
+          <div className="bg-[#E6E6E6] px-4 py-2 rounded-md">
+            <h4 className="text-lg font-semibold text-[#009245]">Quotation #{safeQuotation.quotationNumber}</h4>
+          </div>
         </div>
         
-        {/* Project Cost Summary Content */}
+        {/* Content Area */}
         <div className="flex-1">
-          <h3 className="text-xl font-bold mb-6 text-[#009245]">Project Cost Summary</h3>
-          <div className="border rounded-md overflow-hidden shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-[#E6E6E6]">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#009245] uppercase tracking-wider">
-                    Product Description
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-[#009245] uppercase tracking-wider">
-                    Selling Price
-                  </th>
+          <h2 className="text-xl font-bold text-[#009245] mb-4">Quotation Summary</h2>
+          
+          {/* Price Summary Table */}
+          <div className="mb-8">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="py-2 px-3 text-left border border-gray-200">Room</th>
+                  <th className="py-2 px-3 text-right border border-gray-200">Price</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {safeQuotation.rooms.map((room) => (
-                  <tr key={room.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {(room.name || 'UNNAMED ROOM').toUpperCase()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                      {formatCurrency(room.sellingPrice || 0)}
-                    </td>
+              <tbody>
+                {safeQuotation.rooms.map(room => (
+                  <tr key={room.id} className="border-b border-gray-200">
+                    <td className="py-2 px-3 border border-gray-200">{room.name}</td>
+                    <td className="py-2 px-3 text-right border border-gray-200">{formatCurrency(room.sellingPrice)}</td>
                   </tr>
                 ))}
-                
-                {/* Installation Charges if any */}
-                {totalWithHandling > 0 && (
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      INSTALLATION CHARGES
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                      {formatCurrency(totalWithHandling)}
-                    </td>
-                  </tr>
-                )}
-                
-                {/* Subtotal */}
-                <tr className="bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    SUBTOTAL
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                    {formatCurrency(safeQuotation.totalSellingPrice)}
-                  </td>
+                <tr className="border-b border-gray-200">
+                  <td className="py-2 px-3 border border-gray-200 font-medium">Base Total</td>
+                  <td className="py-2 px-3 text-right border border-gray-200 font-medium">{formatCurrency(safeQuotation.totalSellingPrice)}</td>
                 </tr>
-                
-                {/* Discount if applicable */}
-                {discountPercentage > 0 && (
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      DISCOUNT ({discountPercentage}%)
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#D81F28] text-right">
-                      - {formatCurrency(safeQuotation.totalSellingPrice * (discountPercentage / 100))}
+                {safeQuotation.globalDiscount > 0 && (
+                  <tr className="border-b border-gray-200">
+                    <td className="py-2 px-3 border border-gray-200">Discount ({safeQuotation.globalDiscount}%)</td>
+                    <td className="py-2 px-3 text-right border border-gray-200 text-red-600">
+                      -{formatCurrency(safeQuotation.totalSellingPrice * (safeQuotation.globalDiscount / 100))}
                     </td>
                   </tr>
                 )}
-                
-                {/* GST if applicable */}
+                {totalWithHandling > 0 && (
+                  <tr className="border-b border-gray-200">
+                    <td className="py-2 px-3 border border-gray-200">Installation & Handling</td>
+                    <td className="py-2 px-3 text-right border border-gray-200">{formatCurrency(totalWithHandling)}</td>
+                  </tr>
+                )}
                 {safeQuotation.gstPercentage > 0 && (
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      GST ({safeQuotation.gstPercentage}%)
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                      {formatCurrency(gstAmount)}
-                    </td>
+                  <tr className="border-b border-gray-200">
+                    <td className="py-2 px-3 border border-gray-200">GST ({safeQuotation.gstPercentage}%)</td>
+                    <td className="py-2 px-3 text-right border border-gray-200">{formatCurrency(gstAmount)}</td>
                   </tr>
                 )}
-                
-                {/* Total */}
-                <tr className="bg-[#E6E6E6]">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#009245]">
-                    TOTAL PRICE
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#009245] text-right">
-                    {formatCurrency(finalPrice)}
-                  </td>
+                <tr className="bg-gray-50">
+                  <td className="py-3 px-3 border border-gray-200 font-bold">Total Amount</td>
+                  <td className="py-3 px-3 text-right border border-gray-200 font-bold text-[#009245]">{formatCurrency(finalPrice)}</td>
                 </tr>
               </tbody>
             </table>
           </div>
           
           {/* Removed payment terms as requested */}
-        </div>
-        
-        {/* Page Footer */}
-        <div className="mt-auto pt-4 border-t border-gray-200">
-          <div className="flex justify-between items-center">
-            <div className="text-xs text-gray-500">
-              {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
-            </div>
-            <div className="text-xs text-gray-500">
-              Page {safeQuotation.rooms.length + 3} of {safeQuotation.rooms.length + 4}
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Terms and Conditions Page */}
-      <div className="h-[1100px] bg-white p-8 flex flex-col page-container" 
-           style={{ pageBreakInside: 'avoid', pageBreakAfter: 'avoid', breakAfter: 'avoid' }}>
-        {/* Page Header with Logo */}
-        <div className="flex items-start mb-6 border-b border-gray-200 pb-4">
-          <div className="logo-container">
-            {companySettings?.logo ? (
-              <img 
-                src={companySettings.logo} 
-                alt={companyName} 
-                className="h-10" 
-              />
-            ) : (
-              <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
-            )}
-          </div>
-        </div>
-        
-        {/* Terms and Conditions Content */}
-        <div className="flex-1 overflow-auto" style={{ maxHeight: "calc(100% - 200px)" }}>
-          <h3 className="text-xl font-bold mb-4 text-[#009245]">Terms & Conditions</h3>
-          
-          {appSettings?.presentationTermsAndConditions ? (
-            <div 
-              className="text-sm leading-relaxed text-gray-700 terms-container"
-              style={{ fontSize: '10px', fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}
-              dangerouslySetInnerHTML={{ __html: appSettings.presentationTermsAndConditions }}
-            />
-          ) : (
-            <div className="text-sm leading-relaxed text-gray-700" style={{ fontSize: '10px', fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}>
-              <ol style={{ listStyleType: 'decimal', paddingLeft: '20px', margin: 0 }}>
-                <li style={{ marginBottom: '8px' }}>
-                  <strong>Scope of Work:</strong> {companyName} agrees to perform the production and services outlined in our individual quotation and this agreement according to the terms and conditions contained herein.
-                </li>
-                <li style={{ marginBottom: '8px' }}>
-                  <strong>Quotation Validity:</strong> This quotation is valid for 30 days from the date of issue. Prices and availability of materials are subject to change after this period.
-                </li>
-                <li style={{ marginBottom: '8px' }}>
-                  <strong>Measurement & Design:</strong> All product dimensions and designs are agreed upon in advance. Any changes after production begins may incur additional charges and delay delivery.
-                </li>
-                <li style={{ marginBottom: '8px' }}>
-                  <strong>Payment Terms:</strong> The payment schedule is as follows:
-                  <ol style={{ listStyleType: 'lower-alpha', paddingLeft: '15px', margin: '4px 0' }}>
-                    <li>50% advance upon acceptance of quotation</li>
-                    <li>40% upon delivery of materials</li>
-                    <li>10% upon completion of installation</li>
-                  </ol>
-                </li>
-                <li style={{ marginBottom: '8px' }}>
-                  <strong>Cancellation:</strong> In the event of cancellation after production has begun, the client shall be liable for costs incurred up to the point of cancellation, including materials, labor, and a 15% administration fee.
-                </li>
-                <li style={{ marginBottom: '8px' }}>
-                  <strong>Delivery:</strong> Standard delivery timeline is 6-8 weeks from confirmation of order unless otherwise specified. We're not responsible for delays due to circumstances beyond our control.
-                </li>
-                <li style={{ marginBottom: '8px' }}>
-                  <strong>Site Readiness:</strong> The installation site must be clean, accessible, and with electrical connections available. Additional charges may apply if our team needs to prepare the site.
-                </li>
-                <li style={{ marginBottom: '8px' }}>
-                  <strong>Warranty:</strong> All products come with a 1-year warranty against manufacturing defects. This excludes damage from misuse, normal wear and tear, or unauthorized modifications.
-                </li>
-                <li style={{ marginBottom: '8px' }}>
-                  <strong>Returns & Refunds:</strong> Custom-made products cannot be returned or refunded except in cases of manufacturing defects. Defective items will be repaired or replaced at our discretion.
-                </li>
-                <li style={{ marginBottom: '8px' }}>
-                  <strong>Ownership:</strong> All goods remain the property of {companyName} until payment has been received in full.
-                </li>
-              </ol>
-            </div>
-          )}
         </div>
         
         {/* Page Footer */}
