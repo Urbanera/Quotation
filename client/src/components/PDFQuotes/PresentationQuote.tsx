@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { AppSettings, CompanySettings, QuotationWithDetails } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
+import "./presentationFixedFooter.css";
 
 // Import feature icons
 import bestQualityImg from "@assets/Picture1.png";
@@ -125,175 +126,175 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
 
   return (
     <div ref={ref} className="bg-white w-full mx-auto" id="presentation-quote">
-      {/* Cover Page - First Fixed Page */}
-      <div className="min-h-[1100px] bg-white flex flex-col page-break-after" 
-           style={{ pageBreakAfter: 'always' }}>
-        {/* Logo Area */}
-        <div className="p-10 text-center border-b-5 border-[#009245] logo-container" style={{ borderBottomWidth: '5px' }}>
-          {companySettings?.logo && (
-            <img 
-              src={companySettings.logo} 
-              alt={companyName} 
-              className="h-20 mx-auto"
-            />
-          )}
-          {!companySettings?.logo && (
-            <h1 className="text-4xl font-bold">{companyName}</h1>
-          )}
-        </div>
-        
-        {/* Quotation Title */}
-        <div className="bg-white p-6 text-center">
-          <h2 className="text-2xl font-bold text-[#7A7A7A] uppercase">
-            MODULAR INTERIOR QUOTATION
-          </h2>
-          <div className="w-full h-0.5 bg-[#D81F28] mt-2"></div>
-        </div>
-        
-        {/* Cover Image - Using a background color instead of an image */}
-        <div className="flex-1 bg-gray-100 relative">
-          {/* Project Info Box */}
-          <div className="absolute bottom-32 left-8 bg-white bg-opacity-95 p-6 w-2/3 border-l-4 border-[#D81F28]">
-            <div className="mb-3 flex">
-              <div className="font-bold text-[#009245] w-32">Client:</div>
-              <div>{safeQuotation.customer.name}</div>
-            </div>
-            <div className="mb-3 flex">
-              <div className="font-bold text-[#009245] w-32">Date:</div>
-              <div>{formatDate(safeQuotation.createdAt)}</div>
-            </div>
-            <div className="flex">
-              <div className="font-bold text-[#009245] w-32">Quotation #:</div>
-              <div>{safeQuotation.quotationNumber}</div>
+      {/* Cover Page */}
+      <div className="page-container" style={{ height: '1100px' }}>
+        <div className="content-container">
+          {/* Logo Area */}
+          <div className="p-10 text-center border-b-5 border-[#009245] logo-container" style={{ borderBottomWidth: '5px' }}>
+            {companySettings?.logo && (
+              <img 
+                src={companySettings.logo} 
+                alt={companyName} 
+                className="h-20 mx-auto"
+              />
+            )}
+            {!companySettings?.logo && (
+              <h1 className="text-4xl font-bold">{companyName}</h1>
+            )}
+          </div>
+          
+          {/* Quotation Title */}
+          <div className="bg-white p-6 text-center">
+            <h2 className="text-2xl font-bold text-[#7A7A7A] uppercase">
+              MODULAR INTERIOR QUOTATION
+            </h2>
+            <div className="w-full h-0.5 bg-[#D81F28] mt-2"></div>
+          </div>
+          
+          {/* Cover Image - Using a background color instead of an image */}
+          <div className="bg-gray-100 relative" style={{ height: '600px' }}>
+            {/* Project Info Box */}
+            <div className="absolute bottom-32 left-8 bg-white bg-opacity-95 p-6 w-2/3 border-l-4 border-[#D81F28]">
+              <div className="mb-3 flex">
+                <div className="font-bold text-[#009245] w-32">Client:</div>
+                <div>{safeQuotation.customer.name}</div>
+              </div>
+              <div className="mb-3 flex">
+                <div className="font-bold text-[#009245] w-32">Date:</div>
+                <div>{formatDate(safeQuotation.createdAt)}</div>
+              </div>
+              <div className="flex">
+                <div className="font-bold text-[#009245] w-32">Quotation #:</div>
+                <div>{safeQuotation.quotationNumber}</div>
+              </div>
             </div>
           </div>
         </div>
         
         {/* Footer */}
-        <div className="bg-[#009245] text-white p-4 text-center">
+        <div className="footer-container bg-[#009245] text-white p-4 text-center">
           {companySettings?.website || "www.yourcompany.com"}
         </div>
       </div>
       
-      {/* Second Page - Configurable Content - Second Fixed Page */}
-      <div className="min-h-[1100px] bg-white flex flex-col page-break-after" 
-           style={{ pageBreakAfter: 'always', position: 'relative' }}>
-        {/* Logo Area */}
-        <div className="p-10 text-center logo-container">
-          {companySettings?.logo && (
-            <img 
-              src={companySettings.logo} 
-              alt={companyName} 
-              className="h-16 mx-auto"
-            />
-          )}
-          {!companySettings?.logo && (
-            <h1 className="text-3xl font-bold">{companyName}</h1>
-          )}
-        </div>
-        
-        {/* Configurable Content */}
-        <div className="px-10 mb-8 flex-1">
-          {appSettings?.presentationSecondPageContent ? (
-            <div
-              className="text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ 
-                __html: appSettings.presentationSecondPageContent
-                  .replace(/\${bestQualityImg}/g, bestQualityImg)
-                  .replace(/\${fastDeliveryImg}/g, fastDeliveryImg)
-                  .replace(/\${hassleFreeImg}/g, hassleFreeImg)
-                  .replace(/\${ecoFriendlyImg}/g, ecoFriendlyImg)
-                  .replace(/\${emiAvailableImg}/g, emiAvailableImg)
-              }}
-            />
-          ) : (
-            <>
-              <div>
-                <h2 className="text-2xl font-bold text-[#009245] mb-4">Our Features</h2>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="feature-item flex items-start">
-                    <div className="feature-icon mr-4">
-                      <img src={bestQualityImg} alt="Best Quality Materials" className="w-16 h-16 object-contain" />
-                    </div>
-                    <div className="feature-text">
-                      <h3 className="text-lg font-bold text-gray-800">Best Quality Materials</h3>
-                      <p className="text-gray-600">Premium raw materials and fittings to ensure durability and elegance.</p>
-                    </div>
-                  </div>
-                  
-                  <div className="feature-item flex items-start">
-                    <div className="feature-icon mr-4">
-                      <img src={fastDeliveryImg} alt="Fast Delivery" className="w-16 h-16 object-contain" />
-                    </div>
-                    <div className="feature-text">
-                      <h3 className="text-lg font-bold text-gray-800">Fast Delivery</h3>
-                      <p className="text-gray-600">Prompt project execution with strict timeline adherence.</p>
-                    </div>
-                  </div>
-                  
-                  <div className="feature-item flex items-start">
-                    <div className="feature-icon mr-4">
-                      <img src={hassleFreeImg} alt="Hassle-Free Installation" className="w-16 h-16 object-contain" />
-                    </div>
-                    <div className="feature-text">
-                      <h3 className="text-lg font-bold text-gray-800">Hassle-Free Installation</h3>
-                      <p className="text-gray-600">Expert installation team ensures minimal disruption to your routine.</p>
-                    </div>
-                  </div>
-                  
-                  <div className="feature-item flex items-start">
-                    <div className="feature-icon mr-4">
-                      <img src={ecoFriendlyImg} alt="Eco-Friendly Options" className="w-16 h-16 object-contain" />
-                    </div>
-                    <div className="feature-text">
-                      <h3 className="text-lg font-bold text-gray-800">Eco-Friendly Options</h3>
-                      <p className="text-gray-600">Sustainable materials that care for both your home and the environment.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Client Testimonial */}
-              <div className="mt-8">
-                <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-[#009245]">
-                  <h2 className="text-xl font-bold text-[#009245] mb-2">What Our Clients Say</h2>
-                  <p className="text-gray-700 italic">
-                    "The team's attention to detail and commitment to quality exceeded our expectations. Our home has been completely transformed!"
-                  </p>
-                  <p className="text-gray-600 mt-2">- Recent Client</p>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-        
-        {/* Feature icons in a row - only show when not using custom content */}
-        {!appSettings?.presentationSecondPageContent && (
-          <div className="flex justify-around items-center px-10 mb-16">
-            <img src={bestQualityImg} alt="Best Quality" className="h-14 object-contain" />
-            <img src={fastDeliveryImg} alt="Fast Delivery" className="h-14 object-contain" />
-            <img src={hassleFreeImg} alt="Hassle-Free" className="h-14 object-contain" />
-            <img src={ecoFriendlyImg} alt="Eco-Friendly" className="h-14 object-contain" />
-            <img src={emiAvailableImg} alt="EMI Available" className="h-14 object-contain" />
+      {/* Second Page - Configurable Content */}
+      <div className="page-container" style={{ height: '1100px' }}>
+        <div className="content-container">
+          {/* Logo Area */}
+          <div className="p-10 text-center logo-container">
+            {companySettings?.logo && (
+              <img 
+                src={companySettings.logo} 
+                alt={companyName} 
+                className="h-16 mx-auto"
+              />
+            )}
+            {!companySettings?.logo && (
+              <h1 className="text-3xl font-bold">{companyName}</h1>
+            )}
           </div>
-        )}
-        
-        {/* Page Footer */}
-        <div className="px-10 pt-4 border-t border-gray-200 mb-4">
-          <div className="flex justify-between items-center">
-            <div className="text-xs text-gray-500">
-              {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
-            </div>
-            <div className="text-xs text-gray-500">
-              Page 2 of {safeQuotation.rooms.length + 4}
-            </div>
+          
+          {/* Configurable Content */}
+          <div className="px-10 mb-10">
+            {appSettings?.presentationSecondPageContent ? (
+              <div
+                className="text-gray-700 leading-relaxed"
+                dangerouslySetInnerHTML={{ 
+                  __html: appSettings.presentationSecondPageContent
+                    .replace(/\${bestQualityImg}/g, bestQualityImg)
+                    .replace(/\${fastDeliveryImg}/g, fastDeliveryImg)
+                    .replace(/\${hassleFreeImg}/g, hassleFreeImg)
+                    .replace(/\${ecoFriendlyImg}/g, ecoFriendlyImg)
+                    .replace(/\${emiAvailableImg}/g, emiAvailableImg)
+                }}
+              />
+            ) : (
+              <>
+                <div>
+                  <h2 className="text-2xl font-bold text-[#009245] mb-4">Our Features</h2>
+                  
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="feature-item flex items-start">
+                      <div className="feature-icon mr-4">
+                        <img src={bestQualityImg} alt="Best Quality Materials" className="w-16 h-16 object-contain" />
+                      </div>
+                      <div className="feature-text">
+                        <h3 className="text-lg font-bold text-gray-800">Best Quality Materials</h3>
+                        <p className="text-gray-600">Premium raw materials and fittings to ensure durability and elegance.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="feature-item flex items-start">
+                      <div className="feature-icon mr-4">
+                        <img src={fastDeliveryImg} alt="Fast Delivery" className="w-16 h-16 object-contain" />
+                      </div>
+                      <div className="feature-text">
+                        <h3 className="text-lg font-bold text-gray-800">Fast Delivery</h3>
+                        <p className="text-gray-600">Prompt project execution with strict timeline adherence.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="feature-item flex items-start">
+                      <div className="feature-icon mr-4">
+                        <img src={hassleFreeImg} alt="Hassle-Free Installation" className="w-16 h-16 object-contain" />
+                      </div>
+                      <div className="feature-text">
+                        <h3 className="text-lg font-bold text-gray-800">Hassle-Free Installation</h3>
+                        <p className="text-gray-600">Expert installation team ensures minimal disruption to your routine.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="feature-item flex items-start">
+                      <div className="feature-icon mr-4">
+                        <img src={ecoFriendlyImg} alt="Eco-Friendly Options" className="w-16 h-16 object-contain" />
+                      </div>
+                      <div className="feature-text">
+                        <h3 className="text-lg font-bold text-gray-800">Eco-Friendly Options</h3>
+                        <p className="text-gray-600">Sustainable materials that care for both your home and the environment.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Client Testimonial */}
+                <div className="mt-8 mb-8">
+                  <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-[#009245]">
+                    <h2 className="text-xl font-bold text-[#009245] mb-2">What Our Clients Say</h2>
+                    <p className="text-gray-700 italic">
+                      "The team's attention to detail and commitment to quality exceeded our expectations. Our home has been completely transformed!"
+                    </p>
+                    <p className="text-gray-600 mt-2">- Recent Client</p>
+                  </div>
+                </div>
+                
+                {/* Feature icons in a row */}
+                <div className="flex justify-around items-center px-10 mt-8">
+                  <img src={bestQualityImg} alt="Best Quality" className="h-14 object-contain" />
+                  <img src={fastDeliveryImg} alt="Fast Delivery" className="h-14 object-contain" />
+                  <img src={hassleFreeImg} alt="Hassle-Free" className="h-14 object-contain" />
+                  <img src={ecoFriendlyImg} alt="Eco-Friendly" className="h-14 object-contain" />
+                  <img src={emiAvailableImg} alt="EMI Available" className="h-14 object-contain" />
+                </div>
+              </>
+            )}
           </div>
         </div>
         
         {/* Footer */}
-        <div className="bg-[#009245] text-white p-4 text-center">
-          {companySettings?.website || "www.yourcompany.com"}
+        <div className="footer-container">
+          <div className="px-10 py-2 border-t border-gray-200">
+            <div className="flex justify-between items-center">
+              <div className="text-xs text-gray-500">
+                {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
+              </div>
+              <div className="text-xs text-gray-500">
+                Page 2 of {safeQuotation.rooms.length + 4}
+              </div>
+            </div>
+          </div>
+          <div className="bg-[#009245] text-white p-2 text-center">
+            {companySettings?.website || "www.yourcompany.com"}
+          </div>
         </div>
       </div>
       
@@ -303,12 +304,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         const images3D = get3DImagesForRoom(room);
         
         return (
-          <div 
-            key={room.id} 
-            className="bg-white flex flex-col page-break-after" 
-            style={{ minHeight: '1100px', pageBreakAfter: 'always' }}
-          >
-            <div className="p-8 flex flex-col flex-grow">
+          <div key={room.id} className="page-container" style={{ height: '1100px' }}>
+            <div className="content-container p-8">
               {/* Room Header with Logo */}
               <div className="flex items-start justify-between mb-6 border-b border-gray-200 pb-4">
                 <div className="logo-container">
@@ -328,7 +325,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               </div>
               
               {/* Room Content Area */}
-              <div className="flex-grow">
+              <div>
                 {/* Inclusions Section */}
                 <div className="mb-6">
                   <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
@@ -363,7 +360,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                 {images3D[rowIndex * 2] && (
                                   <div style={{
                                     width: '100%',
-                                    height: '220px',
+                                    height: '200px',
                                     border: '1px solid #e5e7eb',
                                     borderRadius: '6px',
                                     display: 'flex',
@@ -375,7 +372,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                       src={images3D[rowIndex * 2].path} 
                                       alt={`${room.name} - ${images3D[rowIndex * 2].type || 'Design'}`}
                                       style={{
-                                        maxHeight: '210px',
+                                        maxHeight: '190px',
                                         maxWidth: '100%',
                                         objectFit: 'contain'
                                       }}
@@ -389,7 +386,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                 {images3D[rowIndex * 2 + 1] && (
                                   <div style={{
                                     width: '100%',
-                                    height: '220px',
+                                    height: '200px',
                                     border: '1px solid #e5e7eb',
                                     borderRadius: '6px',
                                     display: 'flex',
@@ -401,7 +398,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                       src={images3D[rowIndex * 2 + 1].path} 
                                       alt={`${room.name} - ${images3D[rowIndex * 2 + 1].type || 'Design'}`}
                                       style={{
-                                        maxHeight: '210px',
+                                        maxHeight: '190px',
                                         maxWidth: '100%',
                                         objectFit: 'contain'
                                       }}
@@ -424,7 +421,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                 {images3D[rowIndex * 3] && (
                                   <div style={{
                                     width: '100%',
-                                    height: '180px',
+                                    height: '160px',
                                     border: '1px solid #e5e7eb',
                                     borderRadius: '6px',
                                     display: 'flex',
@@ -436,7 +433,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                       src={images3D[rowIndex * 3].path} 
                                       alt={`${room.name} - ${images3D[rowIndex * 3].type || 'Design'}`}
                                       style={{
-                                        maxHeight: '170px',
+                                        maxHeight: '150px',
                                         maxWidth: '100%',
                                         objectFit: 'contain'
                                       }}
@@ -450,7 +447,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                 {images3D[rowIndex * 3 + 1] && (
                                   <div style={{
                                     width: '100%',
-                                    height: '180px',
+                                    height: '160px',
                                     border: '1px solid #e5e7eb',
                                     borderRadius: '6px',
                                     display: 'flex',
@@ -462,7 +459,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                       src={images3D[rowIndex * 3 + 1].path} 
                                       alt={`${room.name} - ${images3D[rowIndex * 3 + 1].type || 'Design'}`}
                                       style={{
-                                        maxHeight: '170px',
+                                        maxHeight: '150px',
                                         maxWidth: '100%',
                                         objectFit: 'contain'
                                       }}
@@ -476,7 +473,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                 {images3D[rowIndex * 3 + 2] && (
                                   <div style={{
                                     width: '100%',
-                                    height: '180px',
+                                    height: '160px',
                                     border: '1px solid #e5e7eb',
                                     borderRadius: '6px',
                                     display: 'flex',
@@ -488,7 +485,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                       src={images3D[rowIndex * 3 + 2].path} 
                                       alt={`${room.name} - ${images3D[rowIndex * 3 + 2].type || 'Design'}`}
                                       style={{
-                                        maxHeight: '170px',
+                                        maxHeight: '150px',
                                         maxWidth: '100%',
                                         objectFit: 'contain'
                                       }}
@@ -505,16 +502,18 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 )}
                 
                 {/* Room Pricing */}
-                <div className="pt-6 border-t border-gray-200 mb-4">
+                <div className="pt-6 border-t border-gray-200 mb-10">
                   <div className="flex justify-between">
                     <span className="font-semibold">Base Price:</span>
                     <span>{formatCurrency(room.sellingPrice)}</span>
                   </div>
                 </div>
               </div>
-              
-              {/* Fixed Bottom Footer */}
-              <div className="pt-4 border-t border-gray-200 mt-4">
+            </div>
+            
+            {/* Footer */}
+            <div className="footer-container">
+              <div className="px-10 py-2 border-t border-gray-200">
                 <div className="flex justify-between items-center">
                   <div className="text-xs text-gray-500">
                     {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
@@ -524,14 +523,17 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   </div>
                 </div>
               </div>
+              <div className="bg-[#009245] text-white p-2 text-center">
+                {companySettings?.website || "www.yourcompany.com"}
+              </div>
             </div>
           </div>
         );
       })}
       
-      {/* Summary Page - Last Fixed Page */}
-      <div className="bg-white flex flex-col" style={{ minHeight: '1100px' }}>
-        <div className="p-8 flex flex-col flex-grow">
+      {/* Summary Page */}
+      <div className="page-container" style={{ height: '1100px' }}>
+        <div className="content-container p-8">
           {/* Logo and Quotation Number */}
           <div className="flex items-start justify-between mb-6 border-b border-gray-200 pb-4">
             <div className="logo-container">
@@ -551,7 +553,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           </div>
           
           {/* Content Area */}
-          <div className="flex-grow">
+          <div>
             <h2 className="text-xl font-bold text-[#009245] mb-4">Quotation Summary</h2>
             
             {/* Price Summary Table */}
@@ -602,9 +604,11 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               </table>
             </div>
           </div>
-          
-          {/* Page Footer */}
-          <div className="pt-4 border-t border-gray-200">
+        </div>
+        
+        {/* Footer */}
+        <div className="footer-container">
+          <div className="px-10 py-2 border-t border-gray-200">
             <div className="flex justify-between items-center">
               <div className="text-xs text-gray-500">
                 {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
@@ -613,6 +617,9 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 Page {safeQuotation.rooms.length + 4} of {safeQuotation.rooms.length + 4}
               </div>
             </div>
+          </div>
+          <div className="bg-[#009245] text-white p-2 text-center">
+            {companySettings?.website || "www.yourcompany.com"}
           </div>
         </div>
       </div>
