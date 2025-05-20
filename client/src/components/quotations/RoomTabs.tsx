@@ -62,29 +62,43 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
 
   // Add room mutation
   const addRoomMutation = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async (data: { name: string, description?: string }) => {
       const response = await apiRequest(
         "POST", 
         `/api/quotations/${quotationId}/rooms`, 
-        { name, description: "" }
+        {
+          name: data.name,
+          description: data.description || ""
+        }
       );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to add room");
+      }
+      
       return response.json();
     },
     onSuccess: (newRoom) => {
       queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/rooms`] });
       setActiveRoomId(newRoom.id);
       setAddRoomDialogOpen(false);
+      setAddRoomError(null);
       toast({
         title: "Room added",
         description: `${newRoom.name} has been added to the quotation.`,
       });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to add room.",
-        variant: "destructive",
-      });
+    onError: (error: Error) => {
+      if (error.message.includes("already exists")) {
+        setAddRoomError(error.message);
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to add room.",
+          variant: "destructive",
+        });
+      }
     }
   });
   
@@ -119,6 +133,12 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
     mutationFn: async (data: { roomId: number, name: string, description: string }) => {
       const { roomId, name, description } = data;
       const response = await apiRequest("PUT", `/api/rooms/${roomId}`, { name, description });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update room");
+      }
+      
       return response.json();
     },
     onSuccess: (updatedRoom) => {
@@ -126,17 +146,22 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
       queryClient.invalidateQueries({ queryKey: [`/api/rooms/${updatedRoom.id}`] });
       setEditRoomDialogOpen(false);
       setRoomToEdit(null);
+      setEditRoomError(null);
       toast({
         title: "Room updated",
         description: `${updatedRoom.name} has been updated.`,
       });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update room.",
-        variant: "destructive",
-      });
+    onError: (error: Error) => {
+      if (error.message.includes("already exists")) {
+        setEditRoomError(error.message);
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to update room.",
+          variant: "destructive",
+        });
+      }
     }
   });
 
@@ -297,8 +322,9 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                 </DialogHeader>
                 <RoomForm 
                   onSubmit={(data) => {
-                    addRoomMutation.mutate(data.name);
+                    addRoomMutation.mutate(data);
                   }}
+                  error={addRoomError}
                   isSubmitting={addRoomMutation.isPending}
                 />
               </DialogContent>
@@ -325,6 +351,7 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                     isSubmitting={updateRoomMutation.isPending}
                     defaultValues={roomToEdit}
                     isEdit={true}
+                    error={editRoomError}
                   />
                 )}
               </DialogContent>

@@ -28,7 +28,7 @@ interface RoomFormProps {
   isSubmitting: boolean;
   defaultValues?: Room;
   isEdit?: boolean;
-  error?: string;
+  error?: string | null;
 }
 
 export default function RoomForm({ 
