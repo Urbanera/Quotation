@@ -237,10 +237,19 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
   // Sort room images by order or type (same as in the preview component)
   const sortedRooms = quotation.rooms ? quotation.rooms.map(room => {
     const sortedImages = [...(room.images || [])].sort((a, b) => {
-      // First sort by order, then by type
+      // First sort by order
       if (a.order !== b.order) {
         return a.order - b.order;
       }
+      
+      // Then prioritize 3D views over 2D views
+      const aIs3D = (a.type || "").toLowerCase().includes("3d");
+      const bIs3D = (b.type || "").toLowerCase().includes("3d");
+      
+      if (aIs3D && !bIs3D) return -1;
+      if (!aIs3D && bIs3D) return 1;
+      
+      // Finally alphabetical by type
       return (a.type || "").localeCompare(b.type || "");
     });
     
@@ -439,55 +448,57 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
           </View>
           
           {/* Cost Summary Table - Matching the screenshot */}
-          <View style={{ marginVertical: 20 }}>
+          <View style={{ marginVertical: 20, maxHeight: '70%' }}>
             {/* Table Header */}
-            <View style={{ flexDirection: 'row', backgroundColor: '#e8f5e9', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
-              <Text style={{ flex: 2, fontWeight: 'bold', color: '#009245' }}>PRODUCT DESCRIPTION</Text>
-              <Text style={{ flex: 1, fontWeight: 'bold', color: '#009245', textAlign: 'right' }}>SELLING PRICE</Text>
-              <Text style={{ flex: 1, fontWeight: 'bold', color: '#009245', textAlign: 'right' }}>DISCOUNTED PRICE ({quotation.globalDiscount}%)</Text>
+            <View style={{ flexDirection: 'row', backgroundColor: '#e8f5e9', padding: 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
+              <Text style={{ flex: 2, fontWeight: 'bold', color: '#009245', fontSize: 10 }}>PRODUCT DESCRIPTION</Text>
+              <Text style={{ flex: 1, fontWeight: 'bold', color: '#009245', textAlign: 'right', fontSize: 10 }}>SELLING PRICE</Text>
+              <Text style={{ flex: 1, fontWeight: 'bold', color: '#009245', textAlign: 'right', fontSize: 10 }}>DISCOUNTED PRICE ({quotation.globalDiscount}%)</Text>
             </View>
             
-            {/* Room Rows */}
-            {sortedRooms.map((room, index) => (
-              <View key={index} style={{ flexDirection: 'row', backgroundColor: index % 2 === 0 ? '#f5f5f5' : 'white', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
-                <Text style={{ flex: 2, fontWeight: 'bold' }}>{room.name.toUpperCase()}</Text>
-                <Text style={{ flex: 1, textAlign: 'right' }}>{formatRupeeForPDF(room.sellingPrice || 0)}</Text>
-                <Text style={{ flex: 1, textAlign: 'right', color: 'red' }}>
-                  {formatRupeeForPDF((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
-                </Text>
-              </View>
-            ))}
+            {/* Room Rows - use smaller font and padding when many rooms */}
+            <View style={{ maxHeight: '65%' }}>
+              {sortedRooms.map((room, index) => (
+                <View key={index} style={{ flexDirection: 'row', backgroundColor: index % 2 === 0 ? '#f5f5f5' : 'white', padding: sortedRooms.length > 5 ? 6 : 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
+                  <Text style={{ flex: 2, fontWeight: 'bold', fontSize: sortedRooms.length > 5 ? 9 : 10 }}>{room.name.toUpperCase()}</Text>
+                  <Text style={{ flex: 1, textAlign: 'right', fontSize: sortedRooms.length > 5 ? 9 : 10 }}>{formatRupeeForPDF(room.sellingPrice || 0)}</Text>
+                  <Text style={{ flex: 1, textAlign: 'right', color: 'red', fontSize: sortedRooms.length > 5 ? 9 : 10 }}>
+                    {formatRupeeForPDF((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
+                  </Text>
+                </View>
+              ))}
+            </View>
             
             {/* Total Row */}
-            <View style={{ flexDirection: 'row', backgroundColor: '#f5f5f5', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
-              <Text style={{ flex: 2, fontWeight: 'bold' }}>Total Of All Items</Text>
-              <Text style={{ flex: 1, textAlign: 'right' }}>{formatRupeeForPDF(quotation.totalSellingPrice)}</Text>
-              <Text style={{ flex: 1, textAlign: 'right', color: 'red' }}>
+            <View style={{ flexDirection: 'row', backgroundColor: '#f5f5f5', padding: 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
+              <Text style={{ flex: 2, fontWeight: 'bold', fontSize: 10 }}>Total Of All Items</Text>
+              <Text style={{ flex: 1, textAlign: 'right', fontSize: 10 }}>{formatRupeeForPDF(quotation.totalSellingPrice)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right', color: 'red', fontSize: 10 }}>
                 {formatRupeeForPDF(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))}
               </Text>
             </View>
             
             {/* Installation Row */}
-            <View style={{ flexDirection: 'row', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
-              <Text style={{ flex: 2, fontWeight: 'bold' }}>Installation and Handling</Text>
-              <Text style={{ flex: 1, textAlign: 'right' }}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
-              <Text style={{ flex: 1, textAlign: 'right' }}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
+            <View style={{ flexDirection: 'row', padding: 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
+              <Text style={{ flex: 2, fontWeight: 'bold', fontSize: 10 }}>Installation and Handling</Text>
+              <Text style={{ flex: 1, textAlign: 'right', fontSize: 10 }}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right', fontSize: 10 }}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
             </View>
             
             {/* GST Row */}
-            <View style={{ flexDirection: 'row', backgroundColor: '#f5f5f5', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
-              <Text style={{ flex: 2, fontWeight: 'bold' }}>GST {quotation.gstPercentage}%</Text>
-              <Text style={{ flex: 1, textAlign: 'right' }}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
-              <Text style={{ flex: 1, textAlign: 'right' }}>
+            <View style={{ flexDirection: 'row', backgroundColor: '#f5f5f5', padding: 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
+              <Text style={{ flex: 2, fontWeight: 'bold', fontSize: 10 }}>GST {quotation.gstPercentage}%</Text>
+              <Text style={{ flex: 1, textAlign: 'right', fontSize: 10 }}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right', fontSize: 10 }}>
                 {formatRupeeForPDF(quotation.gstAmount * (1 - quotation.globalDiscount / 100))}
               </Text>
             </View>
             
             {/* Final Price Row */}
-            <View style={{ flexDirection: 'row', padding: 10, borderBottom: 1, borderBottomColor: '#ddd' }}>
-              <Text style={{ flex: 2, fontWeight: 'bold' }}>Final Price</Text>
-              <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold' }}>{formatRupeeForPDF(quotation.finalPrice)}</Text>
-              <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold', color: 'red' }}>
+            <View style={{ flexDirection: 'row', padding: 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
+              <Text style={{ flex: 2, fontWeight: 'bold', fontSize: 10 }}>Final Price</Text>
+              <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold', fontSize: 10 }}>{formatRupeeForPDF(quotation.finalPrice)}</Text>
+              <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold', color: 'red', fontSize: 10 }}>
                 {formatRupeeForPDF(quotation.finalPrice * (1 - quotation.globalDiscount / 100) + quotation.totalInstallationCharges)}
               </Text>
             </View>

@@ -24,10 +24,19 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
     
     return quotation.rooms.map(room => {
       const sortedImages = [...(room.images || [])].sort((a, b) => {
-        // First sort by order, then by type
+        // First sort by order
         if (a.order !== b.order) {
           return a.order - b.order;
         }
+        
+        // Then prioritize 3D views over 2D views
+        const aIs3D = (a.type || "").toLowerCase().includes("3d");
+        const bIs3D = (b.type || "").toLowerCase().includes("3d");
+        
+        if (aIs3D && !bIs3D) return -1;
+        if (!aIs3D && bIs3D) return 1;
+        
+        // Finally alphabetical by type
         return (a.type || "").localeCompare(b.type || "");
       });
       
