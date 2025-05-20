@@ -128,7 +128,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
     <div ref={ref} className="bg-white w-full mx-auto" id="presentation-quote">
       {/* Cover Page */}
       <div className="page-container" style={{ height: '1100px' }}>
-        <div className="content-container">
+        <div className="content-container p-8">
           {/* Logo Area */}
           <div className="p-10 text-center border-b-5 border-[#009245] logo-container" style={{ borderBottomWidth: '5px' }}>
             {companySettings?.logo && (
@@ -170,16 +170,11 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
             </div>
           </div>
         </div>
-        
-        {/* Footer */}
-        <div className="footer-container bg-[#009245] text-white p-4 text-center">
-          {companySettings?.website || "www.yourcompany.com"}
-        </div>
       </div>
       
       {/* Second Page - Configurable Content */}
       <div className="page-container" style={{ height: '1100px' }}>
-        <div className="content-container">
+        <div className="content-container p-8">
           {/* Logo Area */}
           <div className="p-10 text-center logo-container">
             {companySettings?.logo && (
@@ -195,7 +190,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           </div>
           
           {/* Configurable Content */}
-          <div className="px-10 mb-10">
+          <div className="px-10">
             {appSettings?.presentationSecondPageContent ? (
               <div
                 className="text-gray-700 leading-relaxed"
@@ -280,20 +275,15 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           </div>
         </div>
         
-        {/* Footer */}
-        <div className="footer-container">
-          <div className="px-10 py-2 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-              <div className="text-xs text-gray-500">
-                {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
-              </div>
-              <div className="text-xs text-gray-500">
-                Page 2 of {safeQuotation.rooms.length + 4}
-              </div>
+        {/* Simple Footer */}
+        <div className="footer-container border-t border-gray-200">
+          <div className="flex justify-between items-center px-10 py-2">
+            <div className="text-xs text-gray-500">
+              {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
             </div>
-          </div>
-          <div className="bg-[#009245] text-white p-2 text-center">
-            {companySettings?.website || "www.yourcompany.com"}
+            <div className="text-xs text-gray-500">
+              Page 2 of {safeQuotation.rooms.length + 4}
+            </div>
           </div>
         </div>
       </div>
@@ -325,7 +315,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               </div>
               
               {/* Room Content Area */}
-              <div>
+              <div className="mb-16">
                 {/* Inclusions Section */}
                 <div className="mb-6">
                   <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
@@ -502,7 +492,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 )}
                 
                 {/* Room Pricing */}
-                <div className="pt-6 border-t border-gray-200 mb-10">
+                <div className="pt-6 border-t border-gray-200 mb-4">
                   <div className="flex justify-between">
                     <span className="font-semibold">Base Price:</span>
                     <span>{formatCurrency(room.sellingPrice)}</span>
@@ -511,20 +501,15 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               </div>
             </div>
             
-            {/* Footer */}
-            <div className="footer-container">
-              <div className="px-10 py-2 border-t border-gray-200">
-                <div className="flex justify-between items-center">
-                  <div className="text-xs text-gray-500">
-                    {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Page {index + 3} of {safeQuotation.rooms.length + 4}
-                  </div>
+            {/* Simple Footer */}
+            <div className="footer-container border-t border-gray-200">
+              <div className="flex justify-between items-center px-10 py-2">
+                <div className="text-xs text-gray-500">
+                  {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
                 </div>
-              </div>
-              <div className="bg-[#009245] text-white p-2 text-center">
-                {companySettings?.website || "www.yourcompany.com"}
+                <div className="text-xs text-gray-500">
+                  Page {index + 3} of {safeQuotation.rooms.length + 4}
+                </div>
               </div>
             </div>
           </div>
@@ -553,7 +538,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           </div>
           
           {/* Content Area */}
-          <div>
+          <div className="mb-16">
             <h2 className="text-xl font-bold text-[#009245] mb-4">Quotation Summary</h2>
             
             {/* Price Summary Table */}
@@ -606,20 +591,15 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           </div>
         </div>
         
-        {/* Footer */}
-        <div className="footer-container">
-          <div className="px-10 py-2 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-              <div className="text-xs text-gray-500">
-                {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
-              </div>
-              <div className="text-xs text-gray-500">
-                Page {safeQuotation.rooms.length + 4} of {safeQuotation.rooms.length + 4}
-              </div>
+        {/* Simple Footer */}
+        <div className="footer-container border-t border-gray-200">
+          <div className="flex justify-between items-center px-10 py-2">
+            <div className="text-xs text-gray-500">
+              {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
             </div>
-          </div>
-          <div className="bg-[#009245] text-white p-2 text-center">
-            {companySettings?.website || "www.yourcompany.com"}
+            <div className="text-xs text-gray-500">
+              Page {safeQuotation.rooms.length + 4} of {safeQuotation.rooms.length + 4}
+            </div>
           </div>
         </div>
       </div>
