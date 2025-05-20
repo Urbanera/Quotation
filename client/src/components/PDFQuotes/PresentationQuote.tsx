@@ -170,6 +170,11 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
             </div>
           </div>
         </div>
+        
+        {/* Green Footer */}
+        <div className="print-footer bg-[#009245] text-white p-3 text-center">
+          {companySettings?.website || "www.yourcompany.com"}
+        </div>
       </div>
       
       {/* Second Page - Configurable Content */}
@@ -275,16 +280,9 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           </div>
         </div>
         
-        {/* Simple Footer */}
-        <div className="print-footer">
-          <div className="flex justify-between items-center px-10 py-2">
-            <div className="text-xs text-gray-500">
-              {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
-            </div>
-            <div className="text-xs text-gray-500">
-              Page 2 of {safeQuotation.rooms.length + 4}
-            </div>
-          </div>
+        {/* Green Footer for second page */}
+        <div className="print-footer bg-[#009245] text-white p-3 text-center">
+          {companySettings?.website || "www.yourcompany.com"}
         </div>
       </div>
       
@@ -538,7 +536,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           </div>
           
           {/* Content Area */}
-          <div className="mb-16">
+          <div>
             <h2 className="text-xl font-bold text-[#009245] mb-4">Quotation Summary</h2>
             
             {/* Price Summary Table - Using requested table style from second screenshot */}
@@ -588,6 +586,26 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   </tr>
                 </tbody>
               </table>
+            </div>
+            
+            {/* Terms and Conditions Section */}
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-[#009245] mb-2">Terms and Conditions</h3>
+              
+              {appSettings?.presentationTermsAndConditions ? (
+                <div 
+                  className="text-sm text-gray-700 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: appSettings.presentationTermsAndConditions }}
+                />
+              ) : (
+                <div className="text-sm space-y-2 text-gray-700">
+                  <p>1. 50% advance payment required to begin work.</p>
+                  <p>2. Balance payment due before installation.</p>
+                  <p>3. Prices are valid for 30 days from the date of this quotation.</p>
+                  <p>4. Delivery timeline: 4-6 weeks from date of advance payment.</p>
+                  <p>5. Any changes after design approval may incur additional charges.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
