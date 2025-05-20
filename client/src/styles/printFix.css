@@ -1,0 +1,29 @@
+@page {
+  margin: 0;
+  size: auto;
+}
+
+@media print {
+  body {
+    margin: 15mm;
+  }
+  
+  .print-page {
+    page-break-after: always;
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .print-content {
+    padding-bottom: 30px;
+  }
+  
+  .print-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-top: 1px solid #eaeaea;
+  }
+}

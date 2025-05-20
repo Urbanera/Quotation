@@ -1,7 +1,7 @@
-import { forwardRef } from "react";
+import { forwardRef, useRef } from "react";
 import { AppSettings, CompanySettings, QuotationWithDetails } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
-import "./presentationFixedFooter.css";
+import "@/styles/printFix.css";
 
 // Import feature icons
 import bestQualityImg from "@assets/Picture1.png";
@@ -127,8 +127,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
   return (
     <div ref={ref} className="bg-white w-full mx-auto" id="presentation-quote">
       {/* Cover Page */}
-      <div className="page-container" style={{ height: '1100px' }}>
-        <div className="content-container p-8">
+      <div className="print-page">
+        <div className="print-content p-8">
           {/* Logo Area */}
           <div className="p-10 text-center border-b-5 border-[#009245] logo-container" style={{ borderBottomWidth: '5px' }}>
             {companySettings?.logo && (
@@ -173,8 +173,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       </div>
       
       {/* Second Page - Configurable Content */}
-      <div className="page-container" style={{ height: '1100px' }}>
-        <div className="content-container p-8">
+      <div className="print-page">
+        <div className="print-content p-8">
           {/* Logo Area */}
           <div className="p-10 text-center logo-container">
             {companySettings?.logo && (
@@ -276,7 +276,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
         
         {/* Simple Footer */}
-        <div className="footer-container border-t border-gray-200">
+        <div className="print-footer">
           <div className="flex justify-between items-center px-10 py-2">
             <div className="text-xs text-gray-500">
               {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
@@ -294,8 +294,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         const images3D = get3DImagesForRoom(room);
         
         return (
-          <div key={room.id} className="page-container" style={{ height: '1100px' }}>
-            <div className="content-container p-8">
+          <div key={room.id} className="print-page">
+            <div className="print-content p-8">
               {/* Room Header with Logo */}
               <div className="flex items-start justify-between mb-6 border-b border-gray-200 pb-4">
                 <div className="logo-container">
@@ -315,7 +315,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               </div>
               
               {/* Room Content Area */}
-              <div className="mb-16">
+              <div>
                 {/* Inclusions Section */}
                 <div className="mb-6">
                   <h5 className="font-medium text-gray-800 mb-2">Inclusions:</h5>
@@ -492,7 +492,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 )}
                 
                 {/* Room Pricing */}
-                <div className="pt-6 border-t border-gray-200 mb-4">
+                <div className="pt-6 border-t border-gray-200 mb-10">
                   <div className="flex justify-between">
                     <span className="font-semibold">Base Price:</span>
                     <span>{formatCurrency(room.sellingPrice)}</span>
@@ -502,7 +502,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
             </div>
             
             {/* Simple Footer */}
-            <div className="footer-container border-t border-gray-200">
+            <div className="print-footer">
               <div className="flex justify-between items-center px-10 py-2">
                 <div className="text-xs text-gray-500">
                   {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
@@ -517,8 +517,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
       })}
       
       {/* Summary Page */}
-      <div className="page-container" style={{ height: '1100px' }}>
-        <div className="content-container p-8">
+      <div className="print-page">
+        <div className="print-content p-8">
           {/* Logo and Quotation Number */}
           <div className="flex items-start justify-between mb-6 border-b border-gray-200 pb-4">
             <div className="logo-container">
@@ -541,7 +541,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           <div className="mb-16">
             <h2 className="text-xl font-bold text-[#009245] mb-4">Quotation Summary</h2>
             
-            {/* Price Summary Table - Matches second screenshot with 3 columns */}
+            {/* Price Summary Table - Using requested table style from second screenshot */}
             <div className="mb-8">
               <table className="w-full border-collapse bg-gray-50">
                 <thead>
@@ -581,7 +581,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                       <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency(gstAmount)}</td>
                     </tr>
                   )}
-                  <tr className="border-b border-gray-200">
+                  <tr>
                     <td className="py-3 px-4 border border-gray-200 font-bold">Final Price</td>
                     <td className="py-3 px-4 text-right border border-gray-200 font-bold">{formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + ((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}</td>
                     <td className="py-3 px-4 text-right border border-gray-200 font-bold text-[#d50000]">{formatCurrency(finalPrice)}</td>
@@ -593,7 +593,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
         
         {/* Simple Footer */}
-        <div className="footer-container border-t border-gray-200">
+        <div className="print-footer">
           <div className="flex justify-between items-center px-10 py-2">
             <div className="text-xs text-gray-500">
               {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
