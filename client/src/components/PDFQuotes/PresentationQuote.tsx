@@ -378,9 +378,9 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               const filteredImages = matchingRoom?.filteredImages || [];
               
               // Only show if we have 3D images
-              return filteredImages.length > 0 && (
-              <div className="mb-6">
-                <h5 className="font-medium text-gray-800 mb-3">3D Design References:</h5>
+              return filteredImages.length > 0 ? (
+                <div className="mb-6">
+                  <h5 className="font-medium text-gray-800 mb-3">3D Design References:</h5>
                 {filteredImages.length <= 6 ? (
                   // For 6 or fewer images - 2 per row
                   <table style={{width: '100%'}} cellPadding={10} cellSpacing={0} border={0}>
@@ -514,8 +514,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                 overflow: 'hidden'
                               }}>
                                 <img 
-                                  src={room.images[rowIndex * 3 + 2].path} 
-                                  alt={`Design ${rowIndex * 3 + 3}`}
+                                  src={filteredImages[rowIndex * 3 + 2].path} 
+                                  alt={`${room.name} - ${filteredImages[rowIndex * 3 + 2].type || 'Design'}`}
                                   style={{
                                     maxHeight: '170px',
                                     maxWidth: '100%',
