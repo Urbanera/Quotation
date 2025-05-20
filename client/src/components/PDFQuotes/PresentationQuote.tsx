@@ -389,7 +389,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                         <tr key={rowIndex}>
                           {/* First column */}
                           <td width="50%" align="center" valign="middle">
-                            {room.images[rowIndex * 2] && (
+                            {filteredImages[rowIndex * 2] && (
                               <div style={{
                                 width: '100%',
                                 height: '200px',
@@ -401,8 +401,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                 overflow: 'hidden'
                               }}>
                                 <img 
-                                  src={room.images[rowIndex * 2].path} 
-                                  alt={`Design ${rowIndex * 2 + 1}`}
+                                  src={filteredImages[rowIndex * 2].path} 
+                                  alt={`${room.name} - ${filteredImages[rowIndex * 2].type || 'Design'}`}
                                   style={{
                                     maxHeight: '190px',
                                     maxWidth: '100%',
@@ -415,7 +415,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                           
                           {/* Second column */}
                           <td width="50%" align="center" valign="middle">
-                            {room.images[rowIndex * 2 + 1] && (
+                            {filteredImages[rowIndex * 2 + 1] && (
                               <div style={{
                                 width: '100%',
                                 height: '200px',
@@ -427,8 +427,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                 overflow: 'hidden'
                               }}>
                                 <img 
-                                  src={room.images[rowIndex * 2 + 1].path} 
-                                  alt={`Design ${rowIndex * 2 + 2}`}
+                                  src={filteredImages[rowIndex * 2 + 1].path} 
+                                  alt={`${room.name} - ${filteredImages[rowIndex * 2 + 1].type || 'Design'}`}
                                   style={{
                                     maxHeight: '190px',
                                     maxWidth: '100%',
@@ -446,11 +446,11 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                   // For more than 6 images - 3 per row
                   <table style={{width: '100%'}} cellPadding={6} cellSpacing={0} border={0}>
                     <tbody>
-                      {Array.from({ length: Math.ceil(room.images.length / 3) }).map((_, rowIndex) => (
+                      {Array.from({ length: Math.ceil(filteredImages.length / 3) }).map((_, rowIndex) => (
                         <tr key={rowIndex}>
                           {/* First column */}
                           <td width="33.33%" align="center" valign="middle">
-                            {room.images[rowIndex * 3] && (
+                            {filteredImages[rowIndex * 3] && (
                               <div style={{
                                 width: '100%',
                                 height: '180px',
@@ -462,8 +462,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                 overflow: 'hidden'
                               }}>
                                 <img 
-                                  src={room.images[rowIndex * 3].path} 
-                                  alt={`Design ${rowIndex * 3 + 1}`}
+                                  src={filteredImages[rowIndex * 3].path} 
+                                  alt={`${room.name} - ${filteredImages[rowIndex * 3].type || 'Design'}`}
                                   style={{
                                     maxHeight: '170px',
                                     maxWidth: '100%',
@@ -476,7 +476,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                           
                           {/* Second column */}
                           <td width="33.33%" align="center" valign="middle">
-                            {room.images[rowIndex * 3 + 1] && (
+                            {filteredImages[rowIndex * 3 + 1] && (
                               <div style={{
                                 width: '100%',
                                 height: '180px',
@@ -488,8 +488,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                                 overflow: 'hidden'
                               }}>
                                 <img 
-                                  src={room.images[rowIndex * 3 + 1].path} 
-                                  alt={`Design ${rowIndex * 3 + 2}`}
+                                  src={filteredImages[rowIndex * 3 + 1].path} 
+                                  alt={`${room.name} - ${filteredImages[rowIndex * 3 + 1].type || 'Design'}`}
                                   style={{
                                     maxHeight: '170px',
                                     maxWidth: '100%',
@@ -502,7 +502,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                           
                           {/* Third column */}
                           <td width="33.33%" align="center" valign="middle">
-                            {room.images[rowIndex * 3 + 2] && (
+                            {filteredImages[rowIndex * 3 + 2] && (
                               <div style={{
                                 width: '100%',
                                 height: '180px',
