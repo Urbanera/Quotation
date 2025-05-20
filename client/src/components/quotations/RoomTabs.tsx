@@ -90,8 +90,11 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
       });
     },
     onError: (error: Error) => {
+      console.error("Room creation error:", error.message);
+      
       if (error.message.includes("already exists")) {
         setAddRoomError(error.message);
+        // Don't close the dialog when there's an error
       } else {
         toast({
           title: "Error",
@@ -153,8 +156,11 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
       });
     },
     onError: (error: Error) => {
+      console.error("Room update error:", error.message);
+      
       if (error.message.includes("already exists")) {
         setEditRoomError(error.message);
+        // Keep dialog open to show the error
       } else {
         toast({
           title: "Error",
@@ -309,7 +315,13 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
               ))
             )}
             
-            <Dialog open={addRoomDialogOpen} onOpenChange={setAddRoomDialogOpen}>
+            <Dialog 
+              open={addRoomDialogOpen} 
+              onOpenChange={(open) => {
+                setAddRoomDialogOpen(open);
+                if (!open) setAddRoomError(null);
+              }}
+            >
               <DialogTrigger asChild>
                 <button className="text-indigo-600 border-transparent whitespace-nowrap py-4 px-1 border-b-0 font-medium text-sm flex items-center">
                   <Plus className="h-5 w-5 mr-1" />
@@ -333,7 +345,10 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
             {/* Edit Room Dialog */}
             <Dialog open={editRoomDialogOpen} onOpenChange={(open) => {
               setEditRoomDialogOpen(open);
-              if (!open) setRoomToEdit(null);
+              if (!open) {
+                setRoomToEdit(null);
+                setEditRoomError(null);
+              }
             }}>
               <DialogContent>
                 <DialogHeader>
