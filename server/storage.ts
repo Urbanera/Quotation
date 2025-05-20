@@ -1712,6 +1712,22 @@ export class MemStorage implements IStorage {
     const existingRoom = this.rooms.get(id);
     if (!existingRoom) return undefined;
     
+    // If name is being updated, check for uniqueness
+    if (room.name && room.name !== existingRoom.name) {
+      // Get all other rooms in the same quotation
+      const quotationRooms = await this.getRooms(existingRoom.quotationId);
+      
+      // Check if another room already has the same name (excluding the current room)
+      const isDuplicate = quotationRooms.some(otherRoom => 
+        otherRoom.id !== id && 
+        otherRoom.name.toLowerCase() === room.name.toLowerCase()
+      );
+      
+      if (isDuplicate) {
+        throw new Error(`A room with the name "${room.name}" already exists in this quotation`);
+      }
+    }
+    
     const updatedRoom: Room = {
       ...existingRoom,
       ...room,
