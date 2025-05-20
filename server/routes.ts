@@ -1363,6 +1363,19 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.post("/api/quotations/:quotationId/rooms", async (req, res) => {
     try {
       const quotationId = parseInt(req.params.quotationId);
+      
+      // Check if a room with the same name already exists in this quotation
+      const existingRooms = await storage.getRooms(quotationId);
+      const isDuplicate = existingRooms.some(room => 
+        room.name.toLowerCase() === req.body.name.toLowerCase()
+      );
+      
+      if (isDuplicate) {
+        return res.status(400).json({ 
+          message: "A room with this name already exists in the quotation" 
+        });
+      }
+      
       const room = await storage.createRoom({
         ...req.body,
         quotationId
