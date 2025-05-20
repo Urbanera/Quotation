@@ -517,22 +517,22 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               )}
               
               {/* Room Pricing */}
-              <div className="mt-auto pt-6 border-t border-gray-200">
+              <div className="pt-6 border-t border-gray-200 mb-8">
                 <div className="flex justify-between">
                   <span className="font-semibold">Base Price:</span>
                   <span>{formatCurrency(room.sellingPrice)}</span>
                 </div>
               </div>
-            </div>
             
-            {/* Page Footer */}
-            <div className="mt-auto pt-4 border-t border-gray-200">
-              <div className="flex justify-between items-center">
-                <div className="text-xs text-gray-500">
-                  {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
-                </div>
-                <div className="text-xs text-gray-500">
-                  Page {index + 3} of {safeQuotation.rooms.length + 4}
+              {/* Page Footer - Moving inside the content area */}
+              <div className="mt-auto pt-4 border-t border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-gray-500">
+                    {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Page {index + 3} of {safeQuotation.rooms.length + 4}
+                  </div>
                 </div>
               </div>
             </div>
