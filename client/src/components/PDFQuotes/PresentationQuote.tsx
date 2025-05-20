@@ -69,6 +69,43 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
     rooms: [],
   };
   
+  // Process rooms to filter for 3D images only and sort them properly
+  const processRoomsWithFilteredImages = () => {
+    if (!quotation?.rooms || !Array.isArray(quotation.rooms)) {
+      return [];
+    }
+    
+    return quotation.rooms.map(room => {
+      if (!room.images || !Array.isArray(room.images)) {
+        return { ...room, filteredImages: [] };
+      }
+      
+      // Filter to only include 3D images
+      const only3DImages = room.images.filter(img => 
+        img.type && img.type.toLowerCase().includes('3d')
+      );
+      
+      // Sort by order first, then by type
+      const sortedImages = [...only3DImages].sort((a, b) => {
+        // First sort by order
+        if (a.order !== b.order) {
+          return a.order - b.order;
+        }
+        // Then alphabetical by type
+        return (a.type || "").localeCompare(b.type || "");
+      });
+      
+      // Add the filtered images as a new property
+      return {
+        ...room,
+        filteredImages: sortedImages
+      };
+    });
+  };
+  
+  // Get rooms with filtered images
+  const roomsWithFilteredImages = processRoomsWithFilteredImages();
+  
   // Calculate installation charges from room-level installation charges
   const calculateInstallationCharges = () => {
     let totalInstallCharges = 0;
@@ -335,14 +372,20 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
             </div>
             
             {/* Design References with Images - ADAPTIVE LAYOUT: 2 IMAGES PER ROW (≤6) OR 3 IMAGES PER ROW (>6) */}
-            {room.images && room.images.length > 0 && (
+            {(() => {
+              // Get the matching room with filtered images
+              const matchingRoom = roomsWithFilteredImages.find(r => r.id === room.id);
+              const filteredImages = matchingRoom?.filteredImages || [];
+              
+              // Only show if we have 3D images
+              return filteredImages.length > 0 && (
               <div className="mb-6">
-                <h5 className="font-medium text-gray-800 mb-3">Design References:</h5>
-                {room.images.length <= 6 ? (
+                <h5 className="font-medium text-gray-800 mb-3">3D Design References:</h5>
+                {filteredImages.length <= 6 ? (
                   // For 6 or fewer images - 2 per row
                   <table style={{width: '100%'}} cellPadding={10} cellSpacing={0} border={0}>
                     <tbody>
-                      {Array.from({ length: Math.ceil(room.images.length / 2) }).map((_, rowIndex) => (
+                      {Array.from({ length: Math.ceil(filteredImages.length / 2) }).map((_, rowIndex) => (
                         <tr key={rowIndex}>
                           {/* First column */}
                           <td width="50%" align="center" valign="middle">
