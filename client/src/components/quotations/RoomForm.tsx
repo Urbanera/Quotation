@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Room } from "@shared/schema";
 import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Define schema for room form
 const roomFormSchema = z.object({
@@ -26,14 +28,18 @@ interface RoomFormProps {
   isSubmitting: boolean;
   defaultValues?: Room;
   isEdit?: boolean;
+  error?: string;
 }
 
 export default function RoomForm({ 
   onSubmit, 
   isSubmitting, 
   defaultValues,
-  isEdit = false 
+  isEdit = false,
+  error
 }: RoomFormProps) {
+  const [formError, setFormError] = useState<string | null>(error || null);
+  
   // Initialize form with default values
   const form = useForm<z.infer<typeof roomFormSchema>>({
     resolver: zodResolver(roomFormSchema),
@@ -42,10 +48,21 @@ export default function RoomForm({
       description: defaultValues?.description || "",
     },
   });
+  
+  // Clear error when form values change
+  const handleFormSubmit = (data: z.infer<typeof roomFormSchema>) => {
+    setFormError(null);
+    onSubmit(data);
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+        {formError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
         <FormField
           control={form.control}
           name="name"
@@ -53,7 +70,14 @@ export default function RoomForm({
             <FormItem>
               <FormLabel>Room Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. Kitchen, Master Bedroom" {...field} />
+                <Input 
+                  placeholder="e.g. Kitchen, Master Bedroom" 
+                  {...field} 
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setFormError(null);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

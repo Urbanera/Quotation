@@ -35,6 +35,8 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
   const [addingInstallation, setAddingInstallation] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+  const [addRoomError, setAddRoomError] = useState<string | null>(null);
+  const [editRoomError, setEditRoomError] = useState<string | null>(null);
   const draggedItemRef = useRef<number | null>(null);
   const dragOverItemRef = useRef<number | null>(null);
   const { toast } = useToast();

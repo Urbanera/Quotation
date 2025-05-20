@@ -1402,6 +1402,31 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.put("/api/rooms/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // First, get the existing room to find its quotation ID
+      const existingRoom = await storage.getRoom(id);
+      if (!existingRoom) {
+        return res.status(404).json({ message: "Room not found" });
+      }
+      
+      // If name is being updated, check for uniqueness
+      if (req.body.name && req.body.name !== existingRoom.name) {
+        // Get all other rooms in the same quotation
+        const quotationRooms = await storage.getRooms(existingRoom.quotationId);
+        
+        // Check if another room already has the same name (excluding the current room)
+        const isDuplicate = quotationRooms.some(room => 
+          room.id !== id && 
+          room.name.toLowerCase() === req.body.name.toLowerCase()
+        );
+        
+        if (isDuplicate) {
+          return res.status(400).json({ 
+            message: "A room with this name already exists in the quotation" 
+          });
+        }
+      }
+      
       const room = await storage.updateRoom(id, req.body);
       if (!room) {
         return res.status(404).json({ message: "Room not found" });
