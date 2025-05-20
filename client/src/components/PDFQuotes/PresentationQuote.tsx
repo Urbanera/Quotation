@@ -541,49 +541,50 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           <div className="mb-16">
             <h2 className="text-xl font-bold text-[#009245] mb-4">Quotation Summary</h2>
             
-            {/* Price Summary Table */}
+            {/* Price Summary Table - Matches second screenshot with 3 columns */}
             <div className="mb-8">
-              <table className="w-full border-collapse">
+              <table className="w-full border-collapse bg-gray-50">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="py-2 px-3 text-left border border-gray-200">Room</th>
-                    <th className="py-2 px-3 text-right border border-gray-200">Price</th>
+                  <tr>
+                    <th className="py-2 px-4 text-left border border-gray-200 bg-white text-[#009245] font-medium">PRODUCT DESCRIPTION</th>
+                    <th className="py-2 px-4 text-right border border-gray-200 bg-white text-[#009245] font-medium">SELLING PRICE</th>
+                    <th className="py-2 px-4 text-right border border-gray-200 bg-white text-[#009245] font-medium">DISCOUNTED PRICE ({safeQuotation.globalDiscount}%)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {safeQuotation.rooms.map(room => (
-                    <tr key={room.id} className="border-b border-gray-200">
-                      <td className="py-2 px-3 border border-gray-200">{room.name}</td>
-                      <td className="py-2 px-3 text-right border border-gray-200">{formatCurrency(room.sellingPrice)}</td>
-                    </tr>
-                  ))}
-                  <tr className="border-b border-gray-200">
-                    <td className="py-2 px-3 border border-gray-200 font-medium">Base Total</td>
-                    <td className="py-2 px-3 text-right border border-gray-200 font-medium">{formatCurrency(safeQuotation.totalSellingPrice)}</td>
+                  {safeQuotation.rooms.map(room => {
+                    const discountedPrice = room.sellingPrice * (1 - (safeQuotation.globalDiscount / 100));
+                    return (
+                      <tr key={room.id} className="border-b border-gray-200">
+                        <td className="py-2 px-4 border border-gray-200">{room.name.toUpperCase()}</td>
+                        <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency(room.sellingPrice)}</td>
+                        <td className="py-2 px-4 text-right border border-gray-200 text-red-500">{formatCurrency(discountedPrice)}</td>
+                      </tr>
+                    );
+                  })}
+                  <tr className="border-b border-gray-200 bg-gray-100">
+                    <td className="py-2 px-4 border border-gray-200 font-medium">Total Of All Items</td>
+                    <td className="py-2 px-4 text-right border border-gray-200 font-medium">{formatCurrency(safeQuotation.totalSellingPrice)}</td>
+                    <td className="py-2 px-4 text-right border border-gray-200 font-medium text-red-500">{formatCurrency(discountedTotal)}</td>
                   </tr>
-                  {safeQuotation.globalDiscount > 0 && (
-                    <tr className="border-b border-gray-200">
-                      <td className="py-2 px-3 border border-gray-200">Discount ({safeQuotation.globalDiscount}%)</td>
-                      <td className="py-2 px-3 text-right border border-gray-200 text-red-600">
-                        -{formatCurrency(safeQuotation.totalSellingPrice * (safeQuotation.globalDiscount / 100))}
-                      </td>
-                    </tr>
-                  )}
                   {totalWithHandling > 0 && (
                     <tr className="border-b border-gray-200">
-                      <td className="py-2 px-3 border border-gray-200">Installation & Handling</td>
-                      <td className="py-2 px-3 text-right border border-gray-200">{formatCurrency(totalWithHandling)}</td>
+                      <td className="py-2 px-4 border border-gray-200">Installation and Handling</td>
+                      <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency(totalWithHandling)}</td>
+                      <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency(totalWithHandling)}</td>
                     </tr>
                   )}
                   {safeQuotation.gstPercentage > 0 && (
                     <tr className="border-b border-gray-200">
-                      <td className="py-2 px-3 border border-gray-200">GST ({safeQuotation.gstPercentage}%)</td>
-                      <td className="py-2 px-3 text-right border border-gray-200">{formatCurrency(gstAmount)}</td>
+                      <td className="py-2 px-4 border border-gray-200">GST {safeQuotation.gstPercentage}%</td>
+                      <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}</td>
+                      <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency(gstAmount)}</td>
                     </tr>
                   )}
-                  <tr className="bg-gray-50">
-                    <td className="py-3 px-3 border border-gray-200 font-bold">Total Amount</td>
-                    <td className="py-3 px-3 text-right border border-gray-200 font-bold text-[#009245]">{formatCurrency(finalPrice)}</td>
+                  <tr className="border-b border-gray-200">
+                    <td className="py-3 px-4 border border-gray-200 font-bold">Final Price</td>
+                    <td className="py-3 px-4 text-right border border-gray-200 font-bold">{formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + ((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}</td>
+                    <td className="py-3 px-4 text-right border border-gray-200 font-bold text-[#d50000]">{formatCurrency(finalPrice)}</td>
                   </tr>
                 </tbody>
               </table>
