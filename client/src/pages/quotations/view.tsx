@@ -445,10 +445,10 @@ export default function ViewQuotation() {
               
               {quotation && quotation.customer && quotation.customer.phone && (
                 <WhatsAppQuotationButton
-                  quotationId={parseInt(id)}
+                  quotationId={parseInt(id || "0")}
                   quotationNumber={quotation.quotationNumber || `#${id}`}
-                  customerName={quotation.customer.name}
-                  customerPhone={quotation.customer.phone}
+                  customerName={quotation.customer.name || "Customer"}
+                  customerPhone={quotation.customer.phone || ""}
                   amount={quotation.finalPrice || 0}
                   className="bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
                 />
