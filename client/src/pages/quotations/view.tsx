@@ -2,7 +2,8 @@ import { useRef, useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart, FileText as FileInvoice, Mail, Layout } from "lucide-react";
+import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart, FileText as FileInvoice, Mail, Layout, MessageSquare } from "lucide-react";
+import { WhatsAppQuotationButton } from "@/components/quotations/WhatsAppQuotationButton";
 import { QuotationWithDetails, CompanySettings, AppSettings } from "@shared/schema";
 import BasicQuote from "@/components/PDFQuotes/BasicQuote";
 import PresentationQuote from "@/components/PDFQuotes/PresentationQuote";
@@ -441,6 +442,17 @@ export default function ViewQuotation() {
                 <Mail className="mr-2 h-4 w-4" />
                 {sendingEmail ? "Sending..." : "Email Quote"}
               </Button>
+              
+              {quotation && quotation.customer && quotation.customer.phone && (
+                <WhatsAppQuotationButton
+                  quotationId={parseInt(id)}
+                  quotationNumber={quotation.quotationNumber || `#${id}`}
+                  customerName={quotation.customer.name}
+                  customerPhone={quotation.customer.phone}
+                  amount={quotation.finalPrice || 0}
+                  className="bg-green-100 text-green-800 hover:bg-green-200 border-green-300"
+                />
+              )}
               
               {/* Show these buttons only if quotation is not approved and not converted */}
               {quotation.status !== "approved" && quotation.status !== "converted" && (
