@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, MessageSquare, Plus, WhatsappLogo } from "lucide-react";
+import { Check, MessageSquare, Plus, Phone } from "lucide-react";
 import { WhatsAppMessageButton } from "./WhatsAppMessageButton";
 import { Customer } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -137,7 +137,7 @@ export function WhatsAppCommunication({ customer }: WhatsAppCommunicationProps) 
       
       <div className="text-sm">
         <p className="flex items-center mb-1">
-          <WhatsappLogo className="h-4 w-4 mr-2 text-green-600" />
+          <Phone className="h-4 w-4 mr-2 text-green-600" />
           <span>Send WhatsApp messages to <strong>{customer.phone}</strong></span>
         </p>
         <p className="text-muted-foreground">
