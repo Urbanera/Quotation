@@ -43,6 +43,7 @@ export const appSettings = pgTable("app_settings", {
   presentationTemplateId: text("presentation_template_id").default("default"),
   requiredAccessories: text("required_accessories").default("skirting,handles,sliding mechanism,t profile"),
   leadSourceOptions: text("lead_source_options").default("walk-in,website,referral,social media,other"),
+  
   // Email settings
   smtpHost: text("smtp_host"),
   smtpPort: integer("smtp_port").default(587),
@@ -53,6 +54,22 @@ export const appSettings = pgTable("app_settings", {
   emailReplyTo: text("email_reply_to"),
   emailFooter: text("email_footer"),
   emailEnabled: boolean("email_enabled").default(false),
+  
+  // WhatsApp settings
+  whatsappEnabled: boolean("whatsapp_enabled").default(false),
+  whatsappPhoneNumberId: text("whatsapp_phone_number_id"),
+  whatsappAccessToken: text("whatsapp_access_token"),
+  whatsappBusinessAccountId: text("whatsapp_business_account_id"),
+  // Template names
+  whatsappGreetingTemplate: text("whatsapp_greeting_template").default("hello_world"),
+  whatsappLayoutRequestTemplate: text("whatsapp_layout_request_template").default("layout_request"),
+  whatsappShowroomVisitTemplate: text("whatsapp_showroom_visit_template").default("showroom_visit"),
+  whatsappMissedCallTemplate: text("whatsapp_missed_call_template").default("missed_call"),
+  whatsappMeetingScheduleTemplate: text("whatsapp_meeting_schedule_template").default("meeting_schedule"),
+  whatsappQuotationTemplate: text("whatsapp_quotation_template").default("quotation_send"),
+  whatsappPaymentReceiptTemplate: text("whatsapp_payment_receipt_template").default("payment_receipt"),
+  whatsappInvoiceTemplate: text("whatsapp_invoice_template").default("invoice_send"),
+  
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 

@@ -58,8 +58,9 @@ export function AppSettingsForm() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("general");
   
-  // Email connect check
+  // Connection checks
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [isCheckingWhatsApp, setIsCheckingWhatsApp] = useState(false);
 
   // Fetch app settings
   const { data: settings, isLoading } = useQuery<AppSettings>({
@@ -91,6 +92,19 @@ export function AppSettingsForm() {
       emailReplyTo: "",
       emailFooter: "",
       emailEnabled: false,
+      // WhatsApp settings
+      whatsappEnabled: false,
+      whatsappPhoneNumberId: "",
+      whatsappAccessToken: "",
+      whatsappBusinessAccountId: "",
+      whatsappGreetingTemplate: "hello_world",
+      whatsappLayoutRequestTemplate: "layout_request",
+      whatsappShowroomVisitTemplate: "showroom_visit",
+      whatsappMissedCallTemplate: "missed_call",
+      whatsappMeetingScheduleTemplate: "meeting_schedule",
+      whatsappQuotationTemplate: "quotation_send",
+      whatsappPaymentReceiptTemplate: "payment_receipt",
+      whatsappInvoiceTemplate: "invoice_send",
     },
     values: settings || undefined,
   });
@@ -163,10 +177,11 @@ export function AppSettingsForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsList className="grid w-full grid-cols-4 mb-6">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
                 <TabsTrigger value="email">Email Settings</TabsTrigger>
+                <TabsTrigger value="whatsapp">WhatsApp Settings</TabsTrigger>
               </TabsList>
               
               <TabsContent value="general" className="space-y-6">
