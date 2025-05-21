@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { WhatsAppSettings } from "./WhatsAppSettings";
 
 
 // Import the same assets used in the PDF component
@@ -130,6 +131,33 @@ export function AppSettingsForm() {
       });
     } finally {
       setIsCheckingEmail(false);
+    }
+  };
+  
+  const checkWhatsAppConfig = async () => {
+    const phoneNumber = prompt("Enter a phone number to test WhatsApp connection:");
+    if (!phoneNumber) return;
+    
+    setIsCheckingWhatsApp(true);
+    try {
+      const response = await fetch(`/api/whatsapp/test-connection?phoneNumber=${encodeURIComponent(phoneNumber)}`);
+      const data = await response.json();
+      
+      toast({
+        title: data.success ? "WhatsApp Configured" : "WhatsApp Connection Failed",
+        description: data.success ? 
+          "Your WhatsApp settings are working correctly." : 
+          `WhatsApp configuration failed: ${data.message}`,
+        variant: data.success ? "default" : "destructive",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to check WhatsApp configuration",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingWhatsApp(false);
     }
   };
 
