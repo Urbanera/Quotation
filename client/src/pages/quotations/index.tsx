@@ -3,7 +3,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, Edit, Trash2, ArrowUpDown, SortAsc, SortDesc, Copy, Check, MoreVertical } from "lucide-react";
+import { Plus, Search, Eye, Edit, Trash2, ArrowUpDown, SortAsc, SortDesc, Copy, Check, MoreVertical, MessageSquare } from "lucide-react";
+import { WhatsAppQuotationButton } from "@/components/quotations/WhatsAppQuotationButton";
 import { Quotation, Customer } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -51,7 +52,7 @@ export default function QuotationsList() {
   const [quotationToDuplicate, setQuotationToDuplicate] = useState<Quotation | null>(null);
   const [quotationToApprove, setQuotationToApprove] = useState<Quotation | null>(null);
   const [quotationToConvert, setQuotationToConvert] = useState<Quotation | null>(null);
-  // Removed quotationToConvertToInvoice state as quotations can only be converted to sales orders
+  const [quotationToConvertToInvoice, setQuotationToConvertToInvoice] = useState<Quotation | null>(null);
   const [duplicateForSameCustomer, setDuplicateForSameCustomer] = useState(true);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<SortField>("createdAt");
@@ -422,6 +423,28 @@ export default function QuotationsList() {
                       </div>
                     </div>
                     <div className="ml-5 flex-shrink-0 flex space-x-2">
+                      {/* Hidden button that will be triggered by the dropdown menu */}
+                      <div className="hidden">
+                        <Button
+                          id={`whatsapp-dialog-${quotation.id}`}
+                          onClick={() => {
+                            const customer = customers?.find(c => c.id === quotation.customerId);
+                            if (customer) {
+                              // Show WhatsApp dialog - use modal instead of dropdown for better UX
+                              document.getElementById(`whatsapp-btn-${quotation.id}`)?.click();
+                            }
+                          }}
+                        />
+                        <WhatsAppQuotationButton
+                          id={`whatsapp-btn-${quotation.id}`}
+                          quotationId={quotation.id}
+                          quotationNumber={`#${quotation.id}`}
+                          customerName={(customers?.find(c => c.id === quotation.customerId)?.name || "")}
+                          customerPhone={(customers?.find(c => c.id === quotation.customerId)?.phone || "")}
+                          amount={quotation.finalPrice || 0}
+                        />
+                      </div>
+                      
                       <Link href={`/quotations/view/${quotation.id}`}>
                         <Button variant="outline" size="sm">
                           <Eye className="h-4 w-4" />
@@ -480,7 +503,13 @@ export default function QuotationsList() {
                                 <Check className="mr-2 h-4 w-4 text-blue-500" />
                                 <span>Convert to Sales Order</span>
                               </DropdownMenuItem>
-
+                              
+                              <DropdownMenuItem onClick={() => {
+                                document.getElementById(`whatsapp-dialog-${quotation.id}`)?.click();
+                              }}>
+                                <MessageSquare className="mr-2 h-4 w-4 text-green-500" />
+                                <span>Send via WhatsApp</span>
+                              </DropdownMenuItem>
                             </>
                           )}
                           {quotation.status === 'converted' && (

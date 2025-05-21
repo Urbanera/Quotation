@@ -12,6 +12,7 @@ interface WhatsAppQuotationButtonProps {
   customerPhone: string;
   amount: string | number;
   className?: string;
+  id?: string;
 }
 
 export const WhatsAppQuotationButton = ({
