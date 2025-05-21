@@ -8,6 +8,7 @@ import fs from "fs";
 import { storage } from "./storage";
 import { emailService } from "./email";
 import { whatsappService } from "./whatsapp";
+import { whatsappRouter } from './whatsapp-routes';
 import {
   customerFormSchema,
   quotationFormSchema,
@@ -3000,6 +3001,9 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: 'Error checking email configuration' });
     }
   });
+
+  // Use WhatsApp routes
+  app.use('/api/whatsapp', whatsappRouter);
 
   const httpServer = createServer(app);
   return httpServer;
