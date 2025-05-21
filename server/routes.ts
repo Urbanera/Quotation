@@ -7,6 +7,7 @@ import fs from "fs";
 
 import { storage } from "./storage";
 import { emailService } from "./email";
+import { whatsappService } from "./whatsapp";
 import {
   customerFormSchema,
   quotationFormSchema,

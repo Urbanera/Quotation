@@ -965,6 +965,10 @@ export function AppSettingsForm() {
                   </FormDescription>
                 </div>
               </TabsContent>
+              
+              <TabsContent value="whatsapp">
+                <WhatsAppSettings form={form} />
+              </TabsContent>
             </Tabs>
             
             <Button 
