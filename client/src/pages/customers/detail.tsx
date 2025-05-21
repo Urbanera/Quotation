@@ -458,12 +458,31 @@ export default function CustomerDetailPage() {
             </Button>
           </Link>
           <h1 className="text-2xl font-semibold text-gray-900">{customer.name}</h1>
-          <Link href={`/customers/edit/${customer.id}`}>
-            <Button variant="outline" size="sm" className="ml-4">
-              <FileEdit className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
-          </Link>
+          <div className="flex gap-2 ml-4">
+            {customer.phone && (
+              <Button 
+                variant="default" 
+                size="sm"
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  // Open WhatsApp on web or mobile
+                  const message = `Hello ${customer.name}, this is a message from Interio Designs.`;
+                  const encodedMessage = encodeURIComponent(message);
+                  const whatsappUrl = `https://wa.me/${customer.phone.replace(/\D/g, '')}?text=${encodedMessage}`;
+                  window.open(whatsappUrl, '_blank');
+                }}
+              >
+                <PhoneCall className="h-4 w-4 mr-1" />
+                WhatsApp Direct
+              </Button>
+            )}
+            <Link href={`/customers/edit/${customer.id}`}>
+              <Button variant="outline" size="sm">
+                <FileEdit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
