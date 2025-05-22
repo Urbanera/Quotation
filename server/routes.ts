@@ -84,7 +84,7 @@ const csvUpload = multer({
       file.mimetype === 'text/csv' || 
       file.mimetype === 'application/vnd.ms-excel' ||
       file.mimetype === 'application/octet-stream' ||
-      file.originalname.toLowerCase().endsWith('.csv')
+      file.originalname.endsWith('.csv')
     ) {
       cb(null, true);
     } else {
@@ -100,11 +100,8 @@ const floorPlanUpload = multer({
     fileSize: 15 * 1024 * 1024, // 15MB max file size
   },
   fileFilter: (req, file, cb) => {
-    // Accept image files and PDF files
-    if (
-      file.mimetype.startsWith('image/') || 
-      file.mimetype === 'application/pdf'
-    ) {
+    // Accept image and PDF files
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
       cb(new Error('Only image and PDF files are allowed for floor plans'));

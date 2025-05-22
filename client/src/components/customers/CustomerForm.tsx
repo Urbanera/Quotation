@@ -34,6 +34,29 @@ export default function CustomerForm({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+  
+  const handleFloorPlanUpload = async () => {
+    if (!selectedFile || !defaultValues?.id || !uploadFloorPlan) return;
+    
+    try {
+      setIsUploading(true);
+      await uploadFloorPlan(defaultValues.id, selectedFile);
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading floor plan:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
   // Fetch app settings to get lead source options
   const { data: appSettings } = useQuery({
     queryKey: ["/api/settings/app"],
@@ -219,6 +242,59 @@ export default function CustomerForm({
             )}
           />
         </div>
+        
+        {isEdit && defaultValues?.id && (
+          <div className="p-4 border rounded-md">
+            <h3 className="text-md font-medium mb-3">Floor Plan</h3>
+            {defaultValues.floorPlanUrl ? (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2 text-sm">
+                  {defaultValues.floorPlanType?.includes('image') ? (
+                    <Image className="h-4 w-4 text-blue-500" />
+                  ) : (
+                    <FileText className="h-4 w-4 text-red-500" />
+                  )}
+                  <span>{defaultValues.floorPlanName}</span>
+                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => window.open(defaultValues.floorPlanUrl!, '_blank')}
+                  className="text-sm"
+                >
+                  View Floor Plan
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 mb-3">No floor plan uploaded yet</p>
+            )}
+            
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleFileChange}
+                  ref={fileInputRef}
+                  className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+                <Button 
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleFloorPlanUpload}
+                  disabled={!selectedFile || isUploading}
+                >
+                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                  Upload
+                </Button>
+              </div>
+              <FormDescription>
+                Supported formats: Images (JPG, PNG) and PDF files
+              </FormDescription>
+            </div>
+          </div>
+        )}
         
         <div className="flex justify-end">
           <Button 
