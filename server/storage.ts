@@ -688,6 +688,26 @@ export class MemStorage implements IStorage {
     return this.customers.delete(id);
   }
   
+  async updateCustomerFloorPlan(
+    id: number, 
+    floorPlanUrl: string, 
+    floorPlanType: string, 
+    floorPlanName: string
+  ): Promise<Customer | undefined> {
+    const existingCustomer = this.customers.get(id);
+    if (!existingCustomer) return undefined;
+    
+    const updatedCustomer: Customer = {
+      ...existingCustomer,
+      floorPlanUrl,
+      floorPlanType,
+      floorPlanName
+    };
+    
+    this.customers.set(id, updatedCustomer);
+    return updatedCustomer;
+  }
+  
   // Customer Follow-up operations
   async getAllFollowUps(): Promise<FollowUp[]> {
     return Array.from(this.followUps.values())
