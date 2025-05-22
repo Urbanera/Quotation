@@ -11,6 +11,7 @@ import AccessoryList from "./AccessoryList";
 import ImageUpload from "./ImageUpload";
 import RoomForm from "./RoomForm";
 import InstallationCalculator from "./InstallationCalculator";
+import TeowinEstimateUpload from "./TeowinEstimateUpload";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -453,6 +454,17 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                   />
                 </div>
               </div>
+            </div>
+            
+            {/* Teowin Estimate Upload */}
+            <div className="bg-white shadow rounded-lg p-4 mb-6">
+              <TeowinEstimateUpload
+                roomId={activeRoom.id}
+                quotationId={quotationId}
+                teowinEstimateUrl={activeRoom.teowinEstimateUrl}
+                teowinEstimateType={activeRoom.teowinEstimateType}
+                teowinEstimateName={activeRoom.teowinEstimateName}
+              />
             </div>
             
             {/* Installation Charges - moved below products and accessories */}
