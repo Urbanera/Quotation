@@ -93,6 +93,25 @@ const csvUpload = multer({
   }
 });
 
+// For floor plan uploads (images and PDFs)
+const floorPlanUpload = multer({
+  storage: storage_config,
+  limits: {
+    fileSize: 15 * 1024 * 1024, // 15MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept image files and PDF files
+    if (
+      file.mimetype.startsWith('image/') || 
+      file.mimetype === 'application/pdf'
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image and PDF files are allowed for floor plans'));
+    }
+  }
+});
+
 export async function registerRoutes(app: express.Express): Promise<Server> {
   // Set up CORS headers
   app.use((req, res, next) => {
