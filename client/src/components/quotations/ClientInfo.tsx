@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Customer } from "@shared/schema";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Image, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -16,6 +16,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 interface ClientInfoProps {
@@ -143,6 +150,54 @@ export default function ClientInfo({
                 <Input id="customer-address" value={selectedCustomer.address} readOnly />
               </div>
             </div>
+            
+            {/* Show floor plan section if customer has a floor plan */}
+            {selectedCustomer.floorPlanUrl && (
+              <div className="sm:col-span-6 mt-3">
+                <div className="flex items-center space-x-2 p-3 border rounded-md bg-gray-50">
+                  {selectedCustomer.floorPlanType?.includes('image') ? (
+                    <Image className="h-5 w-5 text-blue-500" />
+                  ) : (
+                    <FileText className="h-5 w-5 text-red-500" />
+                  )}
+                  <span className="text-sm font-medium">{selectedCustomer.floorPlanName}</span>
+                  
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="ml-auto"
+                      >
+                        View Floor Plan
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+                      <DialogHeader>
+                        <DialogTitle>Floor Plan: {selectedCustomer.floorPlanName}</DialogTitle>
+                      </DialogHeader>
+                      <div className="flex-1 overflow-hidden">
+                        {selectedCustomer.floorPlanType?.includes('image') ? (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <img 
+                              src={selectedCustomer.floorPlanUrl} 
+                              alt="Floor Plan" 
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          </div>
+                        ) : (
+                          <iframe 
+                            src={selectedCustomer.floorPlanUrl} 
+                            className="w-full h-full"
+                            title="Floor Plan PDF"
+                          />
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

@@ -79,6 +79,41 @@ export default function EditCustomer() {
     );
   }
 
+  // Handle floor plan upload
+  const handleFloorPlanUpload = async (customerId: number, file: File) => {
+    try {
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Make API request
+      const response = await fetch(`/api/customers/${customerId}/floor-plan`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to upload floor plan");
+      }
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/customers/${customerId}`] });
+      
+      toast({
+        title: "Success",
+        description: "Floor plan uploaded successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload floor plan",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
@@ -100,6 +135,7 @@ export default function EditCustomer() {
               onSubmit={onSubmit} 
               defaultValues={customer} 
               isEdit 
+              uploadFloorPlan={handleFloorPlanUpload}
             />
           </div>
         </div>
