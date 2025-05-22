@@ -1794,11 +1794,12 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       
       // Update the room with the file info
       const fileUrl = `/uploads/${req.file.filename}`;
-      const updatedRoom = await storage.updateRoom(roomId, {
-        teowinEstimateUrl: fileUrl,
-        teowinEstimateType: req.file.mimetype,
-        teowinEstimateName: req.file.originalname
-      });
+      const updatedRoom = await storage.updateRoomTeowinEstimate(
+        roomId, 
+        fileUrl, 
+        req.file.mimetype, 
+        req.file.originalname
+      );
       
       if (!updatedRoom) {
         return res.status(404).json({ message: "Failed to update room" });

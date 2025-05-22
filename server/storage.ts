@@ -3014,6 +3014,26 @@ export class MemStorage implements IStorage {
     
     return invoice;
   }
+  
+  async updateRoomTeowinEstimate(
+    roomId: number, 
+    teowinEstimateUrl: string, 
+    teowinEstimateType: string, 
+    teowinEstimateName: string
+  ): Promise<Room | undefined> {
+    const existingRoom = this.rooms.get(roomId);
+    if (!existingRoom) return undefined;
+    
+    const updatedRoom = { 
+      ...existingRoom, 
+      teowinEstimateUrl, 
+      teowinEstimateType, 
+      teowinEstimateName 
+    };
+    
+    this.rooms.set(roomId, updatedRoom);
+    return updatedRoom;
+  }
 }
 
 export const storage = new MemStorage();
