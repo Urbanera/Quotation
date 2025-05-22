@@ -9,24 +9,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Customer, customerFormSchema } from "@shared/schema";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, FileText, Image } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState, useRef } from "react";
 
 interface CustomerFormProps {
   onSubmit: (data: any) => void;
   defaultValues?: Customer;
   isEdit?: boolean;
+  uploadFloorPlan?: (id: number, file: File) => Promise<void>;
 }
 
 export default function CustomerForm({ 
   onSubmit, 
   defaultValues,
-  isEdit = false 
+  isEdit = false,
+  uploadFloorPlan 
 }: CustomerFormProps) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // Fetch app settings to get lead source options
   const { data: appSettings } = useQuery({
     queryKey: ["/api/settings/app"],

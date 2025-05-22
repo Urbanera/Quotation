@@ -487,6 +487,42 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  // Floor plan upload endpoint
+  app.post("/api/customers/:id/floor-plan", floorPlanUpload.single('floorPlan'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customer = await storage.getCustomer(id);
+      
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      // Get file information
+      const floorPlanUrl = `/uploads/${req.file.filename}`;
+      const floorPlanType = req.file.mimetype;
+      const floorPlanName = req.file.originalname;
+      
+      // Update customer with floor plan information
+      const updatedCustomer = await storage.updateCustomerFloorPlan(id, floorPlanUrl, floorPlanType, floorPlanName);
+      
+      if (!updatedCustomer) {
+        return res.status(500).json({ message: "Failed to update customer with floor plan" });
+      }
+      
+      res.status(200).json(updatedCustomer);
+    } catch (error) {
+      console.error("Error uploading floor plan:", error);
+      res.status(500).json({ 
+        message: "Failed to upload floor plan",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Customer routes
   app.get("/api/customers", async (req, res) => {
     try {
