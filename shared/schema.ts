@@ -87,6 +87,9 @@ export const customers = pgTable("customers", {
   address: text("address").notNull(),
   gstNumber: text("gst_number"),
   leadSource: text("lead_source"),
+  floorPlanUrl: text("floor_plan_url"),
+  floorPlanType: text("floor_plan_type"), // mime type for image/jpeg, image/png, application/pdf, etc.
+  floorPlanName: text("floor_plan_name"), // original filename
   stage: customerStageEnum("stage").notNull().default('new'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

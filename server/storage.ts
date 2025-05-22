@@ -37,6 +37,7 @@ export interface IStorage {
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: number, customer: InsertCustomer): Promise<Customer | undefined>;
   updateCustomerStage(id: number, stage: string): Promise<Customer | undefined>;
+  updateCustomerFloorPlan(id: number, floorPlanUrl: string, floorPlanType: string, floorPlanName: string): Promise<Customer | undefined>;
   deleteCustomer(id: number): Promise<boolean>;
   
   // Customer Follow-up operations
