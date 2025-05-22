@@ -951,6 +951,18 @@ export default function CustomerDetailPage() {
           <TabsContent value="ledger">
             <CustomerLedger customerId={customer.id} />
           </TabsContent>
+          
+          <TabsContent value="floor-plan">
+            <div className="bg-white shadow rounded-lg p-6">
+              <FloorPlanViewer 
+                customer={customer} 
+                onUpdate={() => {
+                  // Refresh customer data when floor plan is updated
+                  queryClient.invalidateQueries({ queryKey: ["/api/customers", customer.id] });
+                }}
+              />
+            </div>
+          </TabsContent>
 
           <TabsContent value="quotations">
             <div className="bg-white shadow overflow-hidden sm:rounded-lg">

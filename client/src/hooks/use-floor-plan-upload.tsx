@@ -30,7 +30,6 @@ export function useFloorPlanUpload() {
       toast({
         title: "Floor plan uploaded",
         description: "Floor plan has been successfully uploaded",
-        variant: "success",
       });
     },
     onError: (error: Error) => {
