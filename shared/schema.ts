@@ -146,6 +146,10 @@ export const rooms = pgTable("rooms", {
   areaSqft: doublePrecision("area_sqft"),
   pricePerSqft: doublePrecision("price_per_sqft").default(130),
   installAmount: doublePrecision("install_amount").default(0),
+  // Teowin estimate file
+  teowinEstimateUrl: text("teowin_estimate_url"),
+  teowinEstimateType: text("teowin_estimate_type"),
+  teowinEstimateName: text("teowin_estimate_name"),
 });
 
 export const insertRoomSchema = createInsertSchema(rooms).omit({
