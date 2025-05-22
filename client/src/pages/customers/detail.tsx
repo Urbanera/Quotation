@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { WhatsAppCommunication } from "@/components/communications/WhatsAppCommunication";
+import { FloorPlanViewer } from "@/components/customers/FloorPlanViewer";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -540,6 +541,10 @@ export default function CustomerDetailPage() {
             <TabsTrigger value="ledger" className="flex items-center">
               <CreditCard className="h-4 w-4 mr-2" />
               Ledger
+            </TabsTrigger>
+            <TabsTrigger value="floor-plan" className="flex items-center">
+              <MapPin className="h-4 w-4 mr-2" />
+              Floor Plan
             </TabsTrigger>
           </TabsList>
           
