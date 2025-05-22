@@ -109,6 +109,22 @@ const floorPlanUpload = multer({
   }
 });
 
+// For Teowin estimate uploads (images and PDFs)
+const teowinEstimateUpload = multer({
+  storage: storage_config,
+  limits: {
+    fileSize: 15 * 1024 * 1024, // 15MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept image and PDF files
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image and PDF files are allowed for Teowin estimates'));
+    }
+  }
+});
+
 export async function registerRoutes(app: express.Express): Promise<Server> {
   // Set up CORS headers
   app.use((req, res, next) => {
@@ -1759,6 +1775,43 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.json(images);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch images" });
+    }
+  });
+  
+  // Teowin estimate upload route
+  app.post("/api/rooms/:roomId/teowin-estimate", teowinEstimateUpload.single('file'), async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const room = await storage.getRoom(roomId);
+      
+      if (!room) {
+        return res.status(404).json({ message: "Room not found" });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      // Update the room with the file info
+      const fileUrl = `/uploads/${req.file.filename}`;
+      const updatedRoom = await storage.updateRoom(roomId, {
+        teowinEstimateUrl: fileUrl,
+        teowinEstimateType: req.file.mimetype,
+        teowinEstimateName: req.file.originalname
+      });
+      
+      if (!updatedRoom) {
+        return res.status(404).json({ message: "Failed to update room" });
+      }
+      
+      res.status(200).json({ 
+        message: "Teowin estimate uploaded successfully",
+        teowinEstimateUrl: updatedRoom.teowinEstimateUrl,
+        teowinEstimateType: updatedRoom.teowinEstimateType,
+        teowinEstimateName: updatedRoom.teowinEstimateName
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to upload Teowin estimate", error: (error as Error).message });
     }
   });
 

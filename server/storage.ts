@@ -69,6 +69,7 @@ export interface IStorage {
   updateRoom(id: number, room: Partial<InsertRoom>): Promise<Room | undefined>;
   deleteRoom(id: number): Promise<boolean>;
   reorderRooms(roomIds: number[]): Promise<boolean>;
+  updateRoomTeowinEstimate(roomId: number, teowinEstimateUrl: string, teowinEstimateType: string, teowinEstimateName: string): Promise<Room | undefined>;
   
   // Product operations
   getProducts(roomId: number): Promise<Product[]>;
@@ -1719,7 +1720,10 @@ export class MemStorage implements IStorage {
       heightMm: room.heightMm ?? null,
       areaSqft: room.areaSqft ?? null,
       pricePerSqft: room.pricePerSqft ?? null,
-      installAmount: room.installAmount ?? null
+      installAmount: room.installAmount ?? null,
+      teowinEstimateUrl: room.teowinEstimateUrl ?? null,
+      teowinEstimateType: room.teowinEstimateType ?? null,
+      teowinEstimateName: room.teowinEstimateName ?? null
     };
     this.rooms.set(id, newRoom);
     
