@@ -2144,8 +2144,19 @@ export class MemStorage implements IStorage {
     };
     this.products.set(id, newProduct);
     
-    // Update room price after adding a product
-    await this.updateRoomPrices(product.roomId);
+    // Get room and quotation for context
+    const room = await this.getRoom(product.roomId);
+    const roomName = room?.name || 'Unknown Room';
+    
+    // Create snapshot with context if price change is significant (this also updates room prices)
+    if (room) {
+      await this.updateQuotationPricesWithContext(room.quotationId, {
+        type: 'product',
+        itemName: product.name,
+        roomName: roomName,
+        action: 'added'
+      });
+    }
     
     return newProduct;
   }
@@ -2223,8 +2234,19 @@ export class MemStorage implements IStorage {
     };
     this.accessories.set(id, newAccessory);
     
-    // Update room price after adding an accessory
-    await this.updateRoomPrices(accessory.roomId);
+    // Get room and quotation for context
+    const room = await this.getRoom(accessory.roomId);
+    const roomName = room?.name || 'Unknown Room';
+    
+    // Create snapshot with context if price change is significant (this also updates room prices)
+    if (room) {
+      await this.updateQuotationPricesWithContext(room.quotationId, {
+        type: 'accessory',
+        itemName: accessory.name,
+        roomName: roomName,
+        action: 'added'
+      });
+    }
     
     return newAccessory;
   }
@@ -2489,9 +2511,14 @@ export class MemStorage implements IStorage {
     // Get the room to get the quotation ID
     const room = this.rooms.get(charge.roomId);
     
-    // Update quotation prices
+    // Update quotation prices with context
     if (room) {
-      await this.updateQuotationPrices(room.quotationId);
+      await this.updateQuotationPricesWithContext(room.quotationId, {
+        type: 'installation',
+        itemName: charge.cabinetType,
+        roomName: room.name,
+        action: 'added'
+      });
       newCharge.quotationId = room.quotationId; // Add quotationId for the client
     }
     
@@ -2537,12 +2564,12 @@ export class MemStorage implements IStorage {
     return result;
   }
   
-  private async updateRoomPrices(roomId: number) {
+  private updateRoomPricesOnly(roomId: number) {
     const room = this.rooms.get(roomId);
     if (!room) return;
     
-    const products = await this.getProducts(roomId);
-    const accessories = await this.getAccessories(roomId);
+    const products = Array.from(this.products.values()).filter(p => p.roomId === roomId);
+    const accessories = Array.from(this.accessories.values()).filter(a => a.roomId === roomId);
     
     // Calculate room prices
     let sellingPrice = 0;
@@ -2566,11 +2593,94 @@ export class MemStorage implements IStorage {
       sellingPrice,
       discountedPrice
     });
-    
-    // Update quotation prices
-    await this.updateQuotationPrices(room.quotationId);
+  }
+
+  private async updateRoomPrices(roomId: number) {
+    this.updateRoomPricesOnly(roomId);
+    const room = this.rooms.get(roomId);
+    if (room) {
+      await this.updateQuotationPrices(room.quotationId);
+    }
   }
   
+  private async updateQuotationPricesWithContext(quotationId: number, changeContext?: { type: 'product' | 'accessory' | 'installation' | 'room' | 'content', itemName?: string, roomName?: string, action?: 'added' | 'updated' | 'deleted' }) {
+    const quotation = this.quotations.get(quotationId);
+    if (!quotation) return;
+    
+    const rooms = await this.getRooms(quotationId);
+    
+    // Update room prices first (without triggering quotation updates)
+    for (const room of rooms) {
+      this.updateRoomPricesOnly(room.id);
+    }
+    
+    // Calculate quotation prices
+    let totalSellingPrice = 0;
+    let totalDiscountedPrice = 0;
+    
+    // Add room prices (only for included rooms)
+    for (const room of rooms) {
+      if (room.included) {
+        totalSellingPrice += room.sellingPrice;
+        totalDiscountedPrice += room.discountedPrice;
+      }
+    }
+    
+    // Apply global discount
+    const discountMultiplier = 1 - (quotation.globalDiscount / 100);
+    const priceAfterGlobalDiscount = quotation.globalDiscount > 0 
+      ? totalDiscountedPrice * discountMultiplier 
+      : totalDiscountedPrice;
+    
+    // Calculate total installation charges (only for included rooms)
+    let totalInstallationCharges = 0;
+    for (const room of rooms) {
+      if (room.included) {
+        const charges = await this.getInstallationCharges(room.id);
+        for (const charge of charges) {
+          const amount = typeof charge.amount === 'number' 
+            ? charge.amount 
+            : parseFloat(String(charge.amount));
+          totalInstallationCharges += amount;
+        }
+      }
+    }
+    
+    console.log(`Updating quotation ${quotationId} with totalInstallationCharges: ${totalInstallationCharges}`);
+    
+    // Apply GST
+    const subtotal = priceAfterGlobalDiscount + totalInstallationCharges + quotation.installationHandling;
+    const gstAmount = subtotal * (quotation.gstPercentage / 100);
+    const finalPrice = subtotal + gstAmount;
+    
+    // Check for significant price changes and create snapshot if needed
+    const priceChangeThreshold = 100; // Rs. 100 change threshold
+    const originalFinalPrice = quotation.finalPrice;
+    const priceChange = Math.abs(finalPrice - originalFinalPrice);
+    
+    console.log(`Price change check for quotation ${quotationId}: Original: ${originalFinalPrice}, New: ${finalPrice}, Change: ${priceChange}, Threshold: ${priceChangeThreshold}`);
+    
+    if (priceChange > priceChangeThreshold) {
+      // Create snapshot before updating prices with context
+      console.log(`Creating snapshot for quotation ${quotationId} due to price change`);
+      await this.createQuotationSnapshot(quotationId, changeContext);
+    }
+    
+    // Create a new quotation object with all the updated fields
+    const updatedQuotation = {
+      ...quotation,
+      totalSellingPrice,
+      totalDiscountedPrice,
+      totalInstallationCharges,
+      gstAmount,
+      finalPrice,
+      updatedAt: new Date()
+    };
+    
+    // Update the quotation in the storage
+    this.quotations.set(quotationId, updatedQuotation);
+  }
+
   private async updateQuotationPrices(quotationId: number) {
     const quotation = this.quotations.get(quotationId);
     if (!quotation) return;
@@ -2626,7 +2736,7 @@ export class MemStorage implements IStorage {
     if (priceChange > priceChangeThreshold) {
       // Create snapshot before updating prices
       console.log(`Creating snapshot for quotation ${quotationId} due to price change`);
-      await this.createQuotationSnapshot(quotationId, "Content update");
+      await this.createQuotationSnapshot(quotationId, { type: 'content' });
     }
     
     // Create a new quotation object with all the updated fields
@@ -3265,8 +3375,7 @@ export class MemStorage implements IStorage {
     return hasChanges;
   }
 
-  private async createQuotationSnapshot(quotationId: number, title: string): Promise<void> {
-    console.log(`Creating quotation snapshot for quotation ${quotationId} with title: ${title}`);
+  private async createQuotationSnapshot(quotationId: number, changeContext?: { type: 'product' | 'accessory' | 'installation' | 'room' | 'content', itemName?: string, roomName?: string, action?: 'added' | 'updated' | 'deleted' }): Promise<void> {
     const quotation = this.quotations.get(quotationId);
     if (!quotation) {
       console.log(`Quotation ${quotationId} not found for snapshot creation`);
@@ -3289,17 +3398,46 @@ export class MemStorage implements IStorage {
       images.push(...roomImages);
     }
 
+    // Generate a more descriptive title based on the change context
+    let title = "Content update";
+    let description = "Snapshot created: Content update";
+    
+    if (changeContext) {
+      switch (changeContext.type) {
+        case 'product':
+          title = `Product ${changeContext.action || 'updated'}: ${changeContext.itemName || 'Item'}`;
+          description = `${changeContext.action === 'added' ? 'Added' : changeContext.action === 'deleted' ? 'Removed' : 'Updated'} product "${changeContext.itemName || 'Item'}"${changeContext.roomName ? ` in ${changeContext.roomName}` : ''}`;
+          break;
+        case 'accessory':
+          title = `Accessory ${changeContext.action || 'updated'}: ${changeContext.itemName || 'Item'}`;
+          description = `${changeContext.action === 'added' ? 'Added' : changeContext.action === 'deleted' ? 'Removed' : 'Updated'} accessory "${changeContext.itemName || 'Item'}"${changeContext.roomName ? ` in ${changeContext.roomName}` : ''}`;
+          break;
+        case 'installation':
+          title = `Installation charge ${changeContext.action || 'updated'}`;
+          description = `${changeContext.action === 'added' ? 'Added' : changeContext.action === 'deleted' ? 'Removed' : 'Updated'} installation charge${changeContext.roomName ? ` for ${changeContext.roomName}` : ''}`;
+          break;
+        case 'room':
+          title = `Room ${changeContext.action || 'updated'}: ${changeContext.roomName || 'Room'}`;
+          description = `${changeContext.action === 'added' ? 'Added' : changeContext.action === 'deleted' ? 'Removed' : 'Updated'} room "${changeContext.roomName || 'Room'}"`;
+          break;
+        default:
+          title = "Content update";
+          description = "Quotation content updated";
+      }
+    }
+
     // Get the next modification number
     const existingModifications = await this.getQuotationModifications(quotationId);
     const modificationNumber = existingModifications.length + 1;
 
+    console.log(`Creating quotation snapshot for quotation ${quotationId} with title: ${title}`);
     console.log(`Creating modification #${modificationNumber} for quotation ${quotationId}`);
     
     const modification = await this.createQuotationModification({
       quotationId,
       modificationNumber,
       title,
-      description: `Snapshot created: ${title}`,
+      description,
       quotationData: quotation,
       roomsData: rooms,
       productsData: products,

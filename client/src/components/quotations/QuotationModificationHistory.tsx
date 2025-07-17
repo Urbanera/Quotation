@@ -147,7 +147,7 @@ export function QuotationModificationHistory({
               <p className="text-sm">Changes will appear here once you start editing the quotation</p>
             </div>
           ) : (
-            <ScrollArea className="h-full max-h-[500px]">
+            <ScrollArea className="h-[400px] w-full">
               <div className="space-y-2 p-4">
                 {modifications.map((modification, index) => {
                   const isExpanded = expandedModifications.has(modification.id);
