@@ -1445,6 +1445,21 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: "Failed to revert quotation", error: (error as Error).message });
     }
   });
+
+  // Test endpoint to create a snapshot manually
+  app.post("/api/quotations/:id/create-snapshot", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.id);
+      const { title } = req.body;
+      
+      // Call the private method through the storage instance
+      await (storage as any).createQuotationSnapshot(quotationId, title || "Manual snapshot");
+      
+      res.json({ success: true, message: "Snapshot created successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create snapshot", error: (error as Error).message });
+    }
+  });
   
   // Room routes
   app.get("/api/quotations/:quotationId/rooms", async (req, res) => {

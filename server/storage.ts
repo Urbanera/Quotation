@@ -3233,18 +3233,32 @@ export class MemStorage implements IStorage {
   private hasSignificantChanges(existing: Quotation, update: Partial<InsertQuotation>): boolean {
     const significantFields = [
       'title', 'description', 'globalDiscount', 'gstPercentage', 
-      'installationHandling', 'terms', 'validUntil'
+      'installationHandling', 'terms', 'validUntil', 'totalSellingPrice', 
+      'finalPrice', 'totalDiscountedPrice', 'gstAmount'
     ];
     
-    return significantFields.some(field => 
-      update[field as keyof InsertQuotation] !== undefined && 
-      update[field as keyof InsertQuotation] !== existing[field as keyof Quotation]
-    );
+    const hasChanges = significantFields.some(field => {
+      const updateValue = update[field as keyof InsertQuotation];
+      const existingValue = existing[field as keyof Quotation];
+      
+      if (updateValue !== undefined && updateValue !== existingValue) {
+        console.log(`Significant change detected in ${field}: ${existingValue} -> ${updateValue}`);
+        return true;
+      }
+      return false;
+    });
+    
+    console.log(`Checking for significant changes in quotation ${existing.id}: ${hasChanges}`);
+    return hasChanges;
   }
 
   private async createQuotationSnapshot(quotationId: number, title: string): Promise<void> {
+    console.log(`Creating quotation snapshot for quotation ${quotationId} with title: ${title}`);
     const quotation = this.quotations.get(quotationId);
-    if (!quotation) return;
+    if (!quotation) {
+      console.log(`Quotation ${quotationId} not found for snapshot creation`);
+      return;
+    }
 
     const rooms = await this.getRooms(quotationId);
     const products: any[] = [];
@@ -3266,7 +3280,9 @@ export class MemStorage implements IStorage {
     const existingModifications = await this.getQuotationModifications(quotationId);
     const modificationNumber = existingModifications.length + 1;
 
-    await this.createQuotationModification({
+    console.log(`Creating modification #${modificationNumber} for quotation ${quotationId}`);
+    
+    const modification = await this.createQuotationModification({
       quotationId,
       modificationNumber,
       title,
@@ -3279,6 +3295,8 @@ export class MemStorage implements IStorage {
       totalSellingPrice: quotation.totalSellingPrice,
       finalPrice: quotation.finalPrice
     });
+
+    console.log(`Successfully created modification:`, modification);
   }
 }
 
