@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ChevronLeft, Eye, Save, FileCheck } from "lucide-react";
@@ -11,6 +11,7 @@ import RoomTabs from "@/components/quotations/RoomTabs";
 import QuotationSummary from "@/components/quotations/QuotationSummary";
 import { ValidationDialog } from "@/components/quotations/ValidationDialog";
 import { validateQuotation, markQuotationAsSaved, ValidationError, ValidationWarning } from "@/lib/quotationValidation";
+import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
 
 export default function EditQuotation() {
   const { id } = useParams();
@@ -25,6 +26,17 @@ export default function EditQuotation() {
   const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [validationWarnings, setValidationWarnings] = useState<ValidationWarning[]>([]);
+  
+  // States for unsaved changes tracking
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isUnsavedChangesDialogOpen, setIsUnsavedChangesDialogOpen] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const originalValuesRef = useRef<{
+    customerId: number | null;
+    installationHandling: number;
+    globalDiscount: number;
+    gstPercentage: number;
+  } | null>(null);
 
   // Fetch quotation details
   const { data: quotation, isLoading: quotationLoading } = useQuery<QuotationWithDetails>({
@@ -44,8 +56,48 @@ export default function EditQuotation() {
       setInstallationHandling(quotation.installationHandling);
       setGlobalDiscount(quotation.globalDiscount || 0);
       setGstPercentage(quotation.gstPercentage);
+      
+      // Store original values for comparison
+      originalValuesRef.current = {
+        customerId: quotation.customerId,
+        installationHandling: quotation.installationHandling,
+        globalDiscount: quotation.globalDiscount || 0,
+        gstPercentage: quotation.gstPercentage
+      };
+      
+      // Reset unsaved changes state
+      setHasUnsavedChanges(false);
     }
   }, [quotation]);
+
+  // Track changes to detect unsaved state
+  useEffect(() => {
+    if (!originalValuesRef.current) return;
+    
+    const hasChanges = 
+      selectedCustomerId !== originalValuesRef.current.customerId ||
+      installationHandling !== originalValuesRef.current.installationHandling ||
+      globalDiscount !== originalValuesRef.current.globalDiscount ||
+      gstPercentage !== originalValuesRef.current.gstPercentage;
+      
+    setHasUnsavedChanges(hasChanges);
+  }, [selectedCustomerId, installationHandling, globalDiscount, gstPercentage]);
+
+  // Handle browser close/refresh warning
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        event.preventDefault();
+        event.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+        return "You have unsaved changes. Are you sure you want to leave?";
+      }
+    };
+
+    if (hasUnsavedChanges) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+  }, [hasUnsavedChanges]);
 
   // Save quotation (as draft)
   const handleSaveQuotation = useCallback(async () => {
@@ -58,6 +110,17 @@ export default function EditQuotation() {
         globalDiscount,
         gstPercentage
       });
+      
+      // Update original values after successful save
+      originalValuesRef.current = {
+        customerId: selectedCustomerId,
+        installationHandling,
+        globalDiscount,
+        gstPercentage
+      };
+      
+      // Reset unsaved changes state
+      setHasUnsavedChanges(false);
       
       toast({
         title: "Success",
@@ -75,6 +138,36 @@ export default function EditQuotation() {
       });
     }
   }, [id, selectedCustomerId, installationHandling, globalDiscount, gstPercentage, toast]);
+
+  // Handle navigation with unsaved changes
+  const handleNavigationWithUnsavedChanges = (path: string) => {
+    if (hasUnsavedChanges) {
+      setPendingNavigation(path);
+      setIsUnsavedChangesDialogOpen(true);
+    } else {
+      navigate(path);
+    }
+  };
+
+  // Handle save and continue navigation
+  const handleSaveAndContinue = async () => {
+    await handleSaveQuotation();
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+      setPendingNavigation(null);
+    }
+    setIsUnsavedChangesDialogOpen(false);
+  };
+
+  // Handle discard changes navigation
+  const handleDiscardChanges = () => {
+    setHasUnsavedChanges(false);
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+      setPendingNavigation(null);
+    }
+    setIsUnsavedChangesDialogOpen(false);
+  };
   
   // Start validation process for saving quotation as final (saved status)
   const handleValidateForFinalSave = useCallback(async () => {
@@ -183,20 +276,20 @@ export default function EditQuotation() {
             <div className="flex-1 min-w-0 flex items-center">
               <Button
                 variant="ghost"
-                onClick={() => navigate("/quotations")}
+                onClick={() => handleNavigationWithUnsavedChanges("/quotations")}
                 className="mr-4"
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Back
               </Button>
               <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                Edit Quotation #{id}
+                Edit Quotation #{id} {hasUnsavedChanges && <span className="text-orange-600">*</span>}
               </h2>
             </div>
             <div className="mt-4 flex md:mt-0 md:ml-4 space-x-3">
               <Button 
                 variant="outline"
-                onClick={() => navigate(`/quotations/view/${id}`)}
+                onClick={() => handleNavigationWithUnsavedChanges(`/quotations/view/${id}`)}
               >
                 <Eye className="mr-2 h-4 w-4" />
                 Preview
@@ -204,10 +297,10 @@ export default function EditQuotation() {
               <Button 
                 onClick={handleSaveQuotation}
                 disabled={!selectedCustomerId}
-                className="bg-indigo-600 hover:bg-indigo-700"
+                className={`${hasUnsavedChanges ? 'bg-orange-600 hover:bg-orange-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
               >
                 <Save className="mr-2 h-4 w-4" />
-                Save Draft
+                {hasUnsavedChanges ? 'Save Draft*' : 'Save Draft'}
               </Button>
               <Button 
                 onClick={handleValidateForFinalSave}
@@ -267,6 +360,18 @@ export default function EditQuotation() {
         onProceed={validationErrors.length === 0 ? () => saveAsFinalMutation.mutate() : undefined}
         onCancel={() => setIsValidationDialogOpen(false)}
         quotationId={parseInt(id || "0")}
+      />
+      
+      {/* Unsaved Changes Dialog */}
+      <UnsavedChangesDialog
+        isOpen={isUnsavedChangesDialogOpen}
+        onClose={() => setIsUnsavedChangesDialogOpen(false)}
+        onSave={handleSaveAndContinue}
+        onDiscard={handleDiscardChanges}
+        title="Unsaved Changes"
+        description="You have unsaved changes in your quotation. What would you like to do?"
+        saveButtonText="Save & Continue"
+        discardButtonText="Discard Changes"
       />
     </div>
   );
