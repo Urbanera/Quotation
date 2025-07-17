@@ -193,52 +193,107 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
           {renderFooter(2)}
         </div>
         
-        {/* Room Images - one page per image */}
-        {sortedRooms.map((room, roomIndex) => 
-          room.images && room.images.map((image, imageIndex) => {
-            const pageNumber = 3 + roomIndex + imageIndex;
-            return (
-              <div 
-                key={`${roomIndex}-${imageIndex}`} 
-                className="border rounded-lg p-8 mb-8 bg-white" 
-                style={{ width: '100%', aspectRatio: '1.77 / 1', position: 'relative' }}
-              >
-                <div className="absolute top-0 right-0 bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded-bl-md">
-                  Page {pageNumber} - {room.name}
+        {/* Room Images - Room name page followed by image pages */}
+        {sortedRooms.map((room, roomIndex) => {
+          const roomPages = [];
+          let currentPageNumber = 3; // Start after cover and features pages
+          
+          // Calculate page number for this room
+          for (let i = 0; i < roomIndex; i++) {
+            currentPageNumber += 1; // Room name page
+            currentPageNumber += sortedRooms[i].images?.length || 0; // Image pages
+          }
+          
+          // Add room name page
+          roomPages.push(
+            <div 
+              key={`room-${roomIndex}`} 
+              className="border rounded-lg p-8 mb-8 bg-white" 
+              style={{ width: '100%', aspectRatio: '1.77 / 1', position: 'relative' }}
+            >
+              <div className="absolute top-0 right-0 bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded-bl-md">
+                Page {currentPageNumber} - {room.name}
+              </div>
+              
+              <div className="flex flex-col h-full">
+                <div className="flex justify-between mb-4 mt-6 ml-6">
+                  <div className="w-2/3">
+                    <h3 className="text-lg font-bold text-[#009245]">
+                      {companySettings?.name || "DesignQuotes"}
+                    </h3>
+                  </div>
+                  <div className="w-1/4 text-right mr-6">
+                    {companySettings?.logo && (
+                      <img 
+                        src={companySettings.logo} 
+                        alt={companySettings.name}
+                        className="w-[120px] object-contain ml-auto" 
+                      />
+                    )}
+                  </div>
                 </div>
                 
-                <div className="flex flex-col h-full">
-                  <div className="flex justify-between mb-4">
-                    <div className="w-2/3">
-                      <h3 className="text-lg font-bold text-[#009245]">
-                        {room.name} - {image.type || "Room Image"}
-                      </h3>
-                    </div>
-                    <div className="w-1/4 text-right">
-                      {companySettings?.logo && (
-                        <img 
-                          src={companySettings.logo} 
-                          alt={companySettings.name}
-                          className="w-[120px] object-contain ml-auto" 
-                        />
-                      )}
-                    </div>
+                <div className="flex-1 flex items-center justify-center">
+                  <h2 className="text-4xl font-bold text-[#009245]">
+                    {room.name}
+                  </h2>
+                </div>
+              </div>
+              {renderFooter(currentPageNumber)}
+            </div>
+          );
+          currentPageNumber++;
+          
+          // Add image pages for this room
+          if (room.images) {
+            room.images.forEach((image, imageIndex) => {
+              roomPages.push(
+                <div 
+                  key={`${roomIndex}-${imageIndex}`} 
+                  className="border rounded-lg p-8 mb-8 bg-white" 
+                  style={{ width: '100%', aspectRatio: '1.77 / 1', position: 'relative' }}
+                >
+                  <div className="absolute top-0 right-0 bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded-bl-md">
+                    Page {currentPageNumber} - {room.name}
                   </div>
                   
-                  <div className="flex-grow flex items-center justify-center mb-4 overflow-hidden" style={{ height: '380px', width: '95%', margin: 'auto' }}>
-                    <img 
-                      src={image.path} 
-                      alt={`${room.name} - ${image.type || "Image"}`} 
-                      className="object-contain border shadow-sm" 
-                      style={{ width: '100%', height: '100%' }}
-                    />
+                  <div className="flex flex-col h-full">
+                    <div className="flex justify-between mb-4 mt-6 ml-6">
+                      <div className="w-2/3">
+                        <h3 className="text-lg font-bold text-[#009245]">
+                          {room.name} - {image.type || "Room Image"}
+                        </h3>
+                      </div>
+                      <div className="w-1/4 text-right mr-6">
+                        {companySettings?.logo && (
+                          <img 
+                            src={companySettings.logo} 
+                            alt={companySettings.name}
+                            className="w-[120px] object-contain ml-auto" 
+                          />
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex-grow flex items-center justify-center mb-4 overflow-hidden" 
+                         style={{ height: '380px', width: '95%', margin: 'auto', marginLeft: '30px', marginRight: '30px', marginTop: '20px', marginBottom: '40px' }}>
+                      <img 
+                        src={image.path} 
+                        alt={`${room.name} - ${image.type || "Image"}`} 
+                        className="object-contain border shadow-sm" 
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    </div>
                   </div>
+                  {renderFooter(currentPageNumber)}
                 </div>
-                {renderFooter(pageNumber)}
-              </div>
-            );
-          })
-        )}
+              );
+              currentPageNumber++;
+            });
+          }
+          
+          return roomPages;
+        }).flat()}
         
         {/* Summary Page - Project Cost Summary */}
         <div className="border rounded-lg p-8 mb-8 bg-white" style={{ width: '100%', aspectRatio: '1.77 / 1', position: 'relative' }}>
@@ -247,7 +302,7 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
           </div>
           
           <div className="flex flex-col h-full">
-            <div className="flex justify-between mb-4">
+            <div className="flex justify-between mb-4 mt-6 ml-6 mr-6">
               <div className="w-2/3">
                 <h3 className="text-xl font-bold text-[#009245] mb-4">Project Cost Summary</h3>
               </div>
@@ -262,7 +317,7 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
               </div>
             </div>
             
-            <div className="overflow-auto mt-4 mb-6">
+            <div className="overflow-auto mt-4 mb-6 ml-6 mr-6">
               <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-md">
                 {/* Table Header - matching basic and presentation quotes exactly */}
                 <thead className="bg-[#E6E6E6]">
@@ -370,7 +425,7 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
           </div>
           
           <div className="flex flex-col h-full">
-            <div className="flex justify-between mb-4">
+            <div className="flex justify-between mb-4 mt-6 ml-6 mr-6">
               <div className="w-2/3">
                 <h3 className="text-lg font-bold text-[#009245]">Terms & Conditions</h3>
               </div>
@@ -385,7 +440,7 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
               </div>
             </div>
             
-            <div className="overflow-auto mt-4 mb-auto">
+            <div className="overflow-auto mt-4 mb-auto ml-6 mr-6 mb-6">
               {appSettings?.defaultTermsAndConditions ? (
                 <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: appSettings.defaultTermsAndConditions }} />
               ) : (

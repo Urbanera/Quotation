@@ -216,7 +216,7 @@ export default function ViewQuotation() {
       
       // Generate PDF for attachment
       let pdfBase64 = null;
-      let filename = `Quotation-${quotation?.quotationNumber || id}`;
+      let filename = `${quotation?.customer?.name?.replace(/\s+/g, '_') || 'Customer'}_${quotation?.quotationNumber || id}`;
       
       if (activeTab === "basic" && basicQuoteRef.current) {
         try {
@@ -233,7 +233,6 @@ export default function ViewQuotation() {
       } else if (activeTab === "presentation" && presentationQuoteRef.current) {
         try {
           // Convert the current PDF to base64
-          filename = `Presentation-${quotation?.quotationNumber || id}`;
           const blob = await exportToPdf(presentationQuoteRef.current, filename, true, true) as Blob;
           pdfBase64 = await new Promise<string>((resolve) => {
             const reader = new FileReader();
@@ -250,7 +249,6 @@ export default function ViewQuotation() {
             throw new Error('Required data not loaded');
           }
           
-          filename = `Landscape-${quotation?.quotationNumber || id}`;
           const LandscapeDocument = (
             <LandscapeQuote 
               quotation={quotation} 
@@ -319,13 +317,8 @@ export default function ViewQuotation() {
     try {
       setIsGeneratingPdf(true);
       
-      // Generate the filename based on active tab
-      let filename = `Quotation-${quotation?.quotationNumber || id}`;
-      if (activeTab === 'presentation') {
-        filename = `Presentation-${quotation?.quotationNumber || id}`;
-      } else if (activeTab === 'landscape') {
-        filename = `Landscape-${quotation?.quotationNumber || id}`;
-      }
+      // Generate the filename based on customer name and quotation number
+      let filename = `${quotation?.customer?.name?.replace(/\s+/g, '_') || 'Customer'}_${quotation?.quotationNumber || id}`;
       
       if (activeTab === 'landscape') {
         // For landscape quotations, we need to create the document first

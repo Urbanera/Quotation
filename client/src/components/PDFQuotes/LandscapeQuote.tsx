@@ -622,8 +622,8 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
               {/* Header with proper margins */}
               <View style={{ ...styles.roomPageHeader, marginTop: 30, marginLeft: 30 }}>
                 <View style={{ width: '70%' }}>
-                  <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#009245' }}>
-                    {room.name}
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#009245' }}>
+                    {companySettings?.name || "DesignQuotes"}
                   </Text>
                 </View>
                 <View style={{ width: '25%', alignItems: 'flex-end' }}>
@@ -638,8 +638,8 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
               
               {/* Room content area */}
               <View style={styles.roomPageContent}>
-                <Text style={{ fontSize: 18, color: '#666666', textAlign: 'center', marginTop: 100 }}>
-                  {room.images?.length || 0} Design View{(room.images?.length || 0) !== 1 ? 's' : ''} Available
+                <Text style={{ fontSize: 32, color: '#009245', textAlign: 'center', fontWeight: 'bold' }}>
+                  {room.name}
                 </Text>
               </View>
             </View>
@@ -700,7 +700,8 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
       {/* Summary Page */}
       <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+          {/* Header with proper margins */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, marginTop: 30, marginLeft: 30, marginRight: 30 }}>
             <View style={{ width: '65%' }}>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#009245', marginBottom: 15 }}>Project Cost Summary</Text>
             </View>
@@ -714,8 +715,8 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             </View>
           </View>
           
-          {/* Cost Summary Table - Matching Basic and Presentation Quotes */}
-          <View style={{ marginVertical: 20, maxHeight: '70%' }}>
+          {/* Cost Summary Table - Centered with margins */}
+          <View style={{ marginVertical: 20, marginLeft: 30, marginRight: 30, maxHeight: '70%' }}>
             {/* Table Header - matching other quotes exactly */}
             <View style={styles.tableHeader}>
               <Text style={styles.slNoCell}>S.No</Text>
@@ -785,9 +786,10 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
       {/* Terms and Conditions Page */}
       <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.section}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+          {/* Header with proper margins */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, marginTop: 30, marginLeft: 30, marginRight: 30 }}>
             <View style={{ width: '65%' }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245' }}>Terms & Conditions</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#009245' }}>Terms & Conditions</Text>
             </View>
             <View style={{ width: '25%', alignItems: 'flex-end' }}>
               {companySettings?.logo && (
@@ -799,7 +801,7 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             </View>
           </View>
           
-          <View style={{ marginTop: 20 }}>
+          <View style={{ marginTop: 20, marginLeft: 30, marginRight: 30, marginBottom: 30 }}>
             {appSettings?.defaultTermsAndConditions ? (
               <Text style={{ fontSize: 12, lineHeight: 1.5, color: '#333333' }}>
                 {appSettings.defaultTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
