@@ -365,6 +365,24 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   
+  // Green-red footer line
+  footerLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    flexDirection: 'row',
+  },
+  footerLineGreen: {
+    backgroundColor: '#009245',
+    flex: 0.75, // 75% width
+  },
+  footerLineRed: {
+    backgroundColor: '#FF0000',
+    flex: 0.25, // 25% width
+  },
+  
   // Room page styles
   roomPageHeader: {
     flexDirection: 'row',
@@ -537,6 +555,12 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
         <View style={styles.greenFooter}>
           <Text style={styles.footerText}>{companySettings?.website || "www.yourcompany.com"}</Text>
         </View>
+        
+        {/* Green-Red Footer Line */}
+        <View style={styles.footerLine}>
+          <View style={styles.footerLineGreen} />
+          <View style={styles.footerLineRed} />
+        </View>
       </Page>
       
       {/* Second page - Features Page matching Presentation Quote */}
@@ -602,6 +626,12 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
         <View style={styles.greenFooter}>
           <Text style={styles.footerText}>{companySettings?.website || "www.yourcompany.com"}</Text>
         </View>
+        
+        {/* Green-Red Footer Line */}
+        <View style={styles.footerLine}>
+          <View style={styles.footerLineGreen} />
+          <View style={styles.footerLineRed} />
+        </View>
       </Page>
       
       {/* Room Images - Room name page followed by images */}
@@ -648,6 +678,12 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
               <Text>Page {currentPageNumber} of {totalPages}</Text>
               <Text>{companySettings?.website || ""}</Text>
             </View>
+            
+            {/* Green-Red Footer Line */}
+            <View style={styles.footerLine}>
+              <View style={styles.footerLineGreen} />
+              <View style={styles.footerLineRed} />
+            </View>
           </Page>
         );
         currentPageNumber++;
@@ -688,6 +724,12 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
                   <Text>Page {currentPageNumber} of {totalPages}</Text>
                   <Text>{companySettings?.website || ""}</Text>
                 </View>
+                
+                {/* Green-Red Footer Line */}
+                <View style={styles.footerLine}>
+                  <View style={styles.footerLineGreen} />
+                  <View style={styles.footerLineRed} />
+                </View>
               </Page>
             );
             currentPageNumber++;
@@ -715,64 +757,66 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             </View>
           </View>
           
-          {/* Cost Summary Table - Centered with margins */}
-          <View style={{ marginVertical: 20, marginLeft: 30, marginRight: 30, maxHeight: '70%' }}>
-            {/* Table Header - matching other quotes exactly */}
-            <View style={styles.tableHeader}>
-              <Text style={styles.slNoCell}>S.No</Text>
-              <Text style={styles.descriptionCell}>PRODUCT DESCRIPTION</Text>
-              <Text style={styles.unitCell}>SELLING PRICE</Text>
-              <Text style={styles.amountCell}>DISCOUNTED PRICE ({quotation.globalDiscount}%)</Text>
-            </View>
-            
-            {/* Room Rows - matching other quotes structure */}
-            <View style={{ maxHeight: '65%' }}>
-              {sortedRooms.map((room, index) => (
-                <View key={index} style={[styles.tableRow, index % 2 === 0 ? styles.tableRowEven : {}]}>
-                  <Text style={styles.slNoCell}>{index + 1}</Text>
-                  <Text style={styles.descriptionCell}>{room.name.toUpperCase()}</Text>
-                  <Text style={styles.unitCell}>{formatRupeeForPDF(room.sellingPrice || 0)}</Text>
-                  <Text style={[styles.amountCell, { color: 'red' }]}>
-                    {formatRupeeForPDF((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
-                  </Text>
-                </View>
-              ))}
-            </View>
-            
-            {/* Total Row */}
-            <View style={[styles.tableRow, styles.tableRowEven]}>
-              <Text style={styles.slNoCell}></Text>
-              <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>Total Of All Items</Text>
-              <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalSellingPrice)}</Text>
-              <Text style={[styles.amountCell, { fontWeight: 'bold', color: 'red' }]}>
-                {formatRupeeForPDF(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))}
-              </Text>
-            </View>
-            
-            {/* Installation Row */}
-            <View style={styles.tableRow}>
-              <Text style={styles.slNoCell}></Text>
-              <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>Installation and Handling</Text>
-              <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
-              <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
-            </View>
-            
-            {/* GST Row */}
-            <View style={[styles.tableRow, styles.tableRowEven]}>
-              <Text style={styles.slNoCell}></Text>
-              <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>GST {quotation.gstPercentage}%</Text>
-              <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
-              <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
-            </View>
-            
-            {/* Final Price Row */}
-            <View style={[styles.tableRow, { backgroundColor: '#009245' }]}>
-              <Text style={[styles.slNoCell, { color: 'white' }]}></Text>
-              <Text style={[styles.descriptionCell, { fontWeight: 'bold', color: 'white' }]}>Final Price</Text>
-              <Text style={[styles.unitCell, { fontWeight: 'bold', color: 'white' }]}></Text>
-              <Text style={[styles.amountCell, { fontWeight: 'bold', color: 'white' }]}>
-                {formatRupeeForPDF(quotation.finalPrice)}
-              </Text>
+          {/* Cost Summary Table - Centered with margins and auto-sizing */}
+          <View style={{ marginVertical: 20, marginLeft: 30, marginRight: 30, alignItems: 'center' }}>
+            <View style={{ width: '100%', maxHeight: '65%' }}>
+              {/* Table Header - matching other quotes exactly */}
+              <View style={styles.tableHeader}>
+                <Text style={styles.slNoCell}>S.No</Text>
+                <Text style={styles.descriptionCell}>PRODUCT DESCRIPTION</Text>
+                <Text style={styles.unitCell}>SELLING PRICE</Text>
+                <Text style={styles.amountCell}>DISCOUNTED PRICE ({quotation.globalDiscount}%)</Text>
+              </View>
+              
+              {/* Room Rows - matching other quotes structure */}
+              <View style={{ maxHeight: '65%' }}>
+                {sortedRooms.map((room, index) => (
+                  <View key={index} style={[styles.tableRow, index % 2 === 0 ? styles.tableRowEven : {}]}>
+                    <Text style={styles.slNoCell}>{index + 1}</Text>
+                    <Text style={styles.descriptionCell}>{room.name.toUpperCase()}</Text>
+                    <Text style={styles.unitCell}>{formatRupeeForPDF(room.sellingPrice || 0)}</Text>
+                    <Text style={[styles.amountCell, { color: 'red' }]}>
+                      {formatRupeeForPDF((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              
+              {/* Total Row */}
+              <View style={[styles.tableRow, styles.tableRowEven]}>
+                <Text style={styles.slNoCell}></Text>
+                <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>Total Of All Items</Text>
+                <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalSellingPrice)}</Text>
+                <Text style={[styles.amountCell, { fontWeight: 'bold', color: 'red' }]}>
+                  {formatRupeeForPDF(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))}
+                </Text>
+              </View>
+              
+              {/* Installation Row */}
+              <View style={styles.tableRow}>
+                <Text style={styles.slNoCell}></Text>
+                <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>Installation and Handling</Text>
+                <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
+                <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
+              </View>
+              
+              {/* GST Row */}
+              <View style={[styles.tableRow, styles.tableRowEven]}>
+                <Text style={styles.slNoCell}></Text>
+                <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>GST {quotation.gstPercentage}%</Text>
+                <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
+                <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
+              </View>
+              
+              {/* Final Price Row */}
+              <View style={[styles.tableRow, { backgroundColor: '#009245' }]}>
+                <Text style={[styles.slNoCell, { color: 'white' }]}></Text>
+                <Text style={[styles.descriptionCell, { fontWeight: 'bold', color: 'white' }]}>Final Price</Text>
+                <Text style={[styles.unitCell, { fontWeight: 'bold', color: 'white' }]}></Text>
+                <Text style={[styles.amountCell, { fontWeight: 'bold', color: 'white' }]}>
+                  {formatRupeeForPDF(quotation.finalPrice)}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -780,6 +824,12 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
         <View style={styles.footer}>
           <Text>Page {totalPages - 1} of {totalPages}</Text>
           <Text>{companySettings?.website || ""}</Text>
+        </View>
+        
+        {/* Green-Red Footer Line */}
+        <View style={styles.footerLine}>
+          <View style={styles.footerLineGreen} />
+          <View style={styles.footerLineRed} />
         </View>
       </Page>
       
@@ -802,9 +852,9 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
           </View>
           
           <View style={{ marginTop: 20, marginLeft: 30, marginRight: 30, marginBottom: 30 }}>
-            {appSettings?.defaultTermsAndConditions ? (
+            {appSettings?.presentationTermsAndConditions ? (
               <Text style={{ fontSize: 12, lineHeight: 1.5, color: '#333333' }}>
-                {appSettings.defaultTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
+                {appSettings.presentationTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
               </Text>
             ) : (
               <View>
@@ -847,6 +897,12 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
         <View style={styles.footer}>
           <Text>Page {totalPages} of {totalPages}</Text>
           <Text>{companySettings?.website || ""}</Text>
+        </View>
+        
+        {/* Green-Red Footer Line */}
+        <View style={styles.footerLine}>
+          <View style={styles.footerLineGreen} />
+          <View style={styles.footerLineRed} />
         </View>
       </Page>
     </Document>

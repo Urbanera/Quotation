@@ -441,8 +441,8 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
             </div>
             
             <div className="overflow-auto mt-4 mb-auto ml-6 mr-6 mb-6">
-              {appSettings?.defaultTermsAndConditions ? (
-                <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: appSettings.defaultTermsAndConditions }} />
+              {appSettings?.presentationTermsAndConditions ? (
+                <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: appSettings.presentationTermsAndConditions }} />
               ) : (
                 <div className="text-sm text-gray-700 leading-relaxed space-y-4">
                   <div>
@@ -496,7 +496,7 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
               appSettings={appSettings}
             />
           } 
-          fileName={`Landscape-${quotation?.quotationNumber || id}.pdf`}
+          fileName={`${quotation?.customer?.name || 'Customer'}_${quotation?.quotationNumber || id}.pdf`}
           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center"
         >
           {({ blob, url, loading, error }) => 
