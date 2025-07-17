@@ -207,17 +207,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9F9F9',
   },
   slNoCell: {
-    width: '10%',
+    width: '8%',
+    textAlign: 'center',
   },
   descriptionCell: {
-    width: '40%',
+    width: '52%',
   },
   quantityCell: {
     width: '10%',
     textAlign: 'center',
   },
   unitCell: {
-    width: '15%',
+    width: '20%',
     textAlign: 'right',
   },
   discountCell: {
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   amountCell: {
-    width: '15%',
+    width: '20%',
     textAlign: 'right',
   },
   totalSection: {
@@ -745,22 +746,24 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             </View>
           </View>
           
-          {/* Cost Summary Table - Matching the screenshot */}
+          {/* Cost Summary Table - Matching Basic and Presentation Quotes */}
           <View style={{ marginVertical: 20, maxHeight: '70%' }}>
-            {/* Table Header */}
-            <View style={{ flexDirection: 'row', backgroundColor: '#e8f5e9', padding: 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
-              <Text style={{ flex: 2, fontWeight: 'bold', color: '#009245', fontSize: 10 }}>PRODUCT DESCRIPTION</Text>
-              <Text style={{ flex: 1, fontWeight: 'bold', color: '#009245', textAlign: 'right', fontSize: 10 }}>SELLING PRICE</Text>
-              <Text style={{ flex: 1, fontWeight: 'bold', color: '#009245', textAlign: 'right', fontSize: 10 }}>DISCOUNTED PRICE ({quotation.globalDiscount}%)</Text>
+            {/* Table Header - matching other quotes exactly */}
+            <View style={styles.tableHeader}>
+              <Text style={styles.slNoCell}>S.No</Text>
+              <Text style={styles.descriptionCell}>PRODUCT DESCRIPTION</Text>
+              <Text style={styles.unitCell}>SELLING PRICE</Text>
+              <Text style={styles.amountCell}>DISCOUNTED PRICE ({quotation.globalDiscount}%)</Text>
             </View>
             
-            {/* Room Rows - use smaller font and padding when many rooms */}
+            {/* Room Rows - matching other quotes structure */}
             <View style={{ maxHeight: '65%' }}>
               {sortedRooms.map((room, index) => (
-                <View key={index} style={{ flexDirection: 'row', backgroundColor: index % 2 === 0 ? '#f5f5f5' : 'white', padding: sortedRooms.length > 5 ? 6 : 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
-                  <Text style={{ flex: 2, fontWeight: 'bold', fontSize: sortedRooms.length > 5 ? 9 : 10 }}>{room.name.toUpperCase()}</Text>
-                  <Text style={{ flex: 1, textAlign: 'right', fontSize: sortedRooms.length > 5 ? 9 : 10 }}>{formatRupeeForPDF(room.sellingPrice || 0)}</Text>
-                  <Text style={{ flex: 1, textAlign: 'right', color: 'red', fontSize: sortedRooms.length > 5 ? 9 : 10 }}>
+                <View key={index} style={[styles.tableRow, index % 2 === 0 ? styles.tableRowEven : {}]}>
+                  <Text style={styles.slNoCell}>{index + 1}</Text>
+                  <Text style={styles.descriptionCell}>{room.name.toUpperCase()}</Text>
+                  <Text style={styles.unitCell}>{formatRupeeForPDF(room.sellingPrice || 0)}</Text>
+                  <Text style={[styles.amountCell, { color: 'red' }]}>
                     {formatRupeeForPDF((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
                   </Text>
                 </View>
@@ -768,36 +771,38 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             </View>
             
             {/* Total Row */}
-            <View style={{ flexDirection: 'row', backgroundColor: '#f5f5f5', padding: 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
-              <Text style={{ flex: 2, fontWeight: 'bold', fontSize: 10 }}>Total Of All Items</Text>
-              <Text style={{ flex: 1, textAlign: 'right', fontSize: 10 }}>{formatRupeeForPDF(quotation.totalSellingPrice)}</Text>
-              <Text style={{ flex: 1, textAlign: 'right', color: 'red', fontSize: 10 }}>
+            <View style={[styles.tableRow, styles.tableRowEven]}>
+              <Text style={styles.slNoCell}></Text>
+              <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>Total Of All Items</Text>
+              <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalSellingPrice)}</Text>
+              <Text style={[styles.amountCell, { fontWeight: 'bold', color: 'red' }]}>
                 {formatRupeeForPDF(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))}
               </Text>
             </View>
             
             {/* Installation Row */}
-            <View style={{ flexDirection: 'row', padding: 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
-              <Text style={{ flex: 2, fontWeight: 'bold', fontSize: 10 }}>Installation and Handling</Text>
-              <Text style={{ flex: 1, textAlign: 'right', fontSize: 10 }}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
-              <Text style={{ flex: 1, textAlign: 'right', fontSize: 10 }}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
+            <View style={styles.tableRow}>
+              <Text style={styles.slNoCell}></Text>
+              <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>Installation and Handling</Text>
+              <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
+              <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
             </View>
             
             {/* GST Row */}
-            <View style={{ flexDirection: 'row', backgroundColor: '#f5f5f5', padding: 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
-              <Text style={{ flex: 2, fontWeight: 'bold', fontSize: 10 }}>GST {quotation.gstPercentage}%</Text>
-              <Text style={{ flex: 1, textAlign: 'right', fontSize: 10 }}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
-              <Text style={{ flex: 1, textAlign: 'right', fontSize: 10 }}>
-                {formatRupeeForPDF(quotation.gstAmount * (1 - quotation.globalDiscount / 100))}
-              </Text>
+            <View style={[styles.tableRow, styles.tableRowEven]}>
+              <Text style={styles.slNoCell}></Text>
+              <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>GST {quotation.gstPercentage}%</Text>
+              <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
+              <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
             </View>
             
             {/* Final Price Row */}
-            <View style={{ flexDirection: 'row', padding: 8, borderBottom: 1, borderBottomColor: '#ddd' }}>
-              <Text style={{ flex: 2, fontWeight: 'bold', fontSize: 10 }}>Final Price</Text>
-              <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold', fontSize: 10 }}>{formatRupeeForPDF(quotation.finalPrice)}</Text>
-              <Text style={{ flex: 1, textAlign: 'right', fontWeight: 'bold', color: 'red', fontSize: 10 }}>
-                {formatRupeeForPDF(quotation.finalPrice * (1 - quotation.globalDiscount / 100) + quotation.totalInstallationCharges)}
+            <View style={[styles.tableRow, { backgroundColor: '#009245' }]}>
+              <Text style={[styles.slNoCell, { color: 'white' }]}></Text>
+              <Text style={[styles.descriptionCell, { fontWeight: 'bold', color: 'white' }]}>Final Price</Text>
+              <Text style={[styles.unitCell, { fontWeight: 'bold', color: 'white' }]}></Text>
+              <Text style={[styles.amountCell, { fontWeight: 'bold', color: 'white' }]}>
+                {formatRupeeForPDF(quotation.finalPrice)}
               </Text>
             </View>
           </View>
