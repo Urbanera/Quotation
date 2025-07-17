@@ -5,6 +5,17 @@ import { Download } from "lucide-react";
 import LandscapeQuote from "@/components/PDFQuotes/LandscapeQuote";
 import { QuotationWithDetails, CompanySettings, AppSettings } from "@shared/schema";
 
+// Format date function
+const formatDate = (date: Date | string | null | undefined) => {
+  if (!date) return "N/A";
+  const d = new Date(date);
+  return d.toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 interface LandscapeQuotePreviewProps {
   quotation: QuotationWithDetails;
   companySettings: CompanySettings;
@@ -83,50 +94,39 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
             Page 1 - Cover
           </div>
           <div className="flex flex-col h-full">
-            <div className="flex justify-between items-start mb-4">
-              <div className="text-center flex-grow">
-                <h2 className="text-2xl font-bold text-gray-800">Modular Interior Quotation</h2>
+            {/* Logo Area with border */}
+            <div className="text-center p-6 border-b-4 border-[#009245] mb-6">
+              <h1 className="text-2xl font-bold text-gray-800">{companySettings?.name || "DesignQuotes"}</h1>
+            </div>
+            
+            {/* Quotation Title */}
+            <div className="text-center mb-6">
+              <h2 className="text-lg font-bold text-[#7A7A7A] tracking-wide">MODULAR INTERIOR QUOTATION</h2>
+              <div className="w-full h-0.5 bg-[#D81F28] mt-2"></div>
+            </div>
+            
+            {/* Spacer for center positioning */}
+            <div className="flex-grow"></div>
+            
+            {/* Project Info Box */}
+            <div className="bg-white bg-opacity-95 p-6 w-3/5 border-l-4 border-[#D81F28] mb-4">
+              <div className="mb-3 flex">
+                <div className="font-bold text-[#009245] w-28">Client:</div>
+                <div>{quotation?.customer?.name || "Customer Name"}</div>
               </div>
-              <div className="w-1/4 text-right">
-                {companySettings?.logo && (
-                  <img 
-                    src={companySettings.logo} 
-                    alt={companySettings.name}
-                    className="max-h-16 max-w-full object-contain ml-auto" 
-                  />
-                )}
+              <div className="mb-3 flex">
+                <div className="font-bold text-[#009245] w-28">Date:</div>
+                <div>{formatDate(quotation?.createdAt || new Date())}</div>
+              </div>
+              <div className="flex">
+                <div className="font-bold text-[#009245] w-28">Quotation #:</div>
+                <div>{quotation?.quotationNumber || "QT-0000"}</div>
               </div>
             </div>
             
-            <div className="flex justify-between mb-8 mt-4">
-              <div className="w-2/3">
-                <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
-                <p className="text-gray-600">{companySettings?.address || "Address"}</p>
-                <p className="text-gray-600">Phone: {companySettings?.phone || "Phone"}</p>
-                <p className="text-gray-600">Email: {companySettings?.email || "Email"}</p>
-              </div>
-            </div>
-            
-            <div className="border-t border-gray-200 pt-6 mb-auto">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-500 mb-1">Customer:</h4>
-                  <p className="font-medium">{quotation?.customer?.name || "Customer Name"}</p>
-                  
-                  <h4 className="text-sm font-semibold text-gray-500 mb-1 mt-3">Address:</h4>
-                  <p>{quotation?.customer?.address || "Address"}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-500 mb-1">Phone:</h4>
-                  <p>{quotation?.customer?.phone || "Phone"}</p>
-                  
-                  <h4 className="text-sm font-semibold text-gray-500 mb-1 mt-3">Email:</h4>
-                  <p>{quotation?.customer?.email || "Email"}</p>
-                  
-                  <h4 className="text-sm font-semibold text-gray-500 mb-1 mt-3">Quotation #:</h4>
-                  <p className="font-medium">{quotation?.quotationNumber || "QT-0000"}</p>
-                </div>
-              </div>
+            {/* Green Footer */}
+            <div className="bg-[#009245] text-white p-3 text-center -m-8 mt-4">
+              <span className="text-sm">{companySettings?.website || "www.yourcompany.com"}</span>
             </div>
           </div>
           {renderFooter(1)}
@@ -138,60 +138,55 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
             Page 2 - Features
           </div>
           <div className="flex flex-col h-full">
-            <div className="flex justify-between mb-6">
-              <div className="w-2/3">
-                <h3 className="text-xl font-bold text-gray-800">{companySettings?.name || "Company Name"}</h3>
-              </div>
-              <div className="w-1/4 text-right">
-                {companySettings?.logo && (
-                  <img 
-                    src={companySettings.logo} 
-                    alt={companySettings.name}
-                    className="max-h-12 max-w-full object-contain ml-auto" 
-                  />
-                )}
-              </div>
+            {/* Logo Area */}
+            <div className="text-center p-6 mb-6">
+              <h1 className="text-2xl font-bold text-gray-800">{companySettings?.name || "DesignQuotes"}</h1>
             </div>
             
-            <div className="mb-auto">
-              <h4 className="text-lg font-bold text-[#009245] mb-4">About {companySettings?.name || "Our Company"}</h4>
-              
-              <div className="text-gray-700 space-y-2">
-                {appSettings?.presentationSecondPageContent ? (
+            {/* Features Content */}
+            <div className="mb-6">
+              {appSettings?.presentationSecondPageContent ? (
+                <div className="text-sm text-gray-700 space-y-2">
                   <div dangerouslySetInnerHTML={{ __html: appSettings.presentationSecondPageContent }} />
-                ) : (
-                  <>
-                    <p>
-                      {companySettings?.name} is a premier interior design firm specializing in creating exceptional living 
-                      and working spaces that reflect our clients' unique styles and needs. With a dedicated team 
-                      of designers and craftsmen, we combine innovative design with functionality.
+                </div>
+              ) : (
+                <div>
+                  <h4 className="text-lg font-bold text-[#009245] mb-4">Our Features</h4>
+                  
+                  <div className="grid grid-cols-2 gap-4 mt-6">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-bold text-gray-800 mb-2">Best Quality Materials</h5>
+                      <p className="text-sm text-gray-600">Premium raw materials and fittings to ensure durability and elegance.</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-bold text-gray-800 mb-2">Fast Delivery</h5>
+                      <p className="text-sm text-gray-600">Prompt project execution with strict timeline adherence.</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-bold text-gray-800 mb-2">Hassle-Free Installation</h5>
+                      <p className="text-sm text-gray-600">Expert installation team ensures minimal disruption to your routine.</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-bold text-gray-800 mb-2">Eco-Friendly Options</h5>
+                      <p className="text-sm text-gray-600">Sustainable materials that care for both your home and the environment.</p>
+                    </div>
+                  </div>
+                  
+                  {/* Client Testimonial */}
+                  <div className="mt-6 bg-gray-50 p-4 rounded-lg border-l-4 border-[#009245]">
+                    <h5 className="font-bold text-[#009245] mb-2">What Our Clients Say</h5>
+                    <p className="text-sm text-gray-600 italic">
+                      "The team's attention to detail and commitment to quality exceeded our expectations. Our home has been completely transformed!"
                     </p>
-                    <p>
-                      Our process begins with understanding your vision, lifestyle, and requirements before crafting 
-                      customized solutions that blend aesthetics with practicality.
-                    </p>
-                  </>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 mt-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-bold text-[#009245] mb-2">Quality Materials</h5>
-                  <p className="text-sm text-gray-600">We use only the highest quality materials sourced from trusted suppliers.</p>
+                    <p className="text-xs text-gray-500 mt-2">- Recent Client</p>
+                  </div>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-bold text-[#009245] mb-2">Expert Craftsmen</h5>
-                  <p className="text-sm text-gray-600">Our skilled team ensures precise execution of your design vision.</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-bold text-[#009245] mb-2">Timely Delivery</h5>
-                  <p className="text-sm text-gray-600">We commit to delivering your project within the agreed timeframe.</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-bold text-[#009245] mb-2">After-Sales Support</h5>
-                  <p className="text-sm text-gray-600">Our service doesn't end with installation - we provide ongoing support.</p>
-                </div>
-              </div>
+              )}
+            </div>
+            
+            {/* Green Footer */}
+            <div className="bg-[#009245] text-white p-3 text-center -m-8 mt-auto">
+              <span className="text-sm">{companySettings?.website || "www.yourcompany.com"}</span>
             </div>
           </div>
           {renderFooter(2)}

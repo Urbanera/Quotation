@@ -280,16 +280,73 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  coverFooter: {
+  // New styles for presentation quote matching layout
+  logoArea: {
+    textAlign: 'center',
+    paddingVertical: 25,
+    borderBottomWidth: 5,
+    borderBottomColor: '#009245',
+  },
+  companyNameCover: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  greenBorder: {
+    height: 5,
+    backgroundColor: '#009245',
+    marginTop: 10,
+  },
+  quotationTitleArea: {
+    textAlign: 'center',
+    paddingVertical: 20,
+    backgroundColor: 'white',
+  },
+  quotationTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#7A7A7A',
+    letterSpacing: 1,
+  },
+  redLine: {
+    height: 2,
+    backgroundColor: '#D81F28',
+    marginTop: 8,
+    width: '100%',
+  },
+  projectInfoBox: {
+    position: 'absolute',
+    bottom: 80,
+    left: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: 20,
+    width: '60%',
+    borderLeftWidth: 4,
+    borderLeftColor: '#D81F28',
+  },
+  projectInfoRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  projectInfoLabel: {
+    fontWeight: 'bold',
+    color: '#009245',
+    width: 80,
+    fontSize: 12,
+  },
+  projectInfoValue: {
+    color: '#000000',
+    fontSize: 12,
+    flex: 1,
+  },
+  greenFooter: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#009245',
-    padding: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    padding: 12,
+    textAlign: 'center',
   },
   footerText: {
     color: 'white',
@@ -411,281 +468,104 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
 
   return (
     <Document>
-      {/* First page - New Creative Cover Page */}
+      {/* First page - Cover Page matching Presentation Quote */}
       <Page size="A4" orientation="landscape" style={styles.page}>
-        <View style={styles.coverPage}>
-          {/* Header with company branding */}
-          <View style={styles.coverHeader}>
-            <View>
-              <Text style={styles.coverTitle}>
-                {companySettings?.name || "Interior Design Studio"}
-              </Text>
-              <Text style={styles.coverSubtitle}>
-                PREMIUM MODULAR INTERIOR SOLUTIONS
-              </Text>
-            </View>
-            {companySettings?.logo && (
-              <Image 
-                src={companySettings.logo} 
-                style={styles.coverLogo}
-              />
-            )}
-          </View>
-          
-          {/* Main content area */}
-          <View style={styles.coverBody}>
-            {/* Left side - Company information and features */}
-            <View style={styles.coverLeft}>
-              <Text style={styles.welcomeText}>
-                Welcome to Your Dream Interior
-              </Text>
-              <Text style={styles.descriptionText}>
-                Transform your space with our premium modular interior solutions. 
-                We specialize in creating beautiful, functional environments that 
-                reflect your unique style and enhance your daily living experience.
-              </Text>
-              
-              {/* Company details */}
-              <View style={{ marginBottom: 25 }}>
-                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 10 }}>
-                  Contact Information
-                </Text>
-                <Text style={{ fontSize: 12, color: '#333333', marginBottom: 5 }}>
-                  📍 {companySettings?.address || "Address"}
-                </Text>
-                <Text style={{ fontSize: 12, color: '#333333', marginBottom: 5 }}>
-                  📞 {companySettings?.phone || "Phone"}
-                </Text>
-                <Text style={{ fontSize: 12, color: '#333333', marginBottom: 5 }}>
-                  ✉️ {companySettings?.email || "Email"}
-                </Text>
-                {companySettings?.website && (
-                  <Text style={{ fontSize: 12, color: '#333333', marginBottom: 5 }}>
-                    🌐 {companySettings.website}
-                  </Text>
-                )}
-              </View>
-              
-              {/* Feature highlights */}
-              <View>
-                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 15 }}>
-                  Why Choose Us?
-                </Text>
-                <View style={styles.featureHighlight}>
-                  <View style={styles.featureDot} />
-                  <Text style={styles.featureText}>Premium quality materials and finishes</Text>
-                </View>
-                <View style={styles.featureHighlight}>
-                  <View style={styles.featureDot} />
-                  <Text style={styles.featureText}>Expert design consultation and planning</Text>
-                </View>
-                <View style={styles.featureHighlight}>
-                  <View style={styles.featureDot} />
-                  <Text style={styles.featureText}>Timely delivery and professional installation</Text>
-                </View>
-                <View style={styles.featureHighlight}>
-                  <View style={styles.featureDot} />
-                  <Text style={styles.featureText}>Comprehensive warranty and after-sales support</Text>
-                </View>
-                <View style={styles.featureHighlight}>
-                  <View style={styles.featureDot} />
-                  <Text style={styles.featureText}>Customized solutions for every space</Text>
-                </View>
-              </View>
-            </View>
-            
-            {/* Right side - Customer and quotation details */}
-            <View style={styles.coverRight}>
-              {/* Customer information card */}
-              <View style={styles.customerCard}>
-                <Text style={styles.customerTitle}>Client Details</Text>
-                <View style={styles.customerField}>
-                  <Text style={styles.label}>Name:</Text>
-                  <Text style={styles.value}>{quotation?.customer?.name || "Customer Name"}</Text>
-                </View>
-                <View style={styles.customerField}>
-                  <Text style={styles.label}>Address:</Text>
-                  <Text style={styles.value}>{quotation?.customer?.address || "Address"}</Text>
-                </View>
-                <View style={styles.customerField}>
-                  <Text style={styles.label}>Phone:</Text>
-                  <Text style={styles.value}>{quotation?.customer?.phone || "Phone"}</Text>
-                </View>
-                <View style={styles.customerField}>
-                  <Text style={styles.label}>Email:</Text>
-                  <Text style={styles.value}>{quotation?.customer?.email || "Email"}</Text>
-                </View>
-              </View>
-              
-              {/* Quotation details card */}
-              <View style={styles.quotationCard}>
-                <Text style={styles.quotationLabel}>QUOTATION NUMBER</Text>
-                <Text style={styles.quotationNumber}>{quotation?.quotationNumber || "QT-0000"}</Text>
-                <Text style={styles.quotationDate}>
-                  {quotation?.createdAt ? new Date(quotation.createdAt).toLocaleDateString('en-IN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  }) : "Date"}
-                </Text>
-              </View>
-              
-              {/* Total amount preview */}
-              <View style={{ marginTop: 20, alignItems: 'center' }}>
-                <Text style={{ fontSize: 12, color: '#666666', marginBottom: 5 }}>
-                  Total Project Value
-                </Text>
-                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#009245' }}>
-                  {formatRupeeForPDF(quotation?.finalPrice || 0)}
-                </Text>
-                <Text style={{ fontSize: 10, color: '#666666', marginTop: 5 }}>
-                  *Including all taxes and installation
-                </Text>
-              </View>
-            </View>
-          </View>
-          
-          {/* Footer */}
-          <View style={styles.coverFooter}>
-            <Text style={styles.footerText}>Page 1 of {totalPages}</Text>
-            <Text style={styles.footerText}>
-              {companySettings?.website || "www.interiordesign.com"}
-            </Text>
-          </View>
+        {/* Logo Area with border */}
+        <View style={styles.logoArea}>
+          <Text style={styles.companyNameCover}>{companySettings?.name || "DesignQuotes"}</Text>
+          <View style={styles.greenBorder} />
         </View>
-      </Page>
-      
-      {/* Second page - Enhanced Features Page */}
-      <Page size="A4" orientation="landscape" style={styles.page}>
-        <View style={{ ...styles.section, padding: 30 }}>
-          {/* Header with gradient background */}
-          <View style={{ 
-            backgroundColor: '#f8f9fa', 
-            padding: 20, 
-            borderRadius: 8,
-            marginBottom: 20,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <View style={{ width: '70%' }}>
-              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#009245', marginBottom: 5 }}>
-                About {companySettings?.name || "Our Company"}
-              </Text>
-              <Text style={{ fontSize: 12, color: '#666666' }}>
-                Excellence in every detail, innovation in every design
-              </Text>
-            </View>
-            <View style={{ width: '25%', alignItems: 'flex-end' }}>
-              {companySettings?.logo && (
-                <Image 
-                  src={companySettings.logo} 
-                  style={{ width: 80, height: 60, objectFit: 'contain' }} 
-                />
-              )}
-            </View>
+        
+        {/* Quotation Title */}
+        <View style={styles.quotationTitleArea}>
+          <Text style={styles.quotationTitle}>MODULAR INTERIOR QUOTATION</Text>
+          <View style={styles.redLine} />
+        </View>
+        
+        {/* Project Info Box - positioned similar to presentation quote */}
+        <View style={styles.projectInfoBox}>
+          <View style={styles.projectInfoRow}>
+            <Text style={styles.projectInfoLabel}>Client:</Text>
+            <Text style={styles.projectInfoValue}>{quotation?.customer?.name || "N/A"}</Text>
           </View>
-          
-          {/* Company description */}
-          <View style={{ marginBottom: 25 }}>
-            {appSettings?.presentationSecondPageContent ? (
-              <Text style={{ fontSize: 13, lineHeight: 1.6, color: '#333333', textAlign: 'justify' }}>
-                {appSettings.presentationSecondPageContent.replace(/<[^>]*>?/gm, ' ')}
-              </Text>
-            ) : (
-              <Text style={{ fontSize: 13, lineHeight: 1.6, color: '#333333', textAlign: 'justify' }}>
-                {companySettings?.name || "Our company"} is a premier interior design firm specializing in creating exceptional living 
-                and working spaces that reflect our clients' unique styles and needs. With a dedicated team 
-                of designers and craftsmen, we combine innovative design with functionality to deliver spaces 
-                that inspire and delight.
-                
-                Our process begins with understanding your vision, lifestyle, and requirements before crafting 
-                customized solutions that blend aesthetics with practicality. We believe that great design 
-                should not only look beautiful but also enhance your daily living experience.
-              </Text>
-            )}
+          <View style={styles.projectInfoRow}>
+            <Text style={styles.projectInfoLabel}>Date:</Text>
+            <Text style={styles.projectInfoValue}>{formatDateForPDF(quotation.createdAt)}</Text>
           </View>
-          
-          {/* Enhanced feature grid */}
-          <View style={{ 
-            flexDirection: 'row', 
-            flexWrap: 'wrap', 
-            justifyContent: 'space-between',
-            marginTop: 10
-          }}>
-            <View style={{ 
-              width: '48%', 
-              backgroundColor: '#fff',
-              padding: 15,
-              borderRadius: 8,
-              marginBottom: 15,
-              borderLeftWidth: 4,
-              borderLeftColor: '#009245'
-            }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
-                🏆 Premium Quality
-              </Text>
-              <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
-                We use only the highest quality materials sourced from trusted suppliers, ensuring durability and elegance in every project.
-              </Text>
-            </View>
-            
-            <View style={{ 
-              width: '48%', 
-              backgroundColor: '#fff',
-              padding: 15,
-              borderRadius: 8,
-              marginBottom: 15,
-              borderLeftWidth: 4,
-              borderLeftColor: '#009245'
-            }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
-                👨‍🔧 Expert Craftsmen
-              </Text>
-              <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
-                Our skilled team of designers and craftsmen ensures precise execution of your design vision with attention to every detail.
-              </Text>
-            </View>
-            
-            <View style={{ 
-              width: '48%', 
-              backgroundColor: '#fff',
-              padding: 15,
-              borderRadius: 8,
-              marginBottom: 15,
-              borderLeftWidth: 4,
-              borderLeftColor: '#009245'
-            }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
-                ⏰ Timely Delivery
-              </Text>
-              <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
-                We commit to delivering your project within the agreed timeframe without compromising on quality or craftsmanship.
-              </Text>
-            </View>
-            
-            <View style={{ 
-              width: '48%', 
-              backgroundColor: '#fff',
-              padding: 15,
-              borderRadius: 8,
-              marginBottom: 15,
-              borderLeftWidth: 4,
-              borderLeftColor: '#009245'
-            }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
-                🛠️ After-Sales Support
-              </Text>
-              <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
-                Our service doesn't end with installation. We provide comprehensive warranty and ongoing support for complete peace of mind.
-              </Text>
-            </View>
+          <View style={styles.projectInfoRow}>
+            <Text style={styles.projectInfoLabel}>Quotation #:</Text>
+            <Text style={styles.projectInfoValue}>{quotation?.quotationNumber || "QT-0000"}</Text>
           </View>
         </View>
         
-        <View style={styles.footer}>
-          <Text>Page 2 of {totalPages}</Text>
-          <Text>{companySettings?.website || ""}</Text>
+        {/* Green Footer */}
+        <View style={styles.greenFooter}>
+          <Text style={styles.footerText}>{companySettings?.website || "www.yourcompany.com"}</Text>
+        </View>
+      </Page>
+      
+      {/* Second page - Features Page matching Presentation Quote */}
+      <Page size="A4" orientation="landscape" style={styles.page}>
+        {/* Logo Area */}
+        <View style={styles.logoArea}>
+          <Text style={styles.companyNameCover}>{companySettings?.name || "DesignQuotes"}</Text>
+        </View>
+        
+        {/* Features Content */}
+        <View style={{ padding: 30 }}>
+          {appSettings?.presentationSecondPageContent ? (
+            <Text style={{ fontSize: 12, lineHeight: 1.6, color: '#333333', textAlign: 'justify' }}>
+              {appSettings.presentationSecondPageContent.replace(/<[^>]*>?/gm, ' ')}
+            </Text>
+          ) : (
+            <View>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#009245', marginBottom: 15 }}>Our Features</Text>
+              
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                <View style={{ width: '48%', marginBottom: 15 }}>
+                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333333', marginBottom: 8 }}>Best Quality Materials</Text>
+                  <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
+                    Premium raw materials and fittings to ensure durability and elegance.
+                  </Text>
+                </View>
+                
+                <View style={{ width: '48%', marginBottom: 15 }}>
+                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333333', marginBottom: 8 }}>Fast Delivery</Text>
+                  <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
+                    Prompt project execution with strict timeline adherence.
+                  </Text>
+                </View>
+                
+                <View style={{ width: '48%', marginBottom: 15 }}>
+                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333333', marginBottom: 8 }}>Hassle-Free Installation</Text>
+                  <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
+                    Expert installation team ensures minimal disruption to your routine.
+                  </Text>
+                </View>
+                
+                <View style={{ width: '48%', marginBottom: 15 }}>
+                  <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333333', marginBottom: 8 }}>Eco-Friendly Options</Text>
+                  <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
+                    Sustainable materials that care for both your home and the environment.
+                  </Text>
+                </View>
+              </View>
+              
+              {/* Client Testimonial */}
+              <View style={{ marginTop: 20, backgroundColor: '#f8f9fa', padding: 15, borderRadius: 8, borderLeftWidth: 4, borderLeftColor: '#009245' }}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>What Our Clients Say</Text>
+                <Text style={{ fontSize: 12, color: '#333333', fontStyle: 'italic', marginBottom: 8 }}>
+                  "The team's attention to detail and commitment to quality exceeded our expectations. Our home has been completely transformed!"
+                </Text>
+                <Text style={{ fontSize: 10, color: '#666666' }}>- Recent Client</Text>
+              </View>
+            </View>
+          )}
+        </View>
+        
+        {/* Green Footer */}
+        <View style={styles.greenFooter}>
+          <Text style={styles.footerText}>{companySettings?.website || "www.yourcompany.com"}</Text>
         </View>
       </Page>
       
