@@ -23,13 +23,20 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { 
   History, 
   RotateCcw, 
   Clock, 
   FileText, 
   ArrowRight, 
-  AlertCircle 
+  AlertCircle,
+  ChevronDown,
+  ChevronRight 
 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +56,7 @@ export function QuotationModificationHistory({
 }: QuotationModificationHistoryProps) {
   const { toast } = useToast();
   const [selectedModification, setSelectedModification] = useState<QuotationModification | null>(null);
+  const [expandedModifications, setExpandedModifications] = useState<Set<number>>(new Set());
 
   const { data: modifications = [], isLoading, refetch } = useQuery({
     queryKey: [`/api/quotations/${quotationId}/modifications`],
@@ -101,6 +109,18 @@ export function QuotationModificationHistory({
     }
   };
 
+  const toggleExpansion = (modificationId: number) => {
+    setExpandedModifications(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(modificationId)) {
+        newSet.delete(modificationId);
+      } else {
+        newSet.add(modificationId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
@@ -127,67 +147,92 @@ export function QuotationModificationHistory({
               <p className="text-sm">Changes will appear here once you start editing the quotation</p>
             </div>
           ) : (
-            <ScrollArea className="h-full">
-              <div className="space-y-4 p-4">
-                {modifications.map((modification, index) => (
-                  <Card key={modification.id} className="border-l-4 border-l-indigo-500">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline" className="text-xs">
-                            #{modification.modificationNumber}
-                          </Badge>
-                          <CardTitle className="text-lg">{modification.title}</CardTitle>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1 text-sm text-gray-500">
-                            <Clock className="h-4 w-4" />
-                            {formatDate(modification.createdAt)}
+            <ScrollArea className="h-full max-h-[500px]">
+              <div className="space-y-2 p-4">
+                {modifications.map((modification, index) => {
+                  const isExpanded = expandedModifications.has(modification.id);
+                  return (
+                    <div key={modification.id} className="border rounded-lg border-l-4 border-l-indigo-500">
+                      <Collapsible
+                        open={isExpanded}
+                        onOpenChange={() => toggleExpansion(modification.id)}
+                      >
+                        <CollapsibleTrigger className="w-full">
+                          <div className="flex items-center justify-between p-3 hover:bg-gray-50">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
+                                )}
+                                <Badge variant="outline" className="text-xs">
+                                  #{modification.modificationNumber}
+                                </Badge>
+                              </div>
+                              <span className="font-medium">{modification.title}</span>
+                              <span className="text-sm text-gray-500">
+                                {formatCurrency(modification.finalPrice)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1 text-sm text-gray-500">
+                                <Clock className="h-4 w-4" />
+                                {formatDate(modification.createdAt)}
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRevert(modification);
+                                }}
+                                disabled={revertMutation.isPending}
+                                className="ml-2"
+                              >
+                                <RotateCcw className="h-4 w-4 mr-1" />
+                                Revert
+                              </Button>
+                            </div>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRevert(modification)}
-                            disabled={revertMutation.isPending}
-                            className="ml-2"
-                          >
-                            <RotateCcw className="h-4 w-4 mr-1" />
-                            Revert
-                          </Button>
-                        </div>
-                      </div>
-                      {modification.description && (
-                        <CardDescription>{modification.description}</CardDescription>
-                      )}
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-600">Total Selling Price:</span>
-                          <span className="font-medium">
-                            {formatCurrency(modification.totalSellingPrice)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-600">Final Price:</span>
-                          <span className="font-medium">
-                            {formatCurrency(modification.finalPrice)}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {index < modifications.length - 1 && (
-                        <div className="flex items-center gap-2 mt-4 pt-4 border-t text-sm text-gray-500">
-                          <ArrowRight className="h-4 w-4" />
-                          <span>
-                            Price changed from {formatCurrency(modification.finalPrice)} to{" "}
-                            {formatCurrency(modifications[index + 1].finalPrice)}
-                          </span>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="px-3 pb-3 border-t">
+                            <div className="pt-3">
+                              {modification.description && (
+                                <p className="text-sm text-gray-600 mb-3">{modification.description}</p>
+                              )}
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-600">Total Selling Price:</span>
+                                  <span className="font-medium">
+                                    {formatCurrency(modification.totalSellingPrice)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-600">Final Price:</span>
+                                  <span className="font-medium">
+                                    {formatCurrency(modification.finalPrice)}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {index < modifications.length - 1 && (
+                                <div className="flex items-center gap-2 mt-4 pt-4 border-t text-sm text-gray-500">
+                                  <ArrowRight className="h-4 w-4" />
+                                  <span>
+                                    Price changed from {formatCurrency(modification.finalPrice)} to{" "}
+                                    {formatCurrency(modifications[index + 1].finalPrice)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+                  );
+                })}
               </div>
             </ScrollArea>
           )}
