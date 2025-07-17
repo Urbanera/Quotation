@@ -5,9 +5,10 @@ import { formatCurrency } from "@/lib/calculations";
 
 // Custom formatter for rupee symbol in PDF
 // Using Unicode rupee symbol with a space to ensure proper rendering
-const formatRupeeForPDF = (amount: number): string => {
+const formatRupeeForPDF = (amount: number | undefined | null): string => {
   // The PDF renderer has trouble with the rupee symbol, so we use "Rs." instead
-  return `Rs. ${amount.toLocaleString('en-IN')}`;
+  const safeAmount = amount || 0;
+  return `Rs. ${safeAmount.toLocaleString('en-IN')}`;
 };
 
 // Create styles
