@@ -77,9 +77,9 @@ export default function ImageSlideshow({
               View and navigate through room images. Use arrow keys to navigate or click thumbnails to jump to specific images.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col" style={{ height: isFullscreen ? '100vh' : '90vh' }}>
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b bg-white">
+            <div className="flex items-center justify-between p-4 border-b bg-white flex-shrink-0">
               <div className="flex items-center space-x-4">
                 <h3 className="text-lg font-semibold">
                   {currentImage.type || 'Untitled'} ({currentIndex + 1} of {images.length})
@@ -116,12 +116,19 @@ export default function ImageSlideshow({
             </div>
 
             {/* Image Display */}
-            <div className="flex-1 relative bg-gray-100 flex items-center justify-center p-8">
+            <div 
+              className="relative bg-gray-100 flex items-center justify-center p-4"
+              style={{ 
+                height: images.length > 1 
+                  ? 'calc(100% - 140px)' // Header + thumbnails + info
+                  : 'calc(100% - 80px)'  // Header + info only
+              }}
+            >
               <div className="w-full h-full flex items-center justify-center">
                 <img
                   src={currentImage.path}
                   alt={currentImage.filename}
-                  className="max-w-full max-h-full object-contain"
+                  className="block"
                   style={{ 
                     maxWidth: '100%', 
                     maxHeight: '100%',
@@ -157,7 +164,7 @@ export default function ImageSlideshow({
 
             {/* Thumbnail Strip */}
             {images.length > 1 && (
-              <div className="p-4 bg-gray-50 border-t">
+              <div className="p-4 bg-gray-50 border-t flex-shrink-0">
                 <div className="flex space-x-2 overflow-x-auto">
                   {images.map((image, index) => (
                     <button
@@ -181,7 +188,7 @@ export default function ImageSlideshow({
             )}
 
             {/* Image Info */}
-            <div className="p-4 bg-gray-50 border-t">
+            <div className="p-4 bg-gray-50 border-t flex-shrink-0">
               <div className="flex items-center justify-between text-sm text-gray-600">
                 <div className="flex items-center space-x-4">
                   <span>Type: {currentImage.type || 'Not specified'}</span>
