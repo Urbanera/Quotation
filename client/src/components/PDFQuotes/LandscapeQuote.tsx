@@ -13,16 +13,138 @@ const formatRupeeForPDF = (amount: number): string => {
 // Create styles
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
+    padding: 0,
     backgroundColor: '#FFFFFF',
     orientation: 'landscape',
   },
   section: {
-    margin: 10,
-    padding: 10,
-    height: '90%',
+    margin: 0,
+    padding: 0,
+    height: '100%',
     position: 'relative',
   },
+  
+  // New creative cover page styles
+  coverPage: {
+    backgroundColor: '#f8f9fa',
+    height: '100%',
+    position: 'relative',
+  },
+  coverHeader: {
+    backgroundColor: '#009245',
+    height: 120,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 40,
+    paddingVertical: 20,
+  },
+  coverTitle: {
+    color: 'white',
+    fontSize: 32,
+    fontWeight: 'bold',
+    letterSpacing: 1.5,
+  },
+  coverSubtitle: {
+    color: '#e8f5e9',
+    fontSize: 14,
+    marginTop: 5,
+    letterSpacing: 0.5,
+  },
+  coverLogo: {
+    width: 100,
+    height: 80,
+    objectFit: 'contain',
+  },
+  coverBody: {
+    padding: 40,
+    height: '100%',
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  coverLeft: {
+    width: '60%',
+    paddingRight: 30,
+  },
+  coverRight: {
+    width: '40%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#009245',
+    marginBottom: 15,
+    marginTop: 20,
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: '#333333',
+    lineHeight: 1.6,
+    marginBottom: 20,
+  },
+  featureHighlight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  featureDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#009245',
+    marginRight: 12,
+  },
+  featureText: {
+    fontSize: 12,
+    color: '#555555',
+  },
+  customerCard: {
+    backgroundColor: '#f8f9fa',
+    padding: 20,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  customerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#009245',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  customerField: {
+    marginBottom: 10,
+  },
+  quotationCard: {
+    backgroundColor: '#009245',
+    padding: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  quotationLabel: {
+    color: 'white',
+    fontSize: 12,
+    marginBottom: 5,
+  },
+  quotationNumber: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  quotationDate: {
+    color: '#e8f5e9',
+    fontSize: 10,
+    marginTop: 5,
+  },
+  
+  // Original styles (keeping for other pages)
   title: {
     fontSize: 24,
     textAlign: 'center',
@@ -60,12 +182,6 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 12,
     marginBottom: 8,
-  },
-  quotationNumber: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
   },
   tableContainer: {
     marginTop: 20,
@@ -162,6 +278,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  coverFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#009245',
+    padding: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  footerText: {
+    color: 'white',
+    fontSize: 10,
+  },
   aboutSection: {
     marginTop: 20,
     marginBottom: 30,
@@ -217,7 +348,7 @@ const styles = StyleSheet.create({
     color: '#009245',
     marginBottom: 5,
   },
-  featureText: {
+  featureTextOld: {
     fontSize: 10,
     color: '#666666',
   },
@@ -278,108 +409,274 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
 
   return (
     <Document>
-      {/* First page - Cover with logo and customer info */}
+      {/* First page - New Creative Cover Page */}
       <Page size="A4" orientation="landscape" style={styles.page}>
-        <View style={styles.section}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-            <View style={{ width: '70%' }}>
-              <Text style={styles.title}>Modular Interior Quotation</Text>
+        <View style={styles.coverPage}>
+          {/* Header with company branding */}
+          <View style={styles.coverHeader}>
+            <View>
+              <Text style={styles.coverTitle}>
+                {companySettings?.name || "Interior Design Studio"}
+              </Text>
+              <Text style={styles.coverSubtitle}>
+                PREMIUM MODULAR INTERIOR SOLUTIONS
+              </Text>
             </View>
-            <View style={{ width: '25%', alignItems: 'flex-end' }}>
-              {companySettings?.logo && (
-                <Image 
-                  src={companySettings.logo} 
-                  style={{ width: 120, objectFit: 'contain' }} 
-                />
-              )}
+            {companySettings?.logo && (
+              <Image 
+                src={companySettings.logo} 
+                style={styles.coverLogo}
+              />
+            )}
+          </View>
+          
+          {/* Main content area */}
+          <View style={styles.coverBody}>
+            {/* Left side - Company information and features */}
+            <View style={styles.coverLeft}>
+              <Text style={styles.welcomeText}>
+                Welcome to Your Dream Interior
+              </Text>
+              <Text style={styles.descriptionText}>
+                Transform your space with our premium modular interior solutions. 
+                We specialize in creating beautiful, functional environments that 
+                reflect your unique style and enhance your daily living experience.
+              </Text>
+              
+              {/* Company details */}
+              <View style={{ marginBottom: 25 }}>
+                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 10 }}>
+                  Contact Information
+                </Text>
+                <Text style={{ fontSize: 12, color: '#333333', marginBottom: 5 }}>
+                  📍 {companySettings?.address || "Address"}
+                </Text>
+                <Text style={{ fontSize: 12, color: '#333333', marginBottom: 5 }}>
+                  📞 {companySettings?.phone || "Phone"}
+                </Text>
+                <Text style={{ fontSize: 12, color: '#333333', marginBottom: 5 }}>
+                  ✉️ {companySettings?.email || "Email"}
+                </Text>
+                {companySettings?.website && (
+                  <Text style={{ fontSize: 12, color: '#333333', marginBottom: 5 }}>
+                    🌐 {companySettings.website}
+                  </Text>
+                )}
+              </View>
+              
+              {/* Feature highlights */}
+              <View>
+                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 15 }}>
+                  Why Choose Us?
+                </Text>
+                <View style={styles.featureHighlight}>
+                  <View style={styles.featureDot} />
+                  <Text style={styles.featureText}>Premium quality materials and finishes</Text>
+                </View>
+                <View style={styles.featureHighlight}>
+                  <View style={styles.featureDot} />
+                  <Text style={styles.featureText}>Expert design consultation and planning</Text>
+                </View>
+                <View style={styles.featureHighlight}>
+                  <View style={styles.featureDot} />
+                  <Text style={styles.featureText}>Timely delivery and professional installation</Text>
+                </View>
+                <View style={styles.featureHighlight}>
+                  <View style={styles.featureDot} />
+                  <Text style={styles.featureText}>Comprehensive warranty and after-sales support</Text>
+                </View>
+                <View style={styles.featureHighlight}>
+                  <View style={styles.featureDot} />
+                  <Text style={styles.featureText}>Customized solutions for every space</Text>
+                </View>
+              </View>
+            </View>
+            
+            {/* Right side - Customer and quotation details */}
+            <View style={styles.coverRight}>
+              {/* Customer information card */}
+              <View style={styles.customerCard}>
+                <Text style={styles.customerTitle}>Client Details</Text>
+                <View style={styles.customerField}>
+                  <Text style={styles.label}>Name:</Text>
+                  <Text style={styles.value}>{quotation?.customer?.name || "Customer Name"}</Text>
+                </View>
+                <View style={styles.customerField}>
+                  <Text style={styles.label}>Address:</Text>
+                  <Text style={styles.value}>{quotation?.customer?.address || "Address"}</Text>
+                </View>
+                <View style={styles.customerField}>
+                  <Text style={styles.label}>Phone:</Text>
+                  <Text style={styles.value}>{quotation?.customer?.phone || "Phone"}</Text>
+                </View>
+                <View style={styles.customerField}>
+                  <Text style={styles.label}>Email:</Text>
+                  <Text style={styles.value}>{quotation?.customer?.email || "Email"}</Text>
+                </View>
+              </View>
+              
+              {/* Quotation details card */}
+              <View style={styles.quotationCard}>
+                <Text style={styles.quotationLabel}>QUOTATION NUMBER</Text>
+                <Text style={styles.quotationNumber}>{quotation?.quotationNumber || "QT-0000"}</Text>
+                <Text style={styles.quotationDate}>
+                  {quotation?.createdAt ? new Date(quotation.createdAt).toLocaleDateString('en-IN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  }) : "Date"}
+                </Text>
+              </View>
+              
+              {/* Total amount preview */}
+              <View style={{ marginTop: 20, alignItems: 'center' }}>
+                <Text style={{ fontSize: 12, color: '#666666', marginBottom: 5 }}>
+                  Total Project Value
+                </Text>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#009245' }}>
+                  {formatRupeeForPDF(quotation?.finalPrice || 0)}
+                </Text>
+                <Text style={{ fontSize: 10, color: '#666666', marginTop: 5 }}>
+                  *Including all taxes and installation
+                </Text>
+              </View>
             </View>
           </View>
           
-          <View style={{ marginTop: 20 }}>
-            <Text style={styles.text}>{companySettings?.address || "Address"}</Text>
-            <Text style={styles.text}>Phone: {companySettings?.phone || "Phone"}</Text>
-            <Text style={styles.text}>Email: {companySettings?.email || "Email"}</Text>
+          {/* Footer */}
+          <View style={styles.coverFooter}>
+            <Text style={styles.footerText}>Page 1 of {totalPages}</Text>
+            <Text style={styles.footerText}>
+              {companySettings?.website || "www.interiordesign.com"}
+            </Text>
           </View>
-          
-          <View style={{ borderTopWidth: 1, borderTopColor: '#EEEEEE', paddingTop: 20, marginTop: 30 }}>
-            <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: '50%' }}>
-                <Text style={styles.label}>Customer:</Text>
-                <Text style={styles.value}>{quotation?.customer?.name || "Customer Name"}</Text>
-                
-                <Text style={styles.label}>Address:</Text>
-                <Text style={styles.value}>{quotation?.customer?.address || "Address"}</Text>
-              </View>
-              <View style={{ width: '50%' }}>
-                <Text style={styles.label}>Phone:</Text>
-                <Text style={styles.value}>{quotation?.customer?.phone || "Phone"}</Text>
-                
-                <Text style={styles.label}>Email:</Text>
-                <Text style={styles.value}>{quotation?.customer?.email || "Email"}</Text>
-                
-                <Text style={styles.label}>Quotation #:</Text>
-                <Text style={styles.value}>{quotation?.quotationNumber || "QT-0000"}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-        
-        <View style={styles.footer}>
-          <Text>Page 1 of {totalPages}</Text>
-          <Text>{companySettings?.website || ""}</Text>
         </View>
       </Page>
       
-      {/* Second page - Features */}
+      {/* Second page - Enhanced Features Page */}
       <Page size="A4" orientation="landscape" style={styles.page}>
-        <View style={styles.section}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
-            <View style={{ width: '65%' }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245' }}>About Our Company</Text>
+        <View style={{ ...styles.section, padding: 30 }}>
+          {/* Header with gradient background */}
+          <View style={{ 
+            backgroundColor: '#f8f9fa', 
+            padding: 20, 
+            borderRadius: 8,
+            marginBottom: 20,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <View style={{ width: '70%' }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#009245', marginBottom: 5 }}>
+                About {companySettings?.name || "Our Company"}
+              </Text>
+              <Text style={{ fontSize: 12, color: '#666666' }}>
+                Excellence in every detail, innovation in every design
+              </Text>
             </View>
             <View style={{ width: '25%', alignItems: 'flex-end' }}>
               {companySettings?.logo && (
                 <Image 
                   src={companySettings.logo} 
-                  style={{ width: 120, objectFit: 'contain' }} 
+                  style={{ width: 80, height: 60, objectFit: 'contain' }} 
                 />
               )}
             </View>
           </View>
           
-          <View style={{ marginTop: 10 }}>
+          {/* Company description */}
+          <View style={{ marginBottom: 25 }}>
             {appSettings?.presentationSecondPageContent ? (
-              <Text style={styles.aboutText}>
+              <Text style={{ fontSize: 13, lineHeight: 1.6, color: '#333333', textAlign: 'justify' }}>
                 {appSettings.presentationSecondPageContent.replace(/<[^>]*>?/gm, ' ')}
               </Text>
             ) : (
-              <Text style={styles.aboutText}>
-                {companySettings?.name} is a premier interior design firm specializing in creating exceptional living 
+              <Text style={{ fontSize: 13, lineHeight: 1.6, color: '#333333', textAlign: 'justify' }}>
+                {companySettings?.name || "Our company"} is a premier interior design firm specializing in creating exceptional living 
                 and working spaces that reflect our clients' unique styles and needs. With a dedicated team 
-                of designers and craftsmen, we combine innovative design with functionality.
+                of designers and craftsmen, we combine innovative design with functionality to deliver spaces 
+                that inspire and delight.
                 
                 Our process begins with understanding your vision, lifestyle, and requirements before crafting 
-                customized solutions that blend aesthetics with practicality.
+                customized solutions that blend aesthetics with practicality. We believe that great design 
+                should not only look beautiful but also enhance your daily living experience.
               </Text>
             )}
           </View>
           
-          <View style={styles.featureGrid}>
-            <View style={styles.featureBox}>
-              <Text style={styles.featureTitle}>Quality Materials</Text>
-              <Text style={styles.featureText}>We use only the highest quality materials sourced from trusted suppliers.</Text>
+          {/* Enhanced feature grid */}
+          <View style={{ 
+            flexDirection: 'row', 
+            flexWrap: 'wrap', 
+            justifyContent: 'space-between',
+            marginTop: 10
+          }}>
+            <View style={{ 
+              width: '48%', 
+              backgroundColor: '#fff',
+              padding: 15,
+              borderRadius: 8,
+              marginBottom: 15,
+              borderLeftWidth: 4,
+              borderLeftColor: '#009245'
+            }}>
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                🏆 Premium Quality
+              </Text>
+              <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
+                We use only the highest quality materials sourced from trusted suppliers, ensuring durability and elegance in every project.
+              </Text>
             </View>
-            <View style={styles.featureBox}>
-              <Text style={styles.featureTitle}>Expert Craftsmen</Text>
-              <Text style={styles.featureText}>Our skilled team ensures precise execution of your design vision.</Text>
+            
+            <View style={{ 
+              width: '48%', 
+              backgroundColor: '#fff',
+              padding: 15,
+              borderRadius: 8,
+              marginBottom: 15,
+              borderLeftWidth: 4,
+              borderLeftColor: '#009245'
+            }}>
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                👨‍🔧 Expert Craftsmen
+              </Text>
+              <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
+                Our skilled team of designers and craftsmen ensures precise execution of your design vision with attention to every detail.
+              </Text>
             </View>
-            <View style={styles.featureBox}>
-              <Text style={styles.featureTitle}>Timely Delivery</Text>
-              <Text style={styles.featureText}>We commit to delivering your project within the agreed timeframe.</Text>
+            
+            <View style={{ 
+              width: '48%', 
+              backgroundColor: '#fff',
+              padding: 15,
+              borderRadius: 8,
+              marginBottom: 15,
+              borderLeftWidth: 4,
+              borderLeftColor: '#009245'
+            }}>
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                ⏰ Timely Delivery
+              </Text>
+              <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
+                We commit to delivering your project within the agreed timeframe without compromising on quality or craftsmanship.
+              </Text>
             </View>
-            <View style={styles.featureBox}>
-              <Text style={styles.featureTitle}>After-Sales Support</Text>
-              <Text style={styles.featureText}>Our service doesn't end with installation - we provide ongoing support.</Text>
+            
+            <View style={{ 
+              width: '48%', 
+              backgroundColor: '#fff',
+              padding: 15,
+              borderRadius: 8,
+              marginBottom: 15,
+              borderLeftWidth: 4,
+              borderLeftColor: '#009245'
+            }}>
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                🛠️ After-Sales Support
+              </Text>
+              <Text style={{ fontSize: 11, color: '#666666', lineHeight: 1.4 }}>
+                Our service doesn't end with installation. We provide comprehensive warranty and ongoing support for complete peace of mind.
+              </Text>
             </View>
           </View>
         </View>
