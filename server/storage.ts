@@ -2616,6 +2616,19 @@ export class MemStorage implements IStorage {
     const gstAmount = subtotal * (quotation.gstPercentage / 100);
     const finalPrice = subtotal + gstAmount;
     
+    // Check for significant price changes and create snapshot if needed
+    const priceChangeThreshold = 100; // Rs. 100 change threshold
+    const originalFinalPrice = quotation.finalPrice;
+    const priceChange = Math.abs(finalPrice - originalFinalPrice);
+    
+    console.log(`Price change check for quotation ${quotationId}: Original: ${originalFinalPrice}, New: ${finalPrice}, Change: ${priceChange}, Threshold: ${priceChangeThreshold}`);
+    
+    if (priceChange > priceChangeThreshold) {
+      // Create snapshot before updating prices
+      console.log(`Creating snapshot for quotation ${quotationId} due to price change`);
+      await this.createQuotationSnapshot(quotationId, "Content update");
+    }
+    
     // Create a new quotation object with all the updated fields
     const updatedQuotation = {
       ...quotation,
