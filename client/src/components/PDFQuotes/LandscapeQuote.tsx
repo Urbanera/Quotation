@@ -295,6 +295,7 @@ const styles = StyleSheet.create({
   logoArea: {
     textAlign: 'center',
     paddingVertical: 25,
+    paddingTop: 40,
     borderBottomWidth: 5,
     borderBottomColor: '#009245',
   },
@@ -363,6 +364,41 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
   },
+  
+  // Room page styles
+  roomPageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingRight: 30,
+  },
+  roomPageContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imagePageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingRight: 30,
+  },
+  imageContainer: {
+    flex: 1,
+    marginTop: 20,
+    marginBottom: 40,
+    marginLeft: 30,
+    marginRight: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  singleRoomImage: {
+    maxWidth: '100%',
+    maxHeight: '100%',
+    objectFit: 'contain',
+  },
   aboutSection: {
     marginTop: 20,
     marginBottom: 30,
@@ -379,19 +415,7 @@ const styles = StyleSheet.create({
     color: '#333333',
     textAlign: 'justify',
   },
-  imageContainer: {
-    marginTop: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '85%',
-    width: '95%',
-    margin: 'auto',
-  },
-  singleRoomImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'contain',
-  },
+
   roomImageTitle: {
     fontSize: 14,
     fontWeight: 'bold',
@@ -464,9 +488,10 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
   const getTotalPages = () => {
     let pageCount = 2; // Cover page + Features page
     
-    // Count room image pages
+    // Count room name pages and image pages
     sortedRooms.forEach(room => {
-      pageCount += room.images?.length || 0;
+      pageCount += 1; // Room name page
+      pageCount += room.images?.length || 0; // Image pages
     });
     
     // Add summary page
@@ -484,7 +509,6 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
         {/* Logo Area with border */}
         <View style={styles.logoArea}>
           <Text style={styles.companyNameCover}>{companySettings?.name || "DesignQuotes"}</Text>
-          <View style={styles.greenBorder} />
         </View>
         
         {/* Quotation Title */}
@@ -580,45 +604,98 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
         </View>
       </Page>
       
-      {/* Room Images - one page per image */}
-      {sortedRooms.map((room, roomIndex) => 
-        room.images && room.images.map((image, imageIndex) => {
-          const pageNumber = 3 + roomIndex + imageIndex;
-          return (
-            <Page key={`${roomIndex}-${imageIndex}`} size="A4" orientation="landscape" style={styles.page}>
-              <View style={styles.section}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <View style={{ width: '65%' }}>
-                    <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245' }}>
-                      {room.name} - {image.type || "Room Image"}
-                    </Text>
-                  </View>
-                  <View style={{ width: '25%', alignItems: 'flex-end' }}>
-                    {companySettings?.logo && (
-                      <Image 
-                        src={companySettings.logo} 
-                        style={{ width: 120, objectFit: 'contain' }} 
-                      />
-                    )}
-                  </View>
+      {/* Room Images - Room name page followed by images */}
+      {sortedRooms.map((room, roomIndex) => {
+        const roomPages = [];
+        let currentPageNumber = 3; // Start after cover and features pages
+        
+        // Calculate page number for this room
+        for (let i = 0; i < roomIndex; i++) {
+          currentPageNumber += 1; // Room name page
+          currentPageNumber += sortedRooms[i].images?.length || 0; // Image pages
+        }
+        
+        // Add room name page
+        roomPages.push(
+          <Page key={`room-${roomIndex}`} size="A4" orientation="landscape" style={styles.page}>
+            <View style={styles.section}>
+              {/* Header with proper margins */}
+              <View style={{ ...styles.roomPageHeader, marginTop: 30, marginLeft: 30 }}>
+                <View style={{ width: '70%' }}>
+                  <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#009245' }}>
+                    {room.name}
+                  </Text>
                 </View>
-                
-                <View style={styles.imageContainer}>
-                  <Image 
-                    src={image.path} 
-                    style={styles.singleRoomImage}
-                  />
+                <View style={{ width: '25%', alignItems: 'flex-end' }}>
+                  {companySettings?.logo && (
+                    <Image 
+                      src={companySettings.logo} 
+                      style={{ width: 120, objectFit: 'contain' }} 
+                    />
+                  )}
                 </View>
               </View>
               
-              <View style={styles.footer}>
-                <Text>Page {pageNumber} of {totalPages}</Text>
-                <Text>{companySettings?.website || ""}</Text>
+              {/* Room content area */}
+              <View style={styles.roomPageContent}>
+                <Text style={{ fontSize: 18, color: '#666666', textAlign: 'center', marginTop: 100 }}>
+                  {room.images?.length || 0} Design View{(room.images?.length || 0) !== 1 ? 's' : ''} Available
+                </Text>
               </View>
-            </Page>
-          );
-        })
-      )}
+            </View>
+            
+            <View style={styles.footer}>
+              <Text>Page {currentPageNumber} of {totalPages}</Text>
+              <Text>{companySettings?.website || ""}</Text>
+            </View>
+          </Page>
+        );
+        currentPageNumber++;
+        
+        // Add image pages for this room
+        if (room.images) {
+          room.images.forEach((image, imageIndex) => {
+            roomPages.push(
+              <Page key={`${roomIndex}-${imageIndex}`} size="A4" orientation="landscape" style={styles.page}>
+                <View style={styles.section}>
+                  {/* Header with proper margins */}
+                  <View style={{ ...styles.imagePageHeader, marginTop: 30, marginLeft: 30 }}>
+                    <View style={{ width: '70%' }}>
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#009245' }}>
+                        {room.name} - {image.type || "Room Image"}
+                      </Text>
+                    </View>
+                    <View style={{ width: '25%', alignItems: 'flex-end' }}>
+                      {companySettings?.logo && (
+                        <Image 
+                          src={companySettings.logo} 
+                          style={{ width: 120, objectFit: 'contain' }} 
+                        />
+                      )}
+                    </View>
+                  </View>
+                  
+                  {/* Image container with proper margins */}
+                  <View style={styles.imageContainer}>
+                    <Image 
+                      src={image.path} 
+                      style={styles.singleRoomImage}
+                    />
+                  </View>
+                </View>
+                
+                <View style={styles.footer}>
+                  <Text>Page {currentPageNumber} of {totalPages}</Text>
+                  <Text>{companySettings?.website || ""}</Text>
+                </View>
+              </Page>
+            );
+            currentPageNumber++;
+          });
+        }
+        
+        return roomPages;
+      }).flat()}
       
       {/* Summary Page */}
       <Page size="A4" orientation="landscape" style={styles.page}>

@@ -62,9 +62,10 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
   const getTotalPages = () => {
     let pageCount = 2; // Cover page + Features page
     
-    // Count room image pages
+    // Count room name pages and image pages
     sortedRooms.forEach(room => {
-      pageCount += room.images?.length || 0;
+      pageCount += 1; // Room name page
+      pageCount += room.images?.length || 0; // Image pages
     });
     
     // Add summary page
