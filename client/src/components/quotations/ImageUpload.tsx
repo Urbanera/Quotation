@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { useMutation } from "@tanstack/react-query";
-import { Image, Upload, Plus, Trash2, GripVertical } from "lucide-react";
+import { Image, Upload, Plus, Trash2, GripVertical, Eye, Edit, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Select,
@@ -24,6 +24,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import ImageSlideshow from "./ImageSlideshow";
+import ImageEditor from "./ImageEditor";
 
 interface ImageUploadProps {
   roomId: number;
@@ -33,6 +35,9 @@ interface ImageUploadProps {
 export default function ImageUpload({ roomId, images }: ImageUploadProps) {
   const [imageToDelete, setImageToDelete] = useState<ImageType | null>(null);
   const [draggedImage, setDraggedImage] = useState<ImageType | null>(null);
+  const [isSlideshow, setIsSlideshow] = useState(false);
+  const [slideshowIndex, setSlideshowIndex] = useState(0);
+  const [imageToEdit, setImageToEdit] = useState<ImageType | null>(null);
   const { toast } = useToast();
   
   // Get the image type options
@@ -270,8 +275,20 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
 
       {sortedImages.length > 0 && (
         <div className="mt-6">
-          <div className="mb-4 text-sm text-gray-600">
-            <p>Drag and drop images to reorder them. The order will be applied to presentations and PDF documents.</p>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              <p>Drag and drop images to reorder them. The order will be applied to presentations and PDF documents.</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSlideshow(true)}
+              >
+                <Play className="h-4 w-4 mr-1" />
+                View Slideshow
+              </Button>
+            </div>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedImages.map((image, index) => (
@@ -291,21 +308,39 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
                     <GripVertical className="h-4 w-4 mr-1" />
                     <span>#{index + 1}</span>
                   </div>
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={() => setImageToDelete(image)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center space-x-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setImageToEdit(image)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => setImageToDelete(image)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 
-                <div className="relative aspect-w-16 aspect-h-9 rounded-md overflow-hidden bg-gray-100 mb-4">
+                <div 
+                  className="relative aspect-w-16 aspect-h-9 rounded-md overflow-hidden bg-gray-100 mb-4 cursor-pointer group"
+                  onClick={() => {
+                    setSlideshowIndex(index);
+                    setIsSlideshow(true);
+                  }}
+                >
                   <img 
                     src={image.path} 
                     alt={image.filename} 
                     className="object-contain w-full h-full"
                   />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
+                    <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  </div>
                 </div>
                 
                 <div className="mb-2 z-50">
@@ -362,6 +397,23 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Slideshow */}
+      <ImageSlideshow
+        images={sortedImages}
+        isOpen={isSlideshow}
+        onClose={() => setIsSlideshow(false)}
+        roomId={roomId}
+        initialIndex={slideshowIndex}
+      />
+
+      {/* Image Editor */}
+      <ImageEditor
+        image={imageToEdit}
+        isOpen={!!imageToEdit}
+        onClose={() => setImageToEdit(null)}
+        roomId={roomId}
+      />
     </div>
   );
 }

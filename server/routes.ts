@@ -1974,6 +1974,56 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  // Image editing endpoint
+  app.post("/api/images/:id/edit", imageUpload.single('image'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+      
+      // Get the existing image
+      const existingImage = await storage.getImage(id);
+      if (!existingImage) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+      
+      // Delete the old image file if it exists
+      if (existingImage.path.startsWith('/uploads/')) {
+        const oldFilename = existingImage.path.replace('/uploads/', '');
+        const oldFilePath = path.join(uploadDir, oldFilename);
+        
+        try {
+          if (fs.existsSync(oldFilePath)) {
+            fs.unlinkSync(oldFilePath);
+          }
+        } catch (fileError) {
+          console.error("Failed to delete old image file:", fileError);
+        }
+      }
+      
+      // Update the image with new file path
+      const updatedImage = {
+        ...existingImage,
+        filename: file.filename,
+        path: `/uploads/${file.filename}`
+      };
+      
+      const result = await storage.updateImage(id, updatedImage);
+      
+      if (!result) {
+        return res.status(500).json({ message: "Failed to update image in storage" });
+      }
+      
+      res.json(updatedImage);
+    } catch (error) {
+      console.error("Error editing image:", error);
+      res.status(500).json({ message: "Failed to edit image" });
+    }
+  });
+
   // User routes
   app.get("/api/users", async (req, res) => {
     try {
