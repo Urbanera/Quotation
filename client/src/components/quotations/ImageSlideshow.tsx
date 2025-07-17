@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X, Edit, Maximize2, Minimize2 } from "lucide-react";
 import { Image as ImageType } from "@shared/schema";
@@ -71,6 +71,12 @@ export default function ImageSlideshow({
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className={`${isFullscreen ? 'max-w-none max-h-none w-screen h-screen' : 'max-w-6xl max-h-[90vh]'} p-0 overflow-hidden`}>
+          <DialogHeader className="sr-only">
+            <DialogTitle>Image Slideshow</DialogTitle>
+            <DialogDescription>
+              View and navigate through room images. Use arrow keys to navigate or click thumbnails to jump to specific images.
+            </DialogDescription>
+          </DialogHeader>
           <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b bg-white">
@@ -110,17 +116,21 @@ export default function ImageSlideshow({
             </div>
 
             {/* Image Display */}
-            <div className="flex-1 relative bg-gray-100 flex items-center justify-center overflow-hidden">
-              <img
-                src={currentImage.path}
-                alt={currentImage.filename}
-                className="max-w-full max-h-full object-contain"
-                style={{ 
-                  maxWidth: '100%', 
-                  maxHeight: '100%',
-                  objectFit: 'contain' 
-                }}
-              />
+            <div className="flex-1 relative bg-gray-100 flex items-center justify-center p-8">
+              <div className="w-full h-full flex items-center justify-center">
+                <img
+                  src={currentImage.path}
+                  alt={currentImage.filename}
+                  className="max-w-full max-h-full object-contain"
+                  style={{ 
+                    maxWidth: '100%', 
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    width: 'auto',
+                    height: 'auto'
+                  }}
+                />
+              </div>
               
               {/* Navigation Buttons */}
               {images.length > 1 && (
@@ -128,7 +138,7 @@ export default function ImageSlideshow({
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white z-10"
                     onClick={goToPrevious}
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -136,7 +146,7 @@ export default function ImageSlideshow({
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white z-10"
                     onClick={goToNext}
                   >
                     <ChevronRight className="h-4 w-4" />

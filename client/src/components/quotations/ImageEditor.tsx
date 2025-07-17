@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -198,6 +198,9 @@ export default function ImageEditor({ image, isOpen, onClose, roomId }: ImageEdi
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Edit Image</DialogTitle>
+          <DialogDescription>
+            Crop, rotate, and adjust the image. Changes will be applied to all presentations and PDF documents.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="flex flex-col h-[70vh]">
