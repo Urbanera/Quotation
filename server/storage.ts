@@ -2123,6 +2123,26 @@ export class MemStorage implements IStorage {
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
+    // Check if a product with the same name already exists in the room
+    const existingProducts = Array.from(this.products.values())
+      .filter(prod => prod.roomId === product.roomId && prod.name === product.name);
+    
+    // If found, update the quantity instead of creating duplicate
+    if (existingProducts.length > 0) {
+      const existingProduct = existingProducts[0];
+      const newQuantity = existingProduct.quantity + (product.quantity || 1);
+      
+      console.log(`Found existing product "${product.name}" in room ${product.roomId}, updating quantity from ${existingProduct.quantity} to ${newQuantity}`);
+      
+      // Update the existing product
+      const updatedProduct = await this.updateProduct(existingProduct.id, {
+        quantity: newQuantity
+      });
+      
+      return updatedProduct!;
+    }
+    
+    // If not found, create a new product
     const id = this.productIdCounter++;
     
     // Calculate the discounted price based on the discount
@@ -2213,6 +2233,26 @@ export class MemStorage implements IStorage {
   }
   
   async createAccessory(accessory: InsertAccessory): Promise<Accessory> {
+    // Check if an accessory with the same name already exists in the room
+    const existingAccessories = Array.from(this.accessories.values())
+      .filter(acc => acc.roomId === accessory.roomId && acc.name === accessory.name);
+    
+    // If found, update the quantity instead of creating duplicate
+    if (existingAccessories.length > 0) {
+      const existingAccessory = existingAccessories[0];
+      const newQuantity = existingAccessory.quantity + (accessory.quantity || 1);
+      
+      console.log(`Found existing accessory "${accessory.name}" in room ${accessory.roomId}, updating quantity from ${existingAccessory.quantity} to ${newQuantity}`);
+      
+      // Update the existing accessory
+      const updatedAccessory = await this.updateAccessory(existingAccessory.id, {
+        quantity: newQuantity
+      });
+      
+      return updatedAccessory!;
+    }
+    
+    // If not found, create a new accessory
     const id = this.accessoryIdCounter++;
     
     // Calculate the discounted price based on the discount

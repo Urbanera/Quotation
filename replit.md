@@ -137,3 +137,4 @@ Preferred communication style: Simple, everyday language.
 - **Quotation Status Management**: Ability to approve and unapprove quotations with proper validation
 - **Real-time Modification History**: Modification history updates immediately without requiring page refresh
 - **Accurate Price Tracking**: Modification snapshots capture correct final prices and quotation states
+- **Duplicate Prevention**: Adding same products/accessories updates quantity instead of creating duplicates
