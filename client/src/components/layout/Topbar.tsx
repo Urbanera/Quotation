@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { User, Bell, Menu, LogOut, Settings, UserIcon, KeyIcon, LockIcon } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { User, Bell, Menu, LogOut, Settings, UserIcon, KeyIcon, LockIcon, FileText, Users } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import Sidebar from "./Sidebar";
 import {
   DropdownMenu,
@@ -11,6 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Customer, Quotation } from "@shared/schema";
 
 interface TopbarProps {
   onToggleMobileSidebar: () => void;
@@ -19,6 +23,72 @@ interface TopbarProps {
 export default function Topbar({ onToggleMobileSidebar }: TopbarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [, navigate] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  
+  // Fetch customers and quotations for search
+  const { data: customers = [] } = useQuery<Customer[]>({
+    queryKey: ["/api/customers"],
+    enabled: searchQuery.length > 0,
+  });
+  
+  const { data: quotations = [] } = useQuery<Quotation[]>({
+    queryKey: ["/api/quotations"],
+    enabled: searchQuery.length > 0,
+  });
+  
+  // Filter search results based on query
+  const searchResults = {
+    customers: customers.filter(customer =>
+      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.phone?.toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 5),
+    quotations: quotations.filter(quotation =>
+      quotation.quotationNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      quotation.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      quotation.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 5)
+  };
+  
+  // Handle search input
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setShowSearchResults(value.length > 0);
+  };
+  
+  // Handle search result click
+  const handleSearchResultClick = (type: 'customer' | 'quotation', id: number) => {
+    if (type === 'customer') {
+      navigate(`/customers/${id}`);
+    } else {
+      navigate(`/quotations/view/${id}`);
+    }
+    setSearchQuery("");
+    setShowSearchResults(false);
+  };
+  
+  // Handle click outside search results
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      setShowSearchResults(false);
+      setSearchQuery("");
+    }
+  };
 
   return (
     <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white shadow">
@@ -32,7 +102,7 @@ export default function Topbar({ onToggleMobileSidebar }: TopbarProps) {
       </button>
       <div className="flex-1 px-4 flex justify-between">
         <div className="flex-1 flex items-center">
-          <div className="w-full max-w-lg lg:max-w-xs">
+          <div className="w-full max-w-lg lg:max-w-xs relative" ref={searchRef}>
             <label htmlFor="search" className="sr-only">
               Search
             </label>
@@ -57,8 +127,76 @@ export default function Topbar({ onToggleMobileSidebar }: TopbarProps) {
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Search customers or quotations..."
                 type="search"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onKeyDown={handleKeyDown}
               />
             </div>
+            
+            {/* Search Results */}
+            {showSearchResults && (searchResults.customers.length > 0 || searchResults.quotations.length > 0) && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
+                {searchResults.customers.length > 0 && (
+                  <div className="p-2">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
+                      <Users className="h-3 w-3 mr-1" />
+                      Customers
+                    </h3>
+                    {searchResults.customers.map((customer) => (
+                      <div
+                        key={customer.id}
+                        className="px-3 py-2 hover:bg-gray-50 cursor-pointer rounded-md flex items-center justify-between"
+                        onClick={() => handleSearchResultClick('customer', customer.id)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">{customer.name}</div>
+                          <div className="text-sm text-gray-500 truncate">{customer.email}</div>
+                        </div>
+                        <Badge variant="secondary" className="ml-2 capitalize">
+                          {customer.stage}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {searchResults.quotations.length > 0 && (
+                  <div className="p-2 border-t border-gray-100">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
+                      <FileText className="h-3 w-3 mr-1" />
+                      Quotations
+                    </h3>
+                    {searchResults.quotations.map((quotation) => (
+                      <div
+                        key={quotation.id}
+                        className="px-3 py-2 hover:bg-gray-50 cursor-pointer rounded-md flex items-center justify-between"
+                        onClick={() => handleSearchResultClick('quotation', quotation.id)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">{quotation.quotationNumber}</div>
+                          <div className="text-sm text-gray-500 truncate">
+                            {quotation.title || quotation.description || 'No title'}
+                          </div>
+                        </div>
+                        <Badge 
+                          variant={quotation.status === 'approved' ? 'default' : 'secondary'}
+                          className="ml-2 capitalize"
+                        >
+                          {quotation.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* No Results Message */}
+            {showSearchResults && searchQuery.length > 0 && searchResults.customers.length === 0 && searchResults.quotations.length === 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 p-4 text-center">
+                <div className="text-gray-500">No results found for "{searchQuery}"</div>
+              </div>
+            )}
           </div>
         </div>
         <div className="ml-4 flex items-center md:ml-6">
