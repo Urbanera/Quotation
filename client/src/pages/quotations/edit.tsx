@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ChevronLeft, Eye, Save, FileCheck } from "lucide-react";
+import { ChevronLeft, Eye, Save, FileCheck, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -12,6 +12,7 @@ import QuotationSummary from "@/components/quotations/QuotationSummary";
 import { ValidationDialog } from "@/components/quotations/ValidationDialog";
 import { validateQuotation, markQuotationAsSaved, ValidationError, ValidationWarning } from "@/lib/quotationValidation";
 import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
+import { QuotationModificationHistory } from "@/components/quotations/QuotationModificationHistory";
 
 export default function EditQuotation() {
   const { id } = useParams();
@@ -31,6 +32,7 @@ export default function EditQuotation() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isUnsavedChangesDialogOpen, setIsUnsavedChangesDialogOpen] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [isModificationHistoryOpen, setIsModificationHistoryOpen] = useState(false);
   const originalValuesRef = useRef<{
     customerId: number | null;
     installationHandling: number;
@@ -289,6 +291,13 @@ export default function EditQuotation() {
             <div className="mt-4 flex md:mt-0 md:ml-4 space-x-3">
               <Button 
                 variant="outline"
+                onClick={() => setIsModificationHistoryOpen(true)}
+              >
+                <History className="mr-2 h-4 w-4" />
+                History
+              </Button>
+              <Button 
+                variant="outline"
                 onClick={() => handleNavigationWithUnsavedChanges(`/quotations/view/${id}`)}
               >
                 <Eye className="mr-2 h-4 w-4" />
@@ -373,6 +382,15 @@ export default function EditQuotation() {
         saveButtonText="Save & Continue"
         discardButtonText="Discard Changes"
       />
+      
+      {/* Modification History */}
+      {id && (
+        <QuotationModificationHistory
+          quotationId={parseInt(id)}
+          isOpen={isModificationHistoryOpen}
+          onClose={() => setIsModificationHistoryOpen(false)}
+        />
+      )}
     </div>
   );
 }

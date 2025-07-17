@@ -130,6 +130,30 @@ export const insertQuotationSchema = createInsertSchema(quotations).omit({
   updatedAt: true,
 });
 
+// Quotation modification history schema
+export const quotationModifications = pgTable("quotation_modifications", {
+  id: serial("id").primaryKey(),
+  quotationId: integer("quotation_id").notNull(),
+  modificationNumber: integer("modification_number").notNull(),
+  title: text("title").notNull(), // e.g., "Updated room prices", "Added bedroom furniture"
+  description: text("description"), // detailed description of what changed
+  // Store the complete quotation data as JSON snapshot
+  quotationData: json("quotation_data").notNull(),
+  roomsData: json("rooms_data").notNull(),
+  productsData: json("products_data").notNull(),
+  accessoriesData: json("accessories_data").notNull(),
+  imagesData: json("images_data").notNull(),
+  // Track pricing changes
+  totalSellingPrice: doublePrecision("total_selling_price").notNull(),
+  finalPrice: doublePrecision("final_price").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertQuotationModificationSchema = createInsertSchema(quotationModifications).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Room schema
 export const rooms = pgTable("rooms", {
   id: serial("id").primaryKey(),
@@ -732,3 +756,7 @@ export const customerPaymentFormSchema = z.object({
   transactionId: z.string().min(1, "Transaction ID is required"),
   description: z.string().optional().nullable(),
 });
+
+// Quotation modification types
+export type QuotationModification = typeof quotationModifications.$inferSelect;
+export type InsertQuotationModification = z.infer<typeof insertQuotationModificationSchema>;

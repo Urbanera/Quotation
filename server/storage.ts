@@ -3,6 +3,7 @@ import {
   appSettings, AppSettings, InsertAppSettings,
   customers, Customer, InsertCustomer,
   quotations, Quotation, InsertQuotation, quotationStatusEnum,
+  quotationModifications, QuotationModification, InsertQuotationModification,
   rooms, Room, InsertRoom,
   products, Product, InsertProduct,
   accessories, Accessory, InsertAccessory,
@@ -60,6 +61,12 @@ export interface IStorage {
   deleteQuotation(id: number): Promise<boolean>;
   duplicateQuotation(id: number, customerId?: number): Promise<Quotation>;
   updateQuotationStatus(id: number, status: "draft" | "sent" | "approved" | "rejected" | "expired" | "converted"): Promise<Quotation | undefined>;
+  
+  // Quotation modification history operations
+  getQuotationModifications(quotationId: number): Promise<QuotationModification[]>;
+  createQuotationModification(modification: InsertQuotationModification): Promise<QuotationModification>;
+  getQuotationModification(id: number): Promise<QuotationModification | undefined>;
+  revertQuotationToModification(quotationId: number, modificationId: number): Promise<boolean>;
   
   // Room operations
   getRooms(quotationId: number): Promise<Room[]>;
@@ -191,6 +198,12 @@ export interface IStorage {
   updateInvoiceStatus(id: number, status: "pending" | "paid" | "partially_paid" | "overdue" | "cancelled"): Promise<Invoice | undefined>;
   updateInvoice(id: number, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined>;
   cancelInvoice(id: number): Promise<Invoice | undefined>;
+
+  // Quotation modification history operations
+  getQuotationModifications(quotationId: number): Promise<QuotationModification[]>;
+  createQuotationModification(modification: InsertQuotationModification): Promise<QuotationModification>;
+  getQuotationModification(id: number): Promise<QuotationModification | undefined>;
+  revertQuotationToModification(quotationId: number, modificationId: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -198,6 +211,7 @@ export class MemStorage implements IStorage {
   private appSettings: AppSettings | undefined;
   private customers: Map<number, Customer>;
   private quotations: Map<number, Quotation>;
+  private quotationModifications: Map<number, QuotationModification>;
   private rooms: Map<number, Room>;
   private products: Map<number, Product>;
   private accessories: Map<number, Accessory>;
@@ -216,6 +230,7 @@ export class MemStorage implements IStorage {
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
+  private quotationModificationIdCounter: number;
   private roomIdCounter: number;
   private productIdCounter: number;
   private accessoryIdCounter: number;
@@ -241,6 +256,7 @@ export class MemStorage implements IStorage {
       // Copy all properties from existing instance
       this.customers = instance.customers;
       this.quotations = instance.quotations;
+      this.quotationModifications = instance.quotationModifications || new Map();
       this.rooms = instance.rooms;
       this.products = instance.products;
       this.accessories = instance.accessories;
@@ -262,6 +278,7 @@ export class MemStorage implements IStorage {
       
       this.customerIdCounter = instance.customerIdCounter;
       this.quotationIdCounter = instance.quotationIdCounter;
+      this.quotationModificationIdCounter = instance.quotationModificationIdCounter || 1;
       this.roomIdCounter = instance.roomIdCounter;
       this.productIdCounter = instance.productIdCounter;
       this.accessoryIdCounter = instance.accessoryIdCounter;
@@ -286,6 +303,7 @@ export class MemStorage implements IStorage {
     console.log("Creating new MemStorage instance");
     this.customers = new Map();
     this.quotations = new Map();
+    this.quotationModifications = new Map();
     this.rooms = new Map();
     this.products = new Map();
     this.accessories = new Map();
@@ -304,6 +322,7 @@ export class MemStorage implements IStorage {
     
     this.customerIdCounter = 1;
     this.quotationIdCounter = 1;
+    this.quotationModificationIdCounter = 1;
     this.roomIdCounter = 1;
     this.productIdCounter = 1;
     this.accessoryIdCounter = 1;
@@ -1494,6 +1513,12 @@ export class MemStorage implements IStorage {
   async updateQuotation(id: number, quotation: Partial<InsertQuotation>): Promise<Quotation | undefined> {
     const existingQuotation = this.quotations.get(id);
     if (!existingQuotation) return undefined;
+    
+    // Create a snapshot before updating if there are significant changes
+    const hasSignificantChanges = this.hasSignificantChanges(existingQuotation, quotation);
+    if (hasSignificantChanges) {
+      await this.createQuotationSnapshot(id, "Manual update");
+    }
     
     // Preserve the totalInstallationCharges from the existing quotation
     const totalInstallationCharges = 
@@ -3116,6 +3141,144 @@ export class MemStorage implements IStorage {
     
     this.rooms.set(roomId, updatedRoom);
     return updatedRoom;
+  }
+
+  // Quotation modification history methods
+  async getQuotationModifications(quotationId: number): Promise<QuotationModification[]> {
+    return Array.from(this.quotationModifications.values())
+      .filter(mod => mod.quotationId === quotationId)
+      .sort((a, b) => b.modificationNumber - a.modificationNumber); // Most recent first
+  }
+
+  async createQuotationModification(modification: InsertQuotationModification): Promise<QuotationModification> {
+    const id = this.quotationModificationIdCounter++;
+    const newModification: QuotationModification = {
+      id,
+      ...modification,
+      createdAt: new Date()
+    };
+    this.quotationModifications.set(id, newModification);
+    return newModification;
+  }
+
+  async getQuotationModification(id: number): Promise<QuotationModification | undefined> {
+    return this.quotationModifications.get(id);
+  }
+
+  async revertQuotationToModification(quotationId: number, modificationId: number): Promise<boolean> {
+    const modification = this.quotationModifications.get(modificationId);
+    if (!modification || modification.quotationId !== quotationId) {
+      return false;
+    }
+
+    try {
+      // Create a new snapshot of current state before reverting
+      await this.createQuotationSnapshot(quotationId, `Reverted to modification #${modification.modificationNumber}`);
+
+      // Restore quotation data
+      const quotationData = modification.quotationData as any;
+      this.quotations.set(quotationId, {
+        ...quotationData,
+        updatedAt: new Date()
+      });
+
+      // Clear existing rooms, products, accessories, and images
+      const existingRooms = Array.from(this.rooms.values())
+        .filter(room => room.quotationId === quotationId);
+      
+      for (const room of existingRooms) {
+        await this.deleteRoom(room.id);
+      }
+
+      // Restore rooms data
+      const roomsData = modification.roomsData as any[];
+      for (const roomData of roomsData) {
+        const roomId = this.roomIdCounter++;
+        const room = { ...roomData, id: roomId };
+        this.rooms.set(roomId, room);
+      }
+
+      // Restore products data
+      const productsData = modification.productsData as any[];
+      for (const productData of productsData) {
+        const productId = this.productIdCounter++;
+        const product = { ...productData, id: productId };
+        this.products.set(productId, product);
+      }
+
+      // Restore accessories data
+      const accessoriesData = modification.accessoriesData as any[];
+      for (const accessoryData of accessoriesData) {
+        const accessoryId = this.accessoryIdCounter++;
+        const accessory = { ...accessoryData, id: accessoryId };
+        this.accessories.set(accessoryId, accessory);
+      }
+
+      // Restore images data
+      const imagesData = modification.imagesData as any[];
+      for (const imageData of imagesData) {
+        const imageId = this.imageIdCounter++;
+        const image = { ...imageData, id: imageId };
+        this.images.set(imageId, image);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error reverting quotation:', error);
+      return false;
+    }
+  }
+
+  // Helper methods for modification history
+  private hasSignificantChanges(existing: Quotation, update: Partial<InsertQuotation>): boolean {
+    const significantFields = [
+      'title', 'description', 'globalDiscount', 'gstPercentage', 
+      'installationHandling', 'terms', 'validUntil'
+    ];
+    
+    return significantFields.some(field => 
+      update[field as keyof InsertQuotation] !== undefined && 
+      update[field as keyof InsertQuotation] !== existing[field as keyof Quotation]
+    );
+  }
+
+  private async createQuotationSnapshot(quotationId: number, title: string): Promise<void> {
+    const quotation = this.quotations.get(quotationId);
+    if (!quotation) return;
+
+    const rooms = await this.getRooms(quotationId);
+    const products: any[] = [];
+    const accessories: any[] = [];
+    const images: any[] = [];
+
+    // Collect all products, accessories, and images for all rooms
+    for (const room of rooms) {
+      const roomProducts = await this.getProducts(room.id);
+      const roomAccessories = await this.getAccessories(room.id);
+      const roomImages = await this.getImages(room.id);
+      
+      products.push(...roomProducts);
+      accessories.push(...roomAccessories);
+      images.push(...roomImages);
+    }
+
+    // Get the next modification number
+    const existingModifications = await this.getQuotationModifications(quotationId);
+    const modificationNumber = existingModifications.length + 1;
+
+    await this.createQuotationModification({
+      quotationId,
+      modificationNumber,
+      title,
+      description: `Snapshot created: ${title}`,
+      quotationData: quotation,
+      roomsData: rooms,
+      productsData: products,
+      accessoriesData: accessories,
+      imagesData: images,
+      totalSellingPrice: quotation.totalSellingPrice,
+      finalPrice: quotation.finalPrice
+    });
   }
 }
 

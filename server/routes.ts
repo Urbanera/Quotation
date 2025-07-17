@@ -1418,6 +1418,33 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch installation charges" });
     }
   });
+
+  // Quotation modification history routes
+  app.get("/api/quotations/:id/modifications", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.id);
+      const modifications = await storage.getQuotationModifications(quotationId);
+      res.json(modifications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch quotation modifications" });
+    }
+  });
+
+  app.post("/api/quotations/:id/revert/:modificationId", async (req, res) => {
+    try {
+      const quotationId = parseInt(req.params.id);
+      const modificationId = parseInt(req.params.modificationId);
+      
+      const success = await storage.revertQuotationToModification(quotationId, modificationId);
+      if (!success) {
+        return res.status(400).json({ message: "Failed to revert quotation to selected modification" });
+      }
+      
+      res.json({ success: true, message: "Quotation successfully reverted to previous modification" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to revert quotation", error: (error as Error).message });
+    }
+  });
   
   // Room routes
   app.get("/api/quotations/:quotationId/rooms", async (req, res) => {
