@@ -2863,8 +2863,10 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       // When changing to "approved", verify it's in "saved" status first
       if (status === "approved" && existingQuotation.status !== "saved") {
         return res.status(400).json({ 
-          message: "Cannot approve quotation: Only quotations in 'saved' status can be approved",
-          errorType: "invalid_transition"
+          message: `Cannot approve quotation: Only quotations in 'saved' status can be approved. Current status is '${existingQuotation.status}'. Please save the quotation as final first.`,
+          errorType: "invalid_transition",
+          currentStatus: existingQuotation.status,
+          requiredStatus: "saved"
         });
       }
       

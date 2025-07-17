@@ -132,3 +132,6 @@ Preferred communication style: Simple, everyday language.
 - **File Management**: Floor plan and project image handling
 - **Responsive Design**: Mobile-friendly interface with adaptive layout
 - **Print Optimization**: Specialized print styles for documents
+- **Unsaved Changes Protection**: Comprehensive warning system to prevent data loss during quotation editing
+- **Enhanced Error Handling**: Detailed error messages for quotation approval failures with actionable feedback
+- **Quotation Status Management**: Ability to approve and unapprove quotations with proper validation

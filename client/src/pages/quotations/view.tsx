@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart, FileText as FileInvoice, Mail, Layout, MessageSquare } from "lucide-react";
+import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart, FileText as FileInvoice, Mail, Layout, MessageSquare, X } from "lucide-react";
 import { WhatsAppQuotationButton } from "@/components/quotations/WhatsAppQuotationButton";
 import { QuotationWithDetails, CompanySettings, AppSettings } from "@shared/schema";
 import BasicQuote from "@/components/PDFQuotes/BasicQuote";
@@ -105,13 +105,54 @@ export default function ViewQuotation() {
       queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
       setIsApproveDialogOpen(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      let errorMessage = "Failed to approve quotation. Please try again.";
+      
+      // Check if it's a structured error with more details
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to approve quotation. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
       console.error("Failed to approve quotation:", error);
+    },
+  });
+
+  // Unapprove quotation mutation
+  const unapproveQuotationMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        "PUT",
+        `/api/quotations/${id}/status`,
+        { status: "saved" }
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Quotation Unapproved",
+        description: "The quotation has been reverted to saved status.",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${id}/details`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+    },
+    onError: (error: any) => {
+      let errorMessage = "Failed to unapprove quotation. Please try again.";
+      
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      console.error("Failed to unapprove quotation:", error);
     },
   });
   
@@ -479,13 +520,21 @@ export default function ViewQuotation() {
               {quotation.status === "approved" && (
                 <>
                   <Button
+                    onClick={() => unapproveQuotationMutation.mutate()}
+                    variant="outline"
+                    className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300"
+                    disabled={unapproveQuotationMutation.isPending}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    {unapproveQuotationMutation.isPending ? "Unapproving..." : "Unapprove"}
+                  </Button>
+                  <Button
                     onClick={() => setIsConvertDialogOpen(true)}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     <ShoppingCart className="mr-2 h-4 w-4" />
                     Convert to Sales Order
                   </Button>
-
                 </>
               )}
             </div>
