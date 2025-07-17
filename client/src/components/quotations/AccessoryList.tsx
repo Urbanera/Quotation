@@ -45,6 +45,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
       const roomData = queryClient.getQueryData([`/api/rooms/${roomId}`]) as any;
       if (roomData && roomData.quotationId) {
         queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/details`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/modifications`] });
       }
       
       toast({
@@ -77,6 +78,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
       const roomData = queryClient.getQueryData([`/api/rooms/${roomId}`]) as any;
       if (roomData && roomData.quotationId) {
         queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/details`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/modifications`] });
       }
       
       toast({
@@ -106,6 +108,7 @@ export default function AccessoryList({ roomId, accessories }: AccessoryListProp
       const roomData = queryClient.getQueryData([`/api/rooms/${roomId}`]) as any;
       if (roomData && roomData.quotationId) {
         queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/details`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/quotations/${roomData.quotationId}/modifications`] });
       }
       
       toast({

@@ -135,3 +135,5 @@ Preferred communication style: Simple, everyday language.
 - **Unsaved Changes Protection**: Comprehensive warning system to prevent data loss during quotation editing
 - **Enhanced Error Handling**: Detailed error messages for quotation approval failures with actionable feedback
 - **Quotation Status Management**: Ability to approve and unapprove quotations with proper validation
+- **Real-time Modification History**: Modification history updates immediately without requiring page refresh
+- **Accurate Price Tracking**: Modification snapshots capture correct final prices and quotation states
