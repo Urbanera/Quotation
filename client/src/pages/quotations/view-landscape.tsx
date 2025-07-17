@@ -138,7 +138,7 @@ const LandscapeTab: React.FC<LandscapeTabProps> = ({
               </div>
               
               {/* Room Images - one page per image */}
-              {quotation.rooms && quotation.rooms.map((room:any, roomIndex:number) => 
+              {quotation.rooms && quotation.rooms.filter(room => room && room.included).map((room:any, roomIndex:number) => 
                 room.images && room.images.map((image:any, imageIndex:number) => (
                   <div 
                     key={`${roomIndex}-${imageIndex}`} 

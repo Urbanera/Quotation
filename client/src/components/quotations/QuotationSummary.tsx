@@ -219,7 +219,7 @@ export default function QuotationSummary({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {quotation.rooms && quotation.rooms.map((room) => {
+              {quotation.rooms && quotation.rooms.filter(room => room && room.included).map((room) => {
                 if (!room) return null;
                 
                 // Calculate the discounted price with global discount applied

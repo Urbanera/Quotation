@@ -235,7 +235,7 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
   appSettings
 }) => {
   // Sort room images by order or type (same as in the preview component)
-  const sortedRooms = quotation.rooms ? quotation.rooms.map(room => {
+  const sortedRooms = quotation.rooms ? quotation.rooms.filter(room => room && room.included).map(room => {
     const sortedImages = [...(room.images || [])].sort((a, b) => {
       // First sort by order
       if (a.order !== b.order) {

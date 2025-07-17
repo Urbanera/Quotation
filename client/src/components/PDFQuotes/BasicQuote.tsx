@@ -152,7 +152,7 @@ const BasicQuote = forwardRef<HTMLDivElement, BasicQuoteProps>(({ quotation }, r
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {Array.isArray(safeQuotation.rooms) && safeQuotation.rooms.length > 0 ? (
-                safeQuotation.rooms.map((room) => {
+                safeQuotation.rooms.filter(room => room && room.included).map((room) => {
                   if (!room) return null;
                   
                   // Calculate the discounted price with global discount applied

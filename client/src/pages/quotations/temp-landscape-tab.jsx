@@ -130,7 +130,7 @@ const LandscapeTab = ({ quotation, companySettings, appSettings, id }) => {
         </div>
         
         {/* Room Images - one page per image */}
-        {quotation.rooms && quotation.rooms.map((room, roomIndex) => 
+        {quotation.rooms && quotation.rooms.filter(room => room && room.included).map((room, roomIndex) => 
           room.images && room.images.map((image, imageIndex) => (
             <div 
               key={`${roomIndex}-${imageIndex}`} 
@@ -218,7 +218,7 @@ const LandscapeTab = ({ quotation, companySettings, appSettings, id }) => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {quotation.rooms && quotation.rooms.map((room, index) => (
+                  {quotation.rooms && quotation.rooms.filter(room => room && room.included).map((room, index) => (
                     <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                       <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                         {room.name}

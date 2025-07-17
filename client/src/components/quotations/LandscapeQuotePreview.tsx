@@ -22,7 +22,7 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
   const sortedRooms = useMemo(() => {
     if (!quotation.rooms) return [];
     
-    return quotation.rooms.map(room => {
+    return quotation.rooms.filter(room => room && room.included).map(room => {
       const sortedImages = [...(room.images || [])].sort((a, b) => {
         // First sort by order
         if (a.order !== b.order) {

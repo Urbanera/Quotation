@@ -96,9 +96,9 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
   const calculateInstallationCharges = () => {
     let totalInstallCharges = 0;
     
-    // Only calculate if we have rooms with installation charges
+    // Only calculate if we have rooms with installation charges (only included rooms)
     if (safeQuotation.rooms && Array.isArray(safeQuotation.rooms)) {
-      for (const room of safeQuotation.rooms) {
+      for (const room of safeQuotation.rooms.filter(room => room && room.included)) {
         if (room.installationCharges && Array.isArray(room.installationCharges)) {
           for (const charge of room.installationCharges) {
             if (charge && typeof charge.amount === 'number') {
@@ -286,8 +286,8 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
         </div>
       </div>
       
-      {/* Room Pages - One page per room */}
-      {safeQuotation.rooms.map((room, index) => {
+      {/* Room Pages - One page per room (only included rooms) */}
+      {safeQuotation.rooms.filter(room => room && room.included).map((room, index) => {
         // Get 3D images only for this room
         const images3D = get3DImagesForRoom(room);
         
