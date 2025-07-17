@@ -1816,6 +1816,28 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  // Update room inclusion status
+  app.patch("/api/rooms/:id/included", async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.id);
+      const { included } = req.body;
+      
+      const updatedRoom = await storage.updateRoom(roomId, { included });
+      
+      if (!updatedRoom) {
+        return res.status(404).json({ message: "Room not found" });
+      }
+      
+      // Invalidate quotation cache to recalculate prices
+      const quotationId = updatedRoom.quotationId;
+      await storage.updateQuotationPrices(quotationId);
+      
+      res.json(updatedRoom);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update room inclusion status" });
+    }
+  });
+
   app.post("/api/rooms/:roomId/images", imageUpload.single('image'), async (req, res) => {
     try {
       const roomId = parseInt(req.params.roomId);

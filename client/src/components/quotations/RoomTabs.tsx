@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, GripVertical, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Room, RoomWithItems, InstallationCharge } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -210,6 +211,26 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
     }
   });
 
+  // Update room inclusion status mutation
+  const updateRoomInclusionMutation = useMutation({
+    mutationFn: async (data: { roomId: number, included: boolean }) => {
+      const response = await apiRequest("PATCH", `/api/rooms/${data.roomId}/included`, { included: data.included });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/rooms`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}/details`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quotations/${quotationId}`] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update room inclusion status.",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Drag & drop functions for room reordering
   const handleDragStart = (index: number) => {
     draggedItemRef.current = index;
@@ -282,17 +303,30 @@ export default function RoomTabs({ quotationId }: RoomTabsProps) {
                   onDragOver={(e) => e.preventDefault()}
                 >
                   <GripVertical className="h-4 w-4 mr-1 text-gray-400 invisible group-hover:visible" />
-                  <button
-                    className={`whitespace-nowrap py-4 px-2 border-b-2 font-medium text-sm ${
-                      activeRoomId === room.id
-                        ? "border-indigo-500 text-indigo-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                    aria-current={activeRoomId === room.id ? "page" : undefined}
-                    onClick={() => setActiveRoomId(room.id)}
-                  >
-                    {room.name}
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={room.included}
+                      onCheckedChange={(checked) => {
+                        updateRoomInclusionMutation.mutate({
+                          roomId: room.id,
+                          included: checked as boolean
+                        });
+                      }}
+                      className="h-4 w-4"
+                      title={room.included ? "Included in quotation" : "Excluded from quotation"}
+                    />
+                    <button
+                      className={`whitespace-nowrap py-4 px-2 border-b-2 font-medium text-sm ${
+                        activeRoomId === room.id
+                          ? "border-indigo-500 text-indigo-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      } ${!room.included ? "opacity-50" : ""}`}
+                      aria-current={activeRoomId === room.id ? "page" : undefined}
+                      onClick={() => setActiveRoomId(room.id)}
+                    >
+                      {room.name}
+                    </button>
+                  </div>
                   <div className="flex invisible group-hover:visible">
                     <button 
                       className="ml-1 text-gray-500 hover:text-indigo-600 focus:outline-none"

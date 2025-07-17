@@ -1723,7 +1723,8 @@ export class MemStorage implements IStorage {
       installAmount: room.installAmount ?? null,
       teowinEstimateUrl: room.teowinEstimateUrl ?? null,
       teowinEstimateType: room.teowinEstimateType ?? null,
-      teowinEstimateName: room.teowinEstimateName ?? null
+      teowinEstimateName: room.teowinEstimateName ?? null,
+      included: room.included ?? true
     };
     this.rooms.set(id, newRoom);
     
@@ -2477,10 +2478,12 @@ export class MemStorage implements IStorage {
     let totalSellingPrice = 0;
     let totalDiscountedPrice = 0;
     
-    // Add room prices
+    // Add room prices (only for included rooms)
     for (const room of rooms) {
-      totalSellingPrice += room.sellingPrice;
-      totalDiscountedPrice += room.discountedPrice;
+      if (room.included) {
+        totalSellingPrice += room.sellingPrice;
+        totalDiscountedPrice += room.discountedPrice;
+      }
     }
     
     // Apply global discount
@@ -2489,15 +2492,17 @@ export class MemStorage implements IStorage {
       ? totalDiscountedPrice * discountMultiplier 
       : totalDiscountedPrice;
     
-    // Calculate total installation charges
+    // Calculate total installation charges (only for included rooms)
     let totalInstallationCharges = 0;
     for (const room of rooms) {
-      const charges = await this.getInstallationCharges(room.id);
-      for (const charge of charges) {
-        const amount = typeof charge.amount === 'number' 
-          ? charge.amount 
-          : parseFloat(String(charge.amount));
-        totalInstallationCharges += amount;
+      if (room.included) {
+        const charges = await this.getInstallationCharges(room.id);
+        for (const charge of charges) {
+          const amount = typeof charge.amount === 'number' 
+            ? charge.amount 
+            : parseFloat(String(charge.amount));
+          totalInstallationCharges += amount;
+        }
       }
     }
     

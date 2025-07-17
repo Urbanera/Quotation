@@ -150,6 +150,8 @@ export const rooms = pgTable("rooms", {
   teowinEstimateUrl: text("teowin_estimate_url"),
   teowinEstimateType: text("teowin_estimate_type"),
   teowinEstimateName: text("teowin_estimate_name"),
+  // Room inclusion flag for pricing calculations
+  included: boolean("included").notNull().default(true),
 });
 
 export const insertRoomSchema = createInsertSchema(rooms).omit({
