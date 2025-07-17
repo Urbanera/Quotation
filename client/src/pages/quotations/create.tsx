@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ChevronLeft, Eye, Save, FileCheck } from "lucide-react";
+import { ChevronLeft, Eye, Save, FileCheck, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -10,6 +10,7 @@ import ClientInfo from "@/components/quotations/ClientInfo";
 import RoomTabs from "@/components/quotations/RoomTabs";
 import QuotationSummary from "@/components/quotations/QuotationSummary";
 import { ValidationDialog } from "@/components/quotations/ValidationDialog";
+import { QuotationModificationHistory } from "@/components/quotations/QuotationModificationHistory";
 import { validateQuotation, markQuotationAsSaved, ValidationError, ValidationWarning } from "@/lib/quotationValidation";
 
 export default function CreateQuotation() {
@@ -25,6 +26,9 @@ export default function CreateQuotation() {
   const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [validationWarnings, setValidationWarnings] = useState<ValidationWarning[]>([]);
+  
+  // State for modification history dialog
+  const [isModificationHistoryOpen, setIsModificationHistoryOpen] = useState(false);
   
   // Fetch app settings for default values
   const { data: appSettings } = useQuery<AppSettings>({
@@ -230,6 +234,15 @@ export default function CreateQuotation() {
               {quotationId && (
                 <Button 
                   variant="outline"
+                  onClick={() => setIsModificationHistoryOpen(true)}
+                >
+                  <History className="mr-2 h-4 w-4" />
+                  History
+                </Button>
+              )}
+              {quotationId && (
+                <Button 
+                  variant="outline"
                   onClick={() => navigate(`/quotations/view/${quotationId}`)}
                 >
                   <Eye className="mr-2 h-4 w-4" />
@@ -244,6 +257,16 @@ export default function CreateQuotation() {
                 <Save className="mr-2 h-4 w-4" />
                 Save Quotation
               </Button>
+              {quotationId && (
+                <Button 
+                  onClick={handleValidateForFinalSave}
+                  disabled={!selectedCustomerId}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <FileCheck className="mr-2 h-4 w-4" />
+                  Save as Final
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -317,6 +340,15 @@ export default function CreateQuotation() {
         onCancel={() => setIsValidationDialogOpen(false)}
         quotationId={quotationId || 0}
       />
+      
+      {/* Modification History Dialog */}
+      {quotationId && (
+        <QuotationModificationHistory
+          quotationId={quotationId}
+          isOpen={isModificationHistoryOpen}
+          onClose={() => setIsModificationHistoryOpen(false)}
+        />
+      )}
     </div>
   );
 }
