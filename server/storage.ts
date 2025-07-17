@@ -2289,20 +2289,49 @@ export class MemStorage implements IStorage {
     console.log(`Trying to update image with id ${id}`);
     console.log("Has image?", this.images.has(id));
     
-    if (!this.images.has(id)) {
+    const existingImage = this.images.get(id);
+    if (!existingImage) {
       console.log("Image not found in map");
       return false;
     }
     
     try {
-      this.images.set(id, { 
+      let updatedImage = { 
         id,
         roomId: image.roomId,
         filename: image.filename,
         path: image.path,
         type: image.type,
         order: image.order
-      });
+      };
+
+      // If type is being updated and it's different from existing, reorder based on type priority
+      if (image.type && image.type !== existingImage.type) {
+        const currentImages = await this.getImages(image.roomId);
+        const otherImages = currentImages.filter(img => img.id !== id);
+        
+        const newTypeOrder = this.getDefaultImageOrder(image.type);
+        
+        // Find insertion point
+        let insertIndex = otherImages.findIndex(img => 
+          this.getDefaultImageOrder(img.type || 'OTHER') > newTypeOrder
+        );
+        
+        if (insertIndex === -1) {
+          // Insert at the end
+          updatedImage.order = otherImages.length;
+        } else {
+          // Insert at the found position and reorder subsequent images
+          updatedImage.order = insertIndex;
+          // Update order of subsequent images
+          for (let i = insertIndex; i < otherImages.length; i++) {
+            const img = otherImages[i];
+            this.images.set(img.id, { ...img, order: i + 1 });
+          }
+        }
+      }
+      
+      this.images.set(id, updatedImage);
       console.log("Image updated successfully");
       return true;
     } catch (error) {
@@ -2311,6 +2340,26 @@ export class MemStorage implements IStorage {
     }
   }
   
+  // Function to get default order based on image type
+  private getDefaultImageOrder(imageType: string): number {
+    const typeOrder = {
+      'TOP VIEW 3D': 0,
+      'TOP VIEW 2D': 1,
+      'VIEW 1 3D': 2,
+      'VIEW 1 2D': 3,
+      'VIEW 2 3D': 4,
+      'VIEW 2 2D': 5,
+      'VIEW 3 3D': 6,
+      'VIEW 3 2D': 7,
+      'VIEW 4 3D': 8,
+      'VIEW 4 2D': 9,
+      'WARDROBE 3D': 10,
+      'WARDROBE 2D': 11,
+      'OTHER': 12
+    };
+    return typeOrder[imageType as keyof typeof typeOrder] ?? 99;
+  }
+
   async createImage(image: InsertImage): Promise<Image> {
     const id = this.imageIdCounter++;
     
@@ -2319,6 +2368,35 @@ export class MemStorage implements IStorage {
     const maxOrder = currentImages.length > 0 
       ? Math.max(...currentImages.map(i => i.order))
       : -1;
+
+    // Use provided order or calculate based on type priority
+    let defaultOrder = maxOrder + 1;
+    if (image.type) {
+      const typeOrder = this.getDefaultImageOrder(image.type);
+      // Find the right position to insert based on type priority
+      const sortedImages = currentImages.sort((a, b) => {
+        if (a.order !== b.order) return a.order - b.order;
+        return this.getDefaultImageOrder(a.type || 'OTHER') - this.getDefaultImageOrder(b.type || 'OTHER');
+      });
+      
+      // Find insertion point
+      let insertIndex = sortedImages.findIndex(img => 
+        this.getDefaultImageOrder(img.type || 'OTHER') > typeOrder
+      );
+      
+      if (insertIndex === -1) {
+        // Insert at the end
+        defaultOrder = maxOrder + 1;
+      } else {
+        // Insert at the found position and reorder subsequent images
+        defaultOrder = insertIndex;
+        // Update order of subsequent images
+        for (let i = insertIndex; i < sortedImages.length; i++) {
+          const img = sortedImages[i];
+          this.images.set(img.id, { ...img, order: i + 1 });
+        }
+      }
+    }
     
     const newImage: Image = {
       id,
@@ -2326,7 +2404,7 @@ export class MemStorage implements IStorage {
       filename: image.filename,
       path: image.path,
       type: image.type || null,
-      order: image.order ?? maxOrder + 1
+      order: image.order ?? defaultOrder
     };
     this.images.set(id, newImage);
     return newImage;

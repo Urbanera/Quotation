@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { useMutation } from "@tanstack/react-query";
-import { Image, Upload, Plus, Trash2 } from "lucide-react";
+import { Image, Upload, Plus, Trash2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Select,
@@ -32,10 +32,41 @@ interface ImageUploadProps {
 
 export default function ImageUpload({ roomId, images }: ImageUploadProps) {
   const [imageToDelete, setImageToDelete] = useState<ImageType | null>(null);
+  const [draggedImage, setDraggedImage] = useState<ImageType | null>(null);
   const { toast } = useToast();
   
   // Get the image type options
   const imageTypes = Object.values(imageTypeEnum.enumValues);
+
+  // Function to get default order based on image type
+  const getDefaultOrder = (imageType: string): number => {
+    const typeOrder = {
+      'TOP VIEW 3D': 0,
+      'TOP VIEW 2D': 1,
+      'VIEW 1 3D': 2,
+      'VIEW 1 2D': 3,
+      'VIEW 2 3D': 4,
+      'VIEW 2 2D': 5,
+      'VIEW 3 3D': 6,
+      'VIEW 3 2D': 7,
+      'VIEW 4 3D': 8,
+      'VIEW 4 2D': 9,
+      'WARDROBE 3D': 10,
+      'WARDROBE 2D': 11,
+      'OTHER': 12
+    };
+    return typeOrder[imageType as keyof typeof typeOrder] ?? 99;
+  };
+
+  // Sort images by order and then by type priority
+  const sortedImages = [...images].sort((a, b) => {
+    // First sort by order field
+    if (a.order !== b.order) {
+      return a.order - b.order;
+    }
+    // If order is the same, sort by type priority
+    return getDefaultOrder(a.type || 'OTHER') - getDefaultOrder(b.type || 'OTHER');
+  });
 
   // Upload image mutation
   const uploadMutation = useMutation({
@@ -115,6 +146,27 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
     }
   });
 
+  // Reorder images mutation
+  const reorderImagesMutation = useMutation({
+    mutationFn: async (imageIds: number[]) => {
+      await apiRequest("POST", `/api/rooms/${roomId}/images/reorder`, { imageIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
+      toast({
+        title: "Images reordered",
+        description: "Image order has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reorder images.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles?.length) {
       acceptedFiles.forEach(file => {
@@ -140,6 +192,50 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
   // Handle type change with dropdown select
   const handleTypeChange = (imageId: number, newType: string) => {
     updateImageMutation.mutate({ id: imageId, type: newType });
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, image: ImageType) => {
+    setDraggedImage(image);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetImage: ImageType) => {
+    e.preventDefault();
+    
+    if (!draggedImage || draggedImage.id === targetImage.id) {
+      setDraggedImage(null);
+      return;
+    }
+
+    const draggedIndex = sortedImages.findIndex(img => img.id === draggedImage.id);
+    const targetIndex = sortedImages.findIndex(img => img.id === targetImage.id);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedImage(null);
+      return;
+    }
+
+    // Create new order array
+    const newOrder = [...sortedImages];
+    const [draggedItem] = newOrder.splice(draggedIndex, 1);
+    newOrder.splice(targetIndex, 0, draggedItem);
+
+    // Extract image IDs in the new order
+    const imageIds = newOrder.map(img => img.id);
+
+    // Update the order
+    reorderImagesMutation.mutate(imageIds);
+    setDraggedImage(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedImage(null);
   };
 
   return (
@@ -172,26 +268,44 @@ export default function ImageUpload({ roomId, images }: ImageUploadProps) {
         )}
       </div>
 
-      {images.length > 0 && (
+      {sortedImages.length > 0 && (
         <div className="mt-6">
+          <div className="mb-4 text-sm text-gray-600">
+            <p>Drag and drop images to reorder them. The order will be applied to presentations and PDF documents.</p>
+          </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {images.map((image) => (
-              <div key={image.id} className="relative border rounded-lg p-4 bg-white shadow-sm">
+            {sortedImages.map((image, index) => (
+              <div 
+                key={image.id} 
+                className={`relative border rounded-lg p-4 bg-white shadow-sm cursor-move transition-all ${
+                  draggedImage?.id === image.id ? 'opacity-50 transform scale-95' : ''
+                }`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, image)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, image)}
+                onDragEnd={handleDragEnd}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center text-sm text-gray-500">
+                    <GripVertical className="h-4 w-4 mr-1" />
+                    <span>#{index + 1}</span>
+                  </div>
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => setImageToDelete(image)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                
                 <div className="relative aspect-w-16 aspect-h-9 rounded-md overflow-hidden bg-gray-100 mb-4">
                   <img 
                     src={image.path} 
                     alt={image.filename} 
                     className="object-contain w-full h-full"
                   />
-                  <div className="absolute top-2 right-2">
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => setImageToDelete(image)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
                 </div>
                 
                 <div className="mb-2 z-50">
