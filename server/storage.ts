@@ -1749,11 +1749,12 @@ export class MemStorage implements IStorage {
       teowinEstimateUrl: room.teowinEstimateUrl ?? null,
       teowinEstimateType: room.teowinEstimateType ?? null,
       teowinEstimateName: room.teowinEstimateName ?? null,
-      included: room.included ?? true
+      included: room.included !== undefined ? room.included : true
     };
+    
     this.rooms.set(id, newRoom);
     
-    // Update quotation prices
+    // Update quotation prices with the new room included
     await this.updateQuotationPrices(room.quotationId);
     
     return newRoom;
@@ -2614,12 +2615,15 @@ export class MemStorage implements IStorage {
       this.updateRoomPricesOnly(room.id);
     }
     
+    // Get updated room data after price calculation
+    const updatedRooms = await this.getRooms(quotationId);
+    
     // Calculate quotation prices
     let totalSellingPrice = 0;
     let totalDiscountedPrice = 0;
     
     // Add room prices (only for included rooms)
-    for (const room of rooms) {
+    for (const room of updatedRooms) {
       if (room.included) {
         totalSellingPrice += room.sellingPrice;
         totalDiscountedPrice += room.discountedPrice;
@@ -2634,7 +2638,7 @@ export class MemStorage implements IStorage {
     
     // Calculate total installation charges (only for included rooms)
     let totalInstallationCharges = 0;
-    for (const room of rooms) {
+    for (const room of updatedRooms) {
       if (room.included) {
         const charges = await this.getInstallationCharges(room.id);
         for (const charge of charges) {
