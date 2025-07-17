@@ -11,6 +11,17 @@ const formatRupeeForPDF = (amount: number | undefined | null): string => {
   return `Rs. ${safeAmount.toLocaleString('en-IN')}`;
 };
 
+// Format date function for PDF
+const formatDateForPDF = (date: Date | string | null | undefined) => {
+  if (!date) return "N/A";
+  const d = new Date(date);
+  return d.toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 // Create styles
 const styles = StyleSheet.create({
   page: {
