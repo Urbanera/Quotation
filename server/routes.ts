@@ -166,45 +166,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/signup', async (req, res) => {
-    try {
-      const { username, password, email, fullName, role = 'designer' } = req.body;
-      
-      if (!username || !password || !email || !fullName) {
-        return res.status(400).json({ message: 'All fields are required' });
-      }
-      
-      // Check if user already exists
-      const existingUser = await dbStorage.getUserByUsername(username);
-      if (existingUser) {
-        return res.status(409).json({ message: 'Username already exists' });
-      }
-      
-      // Hash password
-      const hashedPassword = await AuthService.hashPassword(password);
-      
-      // Create user
-      const user = await dbStorage.createUser({
-        username,
-        password: hashedPassword,
-        email,
-        fullName,
-        role: role as 'admin' | 'manager' | 'designer' | 'viewer',
-        active: true
-      });
-      
-      const token = AuthService.generateToken(user);
-      const { password: _, ...userWithoutPassword } = user;
-      
-      res.status(201).json({
-        user: userWithoutPassword,
-        token
-      });
-    } catch (error) {
-      console.error('Signup error:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  });
+
 
   app.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res) => {
     try {
@@ -2156,68 +2118,105 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  // User routes
-  app.get("/api/users", async (req, res) => {
+  // User routes (Admin only)
+  app.get("/api/users", authenticateToken, requireRole(['admin']), async (req, res) => {
     try {
-      const users = await storage.getUsers();
-      res.json(users);
+      const users = await dbStorage.getUsers();
+      // Remove passwords from response
+      const usersWithoutPasswords = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      res.json(usersWithoutPasswords);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch users" });
     }
   });
 
-  app.get("/api/users/:id", async (req, res) => {
+  app.get("/api/users/:id", authenticateToken, requireRole(['admin']), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const user = await storage.getUser(id);
+      const user = await dbStorage.getUser(id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      res.json(user);
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
-  app.post("/api/users", validateRequest(userFormSchema), async (req, res) => {
+  app.post("/api/users", authenticateToken, requireRole(['admin']), validateRequest(userFormSchema), async (req, res) => {
     try {
+      const { username, password, email, fullName, role = 'designer' } = req.body;
+      
       // Check if the username is already taken
-      const existingUser = await storage.getUserByUsername(req.body.username);
+      const existingUser = await dbStorage.getUserByUsername(username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
       
-      const user = await storage.createUser(req.body);
-      res.status(201).json(user);
+      // Hash the password
+      const hashedPassword = await AuthService.hashPassword(password);
+      
+      // Create user with hashed password
+      const user = await dbStorage.createUser({
+        username,
+        password: hashedPassword,
+        email,
+        fullName,
+        role: role as 'admin' | 'manager' | 'designer' | 'viewer',
+        active: true
+      });
+      
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
     } catch (error) {
+      console.error('Create user error:', error);
       res.status(500).json({ message: "Failed to create user" });
     }
   });
 
-  app.put("/api/users/:id", validateRequest(userFormSchema), async (req, res) => {
+  app.put("/api/users/:id", authenticateToken, requireRole(['admin']), validateRequest(userFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const { username, password, email, fullName, role, active } = req.body;
       
       // Check if the username is already taken by another user
-      const existingUser = await storage.getUserByUsername(req.body.username);
+      const existingUser = await dbStorage.getUserByUsername(username);
       if (existingUser && existingUser.id !== id) {
         return res.status(400).json({ message: "Username already exists" });
       }
       
-      const user = await storage.updateUser(id, req.body);
+      // Prepare update data
+      const updateData: any = { username, email, fullName, role, active };
+      
+      // Only hash password if it's provided
+      if (password) {
+        updateData.password = await AuthService.hashPassword(password);
+      }
+      
+      const user = await dbStorage.updateUser(id, updateData);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      res.json(user);
+      
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
     } catch (error) {
+      console.error('Update user error:', error);
       res.status(500).json({ message: "Failed to update user" });
     }
   });
 
-  app.delete("/api/users/:id", async (req, res) => {
+  app.delete("/api/users/:id", authenticateToken, requireRole(['admin']), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deleteUser(id);
+      const success = await dbStorage.deleteUser(id);
       if (!success) {
         return res.status(404).json({ message: "User not found" });
       }
