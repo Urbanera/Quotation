@@ -138,3 +138,6 @@ Preferred communication style: Simple, everyday language.
 - **Real-time Modification History**: Modification history updates immediately without requiring page refresh
 - **Accurate Price Tracking**: Modification snapshots capture correct final prices and quotation states
 - **Duplicate Prevention**: Adding same products/accessories updates quantity instead of creating duplicates
+- **Firm Name Display**: Configurable firm name field used specifically for payment receipts and invoice prints
+- **Bank Details Configuration**: Configurable bank details with checkbox option to show/hide on invoices
+- **Compact Invoice Layout**: Optimized invoice printing to fit single A4 page with reduced margins and font sizes
