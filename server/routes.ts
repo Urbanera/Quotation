@@ -6,9 +6,11 @@ import path from "path";
 import fs from "fs";
 
 import { storage } from "./storage";
+import { dbStorage } from "./storage.new";
 import { emailService } from "./email";
 import { whatsappService } from "./whatsapp";
 import { whatsappRouter } from './whatsapp-routes';
+import { AuthService, authenticateToken, requireRole, AuthRequest } from "./auth";
 import {
   customerFormSchema,
   quotationFormSchema,
@@ -141,6 +143,94 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
 
   // Serve static files from the uploads directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+  // Auth routes (public)
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
+      }
+      
+      const result = await AuthService.login(username, password);
+      
+      if (!result) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/auth/signup', async (req, res) => {
+    try {
+      const { username, password, email, fullName, role = 'designer' } = req.body;
+      
+      if (!username || !password || !email || !fullName) {
+        return res.status(400).json({ message: 'All fields are required' });
+      }
+      
+      // Check if user already exists
+      const existingUser = await dbStorage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(409).json({ message: 'Username already exists' });
+      }
+      
+      // Hash password
+      const hashedPassword = await AuthService.hashPassword(password);
+      
+      // Create user
+      const user = await dbStorage.createUser({
+        username,
+        password: hashedPassword,
+        email,
+        fullName,
+        role: role as 'admin' | 'manager' | 'designer' | 'viewer',
+        active: true
+      });
+      
+      const token = AuthService.generateToken(user);
+      const { password: _, ...userWithoutPassword } = user;
+      
+      res.status(201).json({
+        user: userWithoutPassword,
+        token
+      });
+    } catch (error) {
+      console.error('Signup error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const user = await dbStorage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('Get user error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/auth/logout', authenticateToken, async (req, res) => {
+    try {
+      // In a JWT-based system, logout is typically handled client-side
+      // by removing the token from storage
+      res.json({ message: 'Logout successful' });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
 
   // Email routes
   app.get("/api/email/status", async (req, res) => {

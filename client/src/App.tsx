@@ -1,8 +1,11 @@
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { Login } from "./pages/Login";
+import { Dashboard } from "./pages/Dashboard";
+import { Toaster } from "./components/ui/toaster";
 import MainLayout from "./components/layout/MainLayout";
-import Dashboard from "./pages/dashboard";
 import CustomersList from "./pages/customers";
 import AddCustomer from "./pages/customers/add";
 import EditCustomer from "./pages/customers/edit";
@@ -35,69 +38,95 @@ import EditProfilePage from "./pages/profile/edit";
 import ChangePasswordPage from "./pages/profile/change-password";
 import NotFound from "./pages/not-found";
 
+function AppRouter() {
+  const { isAuthenticated, isLoading, login } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Login onLogin={login} />;
+  }
+
+  return (
+    <Switch>
+      {/* Print routes that don't need the layout */}
+      <Route path="/quotations/print/:id" component={PrintQuotation} />
+      <Route path="/quotations/print/presentation/:id" component={PrintQuotation} />
+      <Route path="/invoices/print-invoice/:id" component={PrintInvoiceContainer} />
+      <Route path="/payments/print-receipt/:id" component={PrintReceiptPage} />
+      
+      {/* All other routes with the main layout */}
+      <Route>
+        <MainLayout>
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            
+            {/* Customer Routes */}
+            <Route path="/customers" component={CustomersList} />
+            <Route path="/customers/add" component={AddCustomer} />
+            <Route path="/customers/edit/:id" component={EditCustomer} />
+            <Route path="/customers/:id/follow-ups/add" component={CustomerDetailPage} />
+            <Route path="/customers/view/:id" component={CustomerDetailPage} />
+            
+            {/* Quotation Routes */}
+            <Route path="/quotations" component={QuotationsList} />
+            <Route path="/quotations/create" component={CreateQuotation} />
+            <Route path="/quotations/edit/:id" component={EditQuotation} />
+            <Route path="/quotations/view/:id" component={ViewQuotation} />
+            
+            {/* Sales Order Routes */}
+            <Route path="/sales-orders" component={SalesOrdersPage} />
+            <Route path="/sales-orders/create/:quotationId" component={CreateSalesOrder} />
+            <Route path="/sales-orders/view/:id" component={ViewSalesOrder} />
+            <Route path="/sales-orders/:id/payments" component={SalesOrderPaymentsPage} />
+            <Route path="/sales-orders/:id/payments/add" component={AddPaymentPage} />
+            
+            {/* Payment Routes */}
+            <Route path="/payments" component={PaymentsPage} />
+            <Route path="/payments/create" component={CreatePaymentPage} />
+            <Route path="/payments/view/:id" component={ViewPaymentPage} />
+            <Route path="/payments/edit/:id" component={EditPaymentPage} />
+            
+            {/* Invoice Routes */}
+            <Route path="/invoices" component={InvoicesPage} />
+            <Route path="/invoices/:id" component={InvoiceDetailPage} />
+            
+            {/* Other Routes */}
+            <Route path="/accessories" component={AccessoryCatalogPage} />
+            <Route path="/users" component={UsersPage} />
+            <Route path="/teams" component={TeamsPage} />
+            <Route path="/teams/:id" component={TeamDetailsPage} />
+            <Route path="/settings" component={SettingsPage} />
+            
+            {/* Profile Routes */}
+            <Route path="/profile" component={ProfilePage} />
+            <Route path="/profile/edit" component={EditProfilePage} />
+            <Route path="/profile/change-password" component={ChangePasswordPage} />
+            
+            <Route component={NotFound} />
+          </Switch>
+        </MainLayout>
+      </Route>
+    </Switch>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Switch>
-        {/* Print routes that don't need the layout */}
-        <Route path="/quotations/print/:id" component={PrintQuotation} />
-        <Route path="/quotations/print/presentation/:id" component={PrintQuotation} />
-        <Route path="/invoices/print-invoice/:id" component={PrintInvoiceContainer} />
-        <Route path="/payments/print-receipt/:id" component={PrintReceiptPage} />
-        
-        {/* All other routes with the main layout */}
-        <Route>
-          <MainLayout>
-            <Switch>
-              <Route path="/" component={Dashboard} />
-              
-              {/* Customer Routes */}
-              <Route path="/customers" component={CustomersList} />
-              <Route path="/customers/add" component={AddCustomer} />
-              <Route path="/customers/edit/:id" component={EditCustomer} />
-              <Route path="/customers/:id/follow-ups/add" component={CustomerDetailPage} />
-              <Route path="/customers/view/:id" component={CustomerDetailPage} />
-              
-              {/* Quotation Routes */}
-              <Route path="/quotations" component={QuotationsList} />
-              <Route path="/quotations/create" component={CreateQuotation} />
-              <Route path="/quotations/edit/:id" component={EditQuotation} />
-              <Route path="/quotations/view/:id" component={ViewQuotation} />
-              
-              {/* Sales Order Routes */}
-              <Route path="/sales-orders" component={SalesOrdersPage} />
-              <Route path="/sales-orders/create/:quotationId" component={CreateSalesOrder} />
-              <Route path="/sales-orders/view/:id" component={ViewSalesOrder} />
-              <Route path="/sales-orders/:id/payments" component={SalesOrderPaymentsPage} />
-              <Route path="/sales-orders/:id/payments/add" component={AddPaymentPage} />
-              
-              {/* Payment Routes */}
-              <Route path="/payments" component={PaymentsPage} />
-              <Route path="/payments/create" component={CreatePaymentPage} />
-              <Route path="/payments/view/:id" component={ViewPaymentPage} />
-              <Route path="/payments/edit/:id" component={EditPaymentPage} />
-              
-              {/* Invoice Routes */}
-              <Route path="/invoices" component={InvoicesPage} />
-              <Route path="/invoices/:id" component={InvoiceDetailPage} />
-              
-              {/* Other Routes */}
-              <Route path="/accessories" component={AccessoryCatalogPage} />
-              <Route path="/users" component={UsersPage} />
-              <Route path="/teams" component={TeamsPage} />
-              <Route path="/teams/:id" component={TeamDetailsPage} />
-              <Route path="/settings" component={SettingsPage} />
-              
-              {/* Profile Routes */}
-              <Route path="/profile" component={ProfilePage} />
-              <Route path="/profile/edit" component={EditProfilePage} />
-              <Route path="/profile/change-password" component={ChangePasswordPage} />
-              
-              <Route component={NotFound} />
-            </Switch>
-          </MainLayout>
-        </Route>
-      </Switch>
+      <AuthProvider>
+        <AppRouter />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
