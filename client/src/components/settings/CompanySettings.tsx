@@ -42,6 +42,11 @@ export function CompanySettingsForm() {
       email: "",
       website: "",
       taxId: "",
+      bankName: "",
+      bankAccountNumber: "",
+      bankIfscCode: "",
+      bankBranch: "",
+      showBankDetailsOnInvoice: false,
     },
     values: settings || undefined,
   });
@@ -239,6 +244,88 @@ export function CompanySettingsForm() {
                       <FormLabel>Address</FormLabel>
                       <FormControl>
                         <Input placeholder="Company Address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+            
+            {/* Bank Details Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold">Bank Details</h3>
+                <FormField
+                  control={form.control}
+                  name="showBankDetailsOnInvoice"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="rounded border-gray-300"
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm">Show on invoices</FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="bankName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bank Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Bank Name" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="bankAccountNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Account Number" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="bankIfscCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>IFSC Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="IFSC Code" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="bankBranch"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Branch</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Branch" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -10,13 +10,14 @@ const printStyles = `
 @media print {
   @page {
     size: A4;
-    margin: 15mm;
+    margin: 10mm;
   }
   
   body {
     background: white;
-    font-size: 12pt;
+    font-size: 10pt;
     font-family: 'Arial', sans-serif;
+    line-height: 1.2;
   }
   
   .print\\:hidden,
@@ -44,10 +45,11 @@ const printStyles = `
   }
 
   .terms-conditions {
-    margin-top: 10mm;
-    padding: 5mm;
+    margin-top: 3mm;
+    padding: 2mm;
     border: 1px solid #ddd;
     page-break-inside: avoid;
+    font-size: 9pt;
   }
   
   table {
@@ -57,7 +59,8 @@ const printStyles = `
   .items-table th,
   .items-table td {
     border: 1px solid #ddd;
-    padding: 2mm;
+    padding: 1.5mm;
+    font-size: 9pt;
   }
   
   .items-table th {
@@ -73,16 +76,26 @@ const printStyles = `
   .amount-in-words {
     font-style: italic;
     font-weight: bold;
+    font-size: 9pt;
   }
   
   .gst-section {
-    margin-top: 5mm;
+    margin-top: 3mm;
     page-break-inside: avoid;
   }
   
   .stamp-section {
-    margin-top: 15mm;
+    margin-top: 8mm;
     page-break-inside: avoid;
+  }
+  
+  .header-section {
+    margin-bottom: 3mm;
+  }
+  
+  .bank-details {
+    font-size: 8pt;
+    margin-top: 2mm;
   }
 }
 `;
@@ -294,12 +307,25 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
       <div className="container mx-auto bg-white shadow-md rounded-lg overflow-hidden print:shadow-none print:rounded-none">
         <div className="p-6 print:p-0">
           {/* Company Header */}
-          <div className="border-b pb-6 mb-6 flex justify-between items-start">
+          <div className="border-b pb-4 mb-4 flex justify-between items-start header-section">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">{companySettings?.firmName || companySettings?.name || 'Interior Design Company'}</h1>
               <p className="text-gray-600">{companySettings?.address || '123 Design Street, Creative City'}</p>
               <p className="text-gray-600">{companySettings?.phone || '+1 234 567 8900'} | {companySettings?.email || 'info@designcompany.com'}</p>
               <p className="text-gray-600">GST No: {companySettings?.taxId || 'Not Specified'}</p>
+              
+              {/* Bank Details - Show only if enabled */}
+              {companySettings?.showBankDetailsOnInvoice && (
+                <div className="bank-details mt-2 p-2 bg-gray-50 rounded">
+                  <h4 className="font-medium text-gray-700 mb-1">Bank Details:</h4>
+                  <div className="text-xs text-gray-600">
+                    {companySettings.bankName && <p>Bank: {companySettings.bankName}</p>}
+                    {companySettings.bankAccountNumber && <p>A/C No: {companySettings.bankAccountNumber}</p>}
+                    {companySettings.bankIfscCode && <p>IFSC: {companySettings.bankIfscCode}</p>}
+                    {companySettings.bankBranch && <p>Branch: {companySettings.bankBranch}</p>}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="text-right">
               <h2 className="text-xl font-bold text-gray-800 mb-1">TAX INVOICE</h2>
@@ -310,25 +336,25 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
           </div>
 
           {/* Customer Information */}
-          <div className="mb-6 grid grid-cols-2 gap-6">
+          <div className="mb-3 grid grid-cols-2 gap-4">
             <div>
-              <h3 className="text-lg font-semibold mb-2">Bill To:</h3>
-              <p className="font-medium">{customer.name}</p>
-              <p>{customer.address}</p>
-              <p>Phone: {customer.phone}</p>
-              <p>Email: {customer.email}</p>
-              {customer.gstNumber && <p>GST No: {customer.gstNumber}</p>}
+              <h3 className="text-base font-semibold mb-1">Bill To:</h3>
+              <p className="font-medium text-sm">{customer.name}</p>
+              <p className="text-sm">{customer.address}</p>
+              <p className="text-sm">Phone: {customer.phone}</p>
+              <p className="text-sm">Email: {customer.email}</p>
+              {customer.gstNumber && <p className="text-sm">GST No: {customer.gstNumber}</p>}
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-2">Ship To:</h3>
-              <p className="font-medium">{customer.name}</p>
-              <p>{customer.address}</p>
+              <h3 className="text-base font-semibold mb-1">Ship To:</h3>
+              <p className="font-medium text-sm">{customer.name}</p>
+              <p className="text-sm">{customer.address}</p>
             </div>
           </div>
 
           {/* Invoice Items - Match Quotation Format */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-700">Project Details</h3>
+          <div className="mb-3">
+            <h3 className="text-base font-semibold mb-2 text-gray-700">Project Details</h3>
             <div className="border rounded-md overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">

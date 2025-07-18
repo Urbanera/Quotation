@@ -23,6 +23,12 @@ export const companySettings = pgTable("company_settings", {
   website: text("website"),
   logo: text("logo"),
   taxId: text("tax_id"),
+  // Bank details for invoices
+  bankName: text("bank_name"),
+  bankAccountNumber: text("bank_account_number"),
+  bankIfscCode: text("bank_ifsc_code"),
+  bankBranch: text("bank_branch"),
+  showBankDetailsOnInvoice: boolean("show_bank_details_on_invoice").default(false),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -30,6 +36,8 @@ export const insertCompanySettingsSchema = createInsertSchema(companySettings).o
   id: true,
   updatedAt: true,
 });
+
+
 
 // App Settings schema
 export const appSettings = pgTable("app_settings", {
@@ -409,6 +417,11 @@ export const companySettingsFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   website: z.string().url("Website must be a valid URL").optional().or(z.literal("")),
   taxId: z.string().optional().or(z.literal("")),
+  bankName: z.string().optional().or(z.literal("")),
+  bankAccountNumber: z.string().optional().or(z.literal("")),
+  bankIfscCode: z.string().optional().or(z.literal("")),
+  bankBranch: z.string().optional().or(z.literal("")),
+  showBankDetailsOnInvoice: z.boolean().optional(),
 });
 
 export const appSettingsFormSchema = z.object({

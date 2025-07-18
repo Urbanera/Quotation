@@ -355,6 +355,11 @@ export class MemStorage implements IStorage {
       website: "https://www.interiodesigns.com",
       logo: null,
       taxId: "TAX123456789",
+      bankName: null,
+      bankAccountNumber: null,
+      bankIfscCode: null,
+      bankBranch: null,
+      showBankDetailsOnInvoice: false,
       updatedAt: new Date()
     };
 
@@ -553,6 +558,11 @@ export class MemStorage implements IStorage {
         website: settings.website || null,
         logo: settings.logo || null,
         taxId: settings.taxId || null,
+        bankName: settings.bankName || null,
+        bankAccountNumber: settings.bankAccountNumber || null,
+        bankIfscCode: settings.bankIfscCode || null,
+        bankBranch: settings.bankBranch || null,
+        showBankDetailsOnInvoice: settings.showBankDetailsOnInvoice || false,
         updatedAt: new Date()
       };
     } else {
