@@ -227,7 +227,7 @@ export default function PrintReceiptPage() {
         {/* Company Header */}
         <div className="flex justify-between mb-6 border-b pb-6 print:w-full">
           <div className="w-3/4">
-            <h1 className="text-2xl font-bold">{companyInfo.name}</h1>
+            <h1 className="text-2xl font-bold">{companyInfo.firmName || companyInfo.name}</h1>
             <p className="text-sm">{companyInfo.address}</p>
             <p className="text-sm">Email: {companyInfo.email}</p>
             <p className="text-sm">GSTIN: {companyInfo.gstin}</p>

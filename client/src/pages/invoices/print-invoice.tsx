@@ -296,7 +296,7 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
           {/* Company Header */}
           <div className="border-b pb-6 mb-6 flex justify-between items-start">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">{companySettings?.name || 'Interior Design Company'}</h1>
+              <h1 className="text-2xl font-bold text-gray-800">{companySettings?.firmName || companySettings?.name || 'Interior Design Company'}</h1>
               <p className="text-gray-600">{companySettings?.address || '123 Design Street, Creative City'}</p>
               <p className="text-gray-600">{companySettings?.phone || '+1 234 567 8900'} | {companySettings?.email || 'info@designcompany.com'}</p>
               <p className="text-gray-600">GST No: {companySettings?.taxId || 'Not Specified'}</p>

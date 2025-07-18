@@ -196,7 +196,7 @@ const StaticReceipt: React.FC<StaticReceiptProps> = ({
         {/* Company Header */}
         <View style={styles.headerSection}>
           <View style={styles.companyInfoSection}>
-            <Text style={styles.companyName}>{companyInfo.name}</Text>
+            <Text style={styles.companyName}>{companyInfo.firmName || companyInfo.name}</Text>
             <Text style={styles.companyDetail}>{companyInfo.address}</Text>
             <Text style={styles.companyDetail}>Email: {companyInfo.email}</Text>
             <Text style={styles.companyDetail}>GSTIN: {companyInfo.gstin}</Text>

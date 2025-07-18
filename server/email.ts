@@ -112,7 +112,7 @@ export class EmailService {
 
         // Add company info footer
         htmlContent += `<div style="margin-top: 10px; font-size: 12px; color: #888;">
-          <p>${this.companySettings.name}<br>
+          <p>${this.companySettings.firmName || this.companySettings.name}<br>
           ${this.companySettings.address}<br>
           Phone: ${this.companySettings.phone}<br>
           Email: ${this.companySettings.email}<br>
@@ -122,7 +122,7 @@ export class EmailService {
         
         // Try different connection methods if we're retrying
         let mailOptions: any = {
-          from: `"${this.companySettings.name}" <${emailFrom}>`,
+          from: `"${this.companySettings.firmName || this.companySettings.name}" <${emailFrom}>`,
           to: options.to,
           replyTo: replyTo,
           subject: options.subject,
@@ -313,8 +313,8 @@ export class EmailService {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
           <div style="text-align: center; margin-bottom: 20px;">
             ${this.companySettings.logo ? 
-              `<img src="${logoUrl}" alt="${this.companySettings.name}" style="max-height: 60px; max-width: 180px; margin-bottom: 10px;" />` : 
-              `<h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>`
+              `<img src="${logoUrl}" alt="${this.companySettings.firmName || this.companySettings.name}" style="max-height: 60px; max-width: 180px; margin-bottom: 10px;" />` : 
+              `<h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.firmName || this.companySettings.name}</h1>`
             }
             <div style="height: 3px; background: linear-gradient(to right, #4CAF50, #8BC34A); margin: 15px auto; width: 150px;"></div>
           </div>
@@ -405,8 +405,8 @@ export class EmailService {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
           <div style="text-align: center; margin-bottom: 20px;">
             ${this.companySettings.logo ? 
-              `<img src="${logoUrl}" alt="${this.companySettings.name}" style="max-height: 60px; max-width: 180px; margin-bottom: 10px;" />` : 
-              `<h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.name}</h1>`
+              `<img src="${logoUrl}" alt="${this.companySettings.firmName || this.companySettings.name}" style="max-height: 60px; max-width: 180px; margin-bottom: 10px;" />` : 
+              `<h1 style="color: #2c3e50; margin-bottom: 5px; font-size: 24px;">${this.companySettings.firmName || this.companySettings.name}</h1>`
             }
             <div style="height: 3px; background: linear-gradient(to right, #4CAF50, #8BC34A); margin: 15px auto; width: 150px;"></div>
           </div>
@@ -437,7 +437,7 @@ export class EmailService {
           <p style="font-size: 16px; color: #333;">Thank you for your business.</p>
           
           <p style="font-size: 16px; color: #333;">Best regards,</p>
-          <p style="font-size: 16px; color: #333; font-weight: bold;">${this.companySettings.name}</p>
+          <p style="font-size: 16px; color: #333; font-weight: bold;">${this.companySettings.firmName || this.companySettings.name}</p>
           
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 14px; color: #666; text-align: center;">
             <p>This email contains an invoice attachment. Please process this payment according to the terms specified.</p>
