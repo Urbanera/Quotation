@@ -1347,7 +1347,6 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       const quotation = await storage.createQuotation(req.body);
       res.status(201).json(quotation);
     } catch (error) {
-      console.error("Error creating quotation:", error);
       res.status(500).json({ message: "Failed to create quotation" });
     }
   });

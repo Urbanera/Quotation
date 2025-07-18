@@ -138,5 +138,3 @@ Preferred communication style: Simple, everyday language.
 - **Real-time Modification History**: Modification history updates immediately without requiring page refresh
 - **Accurate Price Tracking**: Modification snapshots capture correct final prices and quotation states
 - **Duplicate Prevention**: Adding same products/accessories updates quantity instead of creating duplicates
-- **Database Performance**: Optimized PostgreSQL connection pooling with reduced query times from 3000ms+ to 65ms
-- **Persistent Storage**: Complete migration from in-memory to PostgreSQL for production-ready data persistence

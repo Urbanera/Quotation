@@ -91,12 +91,7 @@ export default function CreateQuotation() {
         globalDiscount,
         gstPercentage,
         title: "",
-        status: "draft",
-        totalSellingPrice: 0,
-        totalDiscountedPrice: 0,
-        totalInstallationCharges: 0,
-        gstAmount: 0,
-        finalPrice: 0
+        status: "draft"
       });
     } else {
       // Update existing quotation
@@ -105,12 +100,7 @@ export default function CreateQuotation() {
           customerId: selectedCustomerId,
           installationHandling,
           globalDiscount,
-          gstPercentage,
-          totalSellingPrice: 0,
-          totalDiscountedPrice: 0,
-          totalInstallationCharges: 0,
-          gstAmount: 0,
-          finalPrice: 0
+          gstPercentage
         });
         toast({
           title: "Success",
@@ -148,12 +138,7 @@ export default function CreateQuotation() {
         globalDiscount,
         gstPercentage,
         title: "",
-        status: "draft",
-        totalSellingPrice: 0,
-        totalDiscountedPrice: 0,
-        totalInstallationCharges: 0,
-        gstAmount: 0,
-        finalPrice: 0
+        status: "draft"
       });
       
       // Toast explaining they need to add content first
