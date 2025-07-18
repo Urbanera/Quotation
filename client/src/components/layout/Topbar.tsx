@@ -15,6 +15,7 @@ import {
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Customer, Quotation } from "@shared/schema";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TopbarProps {
   onToggleMobileSidebar: () => void;
@@ -26,6 +27,7 @@ export default function Topbar({ onToggleMobileSidebar }: TopbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const { user, logout } = useAuth();
   
   // Fetch customers and quotations for search
   const { data: customers = [] } = useQuery<Customer[]>({
@@ -255,6 +257,7 @@ export default function Topbar({ onToggleMobileSidebar }: TopbarProps) {
                   className="text-red-600"
                   onClick={() => {
                     console.log("Logging out...");
+                    logout();
                     navigate("/");
                   }}
                 >

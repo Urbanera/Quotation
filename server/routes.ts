@@ -2226,6 +2226,51 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  // Profile update endpoint - allows users to update their own profile
+  app.put("/api/auth/profile", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { fullName, email, currentPassword, newPassword } = req.body;
+      
+      // If user wants to change password, verify current password
+      if (newPassword) {
+        if (!currentPassword) {
+          return res.status(400).json({ message: "Current password is required to set a new password" });
+        }
+        
+        const user = await dbStorage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        
+        const isCurrentPasswordValid = await AuthService.comparePassword(currentPassword, user.password);
+        if (!isCurrentPasswordValid) {
+          return res.status(400).json({ message: "Current password is incorrect" });
+        }
+      }
+      
+      // Prepare update data
+      const updateData: any = { fullName, email };
+      
+      // Only hash new password if provided
+      if (newPassword) {
+        updateData.password = await AuthService.hashPassword(newPassword);
+      }
+      
+      const updatedUser = await dbStorage.updateUser(userId, updateData);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('Profile update error:', error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
   // Team routes
   app.get("/api/teams", async (req, res) => {
     try {

@@ -2,18 +2,17 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Edit, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProfilePage() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
   
-  // This would come from authentication context in a real app
-  const mockUser = {
-    id: 1,
-    username: "admin",
-    email: "admin@designquotes.com",
-    fullName: "Admin User",
-    role: "admin"
-  };
+  // Redirect if not authenticated
+  if (!user) {
+    navigate("/");
+    return null;
+  }
 
   return (
     <div className="container mx-auto py-8">
@@ -52,19 +51,25 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Full Name</h3>
-                <p className="mt-1 text-lg font-medium">{mockUser.fullName}</p>
+                <p className="mt-1 text-lg font-medium">{user.fullName}</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Username</h3>
-                <p className="mt-1 text-lg font-medium">{mockUser.username}</p>
+                <p className="mt-1 text-lg font-medium">{user.username}</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Email Address</h3>
-                <p className="mt-1 text-lg font-medium">{mockUser.email}</p>
+                <p className="mt-1 text-lg font-medium">{user.email}</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Role</h3>
-                <p className="mt-1 text-lg font-medium capitalize">{mockUser.role}</p>
+                <p className="mt-1 text-lg font-medium capitalize">{user.role}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Status</h3>
+                <p className={`mt-1 text-lg font-medium ${user.active ? 'text-green-600' : 'text-red-600'}`}>
+                  {user.active ? 'Active' : 'Inactive'}
+                </p>
               </div>
             </div>
 

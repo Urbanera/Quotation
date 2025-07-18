@@ -15,6 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 // Form schema
 const profileFormSchema = z.object({
@@ -24,9 +27,17 @@ const profileFormSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  username: z.string().min(3, {
-    message: "Username must be at least 3 characters.",
-  }),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().optional(),
+}).refine((data) => {
+  // If newPassword is provided, currentPassword must also be provided
+  if (data.newPassword && data.newPassword.length > 0) {
+    return data.currentPassword && data.currentPassword.length > 0;
+  }
+  return true;
+}, {
+  message: "Current password is required when setting a new password",
+  path: ["currentPassword"],
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -34,46 +45,65 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export default function EditProfilePage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  // This would come from authentication context in a real app
-  const mockUser = {
-    id: 1,
-    username: "admin",
-    email: "admin@designquotes.com",
-    fullName: "Admin User",
-    role: "admin"
-  };
+  // Redirect if not authenticated
+  if (!user) {
+    navigate("/");
+    return null;
+  }
 
   // Initialize form with default values
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      fullName: mockUser.fullName,
-      email: mockUser.email,
-      username: mockUser.username,
+      fullName: user.fullName,
+      email: user.email,
+      currentPassword: "",
+      newPassword: "",
     },
   });
 
-  const onSubmit = async (data: ProfileFormValues) => {
-    try {
-      // In a real app, this would be an API call to update the user profile
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: ProfileFormValues) => {
       console.log("Updating profile with:", data);
+      // Clean up the data - remove empty password fields
+      const cleanedData: any = {
+        fullName: data.fullName,
+        email: data.email,
+      };
       
-      // Show success toast
+      // Only include password fields if they have values
+      if (data.currentPassword && data.newPassword) {
+        cleanedData.currentPassword = data.currentPassword;
+        cleanedData.newPassword = data.newPassword;
+      }
+      
+      return await apiRequest(`/api/auth/profile`, {
+        method: "PUT",
+        body: JSON.stringify(cleanedData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
-      
-      // Navigate back to profile page
       navigate("/profile");
-    } catch (error) {
+    },
+    onError: (error) => {
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  const onSubmit = async (data: ProfileFormValues) => {
+    updateProfileMutation.mutate(data);
   };
 
   return (
@@ -114,12 +144,26 @@ export default function EditProfilePage() {
 
                 <FormField
                   control={form.control}
-                  name="username"
+                  name="currentPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username</FormLabel>
+                      <FormLabel>Current Password</FormLabel>
                       <FormControl>
-                        <Input placeholder="Your username" {...field} />
+                        <Input type="password" placeholder="Enter current password (leave empty to keep unchanged)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Enter new password (leave empty to keep unchanged)" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -149,9 +193,9 @@ export default function EditProfilePage() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit">
+                  <Button type="submit" disabled={updateProfileMutation.isPending}>
                     <Save className="h-4 w-4 mr-2" />
-                    Save Changes
+                    {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
               </form>
