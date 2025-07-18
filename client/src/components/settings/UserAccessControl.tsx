@@ -60,10 +60,7 @@ export default function UserAccessControl() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: { permissions: Array<{role: string, module: string, permissions: PermissionSettings[string]}> }) => {
-      return await apiRequest('/api/user-permissions/bulk-update', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
+      return await apiRequest('POST', '/api/user-permissions/bulk-update', data);
     },
     onSuccess: () => {
       toast({
