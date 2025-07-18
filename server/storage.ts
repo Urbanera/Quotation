@@ -22,7 +22,7 @@ import {
   invoices, Invoice, InsertInvoice, invoiceStatusEnum
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, like, ilike } from "drizzle-orm";
+import { eq, and, desc, asc, like, ilike, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -3569,13 +3569,14 @@ export class DatabaseStorage implements IStorage {
           quotationNumber: "Q-2025-001",
           title: "Demo Interior Design Project",
           description: "Complete interior design for living room and bedroom",
+          totalSellingPrice: 150000,
+          totalDiscountedPrice: 142500,
+          totalInstallationCharges: 15000,
+          installationHandling: 5000,
           globalDiscount: 5,
           gstPercentage: 18,
-          totalSellingPrice: 150000,
-          totalInstallationCharges: 15000,
           gstAmount: 27000,
           finalPrice: 192000,
-          installationCharges: [],
           status: "draft"
         });
         console.log("Seeded demo quotation");
@@ -3762,6 +3763,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createQuotation(quotation: InsertQuotation): Promise<Quotation> {
+    // Generate quotation number if not provided
+    if (!quotation.quotationNumber) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const allQuotations = await db.select().from(quotations);
+      const nextNumber = allQuotations.length + 1;
+      quotation.quotationNumber = `Q-${year}-${nextNumber.toString().padStart(3, '0')}`;
+    }
+
     const [created] = await db.insert(quotations).values({
       ...quotation,
       createdAt: new Date()
