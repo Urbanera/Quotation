@@ -348,6 +348,7 @@ export class MemStorage implements IStorage {
     this.companySettings = {
       id: 1,
       name: "Interio Designs",
+      firmName: null, // Optional firm name for invoices and receipts
       address: "123 Design Avenue, Suite 456, Design District",
       phone: "+1 (555) 123-4567",
       email: "info@interiodesigns.com",
@@ -545,12 +546,13 @@ export class MemStorage implements IStorage {
       this.companySettings = {
         id: 1,
         name: settings.name || "Company Name",
+        firmName: settings.firmName || null,
         address: settings.address || "Company Address",
         phone: settings.phone || "Phone Number",
         email: settings.email || "email@example.com",
-        website: settings.website || "",
+        website: settings.website || null,
         logo: settings.logo || null,
-        taxId: settings.taxId || "",
+        taxId: settings.taxId || null,
         updatedAt: new Date()
       };
     } else {

@@ -36,6 +36,7 @@ export function CompanySettingsForm() {
     resolver: zodResolver(companySettingsFormSchema),
     defaultValues: {
       name: "",
+      firmName: "",
       address: "",
       phone: "",
       email: "",
@@ -152,6 +153,23 @@ export function CompanySettingsForm() {
                       <Input placeholder="Company Name" {...field} />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="firmName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Firm Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Firm Name (for invoices and receipts)" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-sm text-muted-foreground">
+                      Optional: This name will appear on invoices and payment receipts instead of the company name
+                    </p>
                   </FormItem>
                 )}
               />

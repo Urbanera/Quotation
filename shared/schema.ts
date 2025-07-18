@@ -16,6 +16,7 @@ export const customerStageEnum = pgEnum('customer_stage', [
 export const companySettings = pgTable("company_settings", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  firmName: text("firm_name"), // Optional firm name for invoices and receipts
   address: text("address").notNull(),
   phone: text("phone").notNull(),
   email: text("email").notNull(),
@@ -402,6 +403,7 @@ export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
 // Custom schemas for client-side validation
 export const companySettingsFormSchema = z.object({
   name: z.string().min(1, "Company name is required"),
+  firmName: z.string().optional().or(z.literal("")),
   address: z.string().min(1, "Company address is required"),
   phone: z.string().min(8, "Phone number must be at least 8 digits"),
   email: z.string().email("Invalid email address"),
