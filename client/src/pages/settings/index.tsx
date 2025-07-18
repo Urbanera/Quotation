@@ -1,5 +1,6 @@
 import { CompanySettingsForm } from "@/components/settings/CompanySettings";
 import { AppSettingsForm } from "@/components/settings/AppSettings";
+import UserAccessControl from "@/components/settings/UserAccessControl";
 import { TabsContent, Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SettingsPage() {
@@ -16,6 +17,7 @@ export default function SettingsPage() {
         <TabsList className="mb-6">
           <TabsTrigger value="company">Company Information</TabsTrigger>
           <TabsTrigger value="quotation">Quotation Defaults</TabsTrigger>
+          <TabsTrigger value="access">User Access Control</TabsTrigger>
         </TabsList>
         
         <TabsContent value="company" className="space-y-6">
@@ -24,6 +26,10 @@ export default function SettingsPage() {
         
         <TabsContent value="quotation" className="space-y-6">
           <AppSettingsForm />
+        </TabsContent>
+        
+        <TabsContent value="access" className="space-y-6">
+          <UserAccessControl />
         </TabsContent>
       </Tabs>
     </div>

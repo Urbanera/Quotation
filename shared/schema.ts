@@ -319,6 +319,9 @@ export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type TeamMember = typeof teamMembers.$inferSelect;
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 
+export type UserPermission = typeof userPermissions.$inferSelect;
+export type InsertUserPermission = z.infer<typeof insertUserPermissionSchema>;
+
 // Installation charge schema
 export const installationCharges = pgTable("installation_charges", {
   id: serial("id").primaryKey(),
@@ -406,6 +409,36 @@ export const teamMembers = pgTable("team_members", {
 export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
   id: true,
   createdAt: true,
+});
+
+// User access control system
+export const moduleEnum = pgEnum('module', [
+  'customers',
+  'quotations', 
+  'sales_orders',
+  'invoices',
+  'payments',
+  'reports',
+  'settings',
+  'users'
+]);
+
+export const userPermissions = pgTable("user_permissions", {
+  id: serial("id").primaryKey(),
+  role: roleEnum("role").notNull(),
+  module: moduleEnum("module").notNull(),
+  canView: boolean("can_view").notNull().default(false),
+  canCreate: boolean("can_create").notNull().default(false),
+  canEdit: boolean("can_edit").notNull().default(false),
+  canDelete: boolean("can_delete").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertUserPermissionSchema = createInsertSchema(userPermissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Custom schemas for client-side validation

@@ -19,7 +19,8 @@ import {
   salesOrders, SalesOrder, InsertSalesOrder, orderStatusEnum, paymentStatusEnum,
   payments, Payment, InsertPayment, paymentMethodEnum,
   customerPayments, CustomerPayment, InsertCustomerPayment, paymentTypeEnum,
-  invoices, Invoice, InsertInvoice, invoiceStatusEnum
+  invoices, Invoice, InsertInvoice, invoiceStatusEnum,
+  userPermissions, UserPermission, InsertUserPermission
 } from "@shared/schema";
 
 export interface IStorage {
@@ -204,6 +205,15 @@ export interface IStorage {
   createQuotationModification(modification: InsertQuotationModification): Promise<QuotationModification>;
   getQuotationModification(id: number): Promise<QuotationModification | undefined>;
   revertQuotationToModification(quotationId: number, modificationId: number): Promise<boolean>;
+  
+  // User permissions operations
+  getAllUserPermissions(): Promise<UserPermission[]>;
+  getUserPermissionsByRole(role: "admin" | "manager" | "designer" | "viewer"): Promise<UserPermission[]>;
+  getUserPermission(role: "admin" | "manager" | "designer" | "viewer", module: "customers" | "quotations" | "sales_orders" | "invoices" | "payments" | "reports" | "settings" | "users"): Promise<UserPermission | undefined>;
+  createUserPermission(permission: InsertUserPermission): Promise<UserPermission>;
+  updateUserPermission(id: number, permission: Partial<InsertUserPermission>): Promise<UserPermission | undefined>;
+  deleteUserPermission(id: number): Promise<boolean>;
+  bulkUpdateUserPermissions(permissions: Array<{role: string, module: string, permissions: {canView: boolean, canCreate: boolean, canEdit: boolean, canDelete: boolean}}>): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -227,6 +237,7 @@ export class MemStorage implements IStorage {
   private payments: Map<number, Payment>;
   private customerPayments: Map<number, CustomerPayment>;
   private invoices: Map<number, Invoice>;
+  private userPermissions: Map<number, UserPermission>;
   
   private customerIdCounter: number;
   private quotationIdCounter: number;
@@ -246,6 +257,7 @@ export class MemStorage implements IStorage {
   private paymentIdCounter: number;
   private customerPaymentIdCounter: number;
   private invoiceIdCounter: number;
+  private userPermissionIdCounter: number;
   
   constructor() {
     // Create singleton instance of storage to persist data between server reloads
@@ -272,6 +284,7 @@ export class MemStorage implements IStorage {
       this.payments = instance.payments;
       this.customerPayments = instance.customerPayments;
       this.invoices = instance.invoices;
+      this.userPermissions = instance.userPermissions || new Map();
       
       this.companySettings = instance.companySettings;
       this.appSettings = instance.appSettings;
@@ -294,6 +307,7 @@ export class MemStorage implements IStorage {
       this.paymentIdCounter = instance.paymentIdCounter;
       this.customerPaymentIdCounter = instance.customerPaymentIdCounter;
       this.invoiceIdCounter = instance.invoiceIdCounter;
+      this.userPermissionIdCounter = instance.userPermissionIdCounter || 1;
       
       console.log(`Restored data with ${this.customers.size} customers, ${this.salesOrders.size} sales orders, ${this.customerPayments.size} customer payments, ${this.invoices.size} invoices`);
       
@@ -319,6 +333,7 @@ export class MemStorage implements IStorage {
     this.payments = new Map();
     this.customerPayments = new Map();
     this.invoices = new Map();
+    this.userPermissions = new Map();
     
     this.customerIdCounter = 1;
     this.quotationIdCounter = 1;
@@ -338,6 +353,7 @@ export class MemStorage implements IStorage {
     this.paymentIdCounter = 1;
     this.customerPaymentIdCounter = 1;
     this.invoiceIdCounter = 1;
+    this.userPermissionIdCounter = 1;
     
     // Add some initial data
     this.initializeData();
@@ -3516,6 +3532,80 @@ export class MemStorage implements IStorage {
     });
 
     console.log(`Successfully created modification:`, modification);
+  }
+
+  // User permissions operations
+  async getAllUserPermissions(): Promise<UserPermission[]> {
+    return Array.from(this.userPermissions.values());
+  }
+
+  async getUserPermissionsByRole(role: "admin" | "manager" | "designer" | "viewer"): Promise<UserPermission[]> {
+    return Array.from(this.userPermissions.values()).filter(p => p.role === role);
+  }
+
+  async getUserPermission(role: "admin" | "manager" | "designer" | "viewer", module: "customers" | "quotations" | "sales_orders" | "invoices" | "payments" | "reports" | "settings" | "users"): Promise<UserPermission | undefined> {
+    return Array.from(this.userPermissions.values()).find(p => p.role === role && p.module === module);
+  }
+
+  async createUserPermission(permission: InsertUserPermission): Promise<UserPermission> {
+    const newPermission: UserPermission = {
+      ...permission,
+      id: this.userPermissionIdCounter++,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.userPermissions.set(newPermission.id, newPermission);
+    return newPermission;
+  }
+
+  async updateUserPermission(id: number, permission: Partial<InsertUserPermission>): Promise<UserPermission | undefined> {
+    const existing = this.userPermissions.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...permission, updatedAt: new Date() };
+    this.userPermissions.set(id, updated);
+    return updated;
+  }
+
+  async deleteUserPermission(id: number): Promise<boolean> {
+    return this.userPermissions.delete(id);
+  }
+
+  async bulkUpdateUserPermissions(permissions: Array<{role: string, module: string, permissions: {canView: boolean, canCreate: boolean, canEdit: boolean, canDelete: boolean}}>): Promise<boolean> {
+    for (const perm of permissions) {
+      // Find existing permission or create new one
+      const existing = Array.from(this.userPermissions.values()).find(p => 
+        p.role === perm.role && p.module === perm.module
+      );
+      
+      if (existing) {
+        // Update existing permission
+        const updated = {
+          ...existing,
+          canView: perm.permissions.canView,
+          canCreate: perm.permissions.canCreate,
+          canEdit: perm.permissions.canEdit,
+          canDelete: perm.permissions.canDelete,
+          updatedAt: new Date()
+        };
+        this.userPermissions.set(existing.id, updated);
+      } else {
+        // Create new permission
+        const newPermission: UserPermission = {
+          id: this.userPermissionIdCounter++,
+          role: perm.role as any,
+          module: perm.module as any,
+          canView: perm.permissions.canView,
+          canCreate: perm.permissions.canCreate,
+          canEdit: perm.permissions.canEdit,
+          canDelete: perm.permissions.canDelete,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        this.userPermissions.set(newPermission.id, newPermission);
+      }
+    }
+    return true;
   }
 }
 

@@ -3358,6 +3358,39 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  // User permissions routes
+  app.get('/api/user-permissions', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+      const permissions = await storage.getAllUserPermissions();
+      res.json(permissions);
+    } catch (error) {
+      console.error('Error fetching user permissions:', error);
+      res.status(500).json({ message: 'Error fetching user permissions' });
+    }
+  });
+
+  app.get('/api/user-permissions/:role', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+      const role = req.params.role as 'admin' | 'manager' | 'designer' | 'viewer';
+      const permissions = await storage.getUserPermissionsByRole(role);
+      res.json(permissions);
+    } catch (error) {
+      console.error('Error fetching user permissions by role:', error);
+      res.status(500).json({ message: 'Error fetching user permissions' });
+    }
+  });
+
+  app.post('/api/user-permissions/bulk-update', authenticateToken, requireRole('admin'), async (req, res) => {
+    try {
+      const { permissions } = req.body;
+      await storage.bulkUpdateUserPermissions(permissions);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating user permissions:', error);
+      res.status(500).json({ message: 'Error updating user permissions' });
+    }
+  });
+
   // Use WhatsApp routes
   app.use('/api/whatsapp', whatsappRouter);
 
