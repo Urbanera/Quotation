@@ -102,8 +102,8 @@ export interface IStorage {
   // Installation charge operations
   getInstallationCharges(roomId: number): Promise<InstallationCharge[]>;
   getInstallationCharge(id: number): Promise<InstallationCharge | undefined>;
-  createInstallationCharge(charge: InstallationCharge): Promise<InstallationCharge>;
-  updateInstallationCharge(id: number, charge: Partial<InstallationCharge>): Promise<InstallationCharge | undefined>;
+  createInstallationCharge(charge: any): Promise<InstallationCharge>;
+  updateInstallationCharge(id: number, charge: any): Promise<InstallationCharge | undefined>;
   deleteInstallationCharge(id: number): Promise<boolean>;
   
   // User operations
@@ -2541,11 +2541,17 @@ export class MemStorage implements IStorage {
     return this.installationCharges.get(id);
   }
   
-  async createInstallationCharge(charge: InstallationCharge): Promise<InstallationCharge> {
+  async createInstallationCharge(charge: any): Promise<InstallationCharge> {
     const id = this.installationChargeIdCounter++;
     const newCharge: InstallationCharge = {
       ...charge,
-      id
+      id,
+      // Ensure numeric fields are properly converted
+      widthMm: typeof charge.widthMm === 'string' ? parseInt(charge.widthMm) : charge.widthMm,
+      heightMm: typeof charge.heightMm === 'string' ? parseInt(charge.heightMm) : charge.heightMm,
+      areaSqft: typeof charge.areaSqft === 'string' ? parseFloat(charge.areaSqft) : charge.areaSqft,
+      pricePerSqft: typeof charge.pricePerSqft === 'string' ? parseFloat(charge.pricePerSqft) : charge.pricePerSqft,
+      amount: typeof charge.amount === 'string' ? parseFloat(charge.amount) : charge.amount,
     };
     this.installationCharges.set(id, newCharge);
     
@@ -2566,13 +2572,19 @@ export class MemStorage implements IStorage {
     return newCharge;
   }
   
-  async updateInstallationCharge(id: number, charge: Partial<InstallationCharge>): Promise<InstallationCharge | undefined> {
+  async updateInstallationCharge(id: number, charge: any): Promise<InstallationCharge | undefined> {
     const existingCharge = this.installationCharges.get(id);
     if (!existingCharge) return undefined;
     
     const updatedCharge: InstallationCharge = {
       ...existingCharge,
-      ...charge
+      ...charge,
+      // Ensure numeric fields are properly converted
+      widthMm: charge.widthMm !== undefined ? (typeof charge.widthMm === 'string' ? parseInt(charge.widthMm) : charge.widthMm) : existingCharge.widthMm,
+      heightMm: charge.heightMm !== undefined ? (typeof charge.heightMm === 'string' ? parseInt(charge.heightMm) : charge.heightMm) : existingCharge.heightMm,
+      areaSqft: charge.areaSqft !== undefined ? (typeof charge.areaSqft === 'string' ? parseFloat(charge.areaSqft) : charge.areaSqft) : existingCharge.areaSqft,
+      pricePerSqft: charge.pricePerSqft !== undefined ? (typeof charge.pricePerSqft === 'string' ? parseFloat(charge.pricePerSqft) : charge.pricePerSqft) : existingCharge.pricePerSqft,
+      amount: charge.amount !== undefined ? (typeof charge.amount === 'string' ? parseFloat(charge.amount) : charge.amount) : existingCharge.amount,
     };
     this.installationCharges.set(id, updatedCharge);
     

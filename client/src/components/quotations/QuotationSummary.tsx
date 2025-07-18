@@ -99,9 +99,9 @@ export default function QuotationSummary({
 
   const getTotalInstallationCharges = () => {
     // First check if totalInstallationCharges is available in the quotation
-    if (quotation?.totalInstallationCharges !== undefined) {
+    if (quotation?.totalInstallationCharges !== undefined && quotation.totalInstallationCharges !== null) {
       console.log('Using totalInstallationCharges from quotation:', quotation.totalInstallationCharges);
-      return Number(quotation.totalInstallationCharges);
+      return Number(quotation.totalInstallationCharges) || 0;
     }
     
     // Then try to use the installation charges from the room data directly
@@ -109,12 +109,14 @@ export default function QuotationSummary({
       let totalAmount = 0;
       
       for (const room of quotation.rooms) {
-        if (room.installationCharges && room.installationCharges.length > 0) {
+        if (room.included && room.installationCharges && room.installationCharges.length > 0) {
           for (const charge of room.installationCharges) {
             const amount = typeof charge.amount === 'number' 
               ? charge.amount 
               : parseFloat(String(charge.amount));
-            totalAmount += amount;
+            if (!isNaN(amount) && amount > 0) {
+              totalAmount += amount;
+            }
           }
         }
       }
@@ -124,18 +126,25 @@ export default function QuotationSummary({
     }
     
     // Fall back to the installation charges from the API endpoint
-    if (!roomInstallationCharges.length) return 0;
+    if (!roomInstallationCharges || !roomInstallationCharges.length) {
+      console.log('No installation charges data available');
+      return 0;
+    }
     
     // Get all charges from all rooms
     let totalAmount = 0;
     
     for (const roomData of roomInstallationCharges) {
-      // Sum up all charges for this room
-      for (const charge of roomData.charges) {
-        const amount = typeof charge.amount === 'number' 
-          ? charge.amount 
-          : parseFloat(String(charge.amount));
-        totalAmount += amount;
+      if (roomData && roomData.charges && roomData.charges.length > 0) {
+        // Sum up all charges for this room
+        for (const charge of roomData.charges) {
+          const amount = typeof charge.amount === 'number' 
+            ? charge.amount 
+            : parseFloat(String(charge.amount));
+          if (!isNaN(amount) && amount > 0) {
+            totalAmount += amount;
+          }
+        }
       }
     }
     
