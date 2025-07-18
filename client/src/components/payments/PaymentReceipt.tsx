@@ -209,10 +209,7 @@ const StaticReceipt: React.FC<StaticReceiptProps> = ({
             ) : (
               <View style={{border: '1px solid #ccc', padding: 5, backgroundColor: '#fff'}}>
                 <Text style={{fontSize: 12, fontWeight: 'bold', color: '#777'}}>
-                  LECCO
-                </Text>
-                <Text style={{fontSize: 12, fontWeight: 'bold', color: '#777'}}>
-                  CUCINA
+                  {companyInfo.firmName || companyInfo.name}
                 </Text>
               </View>
             )}

@@ -237,7 +237,7 @@ export default function PrintReceiptPage() {
             {companyInfo.logo ? (
               <img src={companyInfo.logo} alt="Company Logo" className="h-16 object-contain" />
             ) : (
-              <div className="text-xl font-bold text-primary">LECCO CUCINA</div>
+              <div className="text-xl font-bold text-primary">{companyInfo.firmName || companyInfo.name}</div>
             )}
           </div>
         </div>
