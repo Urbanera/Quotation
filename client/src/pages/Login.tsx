@@ -36,8 +36,8 @@ export function Login({ onLogin }: LoginProps) {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginData) => {
-      const response = await apiRequest('/api/auth/login', 'POST', data);
-      return response;
+      const response = await apiRequest('POST', '/api/auth/login', data);
+      return response.json();
     },
     onSuccess: (data) => {
       toast({

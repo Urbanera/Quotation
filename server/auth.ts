@@ -85,7 +85,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
   }
 
   // Verify user still exists and is active
-  const user = await storage.getUser(decoded.id);
+  const user = await dbStorage.getUser(decoded.id);
   if (!user || !user.active) {
     return res.status(403).json({ message: 'User not found or inactive' });
   }
