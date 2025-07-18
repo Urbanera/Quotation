@@ -300,7 +300,7 @@ export default function PrintReceiptPage() {
 
         {/* Signature Section */}
         <div className="mt-16">
-          <p className="text-sm text-right">For: {companyInfo.name}</p>
+          <p className="text-sm text-right">For: {companyInfo.firmName || companyInfo.name}</p>
           <div className="h-16"></div>
           <p className="text-sm font-semibold text-right">Authorized Signatory</p>
         </div>

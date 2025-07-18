@@ -177,6 +177,7 @@ const StaticReceipt: React.FC<StaticReceiptProps> = ({
   // Company info from settings
   const companyInfo = {
     name: companySettings.name || "URBAN ERA INTERIOR STUDIO",
+    firmName: companySettings.firmName || null,
     address: companySettings.address || "Layout, No.plot Plaza, 48-11-13/2/1, Santhoshimatha Building, Visakhapatnam",
     mobile: companySettings.phone || "+91 98765 43210",
     email: companySettings.email || "sales.visakhapatnam@leccocucina.com",
@@ -265,7 +266,7 @@ const StaticReceipt: React.FC<StaticReceiptProps> = ({
 
         {/* Signature Section */}
         <View style={styles.footerSection}>
-          <Text style={styles.companyFor}>For: {companyInfo.name}</Text>
+          <Text style={styles.companyFor}>For: {companyInfo.firmName || companyInfo.name}</Text>
           <Text style={styles.signatureText}>Authorized Signatory</Text>
         </View>
       </Page>

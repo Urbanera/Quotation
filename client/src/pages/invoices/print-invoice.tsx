@@ -497,7 +497,7 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
             </div>
             
             <div className="text-right stamp-section">
-              <p className="mb-12">For {companySettings?.name || 'Interior Design Company'}</p>
+              <p className="mb-12">For {companySettings?.firmName || companySettings?.name || 'Interior Design Company'}</p>
               <p className="mt-8 font-medium">Authorized Signatory</p>
             </div>
           </div>
