@@ -73,17 +73,14 @@ export default function EditProfilePage() {
         fullName: data.fullName,
         email: data.email,
       };
-      
-      // Only include password fields if they have values
-      if (data.currentPassword && data.newPassword) {
+
+      // Only add password fields if they're provided
+      if (data.newPassword && data.newPassword.trim()) {
         cleanedData.currentPassword = data.currentPassword;
         cleanedData.newPassword = data.newPassword;
       }
-      
-      return await apiRequest(`/api/auth/profile`, {
-        method: "PUT",
-        body: JSON.stringify(cleanedData),
-      });
+
+      return await apiRequest('PUT', '/api/auth/profile', cleanedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });

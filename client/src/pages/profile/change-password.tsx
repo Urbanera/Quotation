@@ -2,6 +2,8 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -50,26 +52,32 @@ export default function ChangePasswordPage() {
     },
   });
 
-  const onSubmit = async (data: PasswordFormValues) => {
-    try {
-      // In a real app, this would be an API call to change the password
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: PasswordFormValues) => {
       console.log("Changing password:", data);
-      
-      // Show success toast
+      return await apiRequest('PUT', '/api/auth/profile', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      });
+    },
+    onSuccess: () => {
       toast({
         title: "Password updated",
         description: "Your password has been changed successfully.",
       });
-      
-      // Navigate back to profile page
       navigate("/profile");
-    } catch (error) {
+    },
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to change password. Please try again.",
+        description: error.message || "Failed to change password. Please try again.",
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  const onSubmit = async (data: PasswordFormValues) => {
+    changePasswordMutation.mutate(data);
   };
 
   return (
@@ -145,9 +153,9 @@ export default function ChangePasswordPage() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit">
+                  <Button type="submit" disabled={changePasswordMutation.isPending}>
                     <Save className="h-4 w-4 mr-2" />
-                    Update Password
+                    {changePasswordMutation.isPending ? "Updating..." : "Update Password"}
                   </Button>
                 </div>
               </form>

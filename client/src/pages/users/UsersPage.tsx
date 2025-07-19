@@ -18,9 +18,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User } from '@shared/schema';
-import { PlusCircle, MoreHorizontal, Pencil, Trash2, Shield } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Pencil, Trash2, Shield, Key } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import UserForm from './UserForm';
@@ -31,7 +33,9 @@ export default function UsersPage() {
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithoutPassword | null>(null);
+  const [newPassword, setNewPassword] = useState('');
 
   const { data: users, isLoading } = useQuery<UserWithoutPassword[]>({
     queryKey: ['/api/users'],
@@ -57,9 +61,62 @@ export default function UsersPage() {
     },
   });
 
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: number; newPassword: string }) => {
+      await apiRequest('PUT', `/api/users/${userId}/reset-password`, { newPassword });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Password reset',
+        description: 'The user password has been reset successfully.',
+      });
+      setIsResetPasswordDialogOpen(false);
+      setNewPassword('');
+      setSelectedUser(null);
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to reset password: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
   function handleEditUser(user: UserWithoutPassword) {
     setSelectedUser(user);
     setIsEditDialogOpen(true);
+  }
+
+  function handleResetPassword(user: UserWithoutPassword) {
+    setSelectedUser(user);
+    setIsResetPasswordDialogOpen(true);
+    setNewPassword('');
+  }
+
+  function handlePasswordReset() {
+    if (!selectedUser || !newPassword.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a new password',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: 'Error',
+        description: 'Password must be at least 6 characters long',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    resetPasswordMutation.mutate({ 
+      userId: selectedUser.id, 
+      newPassword: newPassword.trim() 
+    });
   }
 
   function handleDeleteUser(user: UserWithoutPassword) {
@@ -157,6 +214,10 @@ export default function UsersPage() {
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleResetPassword(user)}>
+                      <Key className="mr-2 h-4 w-4" />
+                      Reset Password
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleDeleteUser(user)}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
@@ -201,6 +262,49 @@ export default function UsersPage() {
               }} 
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Reset User Password</DialogTitle>
+            <DialogDescription>
+              Set a new password for {selectedUser?.fullName} ({selectedUser?.username})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password (min 6 characters)"
+                className="mt-1"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsResetPasswordDialogOpen(false);
+                  setNewPassword('');
+                  setSelectedUser(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handlePasswordReset}
+                disabled={resetPasswordMutation.isPending}
+              >
+                {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

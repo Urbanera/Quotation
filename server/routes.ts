@@ -2291,7 +2291,33 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.json(userWithoutPassword);
     } catch (error) {
       console.error('Profile update error:', error);
-      res.status(500).json({ message: "Failed to update profile" });
+      res.status(500).json({ message: "Failed to update profile", error: error.message });
+    }
+  });
+
+  // Admin password reset endpoint - allows admin to reset any user's password
+  app.put("/api/users/:id/reset-password", authenticateToken, requirePermission('users', 'edit'), async (req: AuthRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "New password must be at least 6 characters long" });
+      }
+
+      // Hash the new password
+      const hashedPassword = await AuthService.hashPassword(newPassword);
+
+      // Update the user's password
+      const updatedUser = await dbStorage.updateUser(userId, { password: hashedPassword });
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error('Password reset error:', error);
+      res.status(500).json({ message: "Failed to reset password", error: error.message });
     }
   });
 
