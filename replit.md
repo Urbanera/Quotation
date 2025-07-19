@@ -7,9 +7,10 @@ DesignQuotes is a full-stack web application for interior design businesses to m
 ## Recent Updates (July 19, 2025)
 
 ### Enhanced Security & Authentication
-- **JWT Authentication**: Implemented secure JWT-based authentication with access tokens (1-hour expiry) and refresh tokens (7-day expiry)
+- **JWT Authentication**: Implemented secure JWT-based authentication with access tokens (10-minute expiry) and refresh tokens (7-day expiry)
 - **Automatic Token Refresh**: Added seamless token refresh mechanism to maintain user sessions
 - **Secure Logout**: Enhanced logout process with proper token cleanup and cache clearing
+- **Short Session Timeout**: Maximum 10-minute session duration for enhanced security
 
 ### Role-Based Access Control (RBAC)
 - **Permission System**: Created comprehensive permission system with role-module-permission mapping

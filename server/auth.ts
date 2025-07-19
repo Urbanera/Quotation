@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 import { dbStorage } from './storage.new';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_EXPIRES_IN = '4h'; // Reduced session time for better security
+const JWT_EXPIRES_IN = '10m'; // Maximum 10 minutes session time
 const JWT_REFRESH_EXPIRES_IN = '7d';
 
 export interface AuthRequest extends Request {
