@@ -10,7 +10,7 @@ import { dbStorage } from "./storage.new";
 import { emailService } from "./email";
 import { whatsappService } from "./whatsapp";
 import { whatsappRouter } from './whatsapp-routes';
-import { AuthService, authenticateToken, requireRole, AuthRequest } from "./auth";
+import { AuthService, authenticateToken, requireRole, requirePermission, AuthRequest } from "./auth";
 import {
   customerFormSchema,
   quotationFormSchema,
@@ -162,6 +162,27 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error('Login error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/auth/refresh', async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+      
+      if (!refreshToken) {
+        return res.status(400).json({ message: 'Refresh token is required' });
+      }
+      
+      const result = await AuthService.refreshToken(refreshToken);
+      
+      if (!result) {
+        return res.status(401).json({ message: 'Invalid refresh token' });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Token refresh error:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   });
@@ -589,7 +610,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
 
   // Customer routes
-  app.get("/api/customers", async (req, res) => {
+  app.get("/api/customers", authenticateToken, requirePermission('customers', 'view'), async (req, res) => {
     try {
       const stage = req.query.stage as string | undefined;
       const followUpFilter = req.query.followUpFilter as string | undefined;
@@ -644,7 +665,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.get("/api/customers/:id", async (req, res) => {
+  app.get("/api/customers/:id", authenticateToken, requirePermission('customers', 'view'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const customer = await storage.getCustomer(id);
@@ -657,7 +678,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.post("/api/customers", validateRequest(customerFormSchema), async (req, res) => {
+  app.post("/api/customers", authenticateToken, requirePermission('customers', 'create'), validateRequest(customerFormSchema), async (req, res) => {
     try {
       const customer = await storage.createCustomer(req.body);
       res.status(201).json(customer);
@@ -3359,9 +3380,9 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
 
   // User permissions routes
-  app.get('/api/user-permissions', authenticateToken, requireRole('admin'), async (req, res) => {
+  app.get('/api/user-permissions', authenticateToken, async (req, res) => {
     try {
-      const permissions = await storage.getAllUserPermissions();
+      const permissions = await dbStorage.getAllUserPermissions();
       res.json(permissions);
     } catch (error) {
       console.error('Error fetching user permissions:', error);
@@ -3388,6 +3409,39 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating user permissions:', error);
       res.status(500).json({ message: 'Error updating user permissions' });
+    }
+  });
+
+  // Follow-up notification endpoint
+  app.get('/api/follow-ups/pending', authenticateToken, async (req, res) => {
+    try {
+      const currentDate = new Date();
+      const followUps = await storage.getFollowUps();
+      
+      // Filter for incomplete follow-ups with dates today or in the past
+      const pendingFollowUps = followUps
+        .filter(followUp => !followUp.completed && followUp.nextFollowUpDate)
+        .filter(followUp => {
+          const followUpDate = new Date(followUp.nextFollowUpDate!);
+          return followUpDate <= currentDate;
+        })
+        .map(followUp => ({
+          id: followUp.id,
+          customerId: followUp.customerId,
+          notes: followUp.notes,
+          nextFollowUpDate: followUp.nextFollowUpDate,
+          completed: followUp.completed,
+          customer: {
+            id: followUp.customerId,
+            name: followUp.customer?.name || 'Unknown Customer',
+            email: followUp.customer?.email || ''
+          }
+        }));
+
+      res.json(pendingFollowUps);
+    } catch (error) {
+      console.error('Error fetching pending follow-ups:', error);
+      res.status(500).json({ message: 'Error fetching pending follow-ups' });
     }
   });
 

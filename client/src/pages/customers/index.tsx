@@ -103,14 +103,19 @@ export default function CustomersList() {
   });
 
   // Fetch customers
-  const { data: customers, isLoading } = useQuery<Customer[]>({
+  const { data: customers, isLoading, error } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
     queryFn: async () => {
       const res = await fetch("/api/customers");
-      return res.json();
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
     // Decrease staleTime to refresh more quickly
     staleTime: 1000, // 1 second
+    select: (data) => Array.isArray(data) ? data : [],
   });
 
   // Get all customer follow-ups for counting
@@ -128,7 +133,7 @@ export default function CustomersList() {
   
   // Computed values for badges and filter counts
   const stageCounts = useMemo(() => {
-    if (!customers) return { all: 0, new: 0, pipeline: 0, cold: 0, warm: 0, booked: 0, lost: 0 };
+    if (!customers || !Array.isArray(customers)) return { all: 0, new: 0, pipeline: 0, cold: 0, warm: 0, booked: 0, lost: 0 };
     
     // Count customers by stage using array methods
     const counts = {

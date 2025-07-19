@@ -1,6 +1,6 @@
-import { users, type User, type InsertUser } from "@shared/schema";
+import { users, userPermissions, type User, type InsertUser, type UserPermission } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 // Keep IStorage interface the same, but implement DatabaseStorage
 export class DatabaseStorage {
@@ -38,6 +38,21 @@ export class DatabaseStorage {
 
   async getUsers(): Promise<User[]> {
     return await db.select().from(users);
+  }
+
+  async getUserPermissions(role: string, module: string): Promise<UserPermission | undefined> {
+    const [permission] = await db
+      .select()
+      .from(userPermissions)
+      .where(and(
+        eq(userPermissions.role, role as any),
+        eq(userPermissions.module, module as any)
+      ));
+    return permission || undefined;
+  }
+
+  async getAllUserPermissions(): Promise<UserPermission[]> {
+    return await db.select().from(userPermissions);
   }
 }
 

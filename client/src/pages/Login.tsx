@@ -19,7 +19,7 @@ const loginSchema = z.object({
 type LoginData = z.infer<typeof loginSchema>;
 
 interface LoginProps {
-  onLogin: (token: string, user: any) => void;
+  onLogin: (accessToken: string, refreshToken: string, user: any) => void;
 }
 
 export function Login({ onLogin }: LoginProps) {
@@ -44,7 +44,7 @@ export function Login({ onLogin }: LoginProps) {
         title: "Login successful",
         description: "Welcome back!",
       });
-      onLogin(data.token, data.user);
+      onLogin(data.accessToken, data.refreshToken, data.user);
     },
     onError: (error: any) => {
       toast({

@@ -15,28 +15,32 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { CompanySettings } from "@shared/schema";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/contexts/PermissionContext";
 
 interface SidebarProps {
   isMobile?: boolean;
   onClose?: () => void;
 }
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "Customers", href: "/customers", icon: Users },
-  { name: "Quotations", href: "/quotations", icon: FileText },
-  { name: "Sales Orders", href: "/sales-orders", icon: ShoppingCart },
-  { name: "Invoices", href: "/invoices", icon: Receipt },
-  { name: "Payments", href: "/payments", icon: CreditCard },
-  { name: "Products", href: "/products", icon: Package },
-  { name: "Accessories", href: "/accessories", icon: Layers },
-  { name: "Teams", href: "/teams", icon: UserCheck },
-  { name: "Users", href: "/users", icon: UserCog },
-  { name: "Settings", href: "/settings", icon: Settings },
+const allNavigation = [
+  { name: "Dashboard", href: "/", icon: Home, module: "dashboard" },
+  { name: "Customers", href: "/customers", icon: Users, module: "customers" },
+  { name: "Quotations", href: "/quotations", icon: FileText, module: "quotations" },
+  { name: "Sales Orders", href: "/sales-orders", icon: ShoppingCart, module: "sales_orders" },
+  { name: "Invoices", href: "/invoices", icon: Receipt, module: "invoices" },
+  { name: "Payments", href: "/payments", icon: CreditCard, module: "payments" },
+  { name: "Products", href: "/products", icon: Package, adminOnly: true },
+  { name: "Accessories", href: "/accessories", icon: Layers, adminOnly: true },
+  { name: "Teams", href: "/teams", icon: UserCheck, adminOnly: true },
+  { name: "Users", href: "/users", icon: UserCog, adminOnly: true },
+  { name: "Settings", href: "/settings", icon: Settings, adminOnly: true },
 ];
 
 export default function Sidebar({ isMobile, onClose }: SidebarProps) {
   const [location] = useLocation();
+  const { user } = useAuth();
+  const { canAccessModule } = usePermissions();
   
   // Fetch company settings for name
   const { data: settings } = useQuery<CompanySettings>({
@@ -51,6 +55,28 @@ export default function Sidebar({ isMobile, onClose }: SidebarProps) {
       onClose();
     }
   };
+
+  // Filter navigation based on user role and permissions
+  const getFilteredNavigation = () => {
+    if (!user) return [];
+    
+    return allNavigation.filter(item => {
+      // Always show dashboard
+      if (item.module === "dashboard") return true;
+      
+      // Admin-only items
+      if (item.adminOnly && user.role !== 'admin') return false;
+      
+      // For non-admin users, check permissions
+      if (user.role !== 'admin' && item.module) {
+        return canAccessModule(item.module);
+      }
+      
+      return true;
+    });
+  };
+
+  const navigation = getFilteredNavigation();
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">

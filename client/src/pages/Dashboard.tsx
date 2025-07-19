@@ -5,12 +5,19 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, Settings, Users, FileText, BarChart3 } from "lucide-react";
 import { Link } from "wouter";
+import { ManagerDesignerDashboard } from "@/components/dashboard/ManagerDesignerDashboard";
 
 export function Dashboard() {
   const { user, logout } = useAuth();
 
   if (!user) return null;
 
+  // Render role-specific dashboard
+  if (user.role === 'manager' || user.role === 'designer') {
+    return <ManagerDesignerDashboard />;
+  }
+
+  // Admin dashboard (original)
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800';

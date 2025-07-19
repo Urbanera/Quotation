@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { PermissionProvider } from "./contexts/PermissionContext";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { Toaster } from "./components/ui/toaster";
@@ -124,8 +125,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppRouter />
-        <Toaster />
+        <PermissionProvider>
+          <AppRouter />
+          <Toaster />
+        </PermissionProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

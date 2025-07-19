@@ -16,6 +16,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Customer, Quotation } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
+import { FollowUpNotifications } from "@/components/notifications/FollowUpNotifications";
 
 interface TopbarProps {
   onToggleMobileSidebar: () => void;
@@ -33,11 +34,13 @@ export default function Topbar({ onToggleMobileSidebar }: TopbarProps) {
   const { data: customers = [] } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
     enabled: searchQuery.length > 0,
+    select: (data) => Array.isArray(data) ? data : [],
   });
   
   const { data: quotations = [] } = useQuery<Quotation[]>({
     queryKey: ["/api/quotations"],
     enabled: searchQuery.length > 0,
+    select: (data) => Array.isArray(data) ? data : [],
   });
   
   // Filter search results based on query
@@ -202,13 +205,7 @@ export default function Topbar({ onToggleMobileSidebar }: TopbarProps) {
           </div>
         </div>
         <div className="ml-4 flex items-center md:ml-6">
-          <button
-            type="button"
-            className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none"
-          >
-            <span className="sr-only">View notifications</span>
-            <Bell className="h-6 w-6" aria-hidden="true" />
-          </button>
+          <FollowUpNotifications />
 
           <div className="ml-3 relative">
             <DropdownMenu>
