@@ -2524,6 +2524,45 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  // CSV Export endpoint (must be before :id route to avoid conflicts)
+  app.get("/api/accessory-catalog/export", async (req, res) => {
+    try {
+      const accessories = await storage.getAccessoryCatalog();
+      
+      // Create CSV content
+      const header = "Category,Code,Name,Selling Price,Kitchen Price,Wardrobe Price,Size,Description\n";
+      const csvContent = accessories.map(item => {
+        const escapeCsvField = (field: string | number | null | undefined) => {
+          if (field === null || field === undefined) return '';
+          const stringField = String(field);
+          if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+            return `"${stringField.replace(/"/g, '""')}"`;
+          }
+          return stringField;
+        };
+        
+        return [
+          escapeCsvField(item.category),
+          escapeCsvField(item.code),
+          escapeCsvField(item.name),
+          escapeCsvField(item.sellingPrice),
+          escapeCsvField(item.kitchenPrice),
+          escapeCsvField(item.wardrobePrice),
+          escapeCsvField(item.size || ''),
+          escapeCsvField(item.description || '')
+        ].join(',');
+      }).join('\n');
+      
+      const csvData = header + csvContent;
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="accessory-catalog.csv"');
+      res.send(csvData);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to export accessory catalog", error: error.message });
+    }
+  });
+
   app.get("/api/accessory-catalog/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -2543,6 +2582,127 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(201).json(accessory);
     } catch (error) {
       res.status(500).json({ message: "Failed to create accessory catalog item" });
+    }
+  });
+
+  // CSV Import endpoint (matches frontend expectation)
+  app.post("/api/accessory-catalog/import", csvUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file provided" });
+      }
+      
+      // Read the CSV file
+      const fileContent = fs.readFileSync(req.file.path, 'utf8');
+      const lines = fileContent.split('\n').filter(line => line.trim());
+      
+      if (lines.length === 0) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ message: "CSV file is empty" });
+      }
+      
+      // Skip header row
+      const dataRows = lines.slice(1);
+      
+      const results = {
+        totalRows: dataRows.length,
+        successCount: 0,
+        errorCount: 0,
+        errors: [] as string[]
+      };
+      
+      for (let i = 0; i < dataRows.length; i++) {
+        const row = dataRows[i];
+        try {
+          if (!row.trim()) continue; // Skip empty rows
+          
+          // Parse CSV row (handle quoted fields)
+          const parseCSVRow = (csvRow: string): string[] => {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let j = 0; j < csvRow.length; j++) {
+              const char = csvRow[j];
+              const nextChar = csvRow[j + 1];
+              
+              if (char === '"' && inQuotes && nextChar === '"') {
+                current += '"';
+                j++; // Skip next quote
+              } else if (char === '"') {
+                inQuotes = !inQuotes;
+              } else if (char === ',' && !inQuotes) {
+                result.push(current);
+                current = '';
+              } else {
+                current += char;
+              }
+            }
+            result.push(current);
+            return result;
+          };
+          
+          const columns = parseCSVRow(row);
+          if (columns.length < 4) {
+            results.errorCount++;
+            results.errors.push(`Row ${i + 2}: Invalid format - expected at least 4 columns, got ${columns.length}`);
+            continue;
+          }
+          
+          const [category, code, name, sellingPriceStr, kitchenPriceStr = "", wardrobePriceStr = "", sizeStr = "", descriptionStr = ""] = columns.map(col => col.trim());
+          
+          if (!category || !code || !name || !sellingPriceStr) {
+            results.errorCount++;
+            results.errors.push(`Row ${i + 2}: Missing required fields (category, code, name, or selling price)`);
+            continue;
+          }
+          
+          const sellingPrice = parseFloat(sellingPriceStr);
+          const kitchenPrice = kitchenPriceStr ? parseFloat(kitchenPriceStr) : null;
+          const wardrobePrice = wardrobePriceStr ? parseFloat(wardrobePriceStr) : null;
+          
+          if (isNaN(sellingPrice)) {
+            results.errorCount++;
+            results.errors.push(`Row ${i + 2}: Invalid selling price value: ${sellingPriceStr}`);
+            continue;
+          }
+          
+          if (kitchenPriceStr && isNaN(kitchenPrice!)) {
+            results.errorCount++;
+            results.errors.push(`Row ${i + 2}: Invalid kitchen price value: ${kitchenPriceStr}`);
+            continue;
+          }
+          
+          if (wardrobePriceStr && isNaN(wardrobePrice!)) {
+            results.errorCount++;
+            results.errors.push(`Row ${i + 2}: Invalid wardrobe price value: ${wardrobePriceStr}`);
+            continue;
+          }
+          
+          await storage.createAccessoryCatalogItem({
+            category,
+            code,
+            name,
+            sellingPrice,
+            kitchenPrice,
+            wardrobePrice,
+            size: sizeStr || undefined,
+            description: descriptionStr || undefined
+          });
+          
+          results.successCount++;
+        } catch (error) {
+          results.errorCount++;
+          results.errors.push(`Row ${i + 2}: ${error.message}`);
+        }
+      }
+      
+      // Clean up the uploaded file
+      fs.unlinkSync(req.file.path);
+      
+      res.status(201).json(results);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to import accessory catalog items", error: error.message });
     }
   });
 

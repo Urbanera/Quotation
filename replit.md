@@ -194,3 +194,4 @@ Preferred communication style: Simple, everyday language.
 - **Firm Name Display**: Configurable firm name field used specifically for payment receipts and invoice prints
 - **Bank Details Configuration**: Configurable bank details with checkbox option to show/hide on invoices
 - **Compact Invoice Layout**: Optimized invoice printing to fit single A4 page with reduced margins and font sizes
+- **Accessory Catalog CSV Management**: Full CSV import/export functionality for bulk accessory management ✅ (Fixed July 19, 2025)
