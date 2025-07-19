@@ -16,6 +16,7 @@ import {
   quotationFormSchema,
   followUpFormSchema,
   userFormSchema,
+  userUpdateSchema,
   teamFormSchema,
   accessoryCatalogFormSchema,
   milestoneFormSchema,
@@ -2204,7 +2205,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.put("/api/users/:id", authenticateToken, requireRole(['admin']), validateRequest(userFormSchema), async (req, res) => {
+  app.put("/api/users/:id", authenticateToken, requireRole(['admin']), validateRequest(userUpdateSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { username, password, email, fullName, role, active } = req.body;

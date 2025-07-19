@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -267,10 +268,10 @@ export default function UsersPage() {
 
       {/* Reset Password Dialog */}
       <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[400px]" aria-describedby="reset-password-description">
           <DialogHeader>
             <DialogTitle>Reset User Password</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="reset-password-description">
               Set a new password for {selectedUser?.fullName} ({selectedUser?.username})
             </DialogDescription>
           </DialogHeader>

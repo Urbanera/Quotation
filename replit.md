@@ -29,6 +29,8 @@ DesignQuotes is a full-stack web application for interior design businesses to m
 - **Profile Update Fixes**: Fixed profile update functionality with proper error handling and validation
 - **Password Change Improvements**: Enhanced password change functionality with consistent validation and proper API integration
 - **Password Hashing**: Ensured proper password hashing on all password updates and resets
+- **User Update Validation**: Fixed user management validation schema - password is now optional for user edits, resolving API errors
+- **Dialog Accessibility**: Enhanced dialog components with proper accessibility attributes for screen readers
 
 ### User Experience Enhancements
 - **Follow-up Notifications**: Added real-time notification system for customer follow-ups with bell icon alerts
