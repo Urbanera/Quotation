@@ -128,6 +128,9 @@ const teowinEstimateUpload = multer({
 });
 
 export async function registerRoutes(app: express.Express): Promise<Server> {
+  // Initialize database with default permissions
+  await dbStorage.seedInitialPermissions();
+  
   // Set up CORS headers
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -3404,7 +3407,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   app.post('/api/user-permissions/bulk-update', authenticateToken, requireRole('admin'), async (req, res) => {
     try {
       const { permissions } = req.body;
-      await storage.bulkUpdateUserPermissions(permissions);
+      await dbStorage.bulkUpdateUserPermissions(permissions);
       res.json({ success: true });
     } catch (error) {
       console.error('Error updating user permissions:', error);

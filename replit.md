@@ -14,8 +14,9 @@ DesignQuotes is a full-stack web application for interior design businesses to m
 ### Role-Based Access Control (RBAC)
 - **Permission System**: Created comprehensive permission system with role-module-permission mapping
 - **Role-Based Navigation**: Sidebar dynamically shows/hides menu items based on user roles (Admin sees all, Manager/Designer limited to Dashboard through Payments)
-- **API Permission Enforcement**: Added middleware to enforce permissions at the API level
-- **Database Permissions**: Seeded initial permission data for admin, manager, and designer roles
+- **API Permission Enforcement**: Added comprehensive middleware to enforce permissions at the API level for all critical routes
+- **Database-Backed Permissions**: Migrated from in-memory to PostgreSQL database storage for persistent permission management
+- **Auto-Seeding**: Implemented automatic database seeding with default permission configurations on application startup
 
 ### Data Management Improvements
 - **Cache Invalidation**: Fixed customer data display issues with proper React Query cache management
