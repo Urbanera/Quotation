@@ -7,7 +7,7 @@ import { ChevronLeft } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import CustomerForm from "@/components/customers/CustomerForm";
-import { customerFormSchema } from "@shared/schema";
+import { customerFormSchema, Customer } from "@shared/schema";
 
 export default function AddCustomer() {
   const [, navigate] = useLocation();
@@ -19,16 +19,21 @@ export default function AddCustomer() {
       return response.json();
     },
     onSuccess: (customerData) => {
-      // Immediately invalidate and refetch customers
+      // Use setQueryData to immediately update the cache with the new customer
+      queryClient.setQueryData(["/api/customers"], (oldData: Customer[] | undefined) => {
+        if (!oldData) return [customerData];
+        return [customerData, ...oldData];
+      });
+      
+      // Also invalidate to trigger a refetch in the background
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
-      queryClient.refetchQueries({ queryKey: ["/api/customers"] });
       
       toast({
         title: "Success",
         description: "Customer created successfully",
       });
       
-      // Navigate to customer list to show the new customer
+      // Navigate to customer list immediately
       navigate("/customers");
       
       // Show follow-up reminder toast after a short delay

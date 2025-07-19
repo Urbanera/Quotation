@@ -97,24 +97,21 @@ export default function CustomersList() {
   const { data: appSettings } = useQuery({
     queryKey: ["/api/settings/app"],
     queryFn: async () => {
-      const res = await fetch("/api/settings/app");
+      const res = await apiRequest("GET", "/api/settings/app");
       return res.json();
     }
   });
 
   // Fetch customers
-  const { data: customers, isLoading, error } = useQuery<Customer[]>({
+  const { data: customers, isLoading, error, refetch: refetchCustomers } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
     queryFn: async () => {
-      const res = await fetch("/api/customers");
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      const res = await apiRequest("GET", "/api/customers");
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     },
     // Decrease staleTime to refresh more quickly
-    staleTime: 1000, // 1 second
+    staleTime: 0, // Always consider stale
     select: (data) => Array.isArray(data) ? data : [],
   });
 
@@ -122,11 +119,11 @@ export default function CustomersList() {
   const { data: allFollowUps } = useQuery<FollowUp[]>({
     queryKey: ["/api/follow-ups/all"],
     queryFn: async () => {
-      const res = await fetch("/api/follow-ups/all");
+      const res = await apiRequest("GET", "/api/follow-ups/all");
       return res.json();
     },
     // Decrease staleTime to refresh more quickly
-    staleTime: 1000, // 1 second
+    staleTime: 0, // Always consider stale
     // Set refetchInterval to periodically check for updates
     refetchInterval: 2000, // 2 seconds
   });
