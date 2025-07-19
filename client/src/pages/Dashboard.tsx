@@ -35,17 +35,17 @@ export function Dashboard() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600">Welcome back, {user.fullName}!</p>
+            <p className="text-gray-600">Welcome back, {user.fullName || user.username}!</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
               <Avatar>
                 <AvatarFallback>
-                  {user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  {(user.fullName || user.username).split(' ').map(n => n[0]).join('').toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium">{user.fullName}</p>
+                <p className="font-medium">{user.fullName || user.username}</p>
                 <Badge className={getRoleColor(user.role)}>
                   {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                 </Badge>
