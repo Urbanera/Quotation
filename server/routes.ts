@@ -3038,7 +3038,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
 
   // Sales Order routes
-  app.get("/api/sales-orders", authenticateToken, requirePermission('sales-orders', 'view'), async (req, res) => {
+  app.get("/api/sales-orders", authenticateToken, requirePermission('sales_orders', 'view'), async (req, res) => {
     try {
       const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
       
@@ -3054,7 +3054,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.get("/api/sales-orders/:id", authenticateToken, requirePermission('sales-orders', 'view'), async (req, res) => {
+  app.get("/api/sales-orders/:id", authenticateToken, requirePermission('sales_orders', 'view'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       console.log(`Fetching sales order with ID: ${id}`);
@@ -3075,7 +3075,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.put("/api/sales-orders/:id/status", authenticateToken, requirePermission('sales-orders', 'edit'), async (req, res) => {
+  app.put("/api/sales-orders/:id/status", authenticateToken, requirePermission('sales_orders', 'edit'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
@@ -3095,7 +3095,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.put("/api/sales-orders/:id", authenticateToken, requirePermission('sales-orders', 'edit'), async (req, res) => {
+  app.put("/api/sales-orders/:id", authenticateToken, requirePermission('sales_orders', 'edit'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const salesOrder = await storage.updateSalesOrder(id, req.body);
@@ -3108,7 +3108,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/sales-orders/:id", authenticateToken, requirePermission('sales-orders', 'delete'), async (req, res) => {
+  app.delete("/api/sales-orders/:id", authenticateToken, requirePermission('sales_orders', 'delete'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const salesOrder = await storage.cancelSalesOrder(id);
