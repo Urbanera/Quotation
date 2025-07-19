@@ -102,13 +102,19 @@ export default function CustomerDetailPage() {
 
   const { data: customer, isLoading: isLoadingCustomer } = useQuery<Customer>({
     queryKey: ["/api/customers", customerId],
-    queryFn: () => fetch(`/api/customers/${customerId}`).then((res) => res.json()),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/customers/${customerId}`);
+      return await response.json();
+    },
     enabled: !isNaN(customerId),
   });
 
   const { data: followUps, isLoading: isLoadingFollowUps } = useQuery<EnhancedFollowUp[]>({
     queryKey: ["/api/follow-ups", customerId],
-    queryFn: () => fetch(`/api/follow-ups?customerId=${customerId}`).then((res) => res.json()),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/follow-ups?customerId=${customerId}`);
+      return await response.json();
+    },
     enabled: !isNaN(customerId),
     onSuccess: (data) => {
       // Only show the follow-up reminder if the customer has no follow-ups
@@ -122,7 +128,10 @@ export default function CustomerDetailPage() {
 
   const { data: quotations, isLoading: isLoadingQuotations } = useQuery<Quotation[]>({
     queryKey: ["/api/quotations", "customer", customerId],
-    queryFn: () => fetch(`/api/quotations?customerId=${customerId}`).then((res) => res.json()),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/quotations?customerId=${customerId}`);
+      return await response.json();
+    },
     enabled: !isNaN(customerId),
   });
 

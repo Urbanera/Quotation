@@ -20,6 +20,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { SalesOrder, CustomerPayment } from "@shared/schema";
 import { ArrowDownCircle, ArrowUpCircle, CreditCard, FileText, Receipt } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiRequest } from "@/lib/queryClient";
 
 interface LedgerEntry {
   id: number;
@@ -37,22 +38,6 @@ interface CustomerLedgerProps {
 }
 
 export function CustomerLedger({ customerId }: CustomerLedgerProps) {
-  // Also fetch direct data to debug
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        console.log(`Direct fetch for customer ledger data, ID: ${customerId}`);
-        const response = await fetch(`/api/customers/${customerId}/ledger`);
-        const data = await response.json();
-        console.log('Direct ledger fetch result:', data);
-      } catch (err) {
-        console.error('Error in direct fetch:', err);
-      }
-    };
-    
-    fetchData();
-  }, [customerId]);
-
   // Fetch customer ledger data (combined sales orders and payments)
   const { data: ledgerData, isLoading, error } = useQuery<{
     salesOrders: SalesOrder[];
@@ -65,7 +50,7 @@ export function CustomerLedger({ customerId }: CustomerLedgerProps) {
     retry: 3, // Retry failed requests
     queryFn: async () => {
       console.log("Fetching ledger data for customer ID:", customerId);
-      const response = await fetch(`/api/customers/${customerId}/ledger`);
+      const response = await apiRequest('GET', `/api/customers/${customerId}/ledger`);
       const data = await response.json();
       console.log("Ledger API response:", data);
       return data;

@@ -26,6 +26,46 @@ export async function apiRequest(
     credentials: "include",
   });
 
+  // If we get a 401/403, try refreshing the token once
+  if ((res.status === 401 || res.status === 403) && token) {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (refreshToken) {
+      try {
+        const refreshResponse = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refreshToken }),
+        });
+        
+        if (refreshResponse.ok) {
+          const { accessToken, refreshToken: newRefreshToken } = await refreshResponse.json();
+          localStorage.setItem('auth_token', accessToken);
+          localStorage.setItem('refresh_token', newRefreshToken);
+          
+          // Retry the original request with new token
+          const retryHeaders = {
+            ...(data ? { "Content-Type": "application/json" } : {}),
+            "Authorization": `Bearer ${accessToken}`,
+          };
+
+          const retryRes = await fetch(url, {
+            method,
+            headers: retryHeaders,
+            body: data ? JSON.stringify(data) : undefined,
+            credentials: "include",
+          });
+
+          await throwIfResNotOk(retryRes);
+          return retryRes;
+        }
+      } catch (error) {
+        console.error('Token refresh failed:', error);
+      }
+    }
+  }
+
   await throwIfResNotOk(res);
   return res;
 }
