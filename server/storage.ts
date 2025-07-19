@@ -214,6 +214,10 @@ export interface IStorage {
   updateUserPermission(id: number, permission: Partial<InsertUserPermission>): Promise<UserPermission | undefined>;
   deleteUserPermission(id: number): Promise<boolean>;
   bulkUpdateUserPermissions(permissions: Array<{role: string, module: string, permissions: {canView: boolean, canCreate: boolean, canEdit: boolean, canDelete: boolean}}>): Promise<boolean>;
+  
+  // Backup helper methods
+  getAllPayments(): Promise<Payment[]>;
+  getAllMilestones(): Promise<Milestone[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -3606,6 +3610,15 @@ export class MemStorage implements IStorage {
       }
     }
     return true;
+  }
+
+  // Backup helper methods
+  async getAllPayments(): Promise<Payment[]> {
+    return Array.from(this.payments.values());
+  }
+
+  async getAllMilestones(): Promise<Milestone[]> {
+    return Array.from(this.milestones.values());
   }
 }
 

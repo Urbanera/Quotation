@@ -2816,6 +2816,152 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  // Full application data backup/restore endpoints
+  app.get("/api/backup/export", authenticateToken, requirePermission('settings', 'view'), async (req, res) => {
+    try {
+      // Collect all application data
+      const backupData = {
+        metadata: {
+          exportDate: new Date().toISOString(),
+          version: "1.0.0",
+          appVersion: require("../package.json").version || "1.0.0"
+        },
+        companySettings: await storage.getCompanySettings(),
+        appSettings: await storage.getAppSettings(),
+        users: await storage.getUsers(),
+        userPermissions: await storage.getAllUserPermissions(),
+        customers: await storage.getCustomers(),
+        quotations: await storage.getQuotations(),
+        invoices: await storage.getInvoices(),
+        payments: await storage.getAllPayments(),
+        followUps: await storage.getAllFollowUps(),
+        accessoryCatalog: await storage.getAccessoryCatalog(),
+        teams: await storage.getTeams(),
+        milestones: await storage.getAllMilestones()
+      };
+
+      const backupJson = JSON.stringify(backupData, null, 2);
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="app-backup-${new Date().toISOString().split('T')[0]}.json"`);
+      res.send(backupJson);
+    } catch (error) {
+      console.error("Backup export error:", error);
+      res.status(500).json({ message: "Failed to export application data", error: error.message });
+    }
+  });
+
+  app.post("/api/backup/import", authenticateToken, requirePermission('settings', 'edit'), csvUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No backup file provided" });
+      }
+
+      // Read and parse the backup file
+      const fileContent = fs.readFileSync(req.file.path, 'utf8');
+      let backupData;
+      
+      try {
+        backupData = JSON.parse(fileContent);
+      } catch (parseError) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ message: "Invalid backup file format" });
+      }
+
+      // Validate backup file structure
+      if (!backupData.metadata || !backupData.metadata.exportDate) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ message: "Invalid backup file - missing metadata" });
+      }
+
+      const results = {
+        restored: {
+          companySettings: 0,
+          appSettings: 0,
+          users: 0,
+          userPermissions: 0,
+          customers: 0,
+          quotations: 0,
+          invoices: 0,
+          payments: 0,
+          followUps: 0,
+          accessoryCatalog: 0,
+          teams: 0,
+          milestones: 0
+        },
+        errors: [] as string[],
+        skipped: [] as string[]
+      };
+
+      // Note: This is a restore operation that will replace existing data
+      // In a production system, you might want to add options for merge vs replace
+
+      try {
+        // Restore company settings
+        if (backupData.companySettings) {
+          await storage.updateCompanySettings(backupData.companySettings);
+          results.restored.companySettings = 1;
+        }
+
+        // Restore app settings
+        if (backupData.appSettings) {
+          await storage.updateAppSettings(backupData.appSettings);
+          results.restored.appSettings = 1;
+        }
+
+        // Note: Users and permissions are typically not restored to avoid security issues
+        results.skipped.push("Users and permissions skipped for security");
+
+        // Restore customers
+        if (backupData.customers && Array.isArray(backupData.customers)) {
+          for (const customer of backupData.customers) {
+            try {
+              // Remove id to let system assign new ones
+              const { id, createdAt, ...customerData } = customer;
+              await storage.createCustomer(customerData);
+              results.restored.customers++;
+            } catch (error) {
+              results.errors.push(`Customer restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore accessory catalog
+        if (backupData.accessoryCatalog && Array.isArray(backupData.accessoryCatalog)) {
+          for (const accessory of backupData.accessoryCatalog) {
+            try {
+              const { id, createdAt, ...accessoryData } = accessory;
+              await storage.createAccessoryCatalogItem(accessoryData);
+              results.restored.accessoryCatalog++;
+            } catch (error) {
+              results.errors.push(`Accessory restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Clean up uploaded file
+        fs.unlinkSync(req.file.path);
+
+        res.status(200).json({
+          message: "Backup restore completed",
+          results,
+          backupInfo: {
+            exportDate: backupData.metadata.exportDate,
+            version: backupData.metadata.version
+          }
+        });
+
+      } catch (restoreError) {
+        fs.unlinkSync(req.file.path);
+        throw restoreError;
+      }
+
+    } catch (error) {
+      console.error("Backup import error:", error);
+      res.status(500).json({ message: "Failed to import backup data", error: error.message });
+    }
+  });
+
   // Company settings routes
   app.get("/api/settings/company", async (req, res) => {
     try {

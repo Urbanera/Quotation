@@ -1,6 +1,7 @@
 import { CompanySettingsForm } from "@/components/settings/CompanySettings";
 import { AppSettingsForm } from "@/components/settings/AppSettings";
 import UserAccessControl from "@/components/settings/UserAccessControl";
+import BackupRestore from "@/components/settings/BackupRestore";
 import { TabsContent, Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SettingsPage() {
@@ -18,6 +19,7 @@ export default function SettingsPage() {
           <TabsTrigger value="company">Company Information</TabsTrigger>
           <TabsTrigger value="quotation">Quotation Defaults</TabsTrigger>
           <TabsTrigger value="access">User Access Control</TabsTrigger>
+          <TabsTrigger value="backup">Data Backup</TabsTrigger>
         </TabsList>
         
         <TabsContent value="company" className="space-y-6">
@@ -30,6 +32,10 @@ export default function SettingsPage() {
         
         <TabsContent value="access" className="space-y-6">
           <UserAccessControl />
+        </TabsContent>
+        
+        <TabsContent value="backup" className="space-y-6">
+          <BackupRestore />
         </TabsContent>
       </Tabs>
     </div>
