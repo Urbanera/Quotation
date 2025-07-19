@@ -691,7 +691,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.put("/api/customers/:id", validateRequest(customerFormSchema), async (req, res) => {
+  app.put("/api/customers/:id", authenticateToken, requirePermission('customers', 'edit'), validateRequest(customerFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const customer = await storage.updateCustomer(id, req.body);
@@ -708,7 +708,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.put("/api/customers/:id/stage", async (req, res) => {
+  app.put("/api/customers/:id/stage", authenticateToken, requirePermission('customers', 'edit'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { stage } = req.body;
@@ -728,7 +728,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/customers/:id", async (req, res) => {
+  app.delete("/api/customers/:id", authenticateToken, requirePermission('customers', 'delete'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteCustomer(id);
@@ -1373,7 +1373,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
 
   // Quotation routes
-  app.get("/api/quotations", async (req, res) => {
+  app.get("/api/quotations", authenticateToken, requirePermission('quotations', 'view'), async (req, res) => {
     try {
       const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
       
@@ -1389,7 +1389,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.get("/api/quotations/:id", async (req, res) => {
+  app.get("/api/quotations/:id", authenticateToken, requirePermission('quotations', 'view'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const quotation = await storage.getQuotation(id);
@@ -1402,7 +1402,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
   
-  app.get("/api/quotations/:id/details", async (req, res) => {
+  app.get("/api/quotations/:id/details", authenticateToken, requirePermission('quotations', 'view'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const quotation = await storage.getQuotationWithDetails(id);
@@ -1415,7 +1415,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.post("/api/quotations", validateRequest(quotationFormSchema), async (req, res) => {
+  app.post("/api/quotations", authenticateToken, requirePermission('quotations', 'create'), validateRequest(quotationFormSchema), async (req, res) => {
     try {
       const quotation = await storage.createQuotation(req.body);
       res.status(201).json(quotation);
@@ -1424,7 +1424,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.put("/api/quotations/:id", validateRequest(quotationFormSchema), async (req, res) => {
+  app.put("/api/quotations/:id", authenticateToken, requirePermission('quotations', 'edit'), validateRequest(quotationFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const quotation = await storage.updateQuotation(id, req.body);
@@ -1437,7 +1437,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/quotations/:id", async (req, res) => {
+  app.delete("/api/quotations/:id", authenticateToken, requirePermission('quotations', 'delete'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -2702,7 +2702,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
 
   // Sales Order routes
-  app.get("/api/sales-orders", async (req, res) => {
+  app.get("/api/sales-orders", authenticateToken, requirePermission('sales-orders', 'view'), async (req, res) => {
     try {
       const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
       
@@ -2718,7 +2718,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.get("/api/sales-orders/:id", async (req, res) => {
+  app.get("/api/sales-orders/:id", authenticateToken, requirePermission('sales-orders', 'view'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       console.log(`Fetching sales order with ID: ${id}`);
@@ -2739,7 +2739,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.put("/api/sales-orders/:id/status", async (req, res) => {
+  app.put("/api/sales-orders/:id/status", authenticateToken, requirePermission('sales-orders', 'edit'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
@@ -2759,7 +2759,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.put("/api/sales-orders/:id", async (req, res) => {
+  app.put("/api/sales-orders/:id", authenticateToken, requirePermission('sales-orders', 'edit'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const salesOrder = await storage.updateSalesOrder(id, req.body);
@@ -2772,7 +2772,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/sales-orders/:id", async (req, res) => {
+  app.delete("/api/sales-orders/:id", authenticateToken, requirePermission('sales-orders', 'delete'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const salesOrder = await storage.cancelSalesOrder(id);
@@ -2821,7 +2821,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
 
   // Payment routes
-  app.get("/api/sales-orders/:salesOrderId/payments", async (req, res) => {
+  app.get("/api/sales-orders/:salesOrderId/payments", authenticateToken, requirePermission('payments', 'view'), async (req, res) => {
     try {
       const salesOrderId = parseInt(req.params.salesOrderId);
       const payments = await storage.getPayments(salesOrderId);
@@ -2831,7 +2831,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.get("/api/payments/:id", async (req, res) => {
+  app.get("/api/payments/:id", authenticateToken, requirePermission('payments', 'view'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const payment = await storage.getPayment(id);
@@ -2844,7 +2844,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.post("/api/sales-orders/:salesOrderId/payments", async (req, res) => {
+  app.post("/api/sales-orders/:salesOrderId/payments", authenticateToken, requirePermission('payments', 'create'), async (req, res) => {
     try {
       const salesOrderId = parseInt(req.params.salesOrderId);
       const { amount, paymentMethod, notes, paymentDate } = req.body;
@@ -2870,7 +2870,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/payments/:id", async (req, res) => {
+  app.delete("/api/payments/:id", authenticateToken, requirePermission('payments', 'delete'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deletePayment(id);
@@ -2884,7 +2884,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
 
   // Customer Payment routes (direct payments without sales orders)
-  app.get("/api/customer-payments", async (req, res) => {
+  app.get("/api/customer-payments", authenticateToken, requirePermission('payments', 'view'), async (req, res) => {
     try {
       const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
       
@@ -2900,7 +2900,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.get("/api/customer-payments/:id", async (req, res) => {
+  app.get("/api/customer-payments/:id", authenticateToken, requirePermission('payments', 'view'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const payment = await storage.getCustomerPayment(id);
@@ -2913,7 +2913,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.post("/api/customer-payments", validateRequest(customerPaymentFormSchema), async (req, res) => {
+  app.post("/api/customer-payments", authenticateToken, requirePermission('payments', 'create'), validateRequest(customerPaymentFormSchema), async (req, res) => {
     try {
       const payment = await storage.createCustomerPayment({
         ...req.body,
@@ -2926,7 +2926,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.put("/api/customer-payments/:id", validateRequest(customerPaymentFormSchema), async (req, res) => {
+  app.put("/api/customer-payments/:id", authenticateToken, requirePermission('payments', 'edit'), validateRequest(customerPaymentFormSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const payment = await storage.updateCustomerPayment(id, {
@@ -2942,7 +2942,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/customer-payments/:id", async (req, res) => {
+  app.delete("/api/customer-payments/:id", authenticateToken, requirePermission('payments', 'delete'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteCustomerPayment(id);
@@ -3126,7 +3126,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
 
   // Invoice routes
-  app.get("/api/invoices", async (req, res) => {
+  app.get("/api/invoices", authenticateToken, requirePermission('invoices', 'view'), async (req, res) => {
     try {
       const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
       
@@ -3142,7 +3142,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.get("/api/invoices/:id", async (req, res) => {
+  app.get("/api/invoices/:id", authenticateToken, requirePermission('invoices', 'view'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const invoice = await storage.getInvoice(id);
@@ -3155,7 +3155,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
   
-  app.get("/api/invoices/:id/details", async (req, res) => {
+  app.get("/api/invoices/:id/details", authenticateToken, requirePermission('invoices', 'view'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const invoice = await storage.getInvoiceWithDetails(id);
@@ -3214,7 +3214,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
   
   // Update invoice status
-  app.patch("/api/invoices/:id/status", async (req, res) => {
+  app.patch("/api/invoices/:id/status", authenticateToken, requirePermission('invoices', 'edit'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
@@ -3235,7 +3235,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
 
   // Update invoice
-  app.patch("/api/invoices/:id", async (req, res) => {
+  app.patch("/api/invoices/:id", authenticateToken, requirePermission('invoices', 'edit'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const invoice = await storage.updateInvoice(id, req.body);
@@ -3249,7 +3249,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   });
   
   // Cancel invoice
-  app.delete("/api/invoices/:id", async (req, res) => {
+  app.delete("/api/invoices/:id", authenticateToken, requirePermission('invoices', 'delete'), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const invoice = await storage.cancelInvoice(id);
