@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useLocation } from "wouter";
+import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -12,29 +13,23 @@ export default function AddCustomer() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
-  const onSubmit = useCallback(async (data: typeof customerFormSchema._type) => {
-    try {
+  const createCustomerMutation = useMutation({
+    mutationFn: async (data: typeof customerFormSchema._type) => {
       const response = await apiRequest("POST", "/api/customers", data);
-      
-      // Check if response is ok
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create customer");
-      }
-      
-      // Get the created customer data
-      const customerData = await response.json();
-      
+      return response.json();
+    },
+    onSuccess: (customerData) => {
+      // Immediately invalidate and refetch customers
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      queryClient.refetchQueries({ queryKey: ["/api/customers"] });
       
-      // Display success toast
       toast({
         title: "Success",
         description: "Customer created successfully",
       });
       
-      // Redirect to the customer detail page with the proper URL
-      navigate(`/customers/view/${customerData.id}`);
+      // Navigate to customer list to show the new customer
+      navigate("/customers");
       
       // Show follow-up reminder toast after a short delay
       setTimeout(() => {
@@ -42,17 +37,22 @@ export default function AddCustomer() {
           title: "Reminder",
           description: "Don't forget to create a follow-up for this customer",
           variant: "destructive",
-          duration: 6000, // Show for 6 seconds
+          duration: 6000,
         });
       }, 1000);
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: error.message || "Failed to create customer",
         variant: "destructive",
       });
-    }
-  }, [navigate, toast]);
+    },
+  });
+
+  const onSubmit = useCallback((data: typeof customerFormSchema._type) => {
+    createCustomerMutation.mutate(data);
+  }, [createCustomerMutation]);
 
   return (
     <div className="py-6">

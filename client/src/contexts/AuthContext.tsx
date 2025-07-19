@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface User {
   id: number;
@@ -99,6 +99,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             return retryResponse.json();
           }
         }
+        // If refresh fails, clear tokens and logout
+        logout();
         throw new Error('Authentication failed');
       }
       
@@ -110,6 +112,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     enabled: !!token,
     retry: false,
+    staleTime: 30 * 1000, // 30 seconds - validate tokens more frequently
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Update user state when userData changes
@@ -133,6 +138,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     localStorage.removeItem('auth_token');
     localStorage.removeItem('refresh_token');
+    // Also clear all query cache to prevent stale data
+    queryClient.clear();
   };
 
   const value = {

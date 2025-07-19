@@ -4,6 +4,29 @@
 
 DesignQuotes is a full-stack web application for interior design businesses to manage customers, quotations, sales orders, payments, and invoices. The application provides a complete business management solution with features for customer relationship management, quotation generation, order processing, and financial tracking.
 
+## Recent Updates (July 19, 2025)
+
+### Enhanced Security & Authentication
+- **JWT Authentication**: Implemented secure JWT-based authentication with access tokens (1-hour expiry) and refresh tokens (7-day expiry)
+- **Automatic Token Refresh**: Added seamless token refresh mechanism to maintain user sessions
+- **Secure Logout**: Enhanced logout process with proper token cleanup and cache clearing
+
+### Role-Based Access Control (RBAC)
+- **Permission System**: Created comprehensive permission system with role-module-permission mapping
+- **Role-Based Navigation**: Sidebar dynamically shows/hides menu items based on user roles (Admin sees all, Manager/Designer limited to Dashboard through Payments)
+- **API Permission Enforcement**: Added middleware to enforce permissions at the API level
+- **Database Permissions**: Seeded initial permission data for admin, manager, and designer roles
+
+### Data Management Improvements
+- **Cache Invalidation**: Fixed customer data display issues with proper React Query cache management
+- **Mutation Optimization**: Converted customer creation to useMutation for better error handling and immediate cache updates
+- **Authentication Validation**: Enhanced token validation on app refresh and new device access
+
+### User Experience Enhancements
+- **Follow-up Notifications**: Added real-time notification system for customer follow-ups with bell icon alerts
+- **Error Handling**: Improved error messages and loading states throughout the application
+- **Data Consistency**: Fixed issues where customer data wouldn't display after creation or page refresh
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
