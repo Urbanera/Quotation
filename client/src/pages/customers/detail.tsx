@@ -26,6 +26,7 @@ import { FloorPlanViewer } from "@/components/customers/FloorPlanViewer";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { 
   AlertDialog,
   AlertDialogAction,

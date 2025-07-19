@@ -217,27 +217,23 @@ const styles = StyleSheet.create({
   tableRowEven: {
     backgroundColor: '#F9F9F9',
   },
-  slNoCell: {
-    width: '8%',
-    textAlign: 'center',
-  },
   descriptionCell: {
-    width: '52%',
+    width: '50%',
   },
   quantityCell: {
-    width: '10%',
+    width: '12%',
     textAlign: 'center',
   },
   unitCell: {
-    width: '20%',
+    width: '24%',
     textAlign: 'right',
   },
   discountCell: {
-    width: '10%',
+    width: '12%',
     textAlign: 'center',
   },
   amountCell: {
-    width: '20%',
+    width: '26%',
     textAlign: 'right',
   },
   totalSection: {
@@ -757,22 +753,20 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             </View>
           </View>
           
-          {/* Cost Summary Table - Centered with margins and auto-sizing */}
-          <View style={{ marginVertical: 20, marginLeft: 30, marginRight: 30, alignItems: 'center' }}>
-            <View style={{ width: '100%', maxHeight: '65%' }}>
-              {/* Table Header - matching other quotes exactly */}
+          {/* Cost Summary Table - Centered with margins and reduced width */}
+          <View style={{ marginVertical: 20, marginLeft: 60, marginRight: 60, alignItems: 'center' }}>
+            <View style={{ width: '80%', maxHeight: '65%' }}>
+              {/* Table Header - removed S.No column */}
               <View style={styles.tableHeader}>
-                <Text style={styles.slNoCell}>S.No</Text>
                 <Text style={styles.descriptionCell}>PRODUCT DESCRIPTION</Text>
                 <Text style={styles.unitCell}>SELLING PRICE</Text>
                 <Text style={styles.amountCell}>DISCOUNTED PRICE ({quotation.globalDiscount}%)</Text>
               </View>
               
-              {/* Room Rows - matching other quotes structure */}
+              {/* Room Rows - removed S.No column */}
               <View style={{ maxHeight: '65%' }}>
                 {sortedRooms.map((room, index) => (
                   <View key={index} style={[styles.tableRow, index % 2 === 0 ? styles.tableRowEven : {}]}>
-                    <Text style={styles.slNoCell}>{index + 1}</Text>
                     <Text style={styles.descriptionCell}>{room.name.toUpperCase()}</Text>
                     <Text style={styles.unitCell}>{formatRupeeForPDF(room.sellingPrice || 0)}</Text>
                     <Text style={[styles.amountCell, { color: 'red' }]}>
@@ -782,9 +776,8 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
                 ))}
               </View>
               
-              {/* Total Row */}
+              {/* Total Row - removed S.No column */}
               <View style={[styles.tableRow, styles.tableRowEven]}>
-                <Text style={styles.slNoCell}></Text>
                 <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>Total Of All Items</Text>
                 <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalSellingPrice)}</Text>
                 <Text style={[styles.amountCell, { fontWeight: 'bold', color: 'red' }]}>
@@ -792,25 +785,22 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
                 </Text>
               </View>
               
-              {/* Installation Row */}
+              {/* Installation Row - removed S.No column */}
               <View style={styles.tableRow}>
-                <Text style={styles.slNoCell}></Text>
                 <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>Installation and Handling</Text>
                 <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
                 <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
               </View>
               
-              {/* GST Row */}
+              {/* GST Row - removed S.No column */}
               <View style={[styles.tableRow, styles.tableRowEven]}>
-                <Text style={styles.slNoCell}></Text>
                 <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>GST {quotation.gstPercentage}%</Text>
                 <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
                 <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
               </View>
               
-              {/* Final Price Row */}
+              {/* Final Price Row - removed S.No column */}
               <View style={[styles.tableRow, { backgroundColor: '#009245' }]}>
-                <Text style={[styles.slNoCell, { color: 'white' }]}></Text>
                 <Text style={[styles.descriptionCell, { fontWeight: 'bold', color: 'white' }]}>Final Price</Text>
                 <Text style={[styles.unitCell, { fontWeight: 'bold', color: 'white' }]}></Text>
                 <Text style={[styles.amountCell, { fontWeight: 'bold', color: 'white' }]}>
