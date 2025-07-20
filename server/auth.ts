@@ -5,7 +5,7 @@ import { dbStorage } from './storage.new';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN = '10m'; // Maximum 10 minutes session time
-const JWT_REFRESH_EXPIRES_IN = '7d';
+const JWT_REFRESH_EXPIRES_IN = '15m'; // Refresh token expires 15 minutes after access token
 
 export interface AuthRequest extends Request {
   user?: {
@@ -29,6 +29,8 @@ export class AuthService {
   }
 
   static generateToken(user: { id: number; username: string; email: string; fullName: string; role: string; active: boolean }): { accessToken: string; refreshToken: string } {
+    const now = Math.floor(Date.now() / 1000);
+    
     const accessToken = jwt.sign(
       {
         id: user.id,
@@ -37,7 +39,8 @@ export class AuthService {
         fullName: user.fullName,
         role: user.role,
         active: user.active,
-        type: 'access'
+        type: 'access',
+        lastActivity: now
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
@@ -47,7 +50,8 @@ export class AuthService {
       {
         id: user.id,
         username: user.username,
-        type: 'refresh'
+        type: 'refresh',
+        lastActivity: now
       },
       JWT_SECRET,
       { expiresIn: JWT_REFRESH_EXPIRES_IN }
@@ -90,6 +94,16 @@ export class AuthService {
       const decoded = jwt.verify(refreshToken, JWT_SECRET) as any;
       
       if (decoded.type !== 'refresh') {
+        return null;
+      }
+
+      // Check session timeout - 10 minutes of inactivity
+      const now = Math.floor(Date.now() / 1000);
+      const lastActivity = decoded.lastActivity || decoded.iat; // fallback to issued time for old tokens
+      const sessionTimeoutSeconds = 10 * 60; // 10 minutes
+      
+      if (now - lastActivity > sessionTimeoutSeconds) {
+        console.log(`Session expired due to inactivity. Last activity: ${new Date(lastActivity * 1000)}, Now: ${new Date(now * 1000)}`);
         return null;
       }
 

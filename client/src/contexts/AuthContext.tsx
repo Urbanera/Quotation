@@ -65,6 +65,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         localStorage.setItem('auth_token', accessToken);
         localStorage.setItem('refresh_token', newRefreshToken);
         return true;
+      } else if (response.status === 401) {
+        // Session expired due to inactivity
+        console.log('Session expired due to inactivity timeout');
+        logout();
+        return false;
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
