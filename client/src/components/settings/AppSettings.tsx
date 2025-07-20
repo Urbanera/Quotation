@@ -75,6 +75,9 @@ export function AppSettingsForm() {
     defaultValues: {
       defaultGlobalDiscount: 0,
       defaultGstPercentage: 18,
+      handlingChargesSmallRooms: 1000,
+      handlingChargesMediumRooms: 2000,
+      handlingChargesLargeRooms: 3000,
       defaultTermsAndConditions: "",
       receiptTermsAndConditions: "",
       presentationTermsAndConditions: "",
@@ -259,13 +262,104 @@ export function AppSettingsForm() {
                           />
                         </FormControl>
                         <FormDescription>
-                          Default GST percentage for all new quotations
+                          Default GST percentage for all quotations (not editable in quotations)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+                </div>
+                
+                {/* Room-based Handling Charges Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Room-Based Handling Charges</CardTitle>
+                    <CardDescription>
+                      Configure handling charges based on the number of rooms in a quotation. 
+                      These charges will be automatically applied based on room count.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="handlingChargesSmallRooms"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Small Projects (&lt; 3 rooms)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="1000" 
+                                {...field}
+                                value={field.value || 0}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              For quotations with 1-2 rooms
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="handlingChargesMediumRooms"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Medium Projects (3-6 rooms)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="2000" 
+                                {...field}
+                                value={field.value || 0}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              For quotations with 3-6 rooms
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="handlingChargesLargeRooms"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Large Projects (7+ rooms)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="3000" 
+                                {...field}
+                                value={field.value || 0}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              For quotations with 7 or more rooms
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="quotationTemplateId"

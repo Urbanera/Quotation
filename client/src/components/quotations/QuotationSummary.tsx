@@ -12,23 +12,15 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface QuotationSummaryProps {
   quotationId: number;
-  installationHandling: number;
-  setInstallationHandling: (value: number) => void;
   globalDiscount: number;
   setGlobalDiscount: (value: number) => void;
-  gstPercentage: number;
-  setGstPercentage: (value: number) => void;
   onSave: () => void;
 }
 
 export default function QuotationSummary({
   quotationId,
-  installationHandling,
-  setInstallationHandling,
   globalDiscount,
   setGlobalDiscount,
-  gstPercentage,
-  setGstPercentage,
   onSave
 }: QuotationSummaryProps) {
   const { toast } = useToast();
@@ -55,24 +47,10 @@ export default function QuotationSummary({
   }, [quotation]);
 
   // Input change handlers
-  const handleInstallationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    if (!isNaN(value) && value >= 0) {
-      setInstallationHandling(value);
-    }
-  };
-
   const handleGlobalDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
     if (!isNaN(value) && value >= 0) {
       setGlobalDiscount(value);
-    }
-  };
-
-  const handleGstChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    if (!isNaN(value) && value >= 0) {
-      setGstPercentage(value);
     }
   };
 
@@ -170,6 +148,8 @@ export default function QuotationSummary({
       : totalDiscounted;
     
     const totalInstallationCharges = getTotalInstallationCharges();
+    const installationHandling = quotation?.installationHandling || 0;
+    const gstPercentage = quotation?.gstPercentage || 18;
     const gstAmount = (totalAfterGlobalDiscount + totalInstallationCharges + installationHandling) * (gstPercentage / 100);
     const finalPrice = totalAfterGlobalDiscount + totalInstallationCharges + installationHandling + gstAmount;
     
@@ -282,19 +262,19 @@ export default function QuotationSummary({
                   Installation and Handling
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{Math.round((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN')}
+                  ₹{Math.round((getTotalInstallationCharges() || 0) + (quotation?.installationHandling || 0)).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{Math.round((getTotalInstallationCharges() || 0) + (installationHandling || 0)).toLocaleString('en-IN')}
+                  ₹{Math.round((getTotalInstallationCharges() || 0) + (quotation?.installationHandling || 0)).toLocaleString('en-IN')}
                 </td>
               </tr>
               
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  GST {gstPercentage}%
+                  GST {quotation?.gstPercentage || 18}%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                  ₹{Math.round(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100)).toLocaleString('en-IN')}
+                  ₹{Math.round(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (quotation?.installationHandling || 0)) * ((quotation?.gstPercentage || 18) / 100)).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                   ₹{Math.round(totals.gstAmount || 0).toLocaleString('en-IN')}
@@ -306,7 +286,7 @@ export default function QuotationSummary({
                   Final Price
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-right">
-                  ₹{Math.round(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) + (((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (installationHandling || 0)) * (gstPercentage / 100))).toLocaleString('en-IN')}
+                  ₹{Math.round(((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (quotation?.installationHandling || 0)) + (((totals.totalSelling || 0) + (getTotalInstallationCharges() || 0) + (quotation?.installationHandling || 0)) * ((quotation?.gstPercentage || 18) / 100))).toLocaleString('en-IN')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-indigo-600 text-right">
                   ₹{Math.round(totals.finalPrice || 0).toLocaleString('en-IN')}
@@ -316,9 +296,9 @@ export default function QuotationSummary({
           </table>
         </div>
         
-        <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="installation-handling" className="block text-sm font-medium text-gray-700">Handling Charges</label>
+            <label htmlFor="installation-handling" className="block text-sm font-medium text-gray-700">Handling Charges (Auto-calculated)</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <span className="text-gray-500 sm:text-sm">₹</span>
@@ -326,12 +306,15 @@ export default function QuotationSummary({
               <Input
                 type="number"
                 id="installation-handling"
-                value={installationHandling}
-                onChange={handleInstallationChange}
-                onBlur={onSave}
-                className="pl-7 focus:ring-indigo-500 focus:border-indigo-500"
+                value={quotation?.installationHandling || 0}
+                readOnly
+                disabled
+                className="pl-7 bg-gray-50 cursor-not-allowed"
               />
             </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Based on room count ({quotation?.rooms?.filter(r => r.included).length || 0} rooms)
+            </p>
           </div>
           <div>
             <label htmlFor="global-discount" className="block text-sm font-medium text-gray-700">Global Discount</label>
@@ -349,21 +332,27 @@ export default function QuotationSummary({
               </div>
             </div>
           </div>
+        </div>
+        
+        <div className="mt-4">
           <div>
-            <label htmlFor="gst-percentage" className="block text-sm font-medium text-gray-700">GST Percentage</label>
+            <label htmlFor="gst-percentage" className="block text-sm font-medium text-gray-700">GST Percentage (Set in Settings)</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <Input
                 type="number"
                 id="gst-percentage"
-                value={gstPercentage}
-                onChange={handleGstChange}
-                onBlur={onSave}
-                className="pr-8 focus:ring-indigo-500 focus:border-indigo-500"
+                value={quotation?.gstPercentage || 18}
+                readOnly
+                disabled
+                className="pr-8 bg-gray-50 cursor-not-allowed"
               />
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                 <span className="text-gray-500 sm:text-sm">%</span>
               </div>
             </div>
+            <p className="mt-1 text-xs text-gray-500">
+              GST percentage is managed in Settings and applies to all quotations
+            </p>
           </div>
         </div>
         

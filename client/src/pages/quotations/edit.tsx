@@ -19,9 +19,7 @@ export default function EditQuotation() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
-  const [installationHandling, setInstallationHandling] = useState<number>(0);
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
-  const [gstPercentage, setGstPercentage] = useState<number>(18);
   
   // States for validation dialog
   const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
@@ -35,9 +33,7 @@ export default function EditQuotation() {
   const [isModificationHistoryOpen, setIsModificationHistoryOpen] = useState(false);
   const originalValuesRef = useRef<{
     customerId: number | null;
-    installationHandling: number;
     globalDiscount: number;
-    gstPercentage: number;
   } | null>(null);
 
   // Fetch quotation details
@@ -55,16 +51,12 @@ export default function EditQuotation() {
   useEffect(() => {
     if (quotation) {
       setSelectedCustomerId(quotation.customerId);
-      setInstallationHandling(quotation.installationHandling);
       setGlobalDiscount(quotation.globalDiscount || 0);
-      setGstPercentage(quotation.gstPercentage);
       
       // Store original values for comparison
       originalValuesRef.current = {
         customerId: quotation.customerId,
-        installationHandling: quotation.installationHandling,
         globalDiscount: quotation.globalDiscount || 0,
-        gstPercentage: quotation.gstPercentage
       };
       
       // Reset unsaved changes state
@@ -78,12 +70,10 @@ export default function EditQuotation() {
     
     const hasChanges = 
       selectedCustomerId !== originalValuesRef.current.customerId ||
-      installationHandling !== originalValuesRef.current.installationHandling ||
-      globalDiscount !== originalValuesRef.current.globalDiscount ||
-      gstPercentage !== originalValuesRef.current.gstPercentage;
+      globalDiscount !== originalValuesRef.current.globalDiscount;
       
     setHasUnsavedChanges(hasChanges);
-  }, [selectedCustomerId, installationHandling, globalDiscount, gstPercentage]);
+  }, [selectedCustomerId, globalDiscount]);
 
   // Handle browser close/refresh warning
   useEffect(() => {
@@ -108,17 +98,13 @@ export default function EditQuotation() {
     try {
       await apiRequest("PUT", `/api/quotations/${id}`, {
         customerId: selectedCustomerId,
-        installationHandling,
-        globalDiscount,
-        gstPercentage
+        globalDiscount
       });
       
       // Update original values after successful save
       originalValuesRef.current = {
         customerId: selectedCustomerId,
-        installationHandling,
-        globalDiscount,
-        gstPercentage
+        globalDiscount
       };
       
       // Reset unsaved changes state
@@ -139,7 +125,7 @@ export default function EditQuotation() {
         variant: "destructive",
       });
     }
-  }, [id, selectedCustomerId, installationHandling, globalDiscount, gstPercentage, toast]);
+  }, [id, selectedCustomerId, globalDiscount, toast]);
 
   // Handle navigation with unsaved changes
   const handleNavigationWithUnsavedChanges = (path: string) => {
@@ -348,12 +334,8 @@ export default function EditQuotation() {
           {id && (
             <QuotationSummary 
               quotationId={parseInt(id)} 
-              installationHandling={installationHandling}
-              setInstallationHandling={setInstallationHandling}
               globalDiscount={globalDiscount}
               setGlobalDiscount={setGlobalDiscount}
-              gstPercentage={gstPercentage}
-              setGstPercentage={setGstPercentage}
               onSave={handleSaveQuotation}
             />
           )}

@@ -398,6 +398,9 @@ export class MemStorage implements IStorage {
       id: 1,
       defaultGlobalDiscount: 5,
       defaultGstPercentage: 18,
+      handlingChargesSmallRooms: 1000,
+      handlingChargesMediumRooms: 2000,
+      handlingChargesLargeRooms: 3000,
       defaultTermsAndConditions: "1. All prices are valid for 30 days from quotation date.\n2. 50% advance payment required to start work.\n3. Balance payment due upon completion.\n4. Material colors may vary slightly from samples.\n5. Changes to design after approval may incur additional charges.",
       receiptTermsAndConditions: "1. Receipt is valid only when payment is confirmed.\n2. All payments are non-refundable unless otherwise specified.\n3. Please retain this receipt for your records and warranty claims.\n4. For any disputes regarding payment, please contact us within 7 days of receipt.",
       presentationTermsAndConditions: "1. Scope of Work\nLecco Cucina agrees to perform the production and services outlined in our individual product dossier document.\n\n2. Taxes\nApplicable taxes will be charged in accordance with Government policies in effect at the time of signing.\n\n3. Order Confirmation\na) This offer should be reviewed in conjunction with the designs and specifications considered at the time of confirmation.\nb) Any modifications to the designs, finishes or additional selections of accessories will result in a revised quote.\nc) A final agreement document must be signed by both Lecco Cucina Experience Centre and the client to confirm the order.\nd) In the event of any disagreement post-order finalization, this document will be deemed as the final agreement.\ne) No changes or alterations to the design, finishes or addition of accessories will be permitted after order confirmation. The order cannot be cancelled once confirmed, the customer is required to remit 100% payment towards the orders placed with Lecco Cucina Experience Centre.\nf) Product colours may vary within a range of 7 to 10% due to differences in production batches or intentional use of similar shades. Such variations will not be considered as material defects.\n\n4. Payment Terms\ni. Token Advance Payment: 20% of the total amount including taxes is required for the order confirmation.\nii. Order Punching Payment: 30% of the total amount (excluding 20% token advance payment), including taxes is due at the time of order punching.\niii. Final Payment: 50% of the total amount, including taxes is to be paid 10 days before the dispatch of the order.\niv. Appliances, Counter Top, dado Tiles, Sink, Faucets and others: 100% payment is required during order finalization.\nv. Urban Ladder Products: 100% payment is required during order confirmation.\nvi. Outstation Deliveries:\n• Special packing, Transportation, freight, insurance and unloading charges will be applicable.\n• Travel, boarding and lodging charges for the installation team for all outstation executions will be billed on an actual basis.\n\nProduction Timeline (approx.): Plain laminate, Grain laminate & High Gloss Finishes delivered in 30 days. Soft Extra Matt & Classic Lacquer delivered in 45 days.\n\n5. Delivery & Installation Terms\na. Delivery Period: The estimated product delivery period is 30 to 45 days, depending on the finish.\nb. Delivery Acceptance: Delivery date must be confirmed and accepted within the first 14 days following the notification of the scheduled dispatch date.\nc. Warehousing: Free warehousing for the material is provided only for up to 14 days following the notification of the scheduled dispatch date. Any additional storage days required beyond this period will incur additional charges, which will be communicated via email and will be at the client's risk.",
@@ -1519,6 +1522,8 @@ export class MemStorage implements IStorage {
   async createQuotation(quotation: InsertQuotation): Promise<Quotation> {
     const id = this.quotationIdCounter++;
     const now = new Date();
+    const appSettings = await this.getAppSettings();
+    
     const newQuotation: Quotation = {
       id,
       customerId: quotation.customerId,
@@ -1529,9 +1534,9 @@ export class MemStorage implements IStorage {
       totalSellingPrice: quotation.totalSellingPrice || 0,
       totalDiscountedPrice: quotation.totalDiscountedPrice || 0,
       totalInstallationCharges: 0,
-      installationHandling: quotation.installationHandling || 0,
+      installationHandling: appSettings.handlingChargesSmallRooms, // Default for new quotations
       globalDiscount: quotation.globalDiscount || 0,
-      gstPercentage: quotation.gstPercentage || 0,
+      gstPercentage: appSettings.defaultGstPercentage, // Use settings default
       gstAmount: quotation.gstAmount || 0,
       finalPrice: quotation.finalPrice || 0,
       validUntil: quotation.validUntil || new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
@@ -2711,6 +2716,7 @@ export class MemStorage implements IStorage {
     if (!quotation) return;
     
     const rooms = await this.getRooms(quotationId);
+    const appSettings = await this.getAppSettings();
     
     // Update room prices first (without triggering quotation updates)
     for (const room of rooms) {
@@ -2752,11 +2758,26 @@ export class MemStorage implements IStorage {
       }
     }
     
-    console.log(`Updating quotation ${quotationId} with totalInstallationCharges: ${totalInstallationCharges}`);
+    // Calculate handling charges based on room count (only included rooms)
+    const includedRoomCount = updatedRooms.filter(room => room.included).length;
+    let calculatedHandlingCharges = 0;
+    
+    if (includedRoomCount < 3) {
+      calculatedHandlingCharges = appSettings.handlingChargesSmallRooms;
+    } else if (includedRoomCount >= 3 && includedRoomCount <= 6) {
+      calculatedHandlingCharges = appSettings.handlingChargesMediumRooms;
+    } else {
+      calculatedHandlingCharges = appSettings.handlingChargesLargeRooms;
+    }
+    
+    console.log(`Updating quotation ${quotationId} with totalInstallationCharges: ${totalInstallationCharges}, handling charges for ${includedRoomCount} rooms: ${calculatedHandlingCharges}`);
+    
+    // Use default GST percentage from settings
+    const gstPercentage = appSettings.defaultGstPercentage;
     
     // Apply GST
-    const subtotal = priceAfterGlobalDiscount + totalInstallationCharges + quotation.installationHandling;
-    const gstAmount = subtotal * (quotation.gstPercentage / 100);
+    const subtotal = priceAfterGlobalDiscount + totalInstallationCharges + calculatedHandlingCharges;
+    const gstAmount = subtotal * (gstPercentage / 100);
     const finalPrice = subtotal + gstAmount;
     
     // Create a new quotation object with all the updated fields
@@ -2765,6 +2786,8 @@ export class MemStorage implements IStorage {
       totalSellingPrice,
       totalDiscountedPrice,
       totalInstallationCharges,
+      installationHandling: calculatedHandlingCharges,
+      gstPercentage: gstPercentage,
       gstAmount,
       finalPrice,
       updatedAt: new Date()
@@ -2792,6 +2815,7 @@ export class MemStorage implements IStorage {
     if (!quotation) return;
     
     const rooms = await this.getRooms(quotationId);
+    const appSettings = await this.getAppSettings();
     
     // Calculate quotation prices
     let totalSellingPrice = 0;
@@ -2825,11 +2849,26 @@ export class MemStorage implements IStorage {
       }
     }
     
-    console.log(`Updating quotation ${quotationId} with totalInstallationCharges: ${totalInstallationCharges}`);
+    // Calculate handling charges based on room count (only included rooms)
+    const includedRoomCount = rooms.filter(room => room.included).length;
+    let calculatedHandlingCharges = 0;
+    
+    if (includedRoomCount < 3) {
+      calculatedHandlingCharges = appSettings.handlingChargesSmallRooms;
+    } else if (includedRoomCount >= 3 && includedRoomCount <= 6) {
+      calculatedHandlingCharges = appSettings.handlingChargesMediumRooms;
+    } else {
+      calculatedHandlingCharges = appSettings.handlingChargesLargeRooms;
+    }
+    
+    console.log(`Updating quotation ${quotationId} with totalInstallationCharges: ${totalInstallationCharges}, handling charges for ${includedRoomCount} rooms: ${calculatedHandlingCharges}`);
+    
+    // Use default GST percentage from settings
+    const gstPercentage = appSettings.defaultGstPercentage;
     
     // Apply GST
-    const subtotal = priceAfterGlobalDiscount + totalInstallationCharges + quotation.installationHandling;
-    const gstAmount = subtotal * (quotation.gstPercentage / 100);
+    const subtotal = priceAfterGlobalDiscount + totalInstallationCharges + calculatedHandlingCharges;
+    const gstAmount = subtotal * (gstPercentage / 100);
     const finalPrice = subtotal + gstAmount;
     
     // Create a new quotation object with all the updated fields
@@ -2838,6 +2877,8 @@ export class MemStorage implements IStorage {
       totalSellingPrice,
       totalDiscountedPrice,
       totalInstallationCharges,
+      installationHandling: calculatedHandlingCharges,
+      gstPercentage: gstPercentage,
       gstAmount,
       finalPrice,
       updatedAt: new Date()

@@ -44,6 +44,10 @@ export const appSettings = pgTable("app_settings", {
   id: serial("id").primaryKey(),
   defaultGlobalDiscount: doublePrecision("default_global_discount").notNull().default(0),
   defaultGstPercentage: doublePrecision("default_gst_percentage").notNull().default(18),
+  // Room-based handling charges
+  handlingChargesSmallRooms: doublePrecision("handling_charges_small_rooms").notNull().default(1000), // < 3 rooms
+  handlingChargesMediumRooms: doublePrecision("handling_charges_medium_rooms").notNull().default(2000), // 3-6 rooms
+  handlingChargesLargeRooms: doublePrecision("handling_charges_large_rooms").notNull().default(3000), // 7+ rooms
   defaultTermsAndConditions: text("default_terms_and_conditions"),
   receiptTermsAndConditions: text("receipt_terms_and_conditions"),
   presentationTermsAndConditions: text("presentation_terms_and_conditions"),
