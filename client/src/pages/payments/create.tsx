@@ -219,18 +219,29 @@ export default function CreatePaymentPage() {
                               ) : (
                                 <span className={cn(
                                   "text-sm font-bold",
-                                  (customerBalance?.balance || 0) >= 0 
-                                    ? "text-green-600" 
-                                    : "text-red-600"
+                                  (customerBalance?.balance || 0) > 0 
+                                    ? "text-red-600" 
+                                    : (customerBalance?.balance || 0) < 0
+                                      ? "text-green-600"
+                                      : "text-gray-600"
                                 )}>
-                                  {formatCurrency(customerBalance?.balance || 0)}
+                                  {formatCurrency(Math.abs(customerBalance?.balance || 0))}
+                                  <span className="text-xs font-normal ml-1">
+                                    {(customerBalance?.balance || 0) > 0 
+                                      ? "(Due)" 
+                                      : (customerBalance?.balance || 0) < 0
+                                        ? "(Advance)"
+                                        : "(Zero Balance)"}
+                                  </span>
                                 </span>
                               )}
                             </div>
                             <p className="text-xs text-blue-700 mt-1">
-                              {(customerBalance?.balance || 0) >= 0 
-                                ? "Customer has credit balance" 
-                                : "Customer has outstanding dues"}
+                              {(customerBalance?.balance || 0) > 0 
+                                ? "Customer has outstanding dues to pay" 
+                                : (customerBalance?.balance || 0) < 0
+                                  ? "Customer has advance credit balance"
+                                  : "Customer has zero balance"}
                             </p>
                           </div>
                         )}

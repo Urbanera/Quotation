@@ -509,7 +509,7 @@ export class MemStorage implements IStorage {
       status: "confirmed",
       paymentStatus: "pending",
       totalAmount: quotation.finalPrice,
-      deliveryDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      expectedDeliveryDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       notes: "Demo sales order for kitchen renovation",
       createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
