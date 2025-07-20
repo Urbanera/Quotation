@@ -32,6 +32,28 @@ DesignQuotes is a full-stack web application for interior design businesses to m
 - **User Update Validation**: Fixed user management validation schema - password is now optional for user edits, resolving API errors
 - **Dialog Accessibility**: Enhanced dialog components with proper accessibility attributes for screen readers
 
+### Critical Fixes & Enhancements (July 20, 2025)
+- **Sidebar Navigation Improvements**: Fixed overlay issues with expandable sidebar functionality
+  - Added proper margin adjustment to prevent content overlay
+  - Implemented smooth transition between collapsed (64px) and expanded (256px) states
+  - Fixed dynamic width calculation and content positioning
+- **Complete Backup & Restore System**: Enhanced data backup to include all critical tables
+  - Added sales orders, quotations, invoices, payments, follow-ups to backup export
+  - Implemented comprehensive restore functionality for all data types
+  - Fixed file type validation to accept both CSV and JSON formats
+- **Invoice Printing Optimization**: Fixed A4 paper formatting and bank details integration
+  - Reduced margins (8mm) and font sizes (9pt/8pt) for single-page A4 printing
+  - Fixed bank details to use actual settings instead of hardcoded values
+  - Added conditional display based on showBankDetailsOnInvoice setting
+  - Improved print layout spacing and formatting
+- **Authentication Token Management**: Fixed invoice print authentication issues
+  - Added Bearer token headers to all invoice data fetching operations
+  - Fixed authentication for quotation details and customer data requests
+- **Customer Balance Display**: Added real-time balance display in payment receipt creation
+  - Shows customer balance with color coding (green for credit, red for dues)
+  - Updates automatically when different customers are selected
+  - Includes helpful status text for better understanding
+
 ### User Experience Enhancements
 - **Follow-up Notifications**: Added real-time notification system for customer follow-ups with bell icon alerts
 - **Error Handling**: Improved error messages and loading states throughout the application

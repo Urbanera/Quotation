@@ -24,6 +24,7 @@ import { useState } from "react";
 interface SidebarProps {
   isMobile?: boolean;
   onClose?: () => void;
+  onExpandChange?: (expanded: boolean) => void;
 }
 
 const allNavigation = [
@@ -40,11 +41,17 @@ const allNavigation = [
   { name: "Settings", href: "/settings", icon: Settings, adminOnly: true },
 ];
 
-export default function Sidebar({ isMobile, onClose }: SidebarProps) {
+export default function Sidebar({ isMobile, onClose, onExpandChange }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useAuth();
   const { canAccessModule } = usePermissions();
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleToggleExpand = () => {
+    const newExpanded = !isExpanded;
+    setIsExpanded(newExpanded);
+    onExpandChange?.(newExpanded);
+  };
   
   // Fetch company settings for name
   const { data: settings } = useQuery<CompanySettings>({
@@ -119,7 +126,7 @@ export default function Sidebar({ isMobile, onClose }: SidebarProps) {
           )}
         </div>
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={handleToggleExpand}
           className="p-1 rounded-md hover:bg-gray-100 transition-colors"
           title={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
         >

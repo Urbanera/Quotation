@@ -2861,6 +2861,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         userPermissions: await storage.getAllUserPermissions(),
         customers: await storage.getCustomers(),
         quotations: await storage.getQuotations(),
+        salesOrders: await storage.getSalesOrders(),
         invoices: await storage.getInvoices(),
         payments: await storage.getAllPayments(),
         followUps: await storage.getAllFollowUps(),
@@ -2911,6 +2912,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
           userPermissions: 0,
           customers: 0,
           quotations: 0,
+          salesOrders: 0,
           invoices: 0,
           payments: 0,
           followUps: 0,
@@ -2951,6 +2953,71 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
               results.restored.customers++;
             } catch (error) {
               results.errors.push(`Customer restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore quotations
+        if (backupData.quotations && Array.isArray(backupData.quotations)) {
+          for (const quotation of backupData.quotations) {
+            try {
+              const { id, createdAt, ...quotationData } = quotation;
+              await storage.createQuotation(quotationData);
+              results.restored.quotations++;
+            } catch (error) {
+              results.errors.push(`Quotation restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore sales orders
+        if (backupData.salesOrders && Array.isArray(backupData.salesOrders)) {
+          for (const salesOrder of backupData.salesOrders) {
+            try {
+              const { id, createdAt, ...salesOrderData } = salesOrder;
+              await storage.createSalesOrder(salesOrderData);
+              results.restored.salesOrders++;
+            } catch (error) {
+              results.errors.push(`Sales Order restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore invoices
+        if (backupData.invoices && Array.isArray(backupData.invoices)) {
+          for (const invoice of backupData.invoices) {
+            try {
+              const { id, createdAt, ...invoiceData } = invoice;
+              await storage.createInvoice(invoiceData);
+              results.restored.invoices++;
+            } catch (error) {
+              results.errors.push(`Invoice restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore customer payments
+        if (backupData.payments && Array.isArray(backupData.payments)) {
+          for (const payment of backupData.payments) {
+            try {
+              const { id, createdAt, ...paymentData } = payment;
+              await storage.createCustomerPayment(paymentData);
+              results.restored.payments++;
+            } catch (error) {
+              results.errors.push(`Payment restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore follow-ups
+        if (backupData.followUps && Array.isArray(backupData.followUps)) {
+          for (const followUp of backupData.followUps) {
+            try {
+              const { id, createdAt, ...followUpData } = followUp;
+              await storage.createFollowUp(followUpData);
+              results.restored.followUps++;
+            } catch (error) {
+              results.errors.push(`Follow-up restore error: ${error.message}`);
             }
           }
         }

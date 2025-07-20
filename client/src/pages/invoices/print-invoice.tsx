@@ -10,14 +10,14 @@ const printStyles = `
 @media print {
   @page {
     size: A4;
-    margin: 10mm;
+    margin: 8mm;
   }
   
   body {
     background: white;
-    font-size: 10pt;
+    font-size: 9pt;
     font-family: 'Arial', sans-serif;
-    line-height: 1.2;
+    line-height: 1.1;
   }
   
   .print\\:hidden,
@@ -59,8 +59,8 @@ const printStyles = `
   .items-table th,
   .items-table td {
     border: 1px solid #ddd;
-    padding: 1.5mm;
-    font-size: 9pt;
+    padding: 1mm;
+    font-size: 8pt;
   }
   
   .items-table th {
@@ -513,33 +513,43 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
             </ol>
           </div>
 
-          {/* Bank Details */}
+          {/* Bank Details - Only show if enabled in settings */}
           <div className="mb-6 grid grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Bank Details:</h3>
-              <table className="text-sm">
-                <tbody>
-                  <tr>
-                    <td className="pr-4 py-1"><strong>Bank Name:</strong></td>
-                    <td>HDFC Bank</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4 py-1"><strong>Account No:</strong></td>
-                    <td>50200012345678</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4 py-1"><strong>IFSC Code:</strong></td>
-                    <td>HDFC0004321</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4 py-1"><strong>Branch:</strong></td>
-                    <td>Main Branch</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            {companySettings?.showBankDetailsOnInvoice && (companySettings?.bankName || companySettings?.bankAccountNumber || companySettings?.bankIfscCode || companySettings?.bankBranch) && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Bank Details:</h3>
+                <table className="text-sm">
+                  <tbody>
+                    {companySettings.bankName && (
+                      <tr>
+                        <td className="pr-4 py-1"><strong>Bank Name:</strong></td>
+                        <td>{companySettings.bankName}</td>
+                      </tr>
+                    )}
+                    {companySettings.bankAccountNumber && (
+                      <tr>
+                        <td className="pr-4 py-1"><strong>Account No:</strong></td>
+                        <td>{companySettings.bankAccountNumber}</td>
+                      </tr>
+                    )}
+                    {companySettings.bankIfscCode && (
+                      <tr>
+                        <td className="pr-4 py-1"><strong>IFSC Code:</strong></td>
+                        <td>{companySettings.bankIfscCode}</td>
+                      </tr>
+                    )}
+                    {companySettings.bankBranch && (
+                      <tr>
+                        <td className="pr-4 py-1"><strong>Branch:</strong></td>
+                        <td>{companySettings.bankBranch}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
             
-            <div className="text-right stamp-section">
+            <div className={`text-right stamp-section ${!companySettings?.showBankDetailsOnInvoice ? 'col-span-2' : ''}`}>
               <p className="mb-12">For {companySettings?.firmName || companySettings?.name || 'Interior Design Company'}</p>
               <p className="mt-8 font-medium">Authorized Signatory</p>
             </div>
