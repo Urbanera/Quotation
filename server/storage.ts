@@ -1595,6 +1595,7 @@ export class MemStorage implements IStorage {
     
     // Get all rooms, products, accessories, images, and installation charges for original quotation
     const originalRooms = await this.getRooms(originalQuotation.id);
+    console.log(`Duplicating quotation ${id} - Found ${originalRooms.length} rooms to duplicate`);
     
     // Create a new quotation with the same details but a new ID
     const now = new Date();
@@ -1627,6 +1628,8 @@ export class MemStorage implements IStorage {
     for (const originalRoom of originalRooms) {
       const roomDetails = await this.getRoomWithItems(originalRoom.id);
       if (!roomDetails) continue;
+      
+      console.log(`Duplicating room "${roomDetails.name}" with ${roomDetails.products.length} products, ${roomDetails.accessories.length} accessories, ${roomDetails.images.length} images, ${roomDetails.installationCharges.length} installation charges`);
       
       // Create the new room
       const newRoom = await this.createRoom({
@@ -1678,14 +1681,16 @@ export class MemStorage implements IStorage {
         });
       }
       
-      // Create images for the new room
-      for (const image of roomDetails.images) {
-        await this.createImage({
-          roomId: newRoom.id,
-          path: image.path,
-          caption: image.caption,
-          order: image.order
-        });
+      // Create images for the new room (only if duplicating for same customer)
+      if (!newCustomerId || newCustomerId === originalQuotation.customerId) {
+        for (const image of roomDetails.images) {
+          await this.createImage({
+            roomId: newRoom.id,
+            path: image.path,
+            caption: image.caption,
+            order: image.order
+          });
+        }
       }
       
       // Create installation charges for the new room
