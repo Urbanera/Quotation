@@ -374,17 +374,17 @@ export class MemStorage implements IStorage {
   }
 
   private initializeData() {
-    // Initialize company settings
+    // Initialize company settings with minimal data - user will configure
     this.companySettings = {
       id: 1,
-      name: "Interio Designs",
-      firmName: null, // Optional firm name for invoices and receipts
-      address: "123 Design Avenue, Suite 456, Design District",
-      phone: "+1 (555) 123-4567",
-      email: "info@interiodesigns.com",
-      website: "https://www.interiodesigns.com",
+      name: "Your Company Name",
+      firmName: null,
+      address: "Your Company Address",
+      phone: "Your Phone Number",
+      email: "your-email@company.com",
+      website: null,
       logo: null,
-      taxId: "TAX123456789",
+      taxId: null,
       bankName: null,
       bankAccountNumber: null,
       bankIfscCode: null,
@@ -393,7 +393,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date()
     };
 
-    // Initialize app settings
+    // Initialize app settings with default values
     this.appSettings = {
       id: 1,
       defaultGlobalDiscount: 5,
@@ -403,27 +403,39 @@ export class MemStorage implements IStorage {
       handlingChargesLargeRooms: 3000,
       defaultTermsAndConditions: "1. All prices are valid for 30 days from quotation date.\n2. 50% advance payment required to start work.\n3. Balance payment due upon completion.\n4. Material colors may vary slightly from samples.\n5. Changes to design after approval may incur additional charges.",
       receiptTermsAndConditions: "1. Receipt is valid only when payment is confirmed.\n2. All payments are non-refundable unless otherwise specified.\n3. Please retain this receipt for your records and warranty claims.\n4. For any disputes regarding payment, please contact us within 7 days of receipt.",
-      presentationTermsAndConditions: "1. Scope of Work\nLecco Cucina agrees to perform the production and services outlined in our individual product dossier document.\n\n2. Taxes\nApplicable taxes will be charged in accordance with Government policies in effect at the time of signing.\n\n3. Order Confirmation\na) This offer should be reviewed in conjunction with the designs and specifications considered at the time of confirmation.\nb) Any modifications to the designs, finishes or additional selections of accessories will result in a revised quote.\nc) A final agreement document must be signed by both Lecco Cucina Experience Centre and the client to confirm the order.\nd) In the event of any disagreement post-order finalization, this document will be deemed as the final agreement.\ne) No changes or alterations to the design, finishes or addition of accessories will be permitted after order confirmation. The order cannot be cancelled once confirmed, the customer is required to remit 100% payment towards the orders placed with Lecco Cucina Experience Centre.\nf) Product colours may vary within a range of 7 to 10% due to differences in production batches or intentional use of similar shades. Such variations will not be considered as material defects.\n\n4. Payment Terms\ni. Token Advance Payment: 20% of the total amount including taxes is required for the order confirmation.\nii. Order Punching Payment: 30% of the total amount (excluding 20% token advance payment), including taxes is due at the time of order punching.\niii. Final Payment: 50% of the total amount, including taxes is to be paid 10 days before the dispatch of the order.\niv. Appliances, Counter Top, dado Tiles, Sink, Faucets and others: 100% payment is required during order finalization.\nv. Urban Ladder Products: 100% payment is required during order confirmation.\nvi. Outstation Deliveries:\n• Special packing, Transportation, freight, insurance and unloading charges will be applicable.\n• Travel, boarding and lodging charges for the installation team for all outstation executions will be billed on an actual basis.\n\nProduction Timeline (approx.): Plain laminate, Grain laminate & High Gloss Finishes delivered in 30 days. Soft Extra Matt & Classic Lacquer delivered in 45 days.\n\n5. Delivery & Installation Terms\na. Delivery Period: The estimated product delivery period is 30 to 45 days, depending on the finish.\nb. Delivery Acceptance: Delivery date must be confirmed and accepted within the first 14 days following the notification of the scheduled dispatch date.\nc. Warehousing: Free warehousing for the material is provided only for up to 14 days following the notification of the scheduled dispatch date. Any additional storage days required beyond this period will incur additional charges, which will be communicated via email and will be at the client's risk.",
+      presentationTermsAndConditions: "Standard terms and conditions apply. Please customize these terms in the application settings.",
+      presentationSecondPageContent: "",
       quotationTemplateId: "default",
       presentationTemplateId: "default",
+      requiredAccessories: "skirting,handles,sliding mechanism,t profile",
+      leadSourceOptions: "walk-in,website,referral,social media,other",
+      // Email settings - empty by default
+      smtpHost: "",
+      smtpPort: 587,
+      smtpSecure: false,
+      smtpUser: "",
+      smtpPassword: "",
+      emailFrom: "",
+      emailReplyTo: "",
+      emailFooter: "",
+      emailEnabled: false,
+      // WhatsApp settings - empty by default
+      whatsappEnabled: false,
+      whatsappPhoneNumberId: "",
+      whatsappAccessToken: "",
+      whatsappBusinessAccountId: "",
+      whatsappGreetingTemplate: "hello_world",
+      whatsappLayoutRequestTemplate: "layout_request",
+      whatsappShowroomVisitTemplate: "showroom_visit",
+      whatsappMissedCallTemplate: "missed_call",
+      whatsappMeetingScheduleTemplate: "meeting_schedule",
+      whatsappQuotationTemplate: "quotation_send",
+      whatsappPaymentReceiptTemplate: "payment_receipt",
+      whatsappInvoiceTemplate: "invoice_send",
       updatedAt: new Date()
     };
     
-    // Add a demo customer
-    const customer: Customer = {
-      id: this.customerIdCounter++,
-      name: "Demo Customer",
-      email: "demo@example.com",
-      phone: "9988776655",
-      address: "123 Demo Street",
-      gstNumber: null,
-      leadSource: null,
-      stage: "new",
-      createdAt: new Date(),
-    };
-    this.customers.set(customer.id, customer);
-    
-    // Add admin user
+    // Add only the admin user - no demo data
     const adminUser: User = {
       id: this.userIdCounter++,
       username: "admin",
@@ -436,175 +448,6 @@ export class MemStorage implements IStorage {
       updatedAt: new Date()
     };
     this.users.set(adminUser.id, adminUser);
-    
-    // Add a design team
-    const designTeam: Team = {
-      id: this.teamIdCounter++,
-      name: "Core Design Team",
-      description: "Main team of designers working on all projects",
-      createdAt: new Date()
-    };
-    this.teams.set(designTeam.id, designTeam);
-    
-    // Add admin to the design team
-    const teamMember: TeamMember = {
-      id: this.teamMemberIdCounter++,
-      teamId: designTeam.id,
-      userId: adminUser.id,
-      createdAt: new Date()
-    };
-    this.teamMembers.set(teamMember.id, teamMember);
-    
-    // Add a sample follow-up for the demo customer
-    const followUp: FollowUp = {
-      id: this.followUpIdCounter++,
-      customerId: customer.id,
-      notes: "Initial meeting to discuss requirements",
-      interactionDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-      nextFollowUpDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days in future
-      completed: false,
-      userId: adminUser.id,
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    };
-    this.followUps.set(followUp.id, followUp);
-    
-    // Create a demo quotation for project timeline
-    const now = new Date();
-    const quotation: Quotation = {
-      id: this.quotationIdCounter++,
-      customerId: customer.id,
-      quotationNumber: "Q-2025-001",
-      status: "draft",
-      title: "Kitchen Renovation Demo",
-      description: "Complete kitchen redesign with modern appliances",
-      gstPercentage: 7,
-      globalDiscount: 5,
-      installationHandling: 500,
-      totalSellingPrice: 15000,
-      totalDiscountedPrice: 14250,
-      gstAmount: 1032.5,
-      finalPrice: 15782.5,
-      validUntil: new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
-      terms: "Standard terms and conditions apply",
-      createdAt: now,
-      updatedAt: now
-    };
-    this.quotations.set(quotation.id, quotation);
-    
-    // Add project timeline milestones for the demo quotation
-    const milestones = this.createDefaultProjectMilestones(quotation.id, now);
-    
-    // Add milestones to the storage
-    milestones.forEach(milestone => {
-      this.milestones.set(milestone.id, milestone);
-    });
-    
-    // Create a demo sales order from the quotation
-    const salesOrder: SalesOrder = {
-      id: this.salesOrderIdCounter++,
-      customerId: customer.id,
-      quotationId: quotation.id,
-      orderNumber: "SO-2025-001",
-      orderDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-      status: "confirmed",
-      paymentStatus: "pending",
-      totalAmount: quotation.finalPrice,
-      expectedDeliveryDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      notes: "Demo sales order for kitchen renovation",
-      createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
-    };
-    this.salesOrders.set(salesOrder.id, salesOrder);
-    
-    // Create a demo customer payment (partial payment)
-    const customerPayment: CustomerPayment = {
-      id: this.customerPaymentIdCounter++,
-      customerId: customer.id,
-      amount: 5000, // Partial payment
-      paymentMethod: "bank_transfer",
-      paymentType: "payment",
-      paymentDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-      transactionId: "TXN123456",
-      receiptNumber: "RCP-2025-001",
-      description: "Advance payment for kitchen renovation",
-      createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
-    };
-    this.customerPayments.set(customerPayment.id, customerPayment);
-    
-    // Add sample accessory catalog items
-    const accessoryCatalogItems = [
-      {
-        id: this.accessoryCatalogIdCounter++,
-        category: "handle" as const,
-        code: "LH-101",
-        name: "Modern Chrome Pull Handle",
-        description: "Sleek chrome finish handle for modern cabinet designs",
-        sellingPrice: 850,
-        kitchenPrice: 850,
-        wardrobePrice: 850,
-        size: "128mm",
-        image: "handle-chrome.jpg",
-        createdAt: new Date()
-      },
-      {
-        id: this.accessoryCatalogIdCounter++,
-        category: "handle" as const,
-        code: "LH-203",
-        name: "Brushed Gold Cabinet Handle",
-        description: "Elegant brushed gold finish for luxury cabinets",
-        sellingPrice: 1200,
-        kitchenPrice: 1200,
-        wardrobePrice: 1200,
-        size: "160mm",
-        image: "handle-gold.jpg",
-        createdAt: new Date()
-      },
-      {
-        id: this.accessoryCatalogIdCounter++,
-        category: "kitchen" as const,
-        code: "LK-305",
-        name: "Pull-Out Spice Rack",
-        description: "Space-saving pull-out spice rack for kitchen cabinets",
-        sellingPrice: 3500,
-        kitchenPrice: 3500,
-        wardrobePrice: null,
-        size: "400mm width",
-        image: "kitchen-spice-rack.jpg",
-        createdAt: new Date()
-      },
-      {
-        id: this.accessoryCatalogIdCounter++,
-        category: "light" as const,
-        code: "LL-405",
-        name: "LED Cabinet Light Strip",
-        description: "Energy-efficient LED strip for under-cabinet lighting",
-        sellingPrice: 1800,
-        kitchenPrice: 1800,
-        wardrobePrice: 1800,
-        size: "1m",
-        image: "light-led-strip.jpg",
-        createdAt: new Date()
-      },
-      {
-        id: this.accessoryCatalogIdCounter++,
-        category: "wardrobe" as const,
-        code: "LW-503",
-        name: "Pull-Out Trouser Rack",
-        description: "Extendable rack for organizing trousers and pants",
-        sellingPrice: 2600,
-        kitchenPrice: null,
-        wardrobePrice: 2600,
-        size: "600mm width",
-        image: "wardrobe-trouser-rack.jpg",
-        createdAt: new Date()
-      }
-    ];
-    
-    // Add accessory catalog items to storage
-    accessoryCatalogItems.forEach(item => {
-      this.accessoryCatalogItems.set(item.id, item);
-    });
   }
   
   // Settings operations
