@@ -23,6 +23,10 @@ DesignQuotes is a full-stack web application for interior design businesses to m
 - **Cache Invalidation**: Fixed customer data display issues with proper React Query cache management
 - **Mutation Optimization**: Converted customer creation to useMutation for better error handling and immediate cache updates
 - **Authentication Validation**: Enhanced token validation on app refresh and new device access
+- **Data Persistence Issue**: ⚠️ **CRITICAL**: Application currently uses in-memory storage (MemStorage) which loses all data on restart
+  - PostgreSQL database configured and available but not yet connected to application storage layer
+  - All customer data, quotations, settings, and business data is temporary until database migration is completed
+  - Backup/restore functionality provides temporary data preservation workaround
 
 ### Authentication & User Management Enhancements (July 19, 2025)
 - **Admin Password Reset**: Added ability for admin users to reset any user's password with secure validation
@@ -53,6 +57,16 @@ DesignQuotes is a full-stack web application for interior design businesses to m
   - Shows customer balance with color coding (green for credit, red for dues)
   - Updates automatically when different customers are selected
   - Includes helpful status text for better understanding
+- **Quotation Update Validation**: Fixed quotation saving errors by creating partial update schema
+  - Created quotationUpdateSchema for editing operations to prevent validation failures
+  - Fixed "failed to update quotation" errors caused by incomplete form data validation
+- **Handling Charges Auto-calculation**: Enhanced quotation summary with room-based handling charge calculation
+  - Auto-calculates handling charges based on room count (small/medium/large categories)
+  - Maintains editable input field for manual override capability
+  - Integrated with app settings for immediate recalculation when settings are updated
+- **Landscape PDF Room Descriptions**: Added room description display in landscape PDF generation
+  - Room descriptions now appear below room names on first slides
+  - Enhanced both preview and PDF export functionality
 
 ### User Experience Enhancements
 - **Follow-up Notifications**: Added real-time notification system for customer follow-ups with bell icon alerts

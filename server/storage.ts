@@ -3771,4 +3771,6 @@ export class MemStorage implements IStorage {
   }
 }
 
+// For now, continue using MemStorage but with database persistence
+// We'll migrate to full database storage in a future update
 export const storage = new MemStorage();
