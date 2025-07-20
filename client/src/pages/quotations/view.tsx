@@ -372,14 +372,10 @@ export default function ViewQuotation() {
     try {
       setIsGeneratingExcel(true);
 
-      // Make API call to download Excel file
-      const response = await fetch(`/api/quotations/${id}/export/excel`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-      });
+      // Make API call to download Excel file using apiRequest for proper auth handling
+      const response = await apiRequest('GET', `/api/quotations/${id}/export/excel`);
 
+      // Check if response is ok (apiRequest throws on error, but let's be safe)
       if (!response.ok) {
         throw new Error('Failed to export Excel file');
       }
