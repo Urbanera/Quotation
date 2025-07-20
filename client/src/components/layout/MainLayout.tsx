@@ -21,7 +21,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       <div 
         className="flex flex-col flex-1 transition-all duration-300"
         style={{ 
-          marginLeft: sidebarExpanded ? '256px' : '64px' 
+          marginLeft: sidebarExpanded ? '192px' : '64px' 
         }}
       >
         <Topbar onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)} />

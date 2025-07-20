@@ -331,18 +331,7 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
               <p className="text-gray-600">{companySettings?.phone || '+1 234 567 8900'} | {companySettings?.email || 'info@designcompany.com'}</p>
               <p className="text-gray-600">GST No: {companySettings?.taxId || 'Not Specified'}</p>
               
-              {/* Bank Details - Show only if enabled */}
-              {companySettings?.showBankDetailsOnInvoice && (
-                <div className="bank-details mt-2 p-2 bg-gray-50 rounded">
-                  <h4 className="font-medium text-gray-700 mb-1">Bank Details:</h4>
-                  <div className="text-xs text-gray-600">
-                    {companySettings.bankName && <p>Bank: {companySettings.bankName}</p>}
-                    {companySettings.bankAccountNumber && <p>A/C No: {companySettings.bankAccountNumber}</p>}
-                    {companySettings.bankIfscCode && <p>IFSC: {companySettings.bankIfscCode}</p>}
-                    {companySettings.bankBranch && <p>Branch: {companySettings.bankBranch}</p>}
-                  </div>
-                </div>
-              )}
+
             </div>
             <div className="text-right">
               <h2 className="text-xl font-bold text-gray-800 mb-1">TAX INVOICE</h2>
@@ -501,7 +490,7 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
           {/* Terms and Conditions */}
           <div className="mb-6 terms-conditions">
             <h3 className="text-lg font-semibold mb-2">Terms and Conditions:</h3>
-            <ol className="list-decimal list-inside space-y-1 text-sm">
+            <ol className="list-decimal list-inside space-y-1 text-xs">
               <li>Payment is due within 15 days of invoice date.</li>
               <li>Goods once sold will not be taken back or exchanged.</li>
               <li>Interest @18% p.a. will be charged on delayed payments.</li>

@@ -46,7 +46,19 @@ export default function CreatePaymentPage() {
   const { toast } = useToast();
   const [location, navigate] = useLocation();
   
-  // We'll no longer generate a default transaction ID
+  // Create payment form with default values first
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      customerId: undefined,
+      amount: undefined,
+      paymentMethod: undefined,
+      paymentType: undefined,
+      paymentDate: new Date(),
+      transactionId: "",
+      description: "",
+    },
+  });
 
   // Fetch customers
   const { data: customers, isLoading: isLoadingCustomers } = useQuery<Customer[]>({
@@ -80,20 +92,6 @@ export default function CreatePaymentPage() {
   
   // Get selected customer info
   const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
-
-  // Create payment form with default values
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      customerId: undefined,
-      amount: undefined,
-      paymentMethod: undefined,
-      paymentType: undefined,
-      paymentDate: new Date(),
-      transactionId: "",
-      description: "",
-    },
-  });
 
   // Create payment mutation
   const createPaymentMutation = useMutation({

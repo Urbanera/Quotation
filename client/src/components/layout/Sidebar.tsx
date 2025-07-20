@@ -92,7 +92,7 @@ export default function Sidebar({ isMobile, onClose, onExpandChange }: SidebarPr
   return (
     <div className={cn(
       "flex flex-col min-h-0 bg-white border-r border-gray-200 transition-all duration-300",
-      isExpanded ? "w-64" : "w-16"
+      isExpanded ? "w-48" : "w-16"
     )}>
       <div className={cn(
         "flex items-center h-16 flex-shrink-0 bg-white px-4",
