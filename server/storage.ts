@@ -183,6 +183,7 @@ export interface IStorage {
   getCustomerPaymentsByCustomer(customerId: number): Promise<CustomerPayment[]>;
   getCustomerPaymentByTransactionId(transactionId: string): Promise<CustomerPayment | undefined>;
   createCustomerPayment(payment: InsertCustomerPayment): Promise<CustomerPayment>;
+  getCustomerBalance(customerId: number): Promise<{ balance: number }>;
   
   // Invoice operations
   getInvoices(): Promise<Invoice[]>;
@@ -218,6 +219,10 @@ export interface IStorage {
   // Backup helper methods
   getAllPayments(): Promise<Payment[]>;
   getAllMilestones(): Promise<Milestone[]>;
+  
+  // Direct CRUD operations for backup restore
+  createSalesOrder(salesOrder: InsertSalesOrder): Promise<SalesOrder>;
+  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
 }
 
 export class MemStorage implements IStorage {
@@ -3619,6 +3624,76 @@ export class MemStorage implements IStorage {
 
   async getAllMilestones(): Promise<Milestone[]> {
     return Array.from(this.milestones.values());
+  }
+
+  async getCustomerBalance(customerId: number): Promise<{ balance: number }> {
+    // Get all customer payments
+    const customerPayments = Array.from(this.customerPayments.values())
+      .filter(payment => payment.customerId === customerId);
+    
+    // Get all sales orders for this customer
+    const salesOrders = Array.from(this.salesOrders.values())
+      .filter(order => order.customerId === customerId);
+    
+    // Get all payments against sales orders
+    let salesOrderPayments = 0;
+    for (const order of salesOrders) {
+      const payments = Array.from(this.payments.values())
+        .filter(payment => payment.salesOrderId === order.id);
+      salesOrderPayments += payments.reduce((sum, payment) => sum + payment.amount, 0);
+    }
+    
+    // Get total invoices amount
+    const invoices = Array.from(this.invoices.values())
+      .filter(invoice => invoice.customerId === customerId);
+    const totalInvoiceAmount = invoices.reduce((sum, invoice) => sum + invoice.finalAmount, 0);
+    
+    // Calculate balance: payments - invoices
+    const totalPayments = customerPayments.reduce((sum, payment) => {
+      return payment.paymentType === 'payment' ? sum + payment.amount : sum - payment.amount;
+    }, 0) + salesOrderPayments;
+    
+    const balance = totalPayments - totalInvoiceAmount;
+    
+    return { balance };
+  }
+
+  // Direct CRUD operations for backup restore
+  async createSalesOrder(salesOrder: InsertSalesOrder): Promise<SalesOrder> {
+    const id = this.salesOrderIdCounter++;
+    const orderNumber = salesOrder.orderNumber || `SO-${new Date().getFullYear()}-${id.toString().padStart(3, '0')}`;
+    
+    const newSalesOrder: SalesOrder = {
+      ...salesOrder,
+      id,
+      orderNumber,
+      status: salesOrder.status || "pending",
+      paymentStatus: salesOrder.paymentStatus || "pending",
+      amountPaid: salesOrder.amountPaid || 0,
+      amountDue: salesOrder.amountDue || salesOrder.totalAmount,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    this.salesOrders.set(id, newSalesOrder);
+    return newSalesOrder;
+  }
+
+  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+    const id = this.invoiceIdCounter++;
+    const invoiceNumber = invoice.invoiceNumber || `INV-${new Date().getFullYear()}-${id.toString().padStart(3, '0')}`;
+    
+    const newInvoice: Invoice = {
+      ...invoice,
+      id,
+      invoiceNumber,
+      status: invoice.status || "pending",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    this.invoices.set(id, newInvoice);
+    return newInvoice;
   }
 }
 

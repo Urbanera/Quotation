@@ -684,6 +684,16 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
+  app.get("/api/customers/:id/balance", authenticateToken, requirePermission('customers', 'view'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const balance = await storage.getCustomerBalance(id);
+      res.json(balance);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer balance" });
+    }
+  });
+
   app.post("/api/customers", authenticateToken, requirePermission('customers', 'create'), validateRequest(customerFormSchema), async (req, res) => {
     try {
       const customer = await storage.createCustomer(req.body);
@@ -1467,6 +1477,26 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete quotation", error: (error as Error).message });
+    }
+  });
+
+  // Duplicate quotation route
+  app.post("/api/quotations/:id/duplicate", authenticateToken, requirePermission('quotations', 'create'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { customerId } = req.body;
+      
+      // Check if original quotation exists
+      const originalQuotation = await storage.getQuotation(id);
+      if (!originalQuotation) {
+        return res.status(404).json({ message: "Original quotation not found" });
+      }
+      
+      // Duplicate the quotation
+      const duplicatedQuotation = await storage.duplicateQuotation(id, customerId);
+      res.status(201).json(duplicatedQuotation);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to duplicate quotation", error: (error as Error).message });
     }
   });
 
@@ -2947,8 +2977,16 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         if (backupData.customers && Array.isArray(backupData.customers)) {
           for (const customer of backupData.customers) {
             try {
-              // Remove id to let system assign new ones
+              // Remove id to let system assign new ones and check for existing email/phone
               const { id, createdAt, ...customerData } = customer;
+              
+              // Check if customer already exists by email or phone
+              const existing = await storage.getCustomerByEmailOrPhone(customerData.email, customerData.phone);
+              if (existing) {
+                results.errors.push(`Customer restore error: The email "${customerData.email}" is already associated with customer "${existing.name}"`);
+                continue;
+              }
+              
               await storage.createCustomer(customerData);
               results.restored.customers++;
             } catch (error) {
