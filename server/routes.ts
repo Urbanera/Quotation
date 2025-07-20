@@ -1556,12 +1556,16 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
 
         // Add installation charges
         roomData.push(['Installation Charges']);
-        roomData.push(['S.No', 'Description', 'Amount']);
+        roomData.push(['S.No', 'Cabinet Type', 'Width (mm)', 'Height (mm)', 'Area (Sqft)', 'Price per Sqft', 'Total Amount']);
         
         roomDetails.installationCharges.forEach((charge, index) => {
           roomData.push([
             index + 1,
-            charge.description,
+            charge.cabinetType || 'N/A',
+            charge.widthMm || 0,
+            charge.heightMm || 0,
+            charge.areaSqft || 0,
+            `₹${charge.pricePerSqft || 0}`,
             `₹${charge.amount}`
           ]);
         });
@@ -3383,6 +3387,18 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
           for (const accessory of backupData.accessoryCatalog) {
             try {
               const { id, createdAt, ...accessoryData } = accessory;
+              
+              // Check if accessory with same code already exists to prevent duplicates
+              const existingAccessories = await storage.getAccessoryCatalog();
+              const existing = existingAccessories.find(existing => 
+                existing.code === accessoryData.code && existing.category === accessoryData.category
+              );
+              
+              if (existing) {
+                results.skipped.push(`Accessory catalog item skipped: ${accessoryData.code} - already exists`);
+                continue;
+              }
+              
               await storage.createAccessoryCatalogItem(accessoryData);
               results.restored.accessoryCatalog++;
             } catch (error) {

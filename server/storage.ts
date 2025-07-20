@@ -1701,9 +1701,12 @@ export class MemStorage implements IStorage {
       // Create installation charges for the new room
       for (const charge of roomDetails.installationCharges) {
         await this.createInstallationCharge({
-          id: this.installationChargeIdCounter++,
           roomId: newRoom.id,
-          description: charge.description,
+          cabinetType: charge.cabinetType,
+          widthMm: charge.widthMm,
+          heightMm: charge.heightMm,
+          areaSqft: charge.areaSqft,
+          pricePerSqft: charge.pricePerSqft,
           amount: charge.amount
         });
       }
