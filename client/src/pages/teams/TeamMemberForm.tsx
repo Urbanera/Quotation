@@ -31,6 +31,15 @@ export default function TeamMemberForm({
     queryKey: ['/api/users'],
   });
   
+  const form = useForm<z.infer<typeof teamMemberFormSchema>>({
+    resolver: zodResolver(teamMemberFormSchema),
+    defaultValues: {
+      teamId,
+      userId: 1,
+    },
+    mode: 'onChange', // Enable real-time validation
+  });
+
   useEffect(() => {
     if (users) {
       // Filter out users that are already team members
@@ -45,15 +54,6 @@ export default function TeamMemberForm({
       }
     }
   }, [users, existingMemberIds, form]);
-
-  const form = useForm<z.infer<typeof teamMemberFormSchema>>({
-    resolver: zodResolver(teamMemberFormSchema),
-    defaultValues: {
-      teamId,
-      userId: availableUsers.length > 0 ? availableUsers[0].id : 1,
-    },
-    mode: 'onChange', // Enable real-time validation
-  });
 
   const addMemberMutation = useMutation({
     mutationFn: async (values: z.infer<typeof teamMemberFormSchema>) => {
