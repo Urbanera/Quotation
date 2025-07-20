@@ -79,17 +79,17 @@ export default function Sidebar({ isMobile, onClose }: SidebarProps) {
   const navigation = getFilteredNavigation();
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">
-      <div className="flex items-center h-16 flex-shrink-0 px-4 bg-indigo-600">
+    <div className="w-16 flex flex-col min-h-0 bg-white border-r border-gray-200">
+      <div className="flex items-center justify-center h-16 flex-shrink-0 bg-white">
         {settings?.logo ? (
           <img
             src={settings.logo}
             alt={companyName}
-            className="h-8 w-auto"
+            className="h-10 w-10 object-contain"
           />
         ) : (
           <svg
-            className="h-8 w-auto text-white"
+            className="h-10 w-10 text-indigo-600"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -103,10 +103,9 @@ export default function Sidebar({ isMobile, onClose }: SidebarProps) {
             />
           </svg>
         )}
-        <h1 className="ml-2 text-white font-semibold text-lg">{companyName}</h1>
       </div>
       <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-        <nav className="mt-5 flex-1 px-2 space-y-1">
+        <nav className="mt-5 flex-1 px-1 space-y-2">
           {navigation.map((item) => {
             const isActive = location === item.href || 
               (item.href !== "/" && location.startsWith(item.href));
@@ -120,19 +119,19 @@ export default function Sidebar({ isMobile, onClose }: SidebarProps) {
                   isActive
                     ? "bg-indigo-50 text-indigo-600"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-                  "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
+                  "group flex items-center justify-center p-3 rounded-md"
                 )}
+                title={item.name}
               >
                 <item.icon
                   className={cn(
                     isActive
                       ? "text-indigo-600"
                       : "text-gray-400 group-hover:text-gray-500",
-                    "mr-3 h-6 w-6"
+                    "h-6 w-6"
                   )}
                   aria-hidden="true"
                 />
-                {item.name}
               </Link>
             );
           })}

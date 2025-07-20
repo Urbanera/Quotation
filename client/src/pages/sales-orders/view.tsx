@@ -105,7 +105,17 @@ export default function ViewSalesOrder() {
     queryKey: ["/api/sales-orders", orderId],
     queryFn: async () => {
       console.log("Fetching sales order data for ID:", orderId);
-      const response = await fetch(`/api/sales-orders/${orderId}`);
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const response = await fetch(`/api/sales-orders/${orderId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error:", errorText);
@@ -127,7 +137,17 @@ export default function ViewSalesOrder() {
     queryFn: async () => {
       if (!salesOrder?.customerId) return [];
       console.log("Fetching customer payments for customer ID:", salesOrder.customerId);
-      const response = await fetch(`/api/customer-payments?customerId=${salesOrder.customerId}`);
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const response = await fetch(`/api/customer-payments?customerId=${salesOrder.customerId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
       if (!response.ok) {
         throw new Error('Failed to fetch customer payments');
       }

@@ -2851,7 +2851,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         metadata: {
           exportDate: new Date().toISOString(),
           version: "1.0.0",
-          appVersion: require("../package.json").version || "1.0.0"
+          appVersion: "1.0.0"
         },
         companySettings: await storage.getCompanySettings(),
         appSettings: await storage.getAppSettings(),

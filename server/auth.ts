@@ -4,8 +4,8 @@ import { Request, Response, NextFunction } from 'express';
 import { dbStorage } from './storage.new';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_EXPIRES_IN = '10m'; // Maximum 10 minutes session time
-const JWT_REFRESH_EXPIRES_IN = '15m'; // Refresh token expires 15 minutes after access token
+const JWT_EXPIRES_IN = '10m'; // Access token expires in 10 minutes 
+const JWT_REFRESH_EXPIRES_IN = '1h'; // Refresh token expires in 1 hour for user session
 
 export interface AuthRequest extends Request {
   user?: {
@@ -97,10 +97,10 @@ export class AuthService {
         return null;
       }
 
-      // Check session timeout - 10 minutes of inactivity
+      // Check session timeout - 1 hour of inactivity
       const now = Math.floor(Date.now() / 1000);
       const lastActivity = decoded.lastActivity || decoded.iat; // fallback to issued time for old tokens
-      const sessionTimeoutSeconds = 10 * 60; // 10 minutes
+      const sessionTimeoutSeconds = 60 * 60; // 1 hour
       
       if (now - lastActivity > sessionTimeoutSeconds) {
         console.log(`Session expired due to inactivity. Last activity: ${new Date(lastActivity * 1000)}, Now: ${new Date(now * 1000)}`);
