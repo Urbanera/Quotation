@@ -567,6 +567,19 @@ export const quotationFormSchema = z.object({
   terms: z.string().optional(),
 });
 
+// Partial quotation update schema for editing
+export const quotationUpdateSchema = z.object({
+  customerId: z.number().min(1, "Customer is required").optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  installationHandling: z.number().min(0, "Installation & handling must be a positive number").optional(),
+  globalDiscount: z.number().min(0, "Global discount must be a positive number").optional(),
+  gstPercentage: z.number().min(0, "GST percentage must be a positive number").optional(),
+  status: z.enum(['draft', 'sent', 'approved', 'rejected', 'expired', 'converted']).optional(),
+  validUntil: z.string().or(z.date()).optional().nullable(),
+  terms: z.string().optional(),
+});
+
 export const customerFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),

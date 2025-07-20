@@ -15,6 +15,7 @@ import { AuthService, authenticateToken, requireRole, requirePermission, AuthReq
 import {
   customerFormSchema,
   quotationFormSchema,
+  quotationUpdateSchema,
   followUpFormSchema,
   userFormSchema,
   userUpdateSchema,
@@ -1654,7 +1655,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     }
   });
 
-  app.put("/api/quotations/:id", authenticateToken, requirePermission('quotations', 'edit'), validateRequest(quotationFormSchema), async (req, res) => {
+  app.put("/api/quotations/:id", authenticateToken, requirePermission('quotations', 'edit'), validateRequest(quotationUpdateSchema), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const quotation = await storage.updateQuotation(id, req.body);
