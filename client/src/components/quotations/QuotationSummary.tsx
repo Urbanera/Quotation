@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { FileText, FileOutput } from "lucide-react";
@@ -66,6 +66,7 @@ export default function QuotationSummary({
   const handleInstallationHandlingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
     if (!isNaN(value) && value >= 0) {
+      userEditedHandlingCharges.current = true; // Mark as manually edited
       setInstallationHandling(value);
     }
   };
@@ -92,8 +93,11 @@ export default function QuotationSummary({
   }, [quotationId, quotation, refetchInstallationCharges]);
 
   // Auto-calculate handling charges based on room count when rooms change
+  // Use a ref to track if user has manually edited the handling charges
+  const userEditedHandlingCharges = useRef(false);
+  
   useEffect(() => {
-    if (quotation?.rooms && appSettings) {
+    if (quotation?.rooms && appSettings && !userEditedHandlingCharges.current) {
       const includedRoomCount = quotation.rooms.filter(room => room.included).length;
       let calculatedHandlingCharges = 0;
       
@@ -105,13 +109,13 @@ export default function QuotationSummary({
         calculatedHandlingCharges = appSettings.handlingChargesLargeRooms;
       }
       
-      // Only update if different from current value to avoid infinite loops
-      if (installationHandling !== calculatedHandlingCharges) {
+      // Only auto-update if the value is significantly different (not just user editing)
+      if (Math.abs(installationHandling - calculatedHandlingCharges) > 50) {
         console.log(`Auto-calculating handling charges for ${includedRoomCount} rooms: ${calculatedHandlingCharges}`);
         setInstallationHandling(calculatedHandlingCharges);
       }
     }
-  }, [quotation?.rooms, appSettings, installationHandling, setInstallationHandling]);
+  }, [quotation?.rooms, appSettings]);
 
   const getTotalInstallationCharges = () => {
     // First check if totalInstallationCharges is available in the quotation
@@ -344,12 +348,10 @@ export default function QuotationSummary({
                 type="number"
                 id="installation-handling"
                 value={installationHandling}
-                onChange={(e) => {
-                  handleInstallationHandlingChange(e);
-                  // Auto-save after a brief delay
-                  setTimeout(() => onSave(), 300);
+                onChange={handleInstallationHandlingChange}
+                onBlur={() => {
+                  onSave();
                 }}
-                onBlur={onSave}
                 className="pl-7 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>

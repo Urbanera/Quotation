@@ -21,6 +21,7 @@ export default function EditQuotation() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [installationHandling, setInstallationHandling] = useState<number>(0);
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   // States for validation dialog
   const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
@@ -49,9 +50,9 @@ export default function EditQuotation() {
     queryKey: ["/api/customers"],
   });
 
-  // Initialize form with quotation data when loaded
+  // Initialize form with quotation data when loaded (only once)
   useEffect(() => {
-    if (quotation) {
+    if (quotation && !hasInitialized) {
       setSelectedCustomerId(quotation.customerId);
       setInstallationHandling(quotation.installationHandling);
       setGlobalDiscount(quotation.globalDiscount || 0);
@@ -65,8 +66,9 @@ export default function EditQuotation() {
       
       // Reset unsaved changes state
       setHasUnsavedChanges(false);
+      setHasInitialized(true);
     }
-  }, [quotation]);
+  }, [quotation, hasInitialized]);
 
   // Track changes to detect unsaved state
   useEffect(() => {
