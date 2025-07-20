@@ -33,7 +33,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 // Extension of the schema for client-side validation
 const formSchema = customerPaymentFormSchema.extend({
@@ -53,9 +53,33 @@ export default function CreatePaymentPage() {
     queryKey: ["/api/customers"]
   });
 
+  // Get selected customer ID
+  const selectedCustomerId = form.watch("customerId");
+
+  // Fetch customer balance for selected customer
+  const { data: customerBalance, isLoading: isLoadingBalance } = useQuery<{ balance: number }>({
+    queryKey: ["/api/customers", selectedCustomerId, "balance"],
+    queryFn: async () => {
+      if (!selectedCustomerId) return { balance: 0 };
+      const response = await fetch(`/api/customers/${selectedCustomerId}/balance`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch customer balance');
+      }
+      return response.json();
+    },
+    enabled: !!selectedCustomerId,
+  });
+
   // Filter customers in 'booked' stage
   const bookedCustomers = customers?.filter(customer => customer.stage === 'booked') || [];
   const allCustomers = customers || [];
+  
+  // Get selected customer info
+  const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
 
   // Create payment form with default values
   const form = useForm<FormValues>({
@@ -185,6 +209,33 @@ export default function CreatePaymentPage() {
                           Select a customer for this payment. Customers in "booked" stage are recommended.
                         </FormDescription>
                         <FormMessage />
+                        {/* Display customer balance */}
+                        {selectedCustomerId && (
+                          <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-blue-900">
+                                {selectedCustomer?.name} - Current Balance:
+                              </span>
+                              {isLoadingBalance ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                              ) : (
+                                <span className={cn(
+                                  "text-sm font-bold",
+                                  (customerBalance?.balance || 0) >= 0 
+                                    ? "text-green-600" 
+                                    : "text-red-600"
+                                )}>
+                                  {formatCurrency(customerBalance?.balance || 0)}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-blue-700 mt-1">
+                              {(customerBalance?.balance || 0) >= 0 
+                                ? "Customer has credit balance" 
+                                : "Customer has outstanding dues"}
+                            </p>
+                          </div>
+                        )}
                       </FormItem>
                     )}
                   />

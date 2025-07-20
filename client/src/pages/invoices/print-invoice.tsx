@@ -135,7 +135,16 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
       try {
         setLoading(true);
         // Fetch invoice data
-        const invoiceRes = await fetch(`/api/invoices/${id}`);
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          throw new Error('Authentication token not found');
+        }
+        
+        const invoiceRes = await fetch(`/api/invoices/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         if (!invoiceRes.ok) {
           throw new Error('Failed to load invoice');
         }
@@ -143,7 +152,11 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
         setInvoice(invoiceData);
 
         // Fetch quotation details with rooms
-        const quotationRes = await fetch(`/api/quotations/${invoiceData.quotationId}/details`);
+        const quotationRes = await fetch(`/api/quotations/${invoiceData.quotationId}/details`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         if (!quotationRes.ok) {
           throw new Error('Failed to load quotation details');
         }
@@ -151,7 +164,11 @@ export default function PrintInvoicePage({ id: propId }: PrintInvoicePageProps) 
         setQuotation(quotationData);
         
         // Fetch customer data
-        const customerRes = await fetch(`/api/customers/${invoiceData.customerId}`);
+        const customerRes = await fetch(`/api/customers/${invoiceData.customerId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         if (!customerRes.ok) {
           throw new Error('Failed to load customer');
         }

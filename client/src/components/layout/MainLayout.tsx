@@ -12,7 +12,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Desktop sidebar */}
-      <div className="hidden md:flex md:w-16 md:flex-col md:fixed md:inset-y-0">
+      <div className="hidden md:flex md:flex-col md:fixed md:inset-y-0">
         <Sidebar />
       </div>
 

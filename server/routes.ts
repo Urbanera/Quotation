@@ -82,16 +82,18 @@ const csvUpload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB max file size
   },
   fileFilter: (req, file, cb) => {
-    // Accept CSV files or Excel files that might be misidentified
+    // Accept CSV files, JSON files (for backup restore), or Excel files that might be misidentified
     if (
       file.mimetype === 'text/csv' || 
+      file.mimetype === 'application/json' ||
       file.mimetype === 'application/vnd.ms-excel' ||
       file.mimetype === 'application/octet-stream' ||
-      file.originalname.endsWith('.csv')
+      file.originalname.endsWith('.csv') ||
+      file.originalname.endsWith('.json')
     ) {
       cb(null, true);
     } else {
-      cb(new Error('Only CSV files are allowed'));
+      cb(new Error('Only CSV and JSON files are allowed'));
     }
   }
 });
