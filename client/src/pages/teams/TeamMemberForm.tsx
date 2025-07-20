@@ -38,15 +38,21 @@ export default function TeamMemberForm({
         !existingMemberIds.includes(user.id)
       );
       setAvailableUsers(filteredUsers);
+      
+      // Update form default value when available users change
+      if (filteredUsers.length > 0 && form.getValues('userId') <= 1) {
+        form.setValue('userId', filteredUsers[0].id);
+      }
     }
-  }, [users, existingMemberIds]);
+  }, [users, existingMemberIds, form]);
 
   const form = useForm<z.infer<typeof teamMemberFormSchema>>({
     resolver: zodResolver(teamMemberFormSchema),
     defaultValues: {
       teamId,
-      userId: 0,
+      userId: availableUsers.length > 0 ? availableUsers[0].id : 1,
     },
+    mode: 'onChange', // Enable real-time validation
   });
 
   const addMemberMutation = useMutation({
@@ -59,7 +65,7 @@ export default function TeamMemberForm({
         title: 'Team member added',
         description: 'The member has been added to the team successfully.',
       });
-      form.reset({ teamId, userId: 0 });
+      form.reset({ teamId, userId: availableUsers[0]?.id || 1 });
       queryClient.invalidateQueries({ queryKey: [`/api/teams/${teamId}/members`] });
       onSubmitSuccess();
     },
@@ -97,7 +103,7 @@ export default function TeamMemberForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Select User</FormLabel>
-              <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value.toString()}>
+              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value > 0 ? field.value.toString() : ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a user to add" />

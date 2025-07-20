@@ -344,7 +344,11 @@ export default function QuotationSummary({
                 type="number"
                 id="installation-handling"
                 value={installationHandling}
-                onChange={handleInstallationHandlingChange}
+                onChange={(e) => {
+                  handleInstallationHandlingChange(e);
+                  // Auto-save after a brief delay
+                  setTimeout(() => onSave(), 300);
+                }}
                 onBlur={onSave}
                 className="pl-7 focus:ring-indigo-500 focus:border-indigo-500"
               />
