@@ -223,6 +223,11 @@ export interface IStorage {
   // Direct CRUD operations for backup restore
   createSalesOrder(salesOrder: InsertSalesOrder): Promise<SalesOrder>;
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+  createRoom(room: InsertRoom): Promise<Room>;
+  createProduct(product: InsertProduct): Promise<Product>;
+  createAccessory(accessory: InsertAccessory): Promise<Accessory>;
+  createImage(image: InsertImage): Promise<Image>;
+  createInstallationCharge(charge: any): Promise<any>;
 }
 
 export class MemStorage implements IStorage {

@@ -2878,7 +2878,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   // Full application data backup/restore endpoints
   app.get("/api/backup/export", authenticateToken, requirePermission('settings', 'view'), async (req, res) => {
     try {
-      // Collect all application data
+      // Collect all application data including related entities
       const backupData = {
         metadata: {
           exportDate: new Date().toISOString(),
@@ -2897,8 +2897,32 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         followUps: await storage.getAllFollowUps(),
         accessoryCatalog: await storage.getAccessoryCatalog(),
         teams: await storage.getTeams(),
-        milestones: await storage.getAllMilestones()
+        milestones: await storage.getAllMilestones(),
+        // Include detailed quotation-related data
+        rooms: [],
+        products: [],
+        accessories: [],
+        images: [],
+        installationCharges: [],
+        customerPayments: await storage.getCustomerPayments()
       };
+
+      // Collect all rooms, products, accessories, images, and installation charges for all quotations
+      const quotations = await storage.getQuotations();
+      for (const quotation of quotations) {
+        const rooms = await storage.getRooms(quotation.id);
+        backupData.rooms.push(...rooms);
+        
+        for (const room of rooms) {
+          const roomDetails = await storage.getRoomWithItems(room.id);
+          if (roomDetails) {
+            backupData.products.push(...roomDetails.products);
+            backupData.accessories.push(...roomDetails.accessories);
+            backupData.images.push(...roomDetails.images);
+            backupData.installationCharges.push(...roomDetails.installationCharges);
+          }
+        }
+      }
 
       const backupJson = JSON.stringify(backupData, null, 2);
       
@@ -2948,7 +2972,13 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
           followUps: 0,
           accessoryCatalog: 0,
           teams: 0,
-          milestones: 0
+          milestones: 0,
+          rooms: 0,
+          products: 0,
+          accessories: 0,
+          images: 0,
+          installationCharges: 0,
+          customerPayments: 0
         },
         errors: [] as string[],
         skipped: [] as string[]
@@ -3030,6 +3060,84 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
               results.restored.invoices++;
             } catch (error) {
               results.errors.push(`Invoice restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore rooms
+        if (backupData.rooms && Array.isArray(backupData.rooms)) {
+          for (const room of backupData.rooms) {
+            try {
+              const { id, createdAt, updatedAt, ...roomData } = room;
+              await storage.createRoom(roomData);
+              results.restored.rooms++;
+            } catch (error) {
+              results.errors.push(`Room restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore products
+        if (backupData.products && Array.isArray(backupData.products)) {
+          for (const product of backupData.products) {
+            try {
+              const { id, createdAt, updatedAt, ...productData } = product;
+              await storage.createProduct(productData);
+              results.restored.products++;
+            } catch (error) {
+              results.errors.push(`Product restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore accessories
+        if (backupData.accessories && Array.isArray(backupData.accessories)) {
+          for (const accessory of backupData.accessories) {
+            try {
+              const { id, createdAt, updatedAt, ...accessoryData } = accessory;
+              await storage.createAccessory(accessoryData);
+              results.restored.accessories++;
+            } catch (error) {
+              results.errors.push(`Accessory restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore images
+        if (backupData.images && Array.isArray(backupData.images)) {
+          for (const image of backupData.images) {
+            try {
+              const { id, createdAt, updatedAt, ...imageData } = image;
+              await storage.createImage(imageData);
+              results.restored.images++;
+            } catch (error) {
+              results.errors.push(`Image restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore installation charges
+        if (backupData.installationCharges && Array.isArray(backupData.installationCharges)) {
+          for (const charge of backupData.installationCharges) {
+            try {
+              const { id, createdAt, updatedAt, ...chargeData } = charge;
+              await storage.createInstallationCharge(chargeData);
+              results.restored.installationCharges++;
+            } catch (error) {
+              results.errors.push(`Installation charge restore error: ${error.message}`);
+            }
+          }
+        }
+
+        // Restore customer payments
+        if (backupData.customerPayments && Array.isArray(backupData.customerPayments)) {
+          for (const payment of backupData.customerPayments) {
+            try {
+              const { id, createdAt, updatedAt, ...paymentData } = payment;
+              await storage.createCustomerPayment(paymentData);
+              results.restored.customerPayments++;
+            } catch (error) {
+              results.errors.push(`Customer payment restore error: ${error.message}`);
             }
           }
         }
