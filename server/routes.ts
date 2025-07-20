@@ -4,6 +4,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import * as XLSX from 'xlsx';
 
 import { storage } from "./storage";
 import { dbStorage } from "./storage.new";
@@ -1428,6 +1429,215 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.json(quotation);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch quotation details" });
+    }
+  });
+
+  // Excel export for quotations
+  app.get("/api/quotations/:id/export/excel", authenticateToken, requirePermission('quotations', 'view'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const quotation = await storage.getQuotationWithDetails(id);
+      if (!quotation) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+
+      // Get customer details
+      const customer = await storage.getCustomer(quotation.customerId);
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+
+      // Get company settings for header info
+      const companySettings = await storage.getCompanySettings();
+
+      // Create workbook
+      const workbook = XLSX.utils.book_new();
+
+      // Sheet 1: Customer Details
+      const customerData = [
+        ['Customer Details'],
+        [''],
+        ['Customer Name', customer.name],
+        ['Email', customer.email || ''],
+        ['Phone', customer.phone || ''],
+        ['Address', customer.address || ''],
+        ['GST Number', customer.gstNumber || ''],
+        ['Lead Source', customer.leadSource || ''],
+        ['Stage', customer.stage || ''],
+        [''],
+        ['Quotation Details'],
+        [''],
+        ['Quotation Number', quotation.quotationNumber],
+        ['Title', quotation.title],
+        ['Description', quotation.description || ''],
+        ['Status', quotation.status],
+        ['GST Percentage', `${quotation.gstPercentage}%`],
+        ['Global Discount', `${quotation.globalDiscount}%`],
+        ['Installation Handling', `₹${quotation.installationHandling}`],
+        ['Valid Until', quotation.validUntil ? new Date(quotation.validUntil).toLocaleDateString() : ''],
+        ['Terms', quotation.terms || ''],
+        ['Created Date', new Date(quotation.createdAt).toLocaleDateString()],
+        [''],
+        ['Company Details'],
+        [''],
+        ['Company Name', companySettings.name],
+        ['Firm Name', companySettings.firmName || ''],
+        ['Address', companySettings.address || ''],
+        ['Phone', companySettings.phone || ''],
+        ['Email', companySettings.email || ''],
+        ['GST Number', companySettings.gstNumber || '']
+      ];
+
+      const customerSheet = XLSX.utils.aoa_to_sheet(customerData);
+      XLSX.utils.book_append_sheet(workbook, customerSheet, 'Customer Details');
+
+      // Sheets 2+: Room data (one sheet per room)
+      const rooms = await storage.getRooms(quotation.id);
+      for (const room of rooms) {
+        const roomDetails = await storage.getRoomWithItems(room.id);
+        if (!roomDetails) continue;
+
+        const roomData = [
+          [`Room: ${room.name}`],
+          [''],
+          ['Room Details'],
+          ['Name', room.name],
+          ['Description', room.description || ''],
+          ['Order', room.order],
+          [''],
+          ['Products'],
+          ['S.No', 'Product Name', 'Description', 'Quantity', 'Selling Price', 'Discount %', 'Discount Type', 'Discounted Price', 'Total Amount']
+        ];
+
+        // Add products
+        roomDetails.products.forEach((product, index) => {
+          const totalAmount = product.discountedPrice * (product.quantity || 1);
+          roomData.push([
+            index + 1,
+            product.name,
+            product.description || '',
+            product.quantity || 1,
+            `₹${product.sellingPrice}`,
+            `${product.discount || 0}%`,
+            product.discountType || 'percentage',
+            `₹${product.discountedPrice}`,
+            `₹${totalAmount}`
+          ]);
+        });
+
+        // Add total for products
+        const productTotal = roomDetails.products.reduce((sum, p) => sum + (p.discountedPrice * (p.quantity || 1)), 0);
+        roomData.push(['', '', '', '', '', '', '', 'Total Products:', `₹${productTotal}`]);
+        roomData.push(['']);
+
+        // Add accessories
+        roomData.push(['Accessories']);
+        roomData.push(['S.No', 'Accessory Name', 'Description', 'Quantity', 'Selling Price', 'Discount %', 'Discount Type', 'Discounted Price', 'Total Amount']);
+        
+        roomDetails.accessories.forEach((accessory, index) => {
+          const totalAmount = accessory.discountedPrice * (accessory.quantity || 1);
+          roomData.push([
+            index + 1,
+            accessory.name,
+            accessory.description || '',
+            accessory.quantity || 1,
+            `₹${accessory.sellingPrice}`,
+            `${accessory.discount || 0}%`,
+            accessory.discountType || 'percentage',
+            `₹${accessory.discountedPrice}`,
+            `₹${totalAmount}`
+          ]);
+        });
+
+        // Add total for accessories
+        const accessoryTotal = roomDetails.accessories.reduce((sum, a) => sum + (a.discountedPrice * (a.quantity || 1)), 0);
+        roomData.push(['', '', '', '', '', '', '', 'Total Accessories:', `₹${accessoryTotal}`]);
+        roomData.push(['']);
+
+        // Add installation charges
+        roomData.push(['Installation Charges']);
+        roomData.push(['S.No', 'Description', 'Amount']);
+        
+        roomDetails.installationCharges.forEach((charge, index) => {
+          roomData.push([
+            index + 1,
+            charge.description,
+            `₹${charge.amount}`
+          ]);
+        });
+
+        // Add total for installation charges
+        const installationTotal = roomDetails.installationCharges.reduce((sum, c) => sum + c.amount, 0);
+        roomData.push(['', 'Total Installation Charges:', `₹${installationTotal}`]);
+        roomData.push(['']);
+
+        // Add room total
+        const roomTotal = productTotal + accessoryTotal + installationTotal;
+        roomData.push(['', 'Room Total:', `₹${roomTotal}`]);
+
+        const roomSheet = XLSX.utils.aoa_to_sheet(roomData);
+        XLSX.utils.book_append_sheet(workbook, roomSheet, `Room - ${room.name}`);
+      }
+
+      // Last Sheet: Pricing Summary
+      const pricingData = [
+        ['Pricing Summary'],
+        [''],
+        ['Item', 'Amount'],
+        ['Total Selling Price', `₹${quotation.totalSellingPrice}`],
+        ['Total Discounted Price', `₹${quotation.totalDiscountedPrice}`],
+        ['Total Installation Charges', `₹${quotation.totalInstallationCharges || 0}`],
+        ['Installation Handling', `₹${quotation.installationHandling}`],
+        ['Subtotal', `₹${(quotation.totalDiscountedPrice + (quotation.totalInstallationCharges || 0) + quotation.installationHandling)}`],
+        ['Global Discount (' + quotation.globalDiscount + '%)', `₹${((quotation.totalDiscountedPrice + (quotation.totalInstallationCharges || 0) + quotation.installationHandling) * quotation.globalDiscount / 100)}`],
+        ['After Global Discount', `₹${((quotation.totalDiscountedPrice + (quotation.totalInstallationCharges || 0) + quotation.installationHandling) * (1 - quotation.globalDiscount / 100))}`],
+        ['GST (' + quotation.gstPercentage + '%)', `₹${quotation.gstAmount}`],
+        [''],
+        ['Final Amount', `₹${quotation.finalPrice}`],
+        [''],
+        ['Room-wise Breakdown'],
+        ['']
+      ];
+
+      // Add room-wise breakdown
+      pricingData.push(['Room Name', 'Products Total', 'Accessories Total', 'Installation Total', 'Room Total']);
+      
+      for (const room of rooms) {
+        const roomDetails = await storage.getRoomWithItems(room.id);
+        if (!roomDetails) continue;
+
+        const productTotal = roomDetails.products.reduce((sum, p) => sum + (p.discountedPrice * (p.quantity || 1)), 0);
+        const accessoryTotal = roomDetails.accessories.reduce((sum, a) => sum + (a.discountedPrice * (a.quantity || 1)), 0);
+        const installationTotal = roomDetails.installationCharges.reduce((sum, c) => sum + c.amount, 0);
+        const roomTotal = productTotal + accessoryTotal + installationTotal;
+
+        pricingData.push([
+          room.name,
+          `₹${productTotal}`,
+          `₹${accessoryTotal}`,
+          `₹${installationTotal}`,
+          `₹${roomTotal}`
+        ]);
+      }
+
+      const pricingSheet = XLSX.utils.aoa_to_sheet(pricingData);
+      XLSX.utils.book_append_sheet(workbook, pricingSheet, 'Pricing Summary');
+
+      // Generate Excel file
+      const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+      // Set response headers
+      const fileName = `${customer.name.replace(/[^a-zA-Z0-9]/g, '_')}_Quote_${quotation.quotationNumber}.xlsx`;
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Length', excelBuffer.length);
+
+      // Send the Excel file
+      res.send(excelBuffer);
+
+    } catch (error) {
+      console.error("Excel export error:", error);
+      res.status(500).json({ message: "Failed to export quotation to Excel" });
     }
   });
 

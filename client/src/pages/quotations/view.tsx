@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart, FileText as FileInvoice, Mail, Layout, MessageSquare, X } from "lucide-react";
+import { ChevronLeft, FileText, FileOutput, Printer, Download, Edit, CalendarRange, CheckSquare, ShoppingCart, FileText as FileInvoice, Mail, Layout, MessageSquare, X, FileSpreadsheet } from "lucide-react";
 import { WhatsAppQuotationButton } from "@/components/quotations/WhatsAppQuotationButton";
 import { QuotationWithDetails, CompanySettings, AppSettings } from "@shared/schema";
 import BasicQuote from "@/components/PDFQuotes/BasicQuote";
@@ -193,6 +193,7 @@ export default function ViewQuotation() {
 
   const [activeTab, setActiveTab] = useState<string>("basic");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGeneratingExcel, setIsGeneratingExcel] = useState(false);
   
 
   
@@ -366,8 +367,60 @@ export default function ViewQuotation() {
       setIsGeneratingPdf(false);
     }
   };
-  
 
+  const handleDownloadExcel = async () => {
+    try {
+      setIsGeneratingExcel(true);
+
+      // Make API call to download Excel file
+      const response = await fetch(`/api/quotations/${id}/export/excel`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export Excel file');
+      }
+
+      // Get the filename from response headers
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `${quotation?.customer?.name?.replace(/[^a-zA-Z0-9]/g, '_') || 'Customer'}_Quote_${quotation?.quotationNumber || id}.xlsx`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Convert response to blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Excel Generated",
+        description: "Your quotation has been downloaded as an Excel file"
+      });
+    } catch (error) {
+      console.error('Error generating Excel:', error);
+      toast({
+        title: "Excel Generation Failed",
+        description: "There was an error generating the Excel file. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingExcel(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -459,6 +512,16 @@ export default function ViewQuotation() {
               >
                 <Download className="mr-2 h-4 w-4" />
                 {isGeneratingPdf ? "Generating PDF..." : "Download PDF"}
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={handleDownloadExcel}
+                disabled={isGeneratingExcel}
+                className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-300"
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                {isGeneratingExcel ? "Generating Excel..." : "Download Excel"}
               </Button>
               
               <Button 
