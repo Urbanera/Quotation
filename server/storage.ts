@@ -499,6 +499,39 @@ export class MemStorage implements IStorage {
       this.milestones.set(milestone.id, milestone);
     });
     
+    // Create a demo sales order from the quotation
+    const salesOrder: SalesOrder = {
+      id: this.salesOrderIdCounter++,
+      customerId: customer.id,
+      quotationId: quotation.id,
+      orderNumber: "SO-2025-001",
+      orderDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+      status: "confirmed",
+      paymentStatus: "pending",
+      totalAmount: quotation.finalPrice,
+      deliveryDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      notes: "Demo sales order for kitchen renovation",
+      createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
+    };
+    this.salesOrders.set(salesOrder.id, salesOrder);
+    
+    // Create a demo customer payment (partial payment)
+    const customerPayment: CustomerPayment = {
+      id: this.customerPaymentIdCounter++,
+      customerId: customer.id,
+      amount: 5000, // Partial payment
+      paymentMethod: "bank_transfer",
+      paymentType: "payment",
+      paymentDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      transactionId: "TXN123456",
+      receiptNumber: "RCP-2025-001",
+      description: "Advance payment for kitchen renovation",
+      createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
+    };
+    this.customerPayments.set(customerPayment.id, customerPayment);
+    
     // Add sample accessory catalog items
     const accessoryCatalogItems = [
       {
@@ -3681,33 +3714,20 @@ export class MemStorage implements IStorage {
   }
 
   async getCustomerBalance(customerId: number): Promise<{ balance: number }> {
-    // Get all customer payments
-    const customerPayments = Array.from(this.customerPayments.values())
-      .filter(payment => payment.customerId === customerId);
-    
-    // Get all sales orders for this customer
+    // Get all sales orders for this customer (debits - money owed TO company)
     const salesOrders = Array.from(this.salesOrders.values())
       .filter(order => order.customerId === customerId);
+    const totalDebits = salesOrders.reduce((sum, order) => sum + order.totalAmount, 0);
     
-    // Get all payments against sales orders
-    let salesOrderPayments = 0;
-    for (const order of salesOrders) {
-      const payments = Array.from(this.payments.values())
-        .filter(payment => payment.salesOrderId === order.id);
-      salesOrderPayments += payments.reduce((sum, payment) => sum + payment.amount, 0);
-    }
+    // Get all customer payments (credits - money paid BY customer)
+    const customerPayments = Array.from(this.customerPayments.values())
+      .filter(payment => payment.customerId === customerId);
+    const totalCredits = customerPayments.reduce((sum, payment) => sum + payment.amount, 0);
     
-    // Get total invoices amount
-    const invoices = Array.from(this.invoices.values())
-      .filter(invoice => invoice.customerId === customerId);
-    const totalInvoiceAmount = invoices.reduce((sum, invoice) => sum + invoice.finalAmount, 0);
-    
-    // Calculate balance: payments - invoices
-    const totalPayments = customerPayments.reduce((sum, payment) => {
-      return payment.paymentType === 'payment' ? sum + payment.amount : sum - payment.amount;
-    }, 0) + salesOrderPayments;
-    
-    const balance = totalPayments - totalInvoiceAmount;
+    // Calculate balance: debits - credits (same as customer ledger)
+    // Positive balance means customer owes money
+    // Negative balance means customer has credit/advance
+    const balance = totalDebits - totalCredits;
     
     return { balance };
   }
