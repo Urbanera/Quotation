@@ -464,7 +464,41 @@ export const companySettingsFormSchema = z.object({
 export const appSettingsFormSchema = z.object({
   defaultGlobalDiscount: z.number().min(0, "Default discount must be a positive number"),
   defaultGstPercentage: z.number().min(0, "Default GST percentage must be a positive number"),
+  // Room-based handling charges
+  handlingChargesSmallRooms: z.number().min(0, "Handling charges must be a positive number"),
+  handlingChargesMediumRooms: z.number().min(0, "Handling charges must be a positive number"),
+  handlingChargesLargeRooms: z.number().min(0, "Handling charges must be a positive number"),
   defaultTermsAndConditions: z.string().optional().or(z.literal("")),
+  receiptTermsAndConditions: z.string().optional().or(z.literal("")),
+  presentationTermsAndConditions: z.string().optional().or(z.literal("")),
+  presentationSecondPageContent: z.string().optional().or(z.literal("")),
+  quotationTemplateId: z.string().default("default"),
+  presentationTemplateId: z.string().default("default"),
+  requiredAccessories: z.string().default("skirting,handles,sliding mechanism,t profile"),
+  leadSourceOptions: z.string().default("walk-in,website,referral,social media,other"),
+  // Email settings
+  smtpHost: z.string().optional().or(z.literal("")),
+  smtpPort: z.number().int().nonnegative("Port must be a positive number").default(587),
+  smtpSecure: z.boolean().default(false),
+  smtpUser: z.string().optional().or(z.literal("")),
+  smtpPassword: z.string().optional().or(z.literal("")),
+  emailFrom: z.string().email("Must be a valid email address").optional().or(z.literal("")),
+  emailReplyTo: z.string().email("Must be a valid email address").optional().or(z.literal("")),
+  emailFooter: z.string().optional().or(z.literal("")),
+  emailEnabled: z.boolean().default(false),
+  // WhatsApp settings
+  whatsappEnabled: z.boolean().default(false),
+  whatsappPhoneNumberId: z.string().optional().or(z.literal("")),
+  whatsappAccessToken: z.string().optional().or(z.literal("")),
+  whatsappBusinessAccountId: z.string().optional().or(z.literal("")),
+  whatsappGreetingTemplate: z.string().default("hello_world"),
+  whatsappLayoutRequestTemplate: z.string().default("layout_request"),
+  whatsappShowroomVisitTemplate: z.string().default("showroom_visit"),
+  whatsappMissedCallTemplate: z.string().default("missed_call"),
+  whatsappMeetingScheduleTemplate: z.string().default("meeting_schedule"),
+  whatsappQuotationTemplate: z.string().default("quotation_send"),
+  whatsappPaymentReceiptTemplate: z.string().default("payment_receipt"),
+  whatsappInvoiceTemplate: z.string().default("invoice_send"),
 });
 
 // User management form schema
@@ -487,27 +521,7 @@ export const userUpdateSchema = z.object({
   active: z.boolean(),
 });
 
-export const emailSettingsFormSchema = z.object({
-  receiptTermsAndConditions: z.string().optional().or(z.literal("")),
-  presentationTermsAndConditions: z.string().optional().or(z.literal("")),
-  presentationSecondPageContent: z.string().optional().or(z.literal("")),
-  quotationTemplateId: z.string().default("default"),
-  presentationTemplateId: z.string().default("default"),
-  requiredAccessories: z.string().default("skirting,handles,sliding mechanism,t profile")
-    .describe("Comma-separated list of required accessories to check in quotation validation"),
-  leadSourceOptions: z.string().default("walk-in,website,referral,social media,other")
-    .describe("Comma-separated list of lead sources"),
-  // Email settings
-  smtpHost: z.string().optional().or(z.literal("")),
-  smtpPort: z.number().int().nonnegative("Port must be a positive number").default(587),
-  smtpSecure: z.boolean().default(false),
-  smtpUser: z.string().optional().or(z.literal("")),
-  smtpPassword: z.string().optional().or(z.literal("")),
-  emailFrom: z.string().email("Must be a valid email address").optional().or(z.literal("")),
-  emailReplyTo: z.string().email("Must be a valid email address").optional().or(z.literal("")),
-  emailFooter: z.string().optional().or(z.literal("")),
-  emailEnabled: z.boolean().default(false),
-});
+
 
 export const roomFormSchema = z.object({
   name: z.string().min(1, "Room name is required"),
