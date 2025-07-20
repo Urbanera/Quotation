@@ -233,10 +233,15 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
                   </div>
                 </div>
                 
-                <div className="flex-1 flex items-center justify-center">
-                  <h2 className="text-4xl font-bold text-[#009245]">
+                <div className="flex-1 flex flex-col items-center justify-center">
+                  <h2 className="text-4xl font-bold text-[#009245] mb-4">
                     {room.name}
                   </h2>
+                  {room.description && (
+                    <p className="text-lg text-gray-700 text-center max-w-2xl leading-relaxed px-8">
+                      {room.description}
+                    </p>
+                  )}
                 </div>
               </div>
               {renderFooter(currentPageNumber)}

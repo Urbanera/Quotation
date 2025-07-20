@@ -5,7 +5,7 @@ import { FileText, FileOutput } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { QuotationWithDetails, Room, InstallationCharge } from "@shared/schema";
+import { QuotationWithDetails, Room, InstallationCharge, AppSettings } from "@shared/schema";
 import { validateQuotation, markQuotationAsSaved, ValidationError, ValidationWarning } from "@/lib/quotationValidation";
 import { ValidationDialog } from "@/components/quotations/ValidationDialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -38,6 +38,11 @@ export default function QuotationSummary({
   const { data: quotation, isLoading } = useQuery<QuotationWithDetails>({
     queryKey: [`/api/quotations/${quotationId}/details`],
     enabled: !!quotationId,
+  });
+
+  // Fetch app settings for auto-calculation
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ["/api/settings/app"],
   });
   
   // Log for debugging
@@ -85,6 +90,28 @@ export default function QuotationSummary({
       refetchInstallationCharges();
     }
   }, [quotationId, quotation, refetchInstallationCharges]);
+
+  // Auto-calculate handling charges based on room count when rooms change
+  useEffect(() => {
+    if (quotation?.rooms && appSettings) {
+      const includedRoomCount = quotation.rooms.filter(room => room.included).length;
+      let calculatedHandlingCharges = 0;
+      
+      if (includedRoomCount < 3) {
+        calculatedHandlingCharges = appSettings.handlingChargesSmallRooms;
+      } else if (includedRoomCount >= 3 && includedRoomCount <= 6) {
+        calculatedHandlingCharges = appSettings.handlingChargesMediumRooms;
+      } else {
+        calculatedHandlingCharges = appSettings.handlingChargesLargeRooms;
+      }
+      
+      // Only update if different from current value to avoid infinite loops
+      if (installationHandling !== calculatedHandlingCharges) {
+        console.log(`Auto-calculating handling charges for ${includedRoomCount} rooms: ${calculatedHandlingCharges}`);
+        setInstallationHandling(calculatedHandlingCharges);
+      }
+    }
+  }, [quotation?.rooms, appSettings, installationHandling, setInstallationHandling]);
 
   const getTotalInstallationCharges = () => {
     // First check if totalInstallationCharges is available in the quotation

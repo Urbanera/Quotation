@@ -172,9 +172,11 @@ export function AppSettingsForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/settings/app"] });
+      // Invalidate quotations to force recalculation with new handling charges
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
       toast({
         title: "Success",
-        description: "Application settings updated successfully",
+        description: "Application settings updated successfully. Handling charges will be recalculated when quotations are saved.",
         variant: "default",
       });
     },

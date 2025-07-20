@@ -116,7 +116,13 @@ export default function PrintReceiptPage() {
       try {
         setLoading(true);
         // Fetch payment data
-        const paymentRes = await fetch(`/api/customer-payments/${id}`);
+        const token = localStorage.getItem('accessToken');
+        const paymentRes = await fetch(`/api/customer-payments/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
         if (!paymentRes.ok) {
           throw new Error('Failed to load payment');
         }
@@ -124,7 +130,12 @@ export default function PrintReceiptPage() {
         setPayment(paymentData);
 
         // Fetch customer data
-        const customerRes = await fetch(`/api/customers/${paymentData.customerId}`);
+        const customerRes = await fetch(`/api/customers/${paymentData.customerId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
         if (!customerRes.ok) {
           throw new Error('Failed to load customer');
         }
@@ -133,8 +144,18 @@ export default function PrintReceiptPage() {
 
         // Fetch settings
         const [companyRes, appRes] = await Promise.all([
-          fetch('/api/settings/company'),
-          fetch('/api/settings/app')
+          fetch('/api/settings/company', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }),
+          fetch('/api/settings/app', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
         ]);
         
         if (companyRes.ok && appRes.ok) {

@@ -664,9 +664,14 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
               
               {/* Room content area */}
               <View style={styles.roomPageContent}>
-                <Text style={{ fontSize: 32, color: '#009245', textAlign: 'center', fontWeight: 'bold' }}>
+                <Text style={{ fontSize: 32, color: '#009245', textAlign: 'center', fontWeight: 'bold', marginBottom: 20 }}>
                   {room.name}
                 </Text>
+                {room.description && (
+                  <Text style={{ fontSize: 14, color: '#333', textAlign: 'center', lineHeight: 1.6, paddingHorizontal: 40 }}>
+                    {room.description}
+                  </Text>
+                )}
               </View>
             </View>
             
