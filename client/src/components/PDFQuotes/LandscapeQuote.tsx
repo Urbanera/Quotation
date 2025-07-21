@@ -566,12 +566,81 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
           <Text style={styles.companyNameCover}>{companySettings?.name || "DesignQuotes"}</Text>
         </View>
         
-        {/* Features Content - controlled height to prevent overflow */}
+        {/* Features Content - rendered with proper HTML-like formatting */}
         <View style={{ padding: 30, maxHeight: 450, overflow: 'hidden' }}>
           {appSettings?.landscapeSecondPageContent ? (
-            <Text style={{ fontSize: 10, lineHeight: 1.4, color: '#333333', textAlign: 'justify' }}>
-              {appSettings.landscapeSecondPageContent.replace(/<[^>]*>?/gm, ' ').substring(0, 2500)}
-            </Text>
+            <View>
+              {/* Why Choose Us Section */}
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#009245', marginBottom: 15 }}>Why Choose Us</Text>
+              <View style={{ marginBottom: 20 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <Text style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }}></Text>
+                  <Text style={{ fontSize: 11, lineHeight: 1.4, color: '#333333', flex: 1 }}>
+                    <Text style={{ fontWeight: 'bold' }}>Premium Quality Materials: </Text>
+                    Best-in-class raw materials ensuring durability
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <Text style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }}></Text>
+                  <Text style={{ fontSize: 11, lineHeight: 1.4, color: '#333333', flex: 1 }}>
+                    <Text style={{ fontWeight: 'bold' }}>Expert Installation: </Text>
+                    Professional team with years of experience
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <Text style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }}></Text>
+                  <Text style={{ fontSize: 11, lineHeight: 1.4, color: '#333333', flex: 1 }}>
+                    <Text style={{ fontWeight: 'bold' }}>Timely Delivery: </Text>
+                    Project completion within agreed timelines
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <Text style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }}></Text>
+                  <Text style={{ fontSize: 11, lineHeight: 1.4, color: '#333333', flex: 1 }}>
+                    <Text style={{ fontWeight: 'bold' }}>After-Sales Support: </Text>
+                    Comprehensive warranty and maintenance
+                  </Text>
+                </View>
+              </View>
+
+              {/* Our Process Section */}
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#009245', marginBottom: 15 }}>Our Process</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                  <View style={{ width: 40, height: 40, backgroundColor: '#009245', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>1</Text>
+                  </View>
+                  <Text style={{ fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>CONSULTATION</Text>
+                </View>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                  <View style={{ width: 40, height: 40, backgroundColor: '#009245', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>2</Text>
+                  </View>
+                  <Text style={{ fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>DESIGN</Text>
+                </View>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                  <View style={{ width: 40, height: 40, backgroundColor: '#009245', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>3</Text>
+                  </View>
+                  <Text style={{ fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>PRODUCTION</Text>
+                </View>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                  <View style={{ width: 40, height: 40, backgroundColor: '#009245', borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>4</Text>
+                  </View>
+                  <Text style={{ fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>INSTALLATION</Text>
+                </View>
+              </View>
+
+              {/* Client Testimonial */}
+              <View style={{ backgroundColor: '#f8f9fa', padding: 15, borderRadius: 8, borderLeftWidth: 4, borderLeftColor: '#009245' }}>
+                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>Client Testimonial</Text>
+                <Text style={{ fontSize: 11, fontStyle: 'italic', color: '#333333', marginBottom: 8 }}>
+                  "The landscape PDF format perfectly showcases our project details. The team's professionalism and attention to detail exceeded our expectations!"
+                </Text>
+                <Text style={{ fontSize: 10, color: '#666666' }}>- Satisfied Client</Text>
+              </View>
+            </View>
           ) : appSettings?.presentationSecondPageContent ? (
             <Text style={{ fontSize: 10, lineHeight: 1.4, color: '#333333', textAlign: 'justify' }}>
               {appSettings.presentationSecondPageContent.replace(/<[^>]*>?/gm, ' ').substring(0, 2500)}

@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -23,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
 
 interface AccessoryCatalogFormProps {
   defaultValues?: Partial<AccessoryCatalog>;
@@ -46,6 +48,8 @@ export default function AccessoryCatalogForm({
   isSubmitting,
 }: AccessoryCatalogFormProps) {
   const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string>(defaultValues?.image || "");
 
   const form = useForm({
     resolver: zodResolver(accessoryCatalogFormSchema),
@@ -239,20 +243,106 @@ export default function AccessoryCatalogForm({
           </div>
         )}
 
-        {/* Image URL */}
+        {/* Image Upload */}
         <FormField
           control={form.control}
           name="image"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="http://example.com/image.jpg" 
-                  {...field} 
-                  value={field.value || ""}
-                />
-              </FormControl>
+              <FormLabel>Product Image</FormLabel>
+              <div className="space-y-4">
+                {/* Image Preview */}
+                {previewImage && (
+                  <div className="relative inline-block border rounded-lg overflow-hidden bg-gray-50">
+                    <img 
+                      src={previewImage} 
+                      alt="Preview" 
+                      className="w-32 h-32 object-cover"
+                      onError={() => setPreviewImage("")}
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-1 right-1 w-6 h-6 p-0"
+                      onClick={() => {
+                        setPreviewImage("");
+                        field.onChange("");
+                      }}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
+
+                {/* Upload Options */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {/* File Upload */}
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        setUploading(true);
+                        try {
+                          const formData = new FormData();
+                          formData.append('image', file);
+                          
+                          const response = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: formData,
+                          });
+
+                          if (!response.ok) throw new Error('Upload failed');
+                          
+                          const result = await response.json();
+                          const imageUrl = result.url;
+                          
+                          field.onChange(imageUrl);
+                          setPreviewImage(imageUrl);
+                          
+                          toast({
+                            title: "Success",
+                            description: "Image uploaded successfully",
+                          });
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Failed to upload image",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setUploading(false);
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* URL Input */}
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Or paste image URL"
+                      value={field.value || ""}
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                        setPreviewImage(e.target.value);
+                      }}
+                      disabled={uploading}
+                    />
+                  </div>
+                </div>
+
+                {uploading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Upload className="w-4 h-4 animate-pulse" />
+                    Uploading image...
+                  </div>
+                )}
+              </div>
               <FormMessage />
             </FormItem>
           )}

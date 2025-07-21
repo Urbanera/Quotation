@@ -865,14 +865,11 @@ export class DatabaseStorage implements IStorage {
       quotationId,
       customerId: quotation.customerId,
       status: "pending",
-      orderStatus: "pending",
-      paymentStatus: "pending",
+      paymentStatus: "unpaid",
       totalAmount: quotation.finalPrice || 0,
-      paidAmount: 0,
-      balanceAmount: quotation.finalPrice || 0,
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      amountPaid: 0,
+      amountDue: quotation.finalPrice || 0,
+      ...data
     }).returning();
     
     return created;
@@ -881,7 +878,7 @@ export class DatabaseStorage implements IStorage {
   async updateSalesOrderStatus(id: number, status: "pending" | "confirmed" | "in_production" | "ready_for_delivery" | "delivered" | "completed" | "cancelled"): Promise<SalesOrder | undefined> {
     const [updated] = await db
       .update(salesOrders)
-      .set({ orderStatus: status, updatedAt: new Date() })
+      .set({ status: status })
       .where(eq(salesOrders.id, id))
       .returning();
     return updated || undefined;
@@ -890,7 +887,7 @@ export class DatabaseStorage implements IStorage {
   async updateSalesOrder(id: number, salesOrder: Partial<InsertSalesOrder>): Promise<SalesOrder | undefined> {
     const [updated] = await db
       .update(salesOrders)
-      .set({ ...salesOrder, updatedAt: new Date() })
+      .set(salesOrder)
       .where(eq(salesOrders.id, id))
       .returning();
     return updated || undefined;
@@ -899,7 +896,7 @@ export class DatabaseStorage implements IStorage {
   async cancelSalesOrder(id: number): Promise<SalesOrder | undefined> {
     const [updated] = await db
       .update(salesOrders)
-      .set({ orderStatus: "cancelled", updatedAt: new Date() })
+      .set({ status: "cancelled" })
       .where(eq(salesOrders.id, id))
       .returning();
     return updated || undefined;
