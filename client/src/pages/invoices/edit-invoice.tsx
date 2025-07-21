@@ -47,7 +47,6 @@ export default function EditInvoicePage() {
 
   const { data: invoice, isLoading } = useQuery<Invoice>({
     queryKey: ['/api/invoices', id],
-    queryFn: () => apiRequest(`/api/invoices/${id}`),
   });
 
   const form = useForm<EditInvoiceForm>({
@@ -84,10 +83,7 @@ export default function EditInvoicePage() {
         updateData.dueDate = new Date(data.dueDate).toISOString();
       }
 
-      return apiRequest(`/api/invoices/${id}`, {
-        method: 'PUT',
-        body: updateData,
-      });
+      return apiRequest('PUT', `/api/invoices/${id}`, updateData);
     },
     onSuccess: () => {
       toast({
