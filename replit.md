@@ -4,7 +4,20 @@
 
 DesignQuotes is a full-stack web application for interior design businesses to manage customers, quotations, sales orders, payments, and invoices. The application provides a complete business management solution with features for customer relationship management, quotation generation, order processing, and financial tracking.
 
-## Recent Updates (July 19, 2025)
+## Recent Updates (July 21, 2025)
+
+### Critical Fixes Completed (July 21, 2025)
+- **✅ RESOLVED: Room Price Calculation Issue**: Fixed critical room pricing system where rooms displayed 0 prices despite having products/accessories with correct values
+  - Implemented missing `updateQuotationPrices` method in database storage to properly aggregate product and accessory prices at room level
+  - Added automatic price recalculation triggers to product/accessory creation routes
+  - Fixed database schema field naming conflicts and established production-ready price calculation system
+  - **Result**: Room prices now display correct values (e.g., 23000/18000) instead of 0/0 with full PostgreSQL persistence
+- **✅ RESOLVED: Sales Order Conversion Failure**: Fixed database date handling error preventing quotation-to-sales-order conversion
+  - Fixed `value.toISOString is not a function` error in sales order creation by properly handling date fields
+  - Enhanced `createSalesOrderFromQuotation` method with safe date object handling and selective field insertion
+  - **Result**: Sales orders now convert successfully with proper order numbers (SO-2025-003) and correct amounts
+
+## Previous Updates (July 19, 2025)
 
 ### Enhanced Security & Authentication
 - **JWT Authentication**: Implemented secure JWT-based authentication with access tokens (10-minute expiry) and refresh tokens (7-day expiry)

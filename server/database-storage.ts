@@ -1016,7 +1016,8 @@ export class DatabaseStorage implements IStorage {
     }, 0);
     const orderNumber = `SO-${new Date().getFullYear()}-${String(maxNumber + 1).padStart(3, '0')}`;
     
-    const [created] = await db.insert(salesOrders).values({
+    // Prepare insert values, ensuring dates are properly handled
+    const insertData: Partial<InsertSalesOrder> = {
       orderNumber,
       quotationId,
       customerId: quotation.customerId,
@@ -1025,8 +1026,21 @@ export class DatabaseStorage implements IStorage {
       totalAmount: quotation.finalPrice || 0,
       amountPaid: 0,
       amountDue: quotation.finalPrice || 0,
-      ...data
-    }).returning();
+    };
+
+    // Only add additional data fields that are safe
+    if (data) {
+      if (data.expectedDeliveryDate) {
+        // Ensure expectedDeliveryDate is a proper Date object
+        insertData.expectedDeliveryDate = new Date(data.expectedDeliveryDate);
+      }
+      if (data.notes) {
+        insertData.notes = data.notes;
+      }
+      // Don't pass orderDate as it should use database default
+    }
+    
+    const [created] = await db.insert(salesOrders).values(insertData).returning();
     
     return created;
   }
