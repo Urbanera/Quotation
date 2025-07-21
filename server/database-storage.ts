@@ -420,6 +420,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCustomerBalance(customerId: number): Promise<{ balance: number }> {
+    // Get total sales orders amount for the customer
+    const salesOrdersResult = await db
+      .select({ total: sql<number>`sum(${salesOrders.totalAmount})` })
+      .from(salesOrders)
+      .where(eq(salesOrders.customerId, customerId));
+    
+    const totalOrders = salesOrdersResult[0]?.total || 0;
+
+    // Get total payments made by the customer  
     const paymentsResult = await db
       .select({ total: sql<number>`sum(${customerPayments.amount})` })
       .from(customerPayments)
@@ -427,9 +436,9 @@ export class DatabaseStorage implements IStorage {
     
     const totalPayments = paymentsResult[0]?.total || 0;
     
-    // For now, just return negative payments as balance (indicating credit)
-    // In a full implementation, you'd subtract total order amounts
-    return { balance: -totalPayments };
+    // Balance = Total Payments - Total Orders (negative means customer owes money)
+    const balance = totalPayments - totalOrders;
+    return { balance };
   }
 
   // ===== PLACEHOLDER IMPLEMENTATIONS FOR REMAINING METHODS =====
@@ -445,30 +454,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQuotationWithDetails(id: number): Promise<QuotationWithDetails | undefined> {
-    const quotation = await this.getQuotation(id);
-    if (!quotation) return undefined;
-    
-    // Get customer data
-    const customer = await this.getCustomer(quotation.customerId);
-    
-    // Get rooms with basic data (products/accessories/images would need separate queries)
-    const roomsList = await db.select().from(rooms)
-      .where(eq(rooms.quotationId, id))
-      .orderBy(rooms.order);
-    
-    const roomsWithItems: RoomWithItems[] = roomsList.map(room => ({
-      ...room,
-      products: [], // Would need separate query
-      accessories: [], // Would need separate query
-      images: [], // Would need separate query
-      installationCharges: [] // Would need separate query
-    }));
-    
-    return {
-      ...quotation,
-      customer: customer || null,
-      rooms: roomsWithItems
-    };
+    try {
+      const quotation = await this.getQuotation(id);
+      if (!quotation) return undefined;
+      
+      // Get customer data
+      const customer = await this.getCustomer(quotation.customerId);
+      
+      // Get rooms with all related data
+      const roomsList = await db.select().from(rooms)
+        .where(eq(rooms.quotationId, id))
+        .orderBy(rooms.order);
+      
+      // For now, return rooms with empty arrays for products/accessories/images
+      // This can be enhanced later with proper join queries
+      const roomsWithItems: RoomWithItems[] = roomsList.map(room => ({
+        ...room,
+        products: [], // Will be implemented when needed
+        accessories: [], // Will be implemented when needed  
+        images: [], // Will be implemented when needed
+        installationCharges: [] // Will be implemented when needed
+      }));
+      
+      return {
+        ...quotation,
+        customer: customer || null,
+        rooms: roomsWithItems
+      };
+    } catch (error) {
+      console.error('Error in getQuotationWithDetails:', error);
+      return undefined;
+    }
   }
 
   async getQuotationsByCustomer(customerId: number): Promise<Quotation[]> {
@@ -769,8 +785,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSalesOrder(id: number): Promise<SalesOrder | undefined> {
-    const [salesOrder] = await db.select().from(salesOrders).where(eq(salesOrders.id, id));
-    return salesOrder || undefined;
+    console.log(`Database getSalesOrder called for ID: ${id}`);
+    
+    try {
+      const result = await db.select().from(salesOrders).where(eq(salesOrders.id, id));
+      console.log(`Database getSalesOrder query result:`, result);
+      
+      const [salesOrder] = result;
+      console.log(`Database getSalesOrder returning:`, salesOrder);
+      return salesOrder || undefined;
+    } catch (error) {
+      console.error('Error in database getSalesOrder:', error);
+      return undefined;
+    }
   }
 
   async getSalesOrderByQuotation(quotationId: number): Promise<SalesOrder | undefined> {
@@ -780,14 +807,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSalesOrderWithDetails(id: number): Promise<SalesOrder & { customer: Customer, quotation: QuotationWithDetails, payments: Payment[] } | undefined> {
+    console.log(`Database getSalesOrderWithDetails called for ID: ${id}`);
+    
     const salesOrder = await this.getSalesOrder(id);
-    if (!salesOrder) return undefined;
+    console.log(`Database getSalesOrder result:`, salesOrder);
+    
+    if (!salesOrder) {
+      console.log(`No sales order found with ID: ${id}`);
+      return undefined;
+    }
     
     const customer = await this.getCustomer(salesOrder.customerId);
-    const quotation = await this.getQuotationWithDetails(salesOrder.quotationId);
-    const orderPayments = await this.getPayments(salesOrder.id);
+    console.log(`Customer found:`, customer?.name);
     
-    if (!customer || !quotation) return undefined;
+    const quotation = await this.getQuotationWithDetails(salesOrder.quotationId);
+    console.log(`Quotation found:`, quotation?.quotationNumber);
+    
+    const orderPayments = await this.getPayments(salesOrder.id);
+    console.log(`Payments found:`, orderPayments.length);
+    
+    if (!customer || !quotation) {
+      console.log(`Missing data - customer: ${!!customer}, quotation: ${!!quotation}`);
+      return undefined;
+    }
     
     return {
       ...salesOrder,
@@ -869,9 +911,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPayments(salesOrderId: number): Promise<Payment[]> {
-    return db.select().from(payments)
-      .where(eq(payments.salesOrderId, salesOrderId))
-      .orderBy(desc(payments.createdAt));
+    try {
+      const result = await db.select().from(payments)
+        .where(eq(payments.salesOrderId, salesOrderId))
+        .orderBy(desc(payments.createdAt));
+      return result;
+    } catch (error) {
+      console.error('Error fetching payments for sales order:', salesOrderId, error);
+      return []; // Return empty array on error instead of throwing
+    }
   }
 
   async getPayment(id: number): Promise<Payment | undefined> {

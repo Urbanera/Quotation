@@ -539,53 +539,91 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
           <div className="h-full flex flex-col justify-center">
             <h2 className="text-xl font-bold text-[#009245] mb-6 text-center">Quotation Summary</h2>
             
-            {/* Price Summary Table - Centered with space at top */}
+            {/* Price Summary Table - Centered and formatted like basic quote */}
             <div className="mx-auto" style={{ maxWidth: "90%" }}>
-              <table className="border-collapse bg-gray-50 mx-auto">
-                <thead>
-                  <tr>
-                    <th className="py-2 px-4 text-left border border-gray-200 bg-white text-[#009245] font-medium">PRODUCT DESCRIPTION</th>
-                    <th className="py-2 px-4 text-right border border-gray-200 bg-white text-[#009245] font-medium">SELLING PRICE</th>
-                    <th className="py-2 px-4 text-right border border-gray-200 bg-white text-[#009245] font-medium">DISCOUNTED PRICE ({safeQuotation.globalDiscount}%)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {safeQuotation.rooms.map(room => {
-                    const discountedPrice = room.sellingPrice * (1 - (safeQuotation.globalDiscount / 100));
-                    return (
-                      <tr key={room.id} className="border-b border-gray-200">
-                        <td className="py-2 px-4 border border-gray-200">{room.name.toUpperCase()}</td>
-                        <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency(room.sellingPrice)}</td>
-                        <td className="py-2 px-4 text-right border border-gray-200 text-red-500">{formatCurrency(discountedPrice)}</td>
+              <div className="overflow-hidden rounded-md border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                        Product Description
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                        Selling Price
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                        Discounted Price ({safeQuotation.globalDiscount}%)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {safeQuotation.rooms.map((room, index) => {
+                      const discountedPrice = room.sellingPrice * (1 - (safeQuotation.globalDiscount / 100));
+                      return (
+                        <tr key={room.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">
+                            {room.name.toUpperCase()}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-right border-b border-gray-200">
+                            {formatCurrency(room.sellingPrice)}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right border-b border-gray-200">
+                            <span className="text-[#D81F28] font-medium">{formatCurrency(discountedPrice)}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="bg-[#E6E6E6]">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">
+                        Total Of All Items
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-right border-b border-gray-200">
+                        {formatCurrency(safeQuotation.totalSellingPrice)}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-right border-b border-gray-200">
+                        <span className="text-[#D81F28] font-medium">{formatCurrency(discountedTotal)}</span>
+                      </td>
+                    </tr>
+                    {totalWithHandling > 0 && (
+                      <tr>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">
+                          Installation and Handling
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right border-b border-gray-200">
+                          {formatCurrency(totalWithHandling)}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right border-b border-gray-200">
+                          {formatCurrency(totalWithHandling)}
+                        </td>
                       </tr>
-                    );
-                  })}
-                  <tr className="border-b border-gray-200 bg-gray-100">
-                    <td className="py-2 px-4 border border-gray-200 font-medium">Total Of All Items</td>
-                    <td className="py-2 px-4 text-right border border-gray-200 font-medium">{formatCurrency(safeQuotation.totalSellingPrice)}</td>
-                    <td className="py-2 px-4 text-right border border-gray-200 font-medium text-red-500">{formatCurrency(discountedTotal)}</td>
-                  </tr>
-                  {totalWithHandling > 0 && (
-                    <tr className="border-b border-gray-200">
-                      <td className="py-2 px-4 border border-gray-200">Installation and Handling</td>
-                      <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency(totalWithHandling)}</td>
-                      <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency(totalWithHandling)}</td>
+                    )}
+                    {safeQuotation.gstPercentage > 0 && (
+                      <tr>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-200">
+                          GST {safeQuotation.gstPercentage}%
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right border-b border-gray-200">
+                          {formatCurrency((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right border-b border-gray-200">
+                          {formatCurrency(gstAmount)}
+                        </td>
+                      </tr>
+                    )}
+                    <tr className="bg-[#E6E6E6]">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900">
+                        Final Price
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
+                        {formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + ((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-bold text-[#D81F28] text-right">
+                        {formatCurrency(finalPrice)}
+                      </td>
                     </tr>
-                  )}
-                  {safeQuotation.gstPercentage > 0 && (
-                    <tr className="border-b border-gray-200">
-                      <td className="py-2 px-4 border border-gray-200">GST {safeQuotation.gstPercentage}%</td>
-                      <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100))}</td>
-                      <td className="py-2 px-4 text-right border border-gray-200">{formatCurrency(gstAmount)}</td>
-                    </tr>
-                  )}
-                  <tr>
-                    <td className="py-3 px-4 border border-gray-200 font-bold">Final Price</td>
-                    <td className="py-3 px-4 text-right border border-gray-200 font-bold">{formatCurrency(safeQuotation.totalSellingPrice + totalWithHandling + ((safeQuotation.totalSellingPrice + totalWithHandling) * (safeQuotation.gstPercentage / 100)))}</td>
-                    <td className="py-3 px-4 text-right border border-gray-200 font-bold text-[#d50000]">{formatCurrency(finalPrice)}</td>
-                  </tr>
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

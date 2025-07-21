@@ -566,15 +566,15 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
           <Text style={styles.companyNameCover}>{companySettings?.name || "DesignQuotes"}</Text>
         </View>
         
-        {/* Features Content */}
-        <View style={{ padding: 30 }}>
+        {/* Features Content - controlled height to prevent overflow */}
+        <View style={{ padding: 30, maxHeight: 450, overflow: 'hidden' }}>
           {appSettings?.landscapeSecondPageContent ? (
-            <Text style={{ fontSize: 12, lineHeight: 1.6, color: '#333333', textAlign: 'justify' }}>
-              {appSettings.landscapeSecondPageContent.replace(/<[^>]*>?/gm, ' ')}
+            <Text style={{ fontSize: 10, lineHeight: 1.4, color: '#333333', textAlign: 'justify' }}>
+              {appSettings.landscapeSecondPageContent.replace(/<[^>]*>?/gm, ' ').substring(0, 2500)}
             </Text>
           ) : appSettings?.presentationSecondPageContent ? (
-            <Text style={{ fontSize: 12, lineHeight: 1.6, color: '#333333', textAlign: 'justify' }}>
-              {appSettings.presentationSecondPageContent.replace(/<[^>]*>?/gm, ' ')}
+            <Text style={{ fontSize: 10, lineHeight: 1.4, color: '#333333', textAlign: 'justify' }}>
+              {appSettings.presentationSecondPageContent.replace(/<[^>]*>?/gm, ' ').substring(0, 2500)}
             </Text>
           ) : (
             <View>
@@ -762,57 +762,55 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             </View>
           </View>
           
-          {/* Cost Summary Table - Centered with margins and reduced width */}
-          <View style={{ marginVertical: 20, marginLeft: 60, marginRight: 60, alignItems: 'center' }}>
-            <View style={{ width: '80%', maxHeight: '65%' }}>
-              {/* Table Header - removed S.No column */}
-              <View style={styles.tableHeader}>
-                <Text style={styles.descriptionCell}>PRODUCT DESCRIPTION</Text>
-                <Text style={styles.unitCell}>SELLING PRICE</Text>
-                <Text style={styles.amountCell}>DISCOUNTED PRICE ({quotation.globalDiscount}%)</Text>
+          {/* Cost Summary Table - Centered and formatted like basic quote */}
+          <View style={{ marginVertical: 20, marginHorizontal: 30, alignItems: 'center' }}>
+            <View style={{ width: '90%' }}>
+              {/* Table Header */}
+              <View style={[styles.tableHeader, { backgroundColor: '#f3f4f6', borderColor: '#d1d5db' }]}>
+                <Text style={[styles.descriptionCell, { fontSize: 10, fontWeight: 'bold', color: '#374151' }]}>PRODUCT DESCRIPTION</Text>
+                <Text style={[styles.unitCell, { fontSize: 10, fontWeight: 'bold', color: '#374151', textAlign: 'right' }]}>SELLING PRICE</Text>
+                <Text style={[styles.amountCell, { fontSize: 10, fontWeight: 'bold', color: '#374151', textAlign: 'right' }]}>DISCOUNTED PRICE ({quotation.globalDiscount}%)</Text>
               </View>
               
-              {/* Room Rows - removed S.No column */}
-              <View style={{ maxHeight: '65%' }}>
-                {sortedRooms.map((room, index) => (
-                  <View key={index} style={[styles.tableRow, index % 2 === 0 ? styles.tableRowEven : {}]}>
-                    <Text style={styles.descriptionCell}>{room.name.toUpperCase()}</Text>
-                    <Text style={styles.unitCell}>{formatRupeeForPDF(room.sellingPrice || 0)}</Text>
-                    <Text style={[styles.amountCell, { color: 'red' }]}>
-                      {formatRupeeForPDF((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+              {/* Room Rows */}
+              {sortedRooms.map((room, index) => (
+                <View key={index} style={[styles.tableRow, { backgroundColor: index % 2 === 0 ? 'white' : '#f9fafb', borderWidth: 1, borderColor: '#d1d5db' }]}>
+                  <Text style={[styles.descriptionCell, { fontSize: 9, padding: 4 }]}>{room.name.toUpperCase()}</Text>
+                  <Text style={[styles.unitCell, { fontSize: 9, padding: 4, textAlign: 'right' }]}>{formatRupeeForPDF(room.sellingPrice || 0)}</Text>
+                  <Text style={[styles.amountCell, { fontSize: 9, padding: 4, textAlign: 'right', color: '#D81F28' }]}>
+                    {formatRupeeForPDF((room.sellingPrice || 0) * (1 - quotation.globalDiscount / 100))}
+                  </Text>
+                </View>
+              ))}
               
-              {/* Total Row - removed S.No column */}
-              <View style={[styles.tableRow, styles.tableRowEven]}>
-                <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>Total Of All Items</Text>
-                <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalSellingPrice)}</Text>
-                <Text style={[styles.amountCell, { fontWeight: 'bold', color: 'red' }]}>
+              {/* Total Row */}
+              <View style={[styles.tableRow, { backgroundColor: '#e5e7eb', borderWidth: 1, borderColor: '#d1d5db' }]}>
+                <Text style={[styles.descriptionCell, { fontSize: 9, padding: 4, fontWeight: 'bold' }]}>Total Of All Items</Text>
+                <Text style={[styles.unitCell, { fontSize: 9, padding: 4, fontWeight: 'bold', textAlign: 'right' }]}>{formatRupeeForPDF(quotation.totalSellingPrice)}</Text>
+                <Text style={[styles.amountCell, { fontSize: 9, padding: 4, fontWeight: 'bold', textAlign: 'right', color: '#D81F28' }]}>
                   {formatRupeeForPDF(quotation.totalSellingPrice * (1 - quotation.globalDiscount / 100))}
                 </Text>
               </View>
               
-              {/* Installation Row - removed S.No column */}
-              <View style={styles.tableRow}>
-                <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>Installation and Handling</Text>
-                <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
-                <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
+              {/* Installation Row */}
+              <View style={[styles.tableRow, { backgroundColor: 'white', borderWidth: 1, borderColor: '#d1d5db' }]}>
+                <Text style={[styles.descriptionCell, { fontSize: 9, padding: 4 }]}>Installation and Handling</Text>
+                <Text style={[styles.unitCell, { fontSize: 9, padding: 4, textAlign: 'right' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
+                <Text style={[styles.amountCell, { fontSize: 9, padding: 4, textAlign: 'right' }]}>{formatRupeeForPDF(quotation.totalInstallationCharges)}</Text>
               </View>
               
-              {/* GST Row - removed S.No column */}
-              <View style={[styles.tableRow, styles.tableRowEven]}>
-                <Text style={[styles.descriptionCell, { fontWeight: 'bold' }]}>GST {quotation.gstPercentage}%</Text>
-                <Text style={[styles.unitCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
-                <Text style={[styles.amountCell, { fontWeight: 'bold' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
+              {/* GST Row */}
+              <View style={[styles.tableRow, { backgroundColor: 'white', borderWidth: 1, borderColor: '#d1d5db' }]}>
+                <Text style={[styles.descriptionCell, { fontSize: 9, padding: 4 }]}>GST {quotation.gstPercentage}%</Text>
+                <Text style={[styles.unitCell, { fontSize: 9, padding: 4, textAlign: 'right' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
+                <Text style={[styles.amountCell, { fontSize: 9, padding: 4, textAlign: 'right' }]}>{formatRupeeForPDF(quotation.gstAmount)}</Text>
               </View>
               
-              {/* Final Price Row - removed S.No column */}
-              <View style={[styles.tableRow, { backgroundColor: '#009245' }]}>
-                <Text style={[styles.descriptionCell, { fontWeight: 'bold', color: 'white' }]}>Final Price</Text>
-                <Text style={[styles.unitCell, { fontWeight: 'bold', color: 'white' }]}></Text>
-                <Text style={[styles.amountCell, { fontWeight: 'bold', color: 'white' }]}>
+              {/* Final Price Row */}
+              <View style={[styles.tableRow, { backgroundColor: '#e5e7eb', borderWidth: 1, borderColor: '#d1d5db' }]}>
+                <Text style={[styles.descriptionCell, { fontSize: 9, padding: 4, fontWeight: 'bold' }]}>Final Price</Text>
+                <Text style={[styles.unitCell, { fontSize: 9, padding: 4 }]}></Text>
+                <Text style={[styles.amountCell, { fontSize: 9, padding: 4, fontWeight: 'bold', textAlign: 'right', color: '#D81F28' }]}>
                   {formatRupeeForPDF(quotation.finalPrice)}
                 </Text>
               </View>
@@ -850,14 +848,15 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
             </View>
           </View>
           
-          <View style={{ marginTop: 20, marginLeft: 30, marginRight: 30, marginBottom: 30 }}>
+          {/* Content area with controlled height */}
+          <View style={{ marginTop: 20, marginLeft: 30, marginRight: 30, marginBottom: 50, maxHeight: 450, overflow: 'hidden' }}>
             {appSettings?.landscapeTermsAndConditions ? (
-              <Text style={{ fontSize: 12, lineHeight: 1.5, color: '#333333' }}>
-                {appSettings.landscapeTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
+              <Text style={{ fontSize: 10, lineHeight: 1.4, color: '#333333' }}>
+                {appSettings.landscapeTermsAndConditions.replace(/<[^>]*>?/gm, ' ').substring(0, 2000)}
               </Text>
             ) : appSettings?.presentationTermsAndConditions ? (
-              <Text style={{ fontSize: 12, lineHeight: 1.5, color: '#333333' }}>
-                {appSettings.presentationTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
+              <Text style={{ fontSize: 10, lineHeight: 1.4, color: '#333333' }}>
+                {appSettings.presentationTermsAndConditions.replace(/<[^>]*>?/gm, ' ').substring(0, 2000)}
               </Text>
             ) : (
               <View>
