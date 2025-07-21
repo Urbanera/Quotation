@@ -704,15 +704,114 @@ export class StorageMigrator {
   async createAccessoryCatalogItem(...args: any[]) { return (this.memStorage as any).createAccessoryCatalogItem(...args); }
   async updateAccessoryCatalogItem(...args: any[]) { return (this.memStorage as any).updateAccessoryCatalogItem(...args); }
   async deleteAccessoryCatalogItem(...args: any[]) { return (this.memStorage as any).deleteAccessoryCatalogItem(...args); }
-  async getSalesOrders(...args: any[]) { return (this.memStorage as any).getSalesOrders(...args); }
-  async getSalesOrdersByCustomer(...args: any[]) { return (this.memStorage as any).getSalesOrdersByCustomer(...args); }
-  async getSalesOrder(...args: any[]) { return (this.memStorage as any).getSalesOrder(...args); }
-  async getSalesOrderByQuotation(...args: any[]) { return (this.memStorage as any).getSalesOrderByQuotation(...args); }
-  async getSalesOrderWithDetails(...args: any[]) { return (this.memStorage as any).getSalesOrderWithDetails(...args); }
-  async createSalesOrderFromQuotation(...args: any[]) { return (this.memStorage as any).createSalesOrderFromQuotation(...args); }
-  async updateSalesOrderStatus(...args: any[]) { return (this.memStorage as any).updateSalesOrderStatus(...args); }
-  async updateSalesOrder(...args: any[]) { return (this.memStorage as any).updateSalesOrder(...args); }
-  async cancelSalesOrder(...args: any[]) { return (this.memStorage as any).cancelSalesOrder(...args); }
+  // Sales Orders operations with database support
+  async getSalesOrders() { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.getSalesOrders();
+      } catch (error) {
+        console.error('Database error in getSalesOrders, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).getSalesOrders(); 
+  }
+  
+  async getSalesOrdersByCustomer(customerId: number) { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.getSalesOrdersByCustomer(customerId);
+      } catch (error) {
+        console.error('Database error in getSalesOrdersByCustomer, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).getSalesOrdersByCustomer(customerId); 
+  }
+  
+  async getSalesOrder(id: number) { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.getSalesOrder(id);
+      } catch (error) {
+        console.error('Database error in getSalesOrder, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).getSalesOrder(id); 
+  }
+  
+  async getSalesOrderByQuotation(quotationId: number) { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.getSalesOrderByQuotation(quotationId);
+      } catch (error) {
+        console.error('Database error in getSalesOrderByQuotation, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).getSalesOrderByQuotation(quotationId); 
+  }
+  
+  async getSalesOrderWithDetails(id: number) { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.getSalesOrderWithDetails(id);
+      } catch (error) {
+        console.error('Database error in getSalesOrderWithDetails, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).getSalesOrderWithDetails(id); 
+  }
+  
+  async createSalesOrderFromQuotation(quotationId: number, data?: any) { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.createSalesOrderFromQuotation(quotationId, data);
+      } catch (error) {
+        console.error('Database error in createSalesOrderFromQuotation, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).createSalesOrderFromQuotation(quotationId, data); 
+  }
+  
+  async updateSalesOrderStatus(id: number, status: any) { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.updateSalesOrderStatus(id, status);
+      } catch (error) {
+        console.error('Database error in updateSalesOrderStatus, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).updateSalesOrderStatus(id, status); 
+  }
+  
+  async updateSalesOrder(id: number, salesOrder: any) { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.updateSalesOrder(id, salesOrder);
+      } catch (error) {
+        console.error('Database error in updateSalesOrder, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).updateSalesOrder(id, salesOrder); 
+  }
+  
+  async cancelSalesOrder(id: number) { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.cancelSalesOrder(id);
+      } catch (error) {
+        console.error('Database error in cancelSalesOrder, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).cancelSalesOrder(id); 
+  }
   async revertSalesOrderToQuotation(...args: any[]) { return (this.memStorage as any).revertSalesOrderToQuotation(...args); }
   async getPayments(...args: any[]) { return (this.memStorage as any).getPayments(...args); }
   async getPayment(...args: any[]) { return (this.memStorage as any).getPayment(...args); }

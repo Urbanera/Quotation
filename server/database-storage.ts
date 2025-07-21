@@ -738,47 +738,119 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSalesOrders(): Promise<SalesOrder[]> {
-    return [];
+    return db.select().from(salesOrders).orderBy(desc(salesOrders.createdAt));
   }
 
   async getSalesOrdersByCustomer(customerId: number): Promise<SalesOrder[]> {
-    return [];
+    return db.select().from(salesOrders)
+      .where(eq(salesOrders.customerId, customerId))
+      .orderBy(desc(salesOrders.createdAt));
   }
 
   async getSalesOrder(id: number): Promise<SalesOrder | undefined> {
-    return undefined;
+    const [salesOrder] = await db.select().from(salesOrders).where(eq(salesOrders.id, id));
+    return salesOrder || undefined;
   }
 
   async getSalesOrderByQuotation(quotationId: number): Promise<SalesOrder | undefined> {
-    return undefined;
+    const [salesOrder] = await db.select().from(salesOrders)
+      .where(eq(salesOrders.quotationId, quotationId));
+    return salesOrder || undefined;
   }
 
   async getSalesOrderWithDetails(id: number): Promise<SalesOrder & { customer: Customer, quotation: QuotationWithDetails, payments: Payment[] } | undefined> {
-    return undefined;
+    const salesOrder = await this.getSalesOrder(id);
+    if (!salesOrder) return undefined;
+    
+    const customer = await this.getCustomer(salesOrder.customerId);
+    const quotation = await this.getQuotationWithDetails(salesOrder.quotationId);
+    const orderPayments = await this.getPayments(salesOrder.id);
+    
+    if (!customer || !quotation) return undefined;
+    
+    return {
+      ...salesOrder,
+      customer,
+      quotation,
+      payments: orderPayments
+    };
   }
 
   async createSalesOrderFromQuotation(quotationId: number, data?: Partial<InsertSalesOrder>): Promise<SalesOrder> {
-    throw new Error("Method not implemented");
+    // Get quotation details
+    const quotation = await this.getQuotation(quotationId);
+    if (!quotation) {
+      throw new Error("Quotation not found");
+    }
+    
+    // Generate order number
+    const existingOrders = await db.select().from(salesOrders);
+    const maxNumber = existingOrders.reduce((max, order) => {
+      if (order.orderNumber) {
+        const match = order.orderNumber.match(/SO-(\d{4})-(\d{3})/);
+        if (match) {
+          const number = parseInt(match[2]);
+          return Math.max(max, number);
+        }
+      }
+      return max;
+    }, 0);
+    const orderNumber = `SO-${new Date().getFullYear()}-${String(maxNumber + 1).padStart(3, '0')}`;
+    
+    const [created] = await db.insert(salesOrders).values({
+      orderNumber,
+      quotationId,
+      customerId: quotation.customerId,
+      status: "pending",
+      orderStatus: "pending",
+      paymentStatus: "pending",
+      totalAmount: quotation.finalPrice || 0,
+      paidAmount: 0,
+      balanceAmount: quotation.finalPrice || 0,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    
+    return created;
   }
 
   async updateSalesOrderStatus(id: number, status: "pending" | "confirmed" | "in_production" | "ready_for_delivery" | "delivered" | "completed" | "cancelled"): Promise<SalesOrder | undefined> {
-    return undefined;
+    const [updated] = await db
+      .update(salesOrders)
+      .set({ orderStatus: status, updatedAt: new Date() })
+      .where(eq(salesOrders.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async updateSalesOrder(id: number, salesOrder: Partial<InsertSalesOrder>): Promise<SalesOrder | undefined> {
-    return undefined;
+    const [updated] = await db
+      .update(salesOrders)
+      .set({ ...salesOrder, updatedAt: new Date() })
+      .where(eq(salesOrders.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async cancelSalesOrder(id: number): Promise<SalesOrder | undefined> {
-    return undefined;
+    const [updated] = await db
+      .update(salesOrders)
+      .set({ orderStatus: "cancelled", updatedAt: new Date() })
+      .where(eq(salesOrders.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async revertSalesOrderToQuotation(id: number): Promise<Quotation | undefined> {
+    // This would require complex logic - returning undefined for now
     return undefined;
   }
 
   async getPayments(salesOrderId: number): Promise<Payment[]> {
-    return [];
+    return db.select().from(payments)
+      .where(eq(payments.salesOrderId, salesOrderId))
+      .orderBy(desc(payments.createdAt));
   }
 
   async getPayment(id: number): Promise<Payment | undefined> {
