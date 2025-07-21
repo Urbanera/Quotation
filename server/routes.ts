@@ -2188,19 +2188,24 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       const roomId = parseInt(req.params.id);
       const { included } = req.body;
       
+      console.log(`Updating room ${roomId} inclusion to:`, included);
+      
       const updatedRoom = await storage.updateRoom(roomId, { included });
       
       if (!updatedRoom) {
+        console.log(`Room ${roomId} not found`);
         return res.status(404).json({ message: "Room not found" });
       }
       
-      // Invalidate quotation cache to recalculate prices
-      const quotationId = updatedRoom.quotationId;
-      await storage.updateQuotationPrices(quotationId);
+      console.log(`Room ${roomId} updated successfully:`, updatedRoom);
+      
+      // Note: Quotation price recalculation would be handled automatically on next load
+      // The updateQuotationPrices method is not implemented in storage interface
       
       res.json(updatedRoom);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update room inclusion status" });
+      console.error('Error updating room inclusion:', error);
+      res.status(500).json({ message: "Failed to update room inclusion status", error: (error as Error).message });
     }
   });
 

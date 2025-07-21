@@ -157,7 +157,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
             <div className="absolute bottom-32 left-8 bg-white bg-opacity-95 p-6 w-2/3 border-l-4 border-[#D81F28]">
               <div className="mb-3 flex">
                 <div className="font-bold text-[#009245] w-32">Client:</div>
-                <div>{safeQuotation.customer.name}</div>
+                <div>{safeQuotation.customer?.name || 'No customer name'}</div>
               </div>
               <div className="mb-3 flex">
                 <div className="font-bold text-[#009245] w-32">Date:</div>

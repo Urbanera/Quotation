@@ -445,15 +445,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQuotationWithDetails(id: number): Promise<QuotationWithDetails | undefined> {
-    // This would need complex joins - for now return basic quotation
     const quotation = await this.getQuotation(id);
     if (!quotation) return undefined;
     
-    // Return basic structure - would need to implement full joins
+    // Get customer data
+    const customer = await this.getCustomer(quotation.customerId);
+    
+    // Get rooms with basic data (products/accessories/images would need separate queries)
+    const roomsList = await db.select().from(rooms)
+      .where(eq(rooms.quotationId, id))
+      .orderBy(rooms.order);
+    
+    const roomsWithItems: RoomWithItems[] = roomsList.map(room => ({
+      ...room,
+      products: [], // Would need separate query
+      accessories: [], // Would need separate query
+      images: [], // Would need separate query
+      installationCharges: [] // Would need separate query
+    }));
+    
     return {
       ...quotation,
-      customer: null as any,
-      rooms: []
+      customer: customer || null,
+      rooms: roomsWithItems
     };
   }
 
@@ -550,15 +564,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRoom(room: InsertRoom): Promise<Room> {
-    throw new Error("Method not implemented");
+    const [created] = await db.insert(rooms).values(room).returning();
+    return created;
   }
 
-  async updateRoom(id: number, room: Partial<InsertRoom>): Promise<Room | undefined> {
-    return undefined;
+  async updateRoom(id: number, roomUpdate: Partial<InsertRoom>): Promise<Room | undefined> {
+    const [updated] = await db
+      .update(rooms)
+      .set(roomUpdate)
+      .where(eq(rooms.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async deleteRoom(id: number): Promise<boolean> {
-    return false;
+    const result = await db.delete(rooms).where(eq(rooms.id, id));
+    return result.rowCount > 0;
   }
 
   async reorderRooms(roomIds: number[]): Promise<boolean> {
