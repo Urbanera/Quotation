@@ -40,11 +40,8 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
   
-  // Restore sample quotation data if needed (for continuity during development)
-  if (app.get("env") === "development") {
-    const { restoreQuotationData } = await import("./restore-quotation-data");
-    setTimeout(() => restoreQuotationData(), 2000); // Delay to ensure storage is ready
-  }
+  // Database migration complete - no need for quotation restoration
+  // All data is now persisted in PostgreSQL database
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

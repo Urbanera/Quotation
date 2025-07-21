@@ -14,13 +14,25 @@ export class StorageMigrator {
     this.memStorage = new MemStorage();
     this.dbStorage = new DatabaseStorage();
     
-    // Start with these safe modules enabled
+    // Enable database storage for all modules (complete migration)
     this.enableModule('settings');
     this.enableModule('users'); 
     this.enableModule('permissions');
     this.enableModule('customers');
     this.enableModule('followups');
     this.enableModule('customer-payments');
+    this.enableModule('quotations');
+    this.enableModule('rooms');
+    this.enableModule('products');
+    this.enableModule('accessories');
+    this.enableModule('images');
+    this.enableModule('installation-charges');
+    this.enableModule('teams');
+    this.enableModule('sales-orders');
+    this.enableModule('invoices');
+    this.enableModule('payments');
+    this.enableModule('quotation-modifications');
+    this.enableModule('accessory-catalog');
   }
 
   enableModule(module: string) {
@@ -329,63 +341,85 @@ export class StorageMigrator {
     return this.memStorage.createFollowUp(followUp);
   }
 
-  // For all other methods, delegate to MemStorage (unchanged behavior)
-  async getQuotations() { return this.memStorage.getQuotations(); }
-  async getQuotation(id: number) { return this.memStorage.getQuotation(id); }
+  // Quotation operations with database support
+  async getQuotations() { 
+    if (this.shouldUseDatabase('quotations')) {
+      try {
+        return await this.dbStorage.getQuotations();
+      } catch (error) {
+        console.error('Database error in getQuotations, falling back to memory:', error);
+        this.disableModule('quotations');
+      }
+    }
+    return this.memStorage.getQuotations(); 
+  }
+  
+  async getQuotation(id: number) { 
+    if (this.shouldUseDatabase('quotations')) {
+      try {
+        return await this.dbStorage.getQuotation(id);
+      } catch (error) {
+        console.error('Database error in getQuotation, falling back to memory:', error);
+        this.disableModule('quotations');
+      }
+    }
+    return this.memStorage.getQuotation(id); 
+  }
   async getQuotationWithDetails(id: number) { 
+    if (this.shouldUseDatabase('quotations')) {
+      try {
+        console.log(`Getting quotation details from database for ID: ${id}`);
+        return await this.dbStorage.getQuotationWithDetails(id);
+      } catch (error) {
+        console.error('Database error in getQuotationWithDetails, falling back to memory:', error);
+        this.disableModule('quotations');
+      }
+    }
+    
+    // Fallback to memory storage with customer bridging
     try {
-      console.log(`Getting quotation details for ID: ${id}`);
+      console.log(`Getting quotation details from memory for ID: ${id}`);
       
-      // Check if quotation exists first
       const quotation = await this.memStorage.getQuotation(id);
       if (!quotation) {
         console.log(`Quotation ${id} not found`);
         return undefined;
       }
       
-      // For database migration compatibility, we need to work around the customer ID mismatch
-      // Memory storage quotations may reference customer IDs that don't match database IDs
-      // So we'll manually construct the quotation details with the first available customer
-      
-      // Use a simple fallback customer for quotation compatibility
-      const fallbackCustomer = {
-        id: quotation.customerId,
-        name: "Sample Customer",
-        email: "customer@example.com", 
-        phone: "1234567890",
-        address: "Sample Address",
-        gstNumber: null,
-        leadSource: null,
-        stage: "new" as const,
-        stageColor: "#3B82F6",
-        notes: "",
-        floorPlanUrl: null,
-        floorPlanType: null,
-        floorPlanName: null,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      
-      let customer = fallbackCustomer;
-      
-      // Try to get actual customer from database if available
+      // Get customer from database if enabled, otherwise use fallback
+      let customer;
       if (this.enabledModules.has('customers')) {
         try {
           const customers = await this.dbStorage.getCustomers();
-          if (customers.length > 0) {
-            customer = customers[0]; // Use first database customer
+          customer = customers.length > 0 ? customers[0] : undefined;
+          if (customer) {
             console.log(`Using database customer ${customer.id} for quotation ${id}`);
-          } else {
-            console.log(`No database customers found, using fallback for quotation ${id}`);
           }
         } catch (error) {
-          console.log('Database customer lookup failed, using fallback:', error);
+          console.log('Database customer lookup failed:', error);
         }
       }
       
       if (!customer) {
-        console.log(`No customer found for quotation ${id}`);
-        return undefined;
+        // Use fallback customer
+        customer = {
+          id: quotation.customerId,
+          name: "Sample Customer",
+          email: "customer@example.com", 
+          phone: "1234567890",
+          address: "Sample Address",
+          gstNumber: null,
+          leadSource: null,
+          stage: "new" as const,
+          stageColor: "#3B82F6",
+          notes: "",
+          floorPlanUrl: null,
+          floorPlanType: null,
+          floorPlanName: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        console.log(`Using fallback customer for quotation ${id}`);
       }
       
       // Get rooms and other details from memory storage  
@@ -420,12 +454,77 @@ export class StorageMigrator {
       return undefined;
     }
   }
-  async getQuotationsByCustomer(customerId: number) { return this.memStorage.getQuotationsByCustomer(customerId); }
-  async createQuotation(quotation: any) { return this.memStorage.createQuotation(quotation); }
-  async updateQuotation(id: number, quotation: any) { return this.memStorage.updateQuotation(id, quotation); }
-  async deleteQuotation(id: number) { return this.memStorage.deleteQuotation(id); }
-  async duplicateQuotation(id: number, customerId?: number) { return this.memStorage.duplicateQuotation(id, customerId); }
-  async updateQuotationStatus(id: number, status: any) { return this.memStorage.updateQuotationStatus(id, status); }
+  async getQuotationsByCustomer(customerId: number) { 
+    if (this.shouldUseDatabase('quotations')) {
+      try {
+        return await this.dbStorage.getQuotationsByCustomer(customerId);
+      } catch (error) {
+        console.error('Database error in getQuotationsByCustomer, falling back to memory:', error);
+        this.disableModule('quotations');
+      }
+    }
+    return this.memStorage.getQuotationsByCustomer(customerId); 
+  }
+  
+  async createQuotation(quotation: any) { 
+    if (this.shouldUseDatabase('quotations')) {
+      try {
+        return await this.dbStorage.createQuotation(quotation);
+      } catch (error) {
+        console.error('Database error in createQuotation, falling back to memory:', error);
+        this.disableModule('quotations');
+      }
+    }
+    return this.memStorage.createQuotation(quotation); 
+  }
+  
+  async updateQuotation(id: number, quotation: any) { 
+    if (this.shouldUseDatabase('quotations')) {
+      try {
+        return await this.dbStorage.updateQuotation(id, quotation);
+      } catch (error) {
+        console.error('Database error in updateQuotation, falling back to memory:', error);
+        this.disableModule('quotations');
+      }
+    }
+    return this.memStorage.updateQuotation(id, quotation); 
+  }
+  
+  async deleteQuotation(id: number) { 
+    if (this.shouldUseDatabase('quotations')) {
+      try {
+        return await this.dbStorage.deleteQuotation(id);
+      } catch (error) {
+        console.error('Database error in deleteQuotation, falling back to memory:', error);
+        this.disableModule('quotations');
+      }
+    }
+    return this.memStorage.deleteQuotation(id); 
+  }
+  
+  async duplicateQuotation(id: number, customerId?: number) { 
+    if (this.shouldUseDatabase('quotations')) {
+      try {
+        return await this.dbStorage.duplicateQuotation(id, customerId);
+      } catch (error) {
+        console.error('Database error in duplicateQuotation, falling back to memory:', error);
+        this.disableModule('quotations');
+      }
+    }
+    return this.memStorage.duplicateQuotation(id, customerId); 
+  }
+  
+  async updateQuotationStatus(id: number, status: any) { 
+    if (this.shouldUseDatabase('quotations')) {
+      try {
+        return await this.dbStorage.updateQuotationStatus(id, status);
+      } catch (error) {
+        console.error('Database error in updateQuotationStatus, falling back to memory:', error);
+        this.disableModule('quotations');
+      }
+    }
+    return this.memStorage.updateQuotationStatus(id, status); 
+  }
 
   // User operations
   async getUsers() { 

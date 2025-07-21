@@ -24,7 +24,7 @@ import {
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
-import { eq, and, desc, asc, lt, lte, or, sql } from "drizzle-orm";
+import { eq, and, desc, asc, lt, lte, or, sql, isNotNull } from "drizzle-orm";
 import bcrypt from 'bcrypt';
 
 export class DatabaseStorage implements IStorage {
@@ -215,14 +215,15 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(customers, eq(followUps.customerId, customers.id))
       .where(
         and(
-          eq(followUps.status, "pending"),
-          lte(followUps.followUpDate, new Date())
+          eq(followUps.completed, false),
+          isNotNull(followUps.nextFollowUpDate),
+          lte(followUps.nextFollowUpDate, new Date())
         )
       )
-      .orderBy(asc(followUps.followUpDate));
+      .orderBy(asc(followUps.nextFollowUpDate));
 
     return result.map(row => ({
-      ...row.follow_ups,
+      ...row.followUps,
       customer: row.customers!
     }));
   }
@@ -463,8 +464,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createQuotation(quotation: InsertQuotation): Promise<Quotation> {
+    // Generate quotation number if not provided
+    let quotationNumber = quotation.quotationNumber;
+    if (!quotationNumber) {
+      const existingQuotations = await db.select().from(quotations);
+      const maxNumber = existingQuotations.reduce((max, q) => {
+        if (q.quotationNumber) {
+          const match = q.quotationNumber.match(/Q-(\d{4})-(\d{3})/);
+          if (match) {
+            const number = parseInt(match[2]);
+            return Math.max(max, number);
+          }
+        }
+        return max;
+      }, 0);
+      quotationNumber = `Q-${new Date().getFullYear()}-${String(maxNumber + 1).padStart(3, '0')}`;
+    }
+
     const [created] = await db.insert(quotations).values({
       ...quotation,
+      quotationNumber,
       createdAt: new Date(),
       updatedAt: new Date()
     }).returning();
