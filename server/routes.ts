@@ -3882,33 +3882,30 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     try {
       const quotationId = parseInt(req.params.id);
       
-      // Check if quotation is already converted
+      // Check if quotation exists
       const quotation = await storage.getQuotation(quotationId);
       if (!quotation) {
         return res.status(404).json({ message: "Quotation not found" });
       }
       
-      if (quotation.status === "converted") {
-        // Check if it's been converted to an invoice
-        const existingInvoice = await storage.getInvoiceByQuotation(quotationId);
-        if (existingInvoice) {
-          return res.status(400).json({ 
-            message: "Quotation has already been converted to an invoice",
-            invoiceId: existingInvoice.id
-          });
-        }
-        
-        // Check if it's been converted to a sales order
-        const salesOrders = await storage.getSalesOrders();
-        const existingSalesOrder = salesOrders.find(so => so.quotationId === quotationId);
-        if (existingSalesOrder) {
-          return res.status(400).json({ 
-            message: "Quotation has already been converted to a sales order",
-            salesOrderId: existingSalesOrder.id
-          });
-        }
-        
-        return res.status(400).json({ message: "Quotation has already been converted" });
+      // Always check for existing sales order regardless of quotation status
+      const existingSalesOrder = await storage.getSalesOrderByQuotation(quotationId);
+      if (existingSalesOrder) {
+        return res.status(400).json({ 
+          message: "Quotation has already been converted to a sales order",
+          salesOrderId: existingSalesOrder.id,
+          orderNumber: existingSalesOrder.orderNumber
+        });
+      }
+      
+      // Check if it's been converted to an invoice
+      const existingInvoice = await storage.getInvoiceByQuotation(quotationId);
+      if (existingInvoice) {
+        return res.status(400).json({ 
+          message: "Quotation has already been converted to an invoice",
+          invoiceId: existingInvoice.id,
+          invoiceNumber: existingInvoice.invoiceNumber
+        });
       }
       
       // Check if quotation is approved

@@ -1328,7 +1328,66 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createSalesOrder(salesOrder: InsertSalesOrder): Promise<SalesOrder> {
-    throw new Error("Method not implemented");
+    try {
+      const [created] = await db.insert(salesOrders).values(salesOrder).returning();
+      return created;
+    } catch (error) {
+      console.error('Error creating sales order:', error);
+      throw error;
+    }
+  }
+
+  async revertSalesOrderToQuotation(id: number): Promise<Quotation | undefined> {
+    try {
+      console.log(`Database revertSalesOrderToQuotation called for ID: ${id}`);
+      
+      // Get the sales order
+      const salesOrder = await this.getSalesOrder(id);
+      if (!salesOrder) {
+        console.error(`Sales Order with ID ${id} not found`);
+        return undefined;
+      }
+      
+      console.log(`Found sales order:`, salesOrder);
+      
+      // Check if the sales order has payments
+      if (salesOrder.amountPaid > 0) {
+        throw new Error("Cannot revert a sales order with payments");
+      }
+      
+      // Check if the sales order is completed, delivered, or cancelled
+      if (['completed', 'delivered', 'cancelled'].includes(salesOrder.status)) {
+        throw new Error(`Cannot revert a sales order with status '${salesOrder.status}'`);
+      }
+      
+      // Get the associated quotation
+      const quotation = await this.getQuotation(salesOrder.quotationId);
+      if (!quotation) {
+        console.error(`Quotation with ID ${salesOrder.quotationId} not found`);
+        return undefined;
+      }
+      
+      console.log(`Found quotation:`, quotation);
+      
+      // Update the quotation status back to 'approved' (not draft, to maintain approval)
+      const [updatedQuotation] = await db
+        .update(quotations)
+        .set({ status: 'approved' })
+        .where(eq(quotations.id, quotation.id))
+        .returning();
+      
+      console.log(`Updated quotation status to approved:`, updatedQuotation);
+      
+      // Remove the sales order
+      await db.delete(salesOrders).where(eq(salesOrders.id, id));
+      
+      console.log(`Deleted sales order with ID: ${id}`);
+      
+      return updatedQuotation;
+    } catch (error) {
+      console.error('Error reverting sales order to quotation:', error);
+      throw error;
+    }
   }
 }
 

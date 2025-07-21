@@ -1069,7 +1069,29 @@ export class StorageMigrator {
   async deleteUserPermission(...args: any[]) { return (this.memStorage as any).deleteUserPermission(...args); }
   async getAllPayments(...args: any[]) { return (this.memStorage as any).getAllPayments(...args); }
   async getAllMilestones(...args: any[]) { return (this.memStorage as any).getAllMilestones(...args); }
-  async createSalesOrder(...args: any[]) { return (this.memStorage as any).createSalesOrder(...args); }
+  async createSalesOrder(salesOrder: any) { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.createSalesOrder(salesOrder);
+      } catch (error) {
+        console.error('Database error in createSalesOrder, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).createSalesOrder(salesOrder); 
+  }
+  
+  async revertSalesOrderToQuotation(id: number) { 
+    if (this.shouldUseDatabase('sales-orders')) {
+      try {
+        return await this.dbStorage.revertSalesOrderToQuotation(id);
+      } catch (error) {
+        console.error('Database error in revertSalesOrderToQuotation, falling back to memory:', error);
+        this.disableModule('sales-orders');
+      }
+    }
+    return (this.memStorage as any).revertSalesOrderToQuotation(id); 
+  }
   
   async updateQuotationPrices(quotationId: number): Promise<void> {
     if (this.shouldUseDatabase('quotations')) {
