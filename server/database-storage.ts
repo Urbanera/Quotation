@@ -590,7 +590,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRoomWithItems(id: number): Promise<RoomWithItems | undefined> {
-    return undefined;
+    const room = await this.getRoom(id);
+    if (!room) return undefined;
+    
+    return {
+      ...room,
+      products: [], // Will be implemented when needed
+      accessories: [], // Will be implemented when needed
+      images: [], // Will be implemented when needed
+      installationCharges: [] // Will be implemented when needed
+    };
   }
 
   async createRoom(room: InsertRoom): Promise<Room> {

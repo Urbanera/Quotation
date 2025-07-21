@@ -675,7 +675,17 @@ export class StorageMigrator {
     }
     return this.memStorage.getRoom(id); 
   }
-  async getRoomWithItems(...args: any[]) { return (this.memStorage as any).getRoomWithItems(...args); }
+  async getRoomWithItems(id: number) { 
+    if (this.shouldUseDatabase('rooms')) {
+      try {
+        return await this.dbStorage.getRoomWithItems(id);
+      } catch (error) {
+        console.error('Database error in getRoomWithItems, falling back to memory:', error);
+        this.disableModule('rooms');
+      }
+    }
+    return this.memStorage.getRoomWithItems(id); 
+  }
   async createRoom(room: any) { 
     if (this.shouldUseDatabase('rooms')) {
       try {
