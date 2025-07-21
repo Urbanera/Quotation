@@ -548,6 +548,70 @@ export class DatabaseStorage implements IStorage {
     return result.count > 0;
   }
 
+  async updateQuotationPrices(quotationId: number): Promise<void> {
+    // Get all rooms for this quotation
+    const quotationRooms = await this.getRooms(quotationId);
+    
+    let totalSellingPrice = 0;
+    let totalDiscountedPrice = 0;
+    let totalInstallationCharges = 0;
+    
+    // Calculate totals from all rooms
+    for (const room of quotationRooms) {
+      if (!room.included) continue; // Skip excluded rooms
+      
+      // Get products for this room
+      const roomProducts = await this.getProducts(room.id);
+      for (const product of roomProducts) {
+        totalSellingPrice += product.sellingPrice * product.quantity;
+        totalDiscountedPrice += product.discountedPrice * product.quantity;
+      }
+      
+      // Get accessories for this room
+      const roomAccessories = await this.getAccessories(room.id);
+      for (const accessory of roomAccessories) {
+        totalSellingPrice += accessory.sellingPrice * accessory.quantity;
+        totalDiscountedPrice += accessory.discountedPrice * accessory.quantity;
+      }
+      
+      // Get installation charges for this room
+      const roomCharges = await this.getInstallationCharges(room.id);
+      for (const charge of roomCharges) {
+        totalInstallationCharges += charge.amount;
+      }
+      
+      // Add room's own prices
+      totalSellingPrice += room.sellingPrice;
+      totalDiscountedPrice += room.discountedPrice;
+    }
+    
+    // Get current quotation to preserve other fields
+    const currentQuotation = await this.getQuotation(quotationId);
+    if (!currentQuotation) return;
+    
+    // Calculate GST and final price
+    const globalDiscount = currentQuotation.globalDiscount || 0;
+    const discountedTotal = totalDiscountedPrice * (1 - globalDiscount / 100);
+    const installationHandling = currentQuotation.installationHandling || 0;
+    const subtotal = discountedTotal + totalInstallationCharges + installationHandling;
+    const gstPercentage = currentQuotation.gstPercentage || 18;
+    const gstAmount = subtotal * (gstPercentage / 100);
+    const finalPrice = subtotal + gstAmount;
+    
+    // Update quotation with calculated prices
+    await db
+      .update(quotations)
+      .set({
+        totalSellingPrice,
+        totalDiscountedPrice,
+        totalInstallationCharges,
+        gstAmount,
+        finalPrice,
+        updatedAt: new Date()
+      })
+      .where(eq(quotations.id, quotationId));
+  }
+
   // ===== STUB IMPLEMENTATIONS =====
   // These are minimal implementations to satisfy the interface
   // Full implementations would be added as needed
@@ -634,7 +698,8 @@ export class DatabaseStorage implements IStorage {
     
     const [created] = await db.insert(rooms).values(roomData).returning();
     
-    // Note: updateQuotationPrices would need to be implemented for full functionality
+    // Update quotation prices after creating room
+    await this.updateQuotationPrices(room.quotationId);
     
     return created;
   }
@@ -671,6 +736,13 @@ export class DatabaseStorage implements IStorage {
 
   async createProduct(product: InsertProduct): Promise<Product> {
     const [created] = await db.insert(products).values(product).returning();
+    
+    // Get room to find quotation ID
+    const room = await this.getRoom(product.roomId);
+    if (room) {
+      await this.updateQuotationPrices(room.quotationId);
+    }
+    
     return created;
   }
 
@@ -692,6 +764,13 @@ export class DatabaseStorage implements IStorage {
 
   async createAccessory(accessory: InsertAccessory): Promise<Accessory> {
     const [created] = await db.insert(accessories).values(accessory).returning();
+    
+    // Get room to find quotation ID
+    const room = await this.getRoom(accessory.roomId);
+    if (room) {
+      await this.updateQuotationPrices(room.quotationId);
+    }
+    
     return created;
   }
 
@@ -733,6 +812,13 @@ export class DatabaseStorage implements IStorage {
 
   async createInstallationCharge(charge: any): Promise<InstallationCharge> {
     const [created] = await db.insert(installationCharges).values(charge).returning();
+    
+    // Get room to find quotation ID
+    const room = await this.getRoom(charge.roomId);
+    if (room) {
+      await this.updateQuotationPrices(room.quotationId);
+    }
+    
     return created;
   }
 

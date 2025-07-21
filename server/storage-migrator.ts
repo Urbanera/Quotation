@@ -951,4 +951,16 @@ export class StorageMigrator {
   async getAllPayments(...args: any[]) { return (this.memStorage as any).getAllPayments(...args); }
   async getAllMilestones(...args: any[]) { return (this.memStorage as any).getAllMilestones(...args); }
   async createSalesOrder(...args: any[]) { return (this.memStorage as any).createSalesOrder(...args); }
+  
+  async updateQuotationPrices(quotationId: number): Promise<void> {
+    if (this.shouldUseDatabase('quotations')) {
+      try {
+        return await (this.dbStorage as any).updateQuotationPrices(quotationId);
+      } catch (error) {
+        console.error('Database error in updateQuotationPrices, falling back to memory:', error);
+        this.disableModule('quotations');
+      }
+    }
+    // Memory storage doesn't have this method, so we skip it
+  }
 }
