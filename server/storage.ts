@@ -3638,4 +3638,11 @@ export class MemStorage implements IStorage {
 
 // For now, continue using MemStorage but with database persistence
 // We'll migrate to full database storage in a future update
-export const storage = new MemStorage();
+// Import the safe storage migrator
+import { StorageMigrator } from "./storage-migrator";
+
+// Use the migrator which provides gradual database integration with fallbacks
+export const storage = new StorageMigrator();
+
+// Keep the MemStorage available for direct access if needed
+export const memStorage = new MemStorage();
