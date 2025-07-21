@@ -805,7 +805,17 @@ export class StorageMigrator {
     }
     return this.memStorage.deleteImage(id); 
   }
-  async updateImage(...args: any[]) { return (this.memStorage as any).updateImage(...args); }
+  async updateImage(id: number, imageData: any) { 
+    if (this.shouldUseDatabase('images')) {
+      try {
+        return await this.dbStorage.updateImage(id, imageData);
+      } catch (error) {
+        console.error('Database error in updateImage, falling back to memory:', error);
+        this.disableModule('images');
+      }
+    }
+    return this.memStorage.updateImage(id, imageData); 
+  }
   async reorderImages(imageIds: number[]) { 
     if (this.shouldUseDatabase('images')) {
       try {

@@ -481,7 +481,7 @@ export class DatabaseStorage implements IStorage {
           ...room,
           products: await this.getProducts(room.id),
           accessories: await this.getAccessories(room.id),
-          images: [], // Will be implemented when needed
+          images: await this.getImages(room.id),
           installationCharges: await this.getInstallationCharges(room.id)
         };
         roomsWithItems.push(roomWithItems);
@@ -849,6 +849,19 @@ export class DatabaseStorage implements IStorage {
   async deleteImage(id: number): Promise<boolean> {
     const result = await db.delete(images).where(eq(images.id, id));
     return result.rowCount > 0;
+  }
+
+  async updateImage(id: number, imageData: any): Promise<boolean> {
+    try {
+      const result = await db
+        .update(images)
+        .set(imageData)
+        .where(eq(images.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error updating image:', error);
+      return false;
+    }
   }
 
   async reorderImages(imageIds: number[]): Promise<boolean> {
