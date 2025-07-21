@@ -4043,6 +4043,20 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update invoice" });
     }
   });
+
+  // Update invoice with PUT (for full updates including invoice number)
+  app.put("/api/invoices/:id", authenticateToken, requirePermission('invoices', 'edit'), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const invoice = await storage.updateInvoice(id, req.body);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      res.json(invoice);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update invoice" });
+    }
+  });
   
   // Cancel invoice
   app.delete("/api/invoices/:id", authenticateToken, requirePermission('invoices', 'delete'), async (req, res) => {

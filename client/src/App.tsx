@@ -28,6 +28,7 @@ import EditPaymentPage from "./pages/payments/edit";
 import PrintReceiptPage from "./pages/payments/print-receipt";
 import InvoicesPage from "./pages/invoices";
 import InvoiceDetailPage from "./pages/invoices/[id]";
+import EditInvoicePage from "./pages/invoices/edit-invoice";
 import PrintInvoiceContainer from "./pages/invoices/print-invoice-container";
 import AccessoryCatalogPage from "./pages/accessories";
 import UsersPage from "./pages/users/UsersPage";
@@ -100,6 +101,7 @@ function AppRouter() {
             {/* Invoice Routes */}
             <Route path="/invoices" component={InvoicesPage} />
             <Route path="/invoices/:id" component={InvoiceDetailPage} />
+            <Route path="/invoices/edit/:id" component={EditInvoicePage} />
             
             {/* Other Routes */}
             <Route path="/accessories" component={AccessoryCatalogPage} />

@@ -1209,14 +1209,8 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createInvoiceFromQuotation(quotationId: number, data?: Partial<InsertInvoice>): Promise<Invoice> {
-    // Get quotation details
-    const quotation = await this.getQuotation(quotationId);
-    if (!quotation) {
-      throw new Error("Quotation not found");
-    }
-    
-    // Generate invoice number
+  // Helper method to generate next invoice number based on existing invoices
+  private async generateNextInvoiceNumber(): Promise<string> {
     const existingInvoices = await db.select().from(invoices);
     const maxNumber = existingInvoices.reduce((max, invoice) => {
       if (invoice.invoiceNumber) {
@@ -1228,7 +1222,18 @@ export class DatabaseStorage implements IStorage {
       }
       return max;
     }, 0);
-    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(maxNumber + 1).padStart(3, '0')}`;
+    return `INV-${new Date().getFullYear()}-${String(maxNumber + 1).padStart(3, '0')}`;
+  }
+
+  async createInvoiceFromQuotation(quotationId: number, data?: Partial<InsertInvoice>): Promise<Invoice> {
+    // Get quotation details
+    const quotation = await this.getQuotation(quotationId);
+    if (!quotation) {
+      throw new Error("Quotation not found");
+    }
+    
+    // Generate invoice number using helper method
+    const invoiceNumber = await this.generateNextInvoiceNumber();
     
     // Prepare insert values
     const insertData: Partial<InsertInvoice> = {
@@ -1271,19 +1276,8 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`Quotation with ID ${quotation.id} is already converted to Invoice #${existingInvoice.invoiceNumber}`);
     }
     
-    // Generate invoice number
-    const existingInvoices = await db.select().from(invoices);
-    const maxNumber = existingInvoices.reduce((max, invoice) => {
-      if (invoice.invoiceNumber) {
-        const match = invoice.invoiceNumber.match(/INV-(\d{4})-(\d{3})/);
-        if (match) {
-          const number = parseInt(match[2]);
-          return Math.max(max, number);
-        }
-      }
-      return max;
-    }, 0);
-    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(maxNumber + 1).padStart(3, '0')}`;
+    // Generate invoice number using helper method
+    const invoiceNumber = await this.generateNextInvoiceNumber();
     
     // Prepare insert values
     const insertData: Partial<InsertInvoice> = {
