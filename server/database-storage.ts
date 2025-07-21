@@ -445,7 +445,15 @@ export class DatabaseStorage implements IStorage {
   // These would need to be implemented for full functionality
 
   async getQuotations(): Promise<Quotation[]> {
-    return db.select().from(quotations).orderBy(desc(quotations.createdAt));
+    try {
+      const result = await db.select().from(quotations)
+        .orderBy(desc(quotations.createdAt));
+      console.log(`Database getQuotations returning ${result.length} quotations`);
+      return result;
+    } catch (error) {
+      console.error('Error fetching quotations from database:', error);
+      throw error;
+    }
   }
 
   async getQuotation(id: number): Promise<Quotation | undefined> {
