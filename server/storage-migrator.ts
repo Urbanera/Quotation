@@ -761,12 +761,62 @@ export class StorageMigrator {
   }
   async updateAccessory(...args: any[]) { return (this.memStorage as any).updateAccessory(...args); }
   async deleteAccessory(...args: any[]) { return (this.memStorage as any).deleteAccessory(...args); }
-  async getImages(...args: any[]) { return (this.memStorage as any).getImages(...args); }
-  async getImage(...args: any[]) { return (this.memStorage as any).getImage(...args); }
-  async createImage(...args: any[]) { return (this.memStorage as any).createImage(...args); }
-  async deleteImage(...args: any[]) { return (this.memStorage as any).deleteImage(...args); }
+  async getImages(roomId: number) { 
+    if (this.shouldUseDatabase('images')) {
+      try {
+        return await this.dbStorage.getImages(roomId);
+      } catch (error) {
+        console.error('Database error in getImages, falling back to memory:', error);
+        this.disableModule('images');
+      }
+    }
+    return this.memStorage.getImages(roomId); 
+  }
+  async getImage(id: number) { 
+    if (this.shouldUseDatabase('images')) {
+      try {
+        return await this.dbStorage.getImage(id);
+      } catch (error) {
+        console.error('Database error in getImage, falling back to memory:', error);
+        this.disableModule('images');
+      }
+    }
+    return this.memStorage.getImage(id); 
+  }
+  async createImage(image: any) { 
+    if (this.shouldUseDatabase('images')) {
+      try {
+        return await this.dbStorage.createImage(image);
+      } catch (error) {
+        console.error('Database error in createImage, falling back to memory:', error);
+        this.disableModule('images');
+      }
+    }
+    return this.memStorage.createImage(image); 
+  }
+  async deleteImage(id: number) { 
+    if (this.shouldUseDatabase('images')) {
+      try {
+        return await this.dbStorage.deleteImage(id);
+      } catch (error) {
+        console.error('Database error in deleteImage, falling back to memory:', error);
+        this.disableModule('images');
+      }
+    }
+    return this.memStorage.deleteImage(id); 
+  }
   async updateImage(...args: any[]) { return (this.memStorage as any).updateImage(...args); }
-  async reorderImages(...args: any[]) { return (this.memStorage as any).reorderImages(...args); }
+  async reorderImages(imageIds: number[]) { 
+    if (this.shouldUseDatabase('images')) {
+      try {
+        return await this.dbStorage.reorderImages(imageIds);
+      } catch (error) {
+        console.error('Database error in reorderImages, falling back to memory:', error);
+        this.disableModule('images');
+      }
+    }
+    return this.memStorage.reorderImages(imageIds); 
+  }
   async getInstallationCharges(roomId: number) { 
     if (this.shouldUseDatabase('installation-charges')) {
       try {

@@ -684,7 +684,7 @@ export class DatabaseStorage implements IStorage {
       ...room,
       products: await this.getProducts(room.id),
       accessories: await this.getAccessories(room.id),
-      images: [], // Will be implemented when needed
+      images: await this.getImages(room.id),
       installationCharges: await this.getInstallationCharges(room.id)
     };
   }
@@ -803,23 +803,68 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getImages(roomId: number): Promise<Image[]> {
-    return [];
+    // Define the priority ordering of image types
+    const typeOrderPriority: Record<string, number> = {
+      'TOP VIEW 3D': 1,
+      'TOP VIEW 2D': 2,
+      'VIEW 1 3D': 3,
+      'VIEW 1 2D': 4,
+      'VIEW 2 3D': 5,
+      'VIEW 2 2D': 6,
+      'VIEW 3 3D': 7,
+      'VIEW 3 2D': 8,
+      'VIEW 4 3D': 9,
+      'VIEW 4 2D': 10,
+      'WARDROBE 3D': 11,
+      'WARDROBE 2D': 12,
+      'OTHER': 13,
+    };
+
+    const roomImages = await db.select().from(images).where(eq(images.roomId, roomId));
+    
+    return roomImages.sort((a, b) => {
+      // First sort by type priority
+      const aTypePriority = typeOrderPriority[a.type || 'OTHER'] || 999;
+      const bTypePriority = typeOrderPriority[b.type || 'OTHER'] || 999;
+      
+      if (aTypePriority !== bTypePriority) {
+        return aTypePriority - bTypePriority;
+      }
+      
+      // If same type, then sort by order field
+      return a.order - b.order;
+    });
   }
 
   async getImage(id: number): Promise<Image | undefined> {
-    return undefined;
+    const [image] = await db.select().from(images).where(eq(images.id, id));
+    return image || undefined;
   }
 
   async createImage(image: InsertImage): Promise<Image> {
-    throw new Error("Method not implemented");
+    const [created] = await db.insert(images).values(image).returning();
+    return created;
   }
 
   async deleteImage(id: number): Promise<boolean> {
-    return false;
+    const result = await db.delete(images).where(eq(images.id, id));
+    return result.rowCount > 0;
   }
 
   async reorderImages(imageIds: number[]): Promise<boolean> {
-    return false;
+    try {
+      // Update order for each image
+      for (let i = 0; i < imageIds.length; i++) {
+        await db
+          .update(images)
+          .set({ order: i })
+          .where(eq(images.id, imageIds[i]));
+      }
+      return true;
+    } catch (error) {
+      console.error('Error reordering images:', error);
+      return false;
+    }
   }
 
   async getInstallationCharges(roomId: number): Promise<InstallationCharge[]> {
