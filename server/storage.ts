@@ -1369,10 +1369,16 @@ export class MemStorage implements IStorage {
   
   async getQuotationWithDetails(id: number): Promise<QuotationWithDetails | undefined> {
     const quotation = this.quotations.get(id);
-    if (!quotation) return undefined;
+    if (!quotation) {
+      console.log(`Quotation ${id} not found in memory storage`);
+      return undefined;
+    }
     
     const customer = this.customers.get(quotation.customerId);
-    if (!customer) return undefined;
+    if (!customer) {
+      console.log(`Customer ${quotation.customerId} not found for quotation ${id}`);
+      return undefined;
+    }
     
     const roomsList = Array.from(this.rooms.values())
       .filter(room => room.quotationId === id)

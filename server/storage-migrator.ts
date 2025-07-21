@@ -335,6 +335,32 @@ export class StorageMigrator {
   async getQuotationWithDetails(id: number) { 
     try {
       console.log(`Getting quotation details for ID: ${id}`);
+      
+      // Check if quotation exists first
+      const quotation = await this.memStorage.getQuotation(id);
+      if (!quotation) {
+        console.log(`Quotation ${id} not found`);
+        return undefined;
+      }
+      
+      // Check if customer exists (could be in database)
+      let customer;
+      if (this.isDatabaseEnabled('customers')) {
+        try {
+          customer = await this.dbStorage.getCustomer(quotation.customerId);
+        } catch (error) {
+          console.log('Database customer lookup failed, trying memory:', error);
+          customer = await this.memStorage.getCustomer(quotation.customerId);
+        }
+      } else {
+        customer = await this.memStorage.getCustomer(quotation.customerId);
+      }
+      
+      if (!customer) {
+        console.log(`Customer ${quotation.customerId} not found for quotation ${id}`);
+        return undefined;
+      }
+      
       const result = await this.memStorage.getQuotationWithDetails(id);
       console.log(`Quotation details result:`, result ? 'found' : 'not found');
       return result;
