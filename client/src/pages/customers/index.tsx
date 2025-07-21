@@ -80,6 +80,10 @@ export default function CustomersList() {
   const [deleteCustomerId, setDeleteCustomerId] = useState<number | null>(null);
   const [editingStageCustomer, setEditingStageCustomer] = useState<{ id: number, name: string, currentStage: string } | null>(null);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  
   // Import/Export functionality
   const [importDialogOpen, setImportDialogOpen] = useState<boolean>(false);
   const [importStatus, setImportStatus] = useState<{ 
@@ -102,18 +106,31 @@ export default function CustomersList() {
     }
   });
 
-  // Fetch customers
-  const { data: customers, isLoading, error, refetch: refetchCustomers } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
+  // Fetch customers with pagination
+  const { data: customersResponse, isLoading, error, refetch: refetchCustomers } = useQuery({
+    queryKey: ["/api/customers", { page: currentPage, limit: pageSize, search: searchTerm, followUpFilter }],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/customers");
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: pageSize.toString(),
+        ...(searchTerm && { search: searchTerm }),
+        ...(followUpFilter !== 'all' && { followUpFilter })
+      });
+      
+      const res = await apiRequest("GET", `/api/customers?${params}`);
       const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      
+      // Handle both old and new API response formats
+      if (Array.isArray(data)) {
+        return { customers: data, pagination: { page: 1, totalCustomers: data.length, totalPages: 1 } };
+      }
+      return data;
     },
-    // Decrease staleTime to refresh more quickly
-    staleTime: 0, // Always consider stale
-    select: (data) => Array.isArray(data) ? data : [],
+    staleTime: 0,
   });
+
+  const customers = customersResponse?.customers || [];
+  const pagination = customersResponse?.pagination;
 
   // Get all customer follow-ups for counting
   const { data: allFollowUps } = useQuery<FollowUp[]>({
@@ -702,6 +719,7 @@ export default function CustomersList() {
                           ? prev.filter(s => s !== "new")
                           : [...prev, "new"]
                       );
+                      setCurrentPage(1);
                     }}
                   >
                     <div className="text-sm font-semibold">{stageCounts.new}</div>
@@ -715,6 +733,7 @@ export default function CustomersList() {
                           ? prev.filter(s => s !== "pipeline")
                           : [...prev, "pipeline"]
                       );
+                      setCurrentPage(1);
                     }}
                   >
                     <div className="text-sm font-semibold">{stageCounts.pipeline}</div>
@@ -728,6 +747,7 @@ export default function CustomersList() {
                           ? prev.filter(s => s !== "cold")
                           : [...prev, "cold"]
                       );
+                      setCurrentPage(1);
                     }}
                   >
                     <div className="text-sm font-semibold">{stageCounts.cold}</div>
@@ -741,6 +761,7 @@ export default function CustomersList() {
                           ? prev.filter(s => s !== "warm")
                           : [...prev, "warm"]
                       );
+                      setCurrentPage(1);
                     }}
                   >
                     <div className="text-sm font-semibold">{stageCounts.warm}</div>
@@ -754,6 +775,7 @@ export default function CustomersList() {
                           ? prev.filter(s => s !== "booked")
                           : [...prev, "booked"]
                       );
+                      setCurrentPage(1);
                     }}
                     style={{ gridColumn: 'span 2' }}
                   >
@@ -768,6 +790,7 @@ export default function CustomersList() {
                           ? prev.filter(s => s !== "lost")
                           : [...prev, "lost"]
                       );
+                      setCurrentPage(1);
                     }}
                     style={{ gridColumn: 'span 2' }}
                   >
@@ -792,28 +815,40 @@ export default function CustomersList() {
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <div 
                     className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "today" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setFollowUpFilter(followUpFilter === "today" ? "all" : "today")}
+                    onClick={() => {
+                      setFollowUpFilter(followUpFilter === "today" ? "all" : "today");
+                      setCurrentPage(1);
+                    }}
                   >
                     <div className="text-sm font-semibold">{followUpCounts.today}</div>
                     <div className="text-xs">Today</div>
                   </div>
                   <div 
                     className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "yesterday" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setFollowUpFilter(followUpFilter === "yesterday" ? "all" : "yesterday")}
+                    onClick={() => {
+                      setFollowUpFilter(followUpFilter === "yesterday" ? "all" : "yesterday");
+                      setCurrentPage(1);
+                    }}
                   >
                     <div className="text-sm font-semibold">{followUpCounts.yesterday}</div>
                     <div className="text-xs">Yesterday</div>
                   </div>
                   <div 
                     className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "missed" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setFollowUpFilter(followUpFilter === "missed" ? "all" : "missed")}
+                    onClick={() => {
+                      setFollowUpFilter(followUpFilter === "missed" ? "all" : "missed");
+                      setCurrentPage(1);
+                    }}
                   >
                     <div className="text-sm font-semibold">{followUpCounts.missed}</div>
                     <div className="text-xs">Missed</div>
                   </div>
                   <div 
                     className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${followUpFilter === "future" ? "ring-2 ring-white" : ""}`}
-                    onClick={() => setFollowUpFilter(followUpFilter === "future" ? "all" : "future")}
+                    onClick={() => {
+                      setFollowUpFilter(followUpFilter === "future" ? "all" : "future");
+                      setCurrentPage(1);
+                    }}
                   >
                     <div className="text-sm font-semibold">{followUpCounts.future}</div>
                     <div className="text-xs">Future</div>
@@ -836,7 +871,10 @@ export default function CustomersList() {
                       <div 
                         key={source}
                         className={`bg-white/10 py-1 px-2 rounded cursor-pointer hover:bg-white/20 transition-colors ${leadSourceFilter === source ? "ring-2 ring-white" : ""}`}
-                        onClick={() => setLeadSourceFilter(leadSourceFilter === source ? "all" : source)}
+                        onClick={() => {
+                          setLeadSourceFilter(leadSourceFilter === source ? "all" : source);
+                          setCurrentPage(1);
+                        }}
                       >
                         <div className="text-sm font-semibold">{leadSourcesData.counts[source] || 0}</div>
                         <div className="text-xs truncate">{source}</div>
@@ -859,7 +897,10 @@ export default function CustomersList() {
                 Stage: {stage.charAt(0).toUpperCase() + stage.slice(1)}
                 <X 
                   className="h-3 w-3 ml-1 cursor-pointer" 
-                  onClick={() => setSelectedStages(prev => prev.filter(s => s !== stage))}
+                  onClick={() => {
+                    setSelectedStages(prev => prev.filter(s => s !== stage));
+                    setCurrentPage(1);
+                  }}
                 />
               </Badge>
             ))}
@@ -869,7 +910,10 @@ export default function CustomersList() {
                 Follow-up: {followUpFilter && typeof followUpFilter === 'string' ? (followUpFilter.charAt(0).toUpperCase() + followUpFilter.slice(1)) : 'All'}
                 <X 
                   className="h-3 w-3 ml-1 cursor-pointer" 
-                  onClick={() => setFollowUpFilter("all")}
+                  onClick={() => {
+                    setFollowUpFilter("all");
+                    setCurrentPage(1);
+                  }}
                 />
               </Badge>
             )}
@@ -879,7 +923,10 @@ export default function CustomersList() {
                 Source: {leadSourceFilter}
                 <X 
                   className="h-3 w-3 ml-1 cursor-pointer" 
-                  onClick={() => setLeadSourceFilter("all")}
+                  onClick={() => {
+                    setLeadSourceFilter("all");
+                    setCurrentPage(1);
+                  }}
                 />
               </Badge>
             )}
@@ -893,6 +940,7 @@ export default function CustomersList() {
                   setSelectedStages([]);
                   setFollowUpFilter("all");
                   setLeadSourceFilter("all");
+                  setCurrentPage(1);
                 }}
               >
                 Clear All
@@ -907,13 +955,19 @@ export default function CustomersList() {
               <Input
                 placeholder="Search by name, email, or phone..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
                 className="pl-10 pr-10"
               />
               {searchTerm && (
                 <X
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
-                  onClick={() => setSearchTerm("")}
+                  onClick={() => {
+                  setSearchTerm("");
+                  setCurrentPage(1);
+                }}
                 />
               )}
             </div>
@@ -1086,6 +1140,83 @@ export default function CustomersList() {
               </TableBody>
             </Table>
           </div>
+          
+          {/* Pagination Controls */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.totalCustomers)} of {pagination.totalCustomers} customers
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={!pagination.hasPrevPage}
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (pagination.totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= pagination.totalPages - 2) {
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === currentPage ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))}
+                  disabled={!pagination.hasNextPage}
+                >
+                  Next
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Rows per page:</span>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => {
+                    setPageSize(parseInt(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
           
       {/* Import Dialog */}
       <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>

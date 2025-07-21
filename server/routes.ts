@@ -622,6 +622,9 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     try {
       const stage = req.query.stage as string | undefined;
       const followUpFilter = req.query.followUpFilter as string | undefined;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const search = req.query.search as string | undefined;
       
       let customers = [];
       
@@ -631,8 +634,20 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         customers = await storage.getCustomers();
       }
       
+      // Apply search filter if provided
+      if (search && search.trim()) {
+        const searchLower = search.toLowerCase().trim();
+        customers = customers.filter(customer => 
+          customer.name.toLowerCase().includes(searchLower) ||
+          customer.email.toLowerCase().includes(searchLower) ||
+          customer.phone.includes(searchLower) ||
+          customer.address?.toLowerCase().includes(searchLower) ||
+          customer.leadSource?.toLowerCase().includes(searchLower)
+        );
+      }
+      
       // If followUpFilter is specified, filter customers based on their follow-ups
-      if (followUpFilter) {
+      if (followUpFilter && followUpFilter !== 'all') {
         // Get all follow-ups
         const allFollowUps = await storage.getAllFollowUps();
         
@@ -667,7 +682,23 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         customers = customers.filter(customer => matchingCustomerIds.has(customer.id));
       }
       
-      res.json(customers);
+      // Calculate pagination
+      const totalCustomers = customers.length;
+      const totalPages = Math.ceil(totalCustomers / limit);
+      const offset = (page - 1) * limit;
+      const paginatedCustomers = customers.slice(offset, offset + limit);
+      
+      res.json({
+        customers: paginatedCustomers,
+        pagination: {
+          page,
+          limit,
+          totalCustomers,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }
+      });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customers" });
     }
