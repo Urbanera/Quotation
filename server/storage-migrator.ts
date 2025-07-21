@@ -334,7 +334,10 @@ export class StorageMigrator {
   async getQuotation(id: number) { return this.memStorage.getQuotation(id); }
   async getQuotationWithDetails(id: number) { 
     try {
-      return await this.memStorage.getQuotationWithDetails(id);
+      console.log(`Getting quotation details for ID: ${id}`);
+      const result = await this.memStorage.getQuotationWithDetails(id);
+      console.log(`Quotation details result:`, result ? 'found' : 'not found');
+      return result;
     } catch (error) {
       console.error('Error getting quotation details:', error);
       return undefined;
