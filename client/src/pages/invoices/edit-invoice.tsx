@@ -258,32 +258,34 @@ export default function EditInvoicePage() {
       </Card>
 
       {/* Read-only invoice info */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Invoice Information</CardTitle>
-          <CardDescription>Read-only information about this invoice</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {invoice && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Invoice Information</CardTitle>
+            <CardDescription>Read-only information about this invoice</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="text-sm font-medium text-gray-500">Total Amount</Label>
-              <p className="text-sm">₹{invoice.totalAmount.toLocaleString()}</p>
+              <p className="text-sm">₹{invoice?.totalAmount?.toLocaleString() || '0'}</p>
             </div>
             <div>
               <Label className="text-sm font-medium text-gray-500">Amount Paid</Label>
-              <p className="text-sm">₹{invoice.amountPaid.toLocaleString()}</p>
+              <p className="text-sm">₹{invoice?.amountPaid?.toLocaleString() || '0'}</p>
             </div>
             <div>
               <Label className="text-sm font-medium text-gray-500">Amount Due</Label>
-              <p className="text-sm">₹{invoice.amountDue.toLocaleString()}</p>
+              <p className="text-sm">₹{invoice?.amountDue?.toLocaleString() || '0'}</p>
             </div>
             <div>
               <Label className="text-sm font-medium text-gray-500">Created Date</Label>
-              <p className="text-sm">{format(new Date(invoice.createdAt), 'MMM dd, yyyy HH:mm')}</p>
+              <p className="text-sm">{invoice?.createdAt ? format(new Date(invoice.createdAt), 'MMM dd, yyyy HH:mm') : 'N/A'}</p>
             </div>
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
