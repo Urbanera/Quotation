@@ -1,10 +1,10 @@
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppSettings, InsertAppSettings, appSettingsFormSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 import { 
   Dialog,
   DialogContent,
@@ -110,8 +110,51 @@ export function AppSettingsForm() {
       whatsappPaymentReceiptTemplate: "payment_receipt",
       whatsappInvoiceTemplate: "invoice_send",
     },
-    values: settings || undefined,
   });
+
+  // Reset form values when settings are loaded
+  useEffect(() => {
+    if (settings) {
+      form.reset({
+        defaultGlobalDiscount: settings.defaultGlobalDiscount || 0,
+        defaultGstPercentage: settings.defaultGstPercentage || 18,
+        handlingChargesSmallRooms: settings.handlingChargesSmallRooms || 1000,
+        handlingChargesMediumRooms: settings.handlingChargesMediumRooms || 2000,
+        handlingChargesLargeRooms: settings.handlingChargesLargeRooms || 3000,
+        defaultTermsAndConditions: settings.defaultTermsAndConditions || "",
+        receiptTermsAndConditions: settings.receiptTermsAndConditions || "",
+        presentationTermsAndConditions: settings.presentationTermsAndConditions || "",
+        presentationSecondPageContent: settings.presentationSecondPageContent || "",
+        quotationTemplateId: settings.quotationTemplateId || "default",
+        presentationTemplateId: settings.presentationTemplateId || "default",
+        requiredAccessories: settings.requiredAccessories || "skirting,handles,sliding mechanism,t profile",
+        leadSourceOptions: settings.leadSourceOptions || "walk-in,website,referral,social media,other",
+        // Email settings
+        smtpHost: settings.smtpHost || "",
+        smtpPort: settings.smtpPort || 587,
+        smtpSecure: settings.smtpSecure || false,
+        smtpUser: settings.smtpUser || "",
+        smtpPassword: settings.smtpPassword || "",
+        emailFrom: settings.emailFrom || "",
+        emailReplyTo: settings.emailReplyTo || "",
+        emailFooter: settings.emailFooter || "",
+        emailEnabled: settings.emailEnabled || false,
+        // WhatsApp settings
+        whatsappEnabled: settings.whatsappEnabled || false,
+        whatsappPhoneNumberId: settings.whatsappPhoneNumberId || "",
+        whatsappAccessToken: settings.whatsappAccessToken || "",
+        whatsappBusinessAccountId: settings.whatsappBusinessAccountId || "",
+        whatsappGreetingTemplate: settings.whatsappGreetingTemplate || "hello_world",
+        whatsappLayoutRequestTemplate: settings.whatsappLayoutRequestTemplate || "layout_request",
+        whatsappShowroomVisitTemplate: settings.whatsappShowroomVisitTemplate || "showroom_visit",
+        whatsappMissedCallTemplate: settings.whatsappMissedCallTemplate || "missed_call",
+        whatsappMeetingScheduleTemplate: settings.whatsappMeetingScheduleTemplate || "meeting_schedule",
+        whatsappQuotationTemplate: settings.whatsappQuotationTemplate || "quotation_send",
+        whatsappPaymentReceiptTemplate: settings.whatsappPaymentReceiptTemplate || "payment_receipt",
+        whatsappInvoiceTemplate: settings.whatsappInvoiceTemplate || "invoice_send",
+      });
+    }
+  }, [settings, form]);
 
   const checkEmailConfig = async () => {
     setIsCheckingEmail(true);
