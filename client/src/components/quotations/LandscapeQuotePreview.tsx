@@ -146,7 +146,11 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
             
             {/* Features Content */}
             <div className="mb-6">
-              {appSettings?.presentationSecondPageContent ? (
+              {appSettings?.landscapeSecondPageContent ? (
+                <div className="text-sm text-gray-700 space-y-2">
+                  <div dangerouslySetInnerHTML={{ __html: appSettings.landscapeSecondPageContent }} />
+                </div>
+              ) : appSettings?.presentationSecondPageContent ? (
                 <div className="text-sm text-gray-700 space-y-2">
                   <div dangerouslySetInnerHTML={{ __html: appSettings.presentationSecondPageContent }} />
                 </div>
@@ -446,7 +450,9 @@ const LandscapeQuotePreview: React.FC<LandscapeQuotePreviewProps> = ({
             </div>
             
             <div className="overflow-auto mt-4 mb-auto ml-6 mr-6 mb-6">
-              {appSettings?.presentationTermsAndConditions ? (
+              {appSettings?.landscapeTermsAndConditions ? (
+                <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: appSettings.landscapeTermsAndConditions }} />
+              ) : appSettings?.presentationTermsAndConditions ? (
                 <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: appSettings.presentationTermsAndConditions }} />
               ) : (
                 <div className="text-sm text-gray-700 leading-relaxed space-y-4">

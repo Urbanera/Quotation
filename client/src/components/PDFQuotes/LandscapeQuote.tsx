@@ -568,7 +568,11 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
         
         {/* Features Content */}
         <View style={{ padding: 30 }}>
-          {appSettings?.presentationSecondPageContent ? (
+          {appSettings?.landscapeSecondPageContent ? (
+            <Text style={{ fontSize: 12, lineHeight: 1.6, color: '#333333', textAlign: 'justify' }}>
+              {appSettings.landscapeSecondPageContent.replace(/<[^>]*>?/gm, ' ')}
+            </Text>
+          ) : appSettings?.presentationSecondPageContent ? (
             <Text style={{ fontSize: 12, lineHeight: 1.6, color: '#333333', textAlign: 'justify' }}>
               {appSettings.presentationSecondPageContent.replace(/<[^>]*>?/gm, ' ')}
             </Text>
@@ -847,7 +851,11 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
           </View>
           
           <View style={{ marginTop: 20, marginLeft: 30, marginRight: 30, marginBottom: 30 }}>
-            {appSettings?.presentationTermsAndConditions ? (
+            {appSettings?.landscapeTermsAndConditions ? (
+              <Text style={{ fontSize: 12, lineHeight: 1.5, color: '#333333' }}>
+                {appSettings.landscapeTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
+              </Text>
+            ) : appSettings?.presentationTermsAndConditions ? (
               <Text style={{ fontSize: 12, lineHeight: 1.5, color: '#333333' }}>
                 {appSettings.presentationTermsAndConditions.replace(/<[^>]*>?/gm, ' ')}
               </Text>

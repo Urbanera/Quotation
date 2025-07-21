@@ -52,6 +52,9 @@ export const appSettings = pgTable("app_settings", {
   receiptTermsAndConditions: text("receipt_terms_and_conditions"),
   presentationTermsAndConditions: text("presentation_terms_and_conditions"),
   presentationSecondPageContent: text("presentation_second_page_content"),
+  // Landscape-specific content templates
+  landscapeSecondPageContent: text("landscape_second_page_content"),
+  landscapeTermsAndConditions: text("landscape_terms_and_conditions"),
   quotationTemplateId: text("quotation_template_id").default("default"),
   presentationTemplateId: text("presentation_template_id").default("default"),
   requiredAccessories: text("required_accessories").default("skirting,handles,sliding mechanism,t profile"),
@@ -472,6 +475,9 @@ export const appSettingsFormSchema = z.object({
   receiptTermsAndConditions: z.string().optional().or(z.literal("")),
   presentationTermsAndConditions: z.string().optional().or(z.literal("")),
   presentationSecondPageContent: z.string().optional().or(z.literal("")),
+  // Landscape-specific content templates
+  landscapeSecondPageContent: z.string().optional().or(z.literal("")),
+  landscapeTermsAndConditions: z.string().optional().or(z.literal("")),
   quotationTemplateId: z.string().default("default"),
   presentationTemplateId: z.string().default("default"),
   requiredAccessories: z.string().default("skirting,handles,sliding mechanism,t profile"),

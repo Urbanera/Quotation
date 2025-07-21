@@ -82,6 +82,9 @@ export function AppSettingsForm() {
       receiptTermsAndConditions: "",
       presentationTermsAndConditions: "",
       presentationSecondPageContent: "",
+      // Landscape-specific content
+      landscapeSecondPageContent: "",
+      landscapeTermsAndConditions: "",
       quotationTemplateId: "default",
       presentationTemplateId: "default",
       requiredAccessories: "skirting,handles,sliding mechanism,t profile",
@@ -125,6 +128,9 @@ export function AppSettingsForm() {
         receiptTermsAndConditions: settings.receiptTermsAndConditions || "",
         presentationTermsAndConditions: settings.presentationTermsAndConditions || "",
         presentationSecondPageContent: settings.presentationSecondPageContent || "",
+        // Landscape-specific content
+        landscapeSecondPageContent: settings.landscapeSecondPageContent || "",
+        landscapeTermsAndConditions: settings.landscapeTermsAndConditions || "",
         quotationTemplateId: settings.quotationTemplateId || "default",
         presentationTemplateId: settings.presentationTemplateId || "default",
         requiredAccessories: settings.requiredAccessories || "skirting,handles,sliding mechanism,t profile",
@@ -253,9 +259,10 @@ export function AppSettingsForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsList className="grid w-full grid-cols-5 mb-6">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
+                <TabsTrigger value="landscape">Landscape PDF</TabsTrigger>
                 <TabsTrigger value="email">Email Settings</TabsTrigger>
                 <TabsTrigger value="whatsapp">WhatsApp Settings</TabsTrigger>
               </TabsList>
@@ -874,6 +881,308 @@ export function AppSettingsForm() {
                       <FormDescription>
                         These terms will appear on all payment receipts. They will be displayed in a highlighted section at the bottom of the receipt and should include important information about refund policies, payment acknowledgments, or other legal terms.
                       </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
+              
+              <TabsContent value="landscape" className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="landscapeSecondPageContent"
+                  render={({ field }) => (
+                    <FormItem className="border p-4 rounded-md bg-muted/30">
+                      <FormLabel className="text-lg font-medium">Landscape PDF Second Page Content</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Enter content for the second page of landscape PDF quotations"
+                          className="min-h-40"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormDescription className="mb-2 flex items-start gap-1">
+                        <span>
+                          This content will appear on the second page of landscape PDF quotations. 
+                          Content should be optimized for landscape orientation (wider layout). 
+                          This page will appear after the cover page and before the room details.
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-muted-foreground">
+                                <Info className="h-4 w-4" />
+                                <span className="sr-only">More information</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-96 p-4">
+                              <div className="space-y-2 text-xs">
+                                <p><strong>Landscape Optimization Tips:</strong></p>
+                                <ul className="list-disc pl-4 space-y-1">
+                                  <li>Use wider layouts with multiple columns</li>
+                                  <li>Keep content concise - landscape pages have less vertical space</li>
+                                  <li>Use smaller font sizes (10-12px) for better fit</li>
+                                  <li>Consider horizontal arrangement of features/content</li>
+                                </ul>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </FormDescription>
+                      
+                      <div className="flex space-x-2 mb-2">
+                        <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={() => {
+                            const landscapeTemplate = `<div style="padding: 20px; font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4;">
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
+    <div style="flex: 1; min-width: 300px;">
+      <h3 style="color: #009245; font-size: 16px; margin-bottom: 15px; font-weight: bold;">Why Choose Us</h3>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 8px; height: 8px; background-color: #009245; border-radius: 50%;"></div>
+          <span><strong>Premium Quality Materials:</strong> Best-in-class raw materials ensuring durability</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 8px; height: 8px; background-color: #009245; border-radius: 50%;"></div>
+          <span><strong>Expert Installation:</strong> Professional team with years of experience</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 8px; height: 8px; background-color: #009245; border-radius: 50%;"></div>
+          <span><strong>Timely Delivery:</strong> Project completion within agreed timelines</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 8px; height: 8px; background-color: #009245; border-radius: 50%;"></div>
+          <span><strong>After-Sales Support:</strong> Comprehensive warranty and maintenance</span>
+        </div>
+      </div>
+    </div>
+    
+    <div style="flex: 1; min-width: 300px;">
+      <h3 style="color: #009245; font-size: 16px; margin-bottom: 15px; font-weight: bold;">Our Process</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="text-align: center; flex: 1;">
+          <div style="width: 40px; height: 40px; background-color: #009245; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold;">1</div>
+          <div style="font-size: 10px; font-weight: bold;">CONSULTATION</div>
+        </div>
+        <div style="width: 20px; height: 2px; background-color: #009245; margin: 0 5px;"></div>
+        <div style="text-align: center; flex: 1;">
+          <div style="width: 40px; height: 40px; background-color: #009245; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold;">2</div>
+          <div style="font-size: 10px; font-weight: bold;">DESIGN</div>
+        </div>
+        <div style="width: 20px; height: 2px; background-color: #009245; margin: 0 5px;"></div>
+        <div style="text-align: center; flex: 1;">
+          <div style="width: 40px; height: 40px; background-color: #009245; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold;">3</div>
+          <div style="font-size: 10px; font-weight: bold;">PRODUCTION</div>
+        </div>
+        <div style="width: 20px; height: 2px; background-color: #009245; margin: 0 5px;"></div>
+        <div style="text-align: center; flex: 1;">
+          <div style="width: 40px; height: 40px; background-color: #009245; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold;">4</div>
+          <div style="font-size: 10px; font-weight: bold;">INSTALLATION</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #009245; margin-top: 20px;">
+    <h4 style="color: #009245; font-size: 14px; margin-bottom: 8px; font-weight: bold;">Client Testimonial</h4>
+    <p style="margin: 0; font-style: italic; color: #333;">"The landscape PDF format perfectly showcases our project details. The team's professionalism and attention to detail exceeded our expectations!"</p>
+    <p style="margin: 8px 0 0 0; font-size: 10px; color: #666;">- Satisfied Client</p>
+  </div>
+</div>`;
+                            
+                            field.onChange(landscapeTemplate);
+                          }}
+                        >
+                          Insert Landscape Template
+                        </Button>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              type="button" 
+                              variant="secondary"
+                            >
+                              Preview Content
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl">
+                            <DialogHeader>
+                              <DialogTitle>Landscape Content Preview</DialogTitle>
+                              <DialogDescription>
+                                Preview how the landscape second page content will appear in the PDF
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="border rounded-md p-4 bg-white" style={{minHeight: "400px", maxHeight: "600px", overflow: "auto"}}>
+                              <div 
+                                className="print-content" 
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  border: "1px solid #eee",
+                                  padding: "20px",
+                                  backgroundColor: "white"
+                                }}
+                                dangerouslySetInnerHTML={{ __html: field.value || "" }}
+                              />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="landscapeTermsAndConditions"
+                  render={({ field }) => (
+                    <FormItem className="border p-4 rounded-md bg-muted/30">
+                      <FormLabel className="text-lg font-medium">Landscape PDF Terms & Conditions</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Enter terms and conditions for landscape PDF quotations"
+                          className="min-h-40"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormDescription className="mb-2 flex items-start gap-1">
+                        <span>
+                          These terms will appear on the last page of landscape PDF quotations. 
+                          Content should be optimized for landscape orientation with concise formatting 
+                          to fit properly on a single page.
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full p-0 text-muted-foreground">
+                                <Info className="h-4 w-4" />
+                                <span className="sr-only">More information</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-96 p-4">
+                              <div className="space-y-2 text-xs">
+                                <p><strong>Landscape Terms Tips:</strong></p>
+                                <ul className="list-disc pl-4 space-y-1">
+                                  <li>Use multiple columns for better space utilization</li>
+                                  <li>Keep sections concise with bullet points</li>
+                                  <li>Use smaller font sizes (10-11px) for better fit</li>
+                                  <li>Organize content in horizontal sections rather than long vertical lists</li>
+                                </ul>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </FormDescription>
+                      
+                      <div className="flex space-x-2 mb-2">
+                        <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={() => {
+                            const landscapeTermsTemplate = `<div style="font-family: Arial, sans-serif; font-size: 10px; line-height: 1.4; padding: 10px;">
+  <div style="display: flex; gap: 30px;">
+    <div style="flex: 1;">
+      <h4 style="color: #009245; font-size: 12px; margin-bottom: 10px; font-weight: bold;">1. Project Scope & Delivery</h4>
+      <ul style="list-style-type: disc; padding-left: 15px; margin: 0 0 15px 0;">
+        <li style="margin-bottom: 4px;">Design, supply & installation as per specifications</li>
+        <li style="margin-bottom: 4px;">Manufacturing begins after advance payment & design approval</li>
+        <li style="margin-bottom: 4px;">Standard delivery: 4-6 weeks from order confirmation</li>
+        <li style="margin-bottom: 4px;">Installation timeline depends on site conditions</li>
+      </ul>
+      
+      <h4 style="color: #009245; font-size: 12px; margin-bottom: 10px; font-weight: bold;">2. Payment & Pricing</h4>
+      <ul style="list-style-type: disc; padding-left: 15px; margin: 0 0 15px 0;">
+        <li style="margin-bottom: 4px;">Prices valid for 30 days from quotation date</li>
+        <li style="margin-bottom: 4px;">Payment: 50% advance, 40% pre-delivery, 10% completion</li>
+        <li style="margin-bottom: 4px;">GST & taxes as per government regulations</li>
+        <li style="margin-bottom: 4px;">All prices in Indian Rupees (INR)</li>
+      </ul>
+      
+      <h4 style="color: #009245; font-size: 12px; margin-bottom: 10px; font-weight: bold;">3. Quality & Warranty</h4>
+      <ul style="list-style-type: disc; padding-left: 15px; margin: 0;">
+        <li style="margin-bottom: 4px;">12-month warranty against manufacturing defects</li>
+        <li style="margin-bottom: 4px;">Premium materials with quality certifications</li>
+        <li style="margin-bottom: 4px;">Professional installation by trained technicians</li>
+      </ul>
+    </div>
+    
+    <div style="flex: 1;">
+      <h4 style="color: #009245; font-size: 12px; margin-bottom: 10px; font-weight: bold;">4. Modifications & Changes</h4>
+      <ul style="list-style-type: disc; padding-left: 15px; margin: 0 0 15px 0;">
+        <li style="margin-bottom: 4px;">Design changes after approval may incur additional costs</li>
+        <li style="margin-bottom: 4px;">Material changes subject to availability & pricing</li>
+        <li style="margin-bottom: 4px;">Timeline extensions for scope modifications</li>
+      </ul>
+      
+      <h4 style="color: #009245; font-size: 12px; margin-bottom: 10px; font-weight: bold;">5. Client Responsibilities</h4>
+      <ul style="list-style-type: disc; padding-left: 15px; margin: 0 0 15px 0;">
+        <li style="margin-bottom: 4px;">Provide site access during installation period</li>
+        <li style="margin-bottom: 4px;">Final measurements confirmation before production</li>
+        <li style="margin-bottom: 4px;">Timely payments as per agreed schedule</li>
+      </ul>
+      
+      <h4 style="color: #009245; font-size: 12px; margin-bottom: 10px; font-weight: bold;">6. Cancellation Policy</h4>
+      <ul style="list-style-type: disc; padding-left: 15px; margin: 0;">
+        <li style="margin-bottom: 4px;">Pre-production cancellation: 10% fee of total value</li>
+        <li style="margin-bottom: 4px;">Post-production cancellation: As per completion stage</li>
+        <li style="margin-bottom: 4px;">Advance payments non-refundable after production starts</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div style="margin-top: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; border: 1px solid #009245;">
+    <p style="margin: 0; font-size: 9px; color: #333; text-align: center;">
+      <strong>Note:</strong> This quotation is computer generated and does not require signature. 
+      Terms & conditions are subject to change based on project requirements and mutual agreement.
+    </p>
+  </div>
+</div>`;
+                            
+                            field.onChange(landscapeTermsTemplate);
+                          }}
+                        >
+                          Insert Landscape Terms Template
+                        </Button>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              type="button" 
+                              variant="secondary"
+                            >
+                              Preview Terms
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl">
+                            <DialogHeader>
+                              <DialogTitle>Landscape Terms Preview</DialogTitle>
+                              <DialogDescription>
+                                Preview how the landscape terms & conditions will appear in the PDF
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="border rounded-md p-4 bg-white" style={{minHeight: "400px", maxHeight: "600px", overflow: "auto"}}>
+                              <div 
+                                className="print-content" 
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  border: "1px solid #eee",
+                                  padding: "20px",
+                                  backgroundColor: "white"
+                                }}
+                                dangerouslySetInnerHTML={{ __html: field.value || "" }}
+                              />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      
                       <FormMessage />
                     </FormItem>
                   )}
