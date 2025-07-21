@@ -4,6 +4,7 @@ import { CustomerPayment, Customer, CompanySettings, AppSettings } from "@shared
 import { ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { convertToWords, formatDate } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
 // Add custom styles for printing
 const printStyles = `
@@ -88,15 +89,31 @@ const paymentMethods: Record<string, string> = {
 
 export default function PrintReceiptPage() {
   const [location, setLocation] = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [payment, setPayment] = useState<CustomerPayment | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
-  const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
 
   // Extract payment ID from URL
   const id = location.split("/").pop();
+
+  // Use React Query to fetch data with proper authentication
+  const { data: payment, isLoading: paymentLoading, error: paymentError } = useQuery<CustomerPayment>({
+    queryKey: ["/api/customer-payments", id],
+    enabled: !!id,
+  });
+
+  const { data: customer, isLoading: customerLoading } = useQuery<Customer>({
+    queryKey: ["/api/customers", payment?.customerId],
+    enabled: !!payment?.customerId,
+  });
+
+  const { data: companySettings, isLoading: companyLoading } = useQuery<CompanySettings>({
+    queryKey: ["/api/settings/company"],
+  });
+
+  const { data: appSettings, isLoading: appLoading } = useQuery<AppSettings>({
+    queryKey: ["/api/settings/app"],
+  });
+
+  const isLoading = paymentLoading || customerLoading || companyLoading || appLoading;
+  const error = paymentError;
 
   // Inject print styles
   useEffect(() => {
@@ -111,113 +128,11 @@ export default function PrintReceiptPage() {
     };
   }, []);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        
-        // Helper function to make authenticated requests with token refresh
-        const makeAuthenticatedRequest = async (url: string, options = {}) => {
-          let token = localStorage.getItem('accessToken');
-          
-          const makeRequest = async (authToken: string) => {
-            return fetch(url, {
-              ...options,
-              headers: {
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json',
-                ...(options as any).headers
-              }
-            });
-          };
-          
-          let response = await makeRequest(token || '');
-          
-          // If token is invalid/expired, try to refresh it
-          if (response.status === 401 || response.status === 403) {
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (refreshToken) {
-              try {
-                const refreshResponse = await fetch('/api/auth/refresh', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ refreshToken }),
-                });
-                
-                if (refreshResponse.ok) {
-                  const { accessToken: newToken } = await refreshResponse.json();
-                  localStorage.setItem('accessToken', newToken);
-                  
-                  // Retry the original request with new token
-                  response = await makeRequest(newToken);
-                } else {
-                  // Refresh failed, redirect to login
-                  window.location.href = '/login';
-                  return response;
-                }
-              } catch (refreshError) {
-                console.error('Token refresh failed:', refreshError);
-                window.location.href = '/login';
-                return response;
-              }
-            } else {
-              // No refresh token, redirect to login
-              window.location.href = '/login';
-              return response;
-            }
-          }
-          
-          return response;
-        };
-
-        // Fetch payment data
-        const paymentRes = await makeAuthenticatedRequest(`/api/customer-payments/${id}`);
-        if (!paymentRes.ok) {
-          throw new Error('Failed to load payment');
-        }
-        const paymentData = await paymentRes.json();
-        setPayment(paymentData);
-
-        // Fetch customer data
-        const customerRes = await makeAuthenticatedRequest(`/api/customers/${paymentData.customerId}`);
-        if (!customerRes.ok) {
-          throw new Error('Failed to load customer');
-        }
-        const customerData = await customerRes.json();
-        setCustomer(customerData);
-
-        // Fetch settings
-        const [companyRes, appRes] = await Promise.all([
-          makeAuthenticatedRequest('/api/settings/company'),
-          makeAuthenticatedRequest('/api/settings/app')
-        ]);
-        
-        if (companyRes.ok && appRes.ok) {
-          const company = await companyRes.json();
-          const app = await appRes.json();
-          setCompanySettings(company);
-          setAppSettings(app);
-        } else {
-          throw new Error('Failed to load settings');
-        }
-
-        setLoading(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [id]);
-
   const handlePrint = () => {
     window.print();
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -230,7 +145,7 @@ export default function PrintReceiptPage() {
       <div className="container mx-auto py-10">
         <div className="bg-destructive/10 border border-destructive rounded-md p-4">
           <h2 className="font-semibold text-destructive">Error</h2>
-          <p>{error || 'Failed to load receipt data'}</p>
+          <p>{error?.message || 'Failed to load receipt data'}</p>
           <Link href="/payments">
             <Button variant="outline" className="mt-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
