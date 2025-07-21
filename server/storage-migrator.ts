@@ -653,11 +653,51 @@ export class StorageMigrator {
   async createQuotationModification(...args: any[]) { return (this.memStorage as any).createQuotationModification(...args); }
   async getQuotationModification(...args: any[]) { return (this.memStorage as any).getQuotationModification(...args); }
   async revertQuotationToModification(...args: any[]) { return (this.memStorage as any).revertQuotationToModification(...args); }
-  async getRooms(...args: any[]) { return (this.memStorage as any).getRooms(...args); }
-  async getRoom(...args: any[]) { return (this.memStorage as any).getRoom(...args); }
+  async getRooms(quotationId: number) { 
+    if (this.shouldUseDatabase('rooms')) {
+      try {
+        return await this.dbStorage.getRooms(quotationId);
+      } catch (error) {
+        console.error('Database error in getRooms, falling back to memory:', error);
+        this.disableModule('rooms');
+      }
+    }
+    return this.memStorage.getRooms(quotationId); 
+  }
+  async getRoom(id: number) { 
+    if (this.shouldUseDatabase('rooms')) {
+      try {
+        return await this.dbStorage.getRoom(id);
+      } catch (error) {
+        console.error('Database error in getRoom, falling back to memory:', error);
+        this.disableModule('rooms');
+      }
+    }
+    return this.memStorage.getRoom(id); 
+  }
   async getRoomWithItems(...args: any[]) { return (this.memStorage as any).getRoomWithItems(...args); }
-  async createRoom(...args: any[]) { return (this.memStorage as any).createRoom(...args); }
-  async updateRoom(...args: any[]) { return (this.memStorage as any).updateRoom(...args); }
+  async createRoom(room: any) { 
+    if (this.shouldUseDatabase('rooms')) {
+      try {
+        return await this.dbStorage.createRoom(room);
+      } catch (error) {
+        console.error('Database error in createRoom, falling back to memory:', error);
+        this.disableModule('rooms');
+      }
+    }
+    return this.memStorage.createRoom(room); 
+  }
+  async updateRoom(id: number, roomUpdate: any) { 
+    if (this.shouldUseDatabase('rooms')) {
+      try {
+        return await this.dbStorage.updateRoom(id, roomUpdate);
+      } catch (error) {
+        console.error('Database error in updateRoom, falling back to memory:', error);
+        this.disableModule('rooms');
+      }
+    }
+    return this.memStorage.updateRoom(id, roomUpdate); 
+  }
   async deleteRoom(...args: any[]) { return (this.memStorage as any).deleteRoom(...args); }
   async reorderRooms(...args: any[]) { return (this.memStorage as any).reorderRooms(...args); }
   async updateRoomTeowinEstimate(...args: any[]) { return (this.memStorage as any).updateRoomTeowinEstimate(...args); }

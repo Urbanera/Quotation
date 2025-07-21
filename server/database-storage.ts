@@ -579,11 +579,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRooms(quotationId: number): Promise<Room[]> {
-    return [];
+    return db.select().from(rooms)
+      .where(eq(rooms.quotationId, quotationId))
+      .orderBy(rooms.order);
   }
 
   async getRoom(id: number): Promise<Room | undefined> {
-    return undefined;
+    const [room] = await db.select().from(rooms).where(eq(rooms.id, id));
+    return room || undefined;
   }
 
   async getRoomWithItems(id: number): Promise<RoomWithItems | undefined> {
@@ -591,7 +594,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRoom(room: InsertRoom): Promise<Room> {
-    const [created] = await db.insert(rooms).values(room).returning();
+    // Check if room with the same name already exists in this quotation
+    const existingRooms = await db.select().from(rooms)
+      .where(eq(rooms.quotationId, room.quotationId));
+    
+    // Case-insensitive check for duplicate room names
+    const isDuplicate = existingRooms.some(existingRoom => 
+      existingRoom.name.toLowerCase() === room.name.toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      throw new Error(`A room with the name "${room.name}" already exists in this quotation`);
+    }
+    
+    // Get the current highest order value for rooms in this quotation
+    const maxOrder = existingRooms.length > 0 
+      ? Math.max(...existingRooms.map(r => r.order))
+      : -1;
+    
+    const roomData = {
+      ...room,
+      order: room.order ?? maxOrder + 1,
+      sellingPrice: room.sellingPrice ?? 0,
+      discountedPrice: room.discountedPrice ?? 0,
+      included: room.included !== undefined ? room.included : true
+    };
+    
+    const [created] = await db.insert(rooms).values(roomData).returning();
+    
+    // Note: updateQuotationPrices would need to be implemented for full functionality
+    
     return created;
   }
 
