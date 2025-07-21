@@ -115,14 +115,65 @@ export default function PrintReceiptPage() {
     async function fetchData() {
       try {
         setLoading(true);
-        // Fetch payment data
-        const token = localStorage.getItem('accessToken');
-        const paymentRes = await fetch(`/api/customer-payments/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        
+        // Helper function to make authenticated requests with token refresh
+        const makeAuthenticatedRequest = async (url: string, options = {}) => {
+          let token = localStorage.getItem('accessToken');
+          
+          const makeRequest = async (authToken: string) => {
+            return fetch(url, {
+              ...options,
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+                ...(options as any).headers
+              }
+            });
+          };
+          
+          let response = await makeRequest(token || '');
+          
+          // If token is invalid/expired, try to refresh it
+          if (response.status === 401 || response.status === 403) {
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (refreshToken) {
+              try {
+                const refreshResponse = await fetch('/api/auth/refresh', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ refreshToken }),
+                });
+                
+                if (refreshResponse.ok) {
+                  const { accessToken: newToken } = await refreshResponse.json();
+                  localStorage.setItem('accessToken', newToken);
+                  
+                  // Retry the original request with new token
+                  response = await makeRequest(newToken);
+                } else {
+                  // Refresh failed, redirect to login
+                  window.location.href = '/login';
+                  return response;
+                }
+              } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError);
+                window.location.href = '/login';
+                return response;
+              }
+            } else {
+              // No refresh token, redirect to login
+              window.location.href = '/login';
+              return response;
+            }
           }
-        });
+          
+          return response;
+        };
+
+        // Fetch payment data
+        const paymentRes = await makeAuthenticatedRequest(`/api/customer-payments/${id}`);
         if (!paymentRes.ok) {
           throw new Error('Failed to load payment');
         }
@@ -130,12 +181,7 @@ export default function PrintReceiptPage() {
         setPayment(paymentData);
 
         // Fetch customer data
-        const customerRes = await fetch(`/api/customers/${paymentData.customerId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        const customerRes = await makeAuthenticatedRequest(`/api/customers/${paymentData.customerId}`);
         if (!customerRes.ok) {
           throw new Error('Failed to load customer');
         }
@@ -144,18 +190,8 @@ export default function PrintReceiptPage() {
 
         // Fetch settings
         const [companyRes, appRes] = await Promise.all([
-          fetch('/api/settings/company', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }),
-          fetch('/api/settings/app', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
+          makeAuthenticatedRequest('/api/settings/company'),
+          makeAuthenticatedRequest('/api/settings/app')
         ]);
         
         if (companyRes.ok && appRes.ok) {

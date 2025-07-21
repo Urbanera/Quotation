@@ -22,6 +22,7 @@ import {
   invoices, Invoice, InsertInvoice, invoiceStatusEnum,
   userPermissions, UserPermission, InsertUserPermission
 } from "@shared/schema";
+import bcrypt from 'bcrypt';
 
 export interface IStorage {
   // Settings operations
@@ -436,18 +437,35 @@ export class MemStorage implements IStorage {
     };
     
     // Add only the admin user - no demo data
-    const adminUser: User = {
-      id: this.userIdCounter++,
-      username: "admin",
-      password: "AdminPass123", // This would be hashed in a real application
-      email: "admin@example.com",
-      fullName: "Administrator",
-      role: "admin",
-      active: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.users.set(adminUser.id, adminUser);
+    // Note: Password hashing is handled during user creation through createUser method
+    this.initializeAdminUser().catch(console.error);
+  }
+
+  private async initializeAdminUser() {
+    console.log("Initializing admin user...");
+    
+    // Check if admin user already exists
+    const existingAdmin = await this.getUserByUsername("admin");
+    if (existingAdmin) {
+      console.log("Admin user already exists");
+      return;
+    }
+
+    // Create admin user with hashed password
+    try {
+      console.log("Creating admin user with hashed password...");
+      const adminUser = await this.createUser({
+        username: "admin",
+        password: "AdminPass123",
+        email: "admin@example.com",
+        fullName: "Administrator",
+        role: "admin",
+        active: true
+      });
+      console.log("Admin user created successfully:", adminUser.username);
+    } catch (error) {
+      console.error("Failed to create admin user:", error);
+    }
   }
   
   // Settings operations
@@ -2793,10 +2811,14 @@ export class MemStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
     const now = new Date();
+    
+    // Hash the password before storing
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    
     const newUser: User = {
       id,
       username: user.username,
-      password: user.password,
+      password: hashedPassword,
       email: user.email,
       fullName: user.fullName,
       role: user.role,
