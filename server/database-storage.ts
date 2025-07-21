@@ -1214,9 +1214,10 @@ export class DatabaseStorage implements IStorage {
     const existingInvoices = await db.select().from(invoices);
     const maxNumber = existingInvoices.reduce((max, invoice) => {
       if (invoice.invoiceNumber) {
-        const match = invoice.invoiceNumber.match(/INV-(\d{4})-(\d{3})/);
+        // Match any INV-YYYY-XXX format where XXX can be any number of digits
+        const match = invoice.invoiceNumber.match(/INV-\d{4}-(\d+)/);
         if (match) {
-          const number = parseInt(match[2]);
+          const number = parseInt(match[1]);
           return Math.max(max, number);
         }
       }

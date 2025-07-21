@@ -62,12 +62,15 @@ export default function EditInvoicePage() {
   // Update form when invoice data is loaded
   useEffect(() => {
     if (invoice) {
-      form.reset({
-        invoiceNumber: invoice.invoiceNumber,
-        status: invoice.status as 'pending' | 'partially_paid' | 'paid',
+      console.log('Invoice data loaded:', invoice);
+      const formData = {
+        invoiceNumber: invoice.invoiceNumber || '',
+        status: (invoice.status as 'pending' | 'partially_paid' | 'paid') || 'pending',
         dueDate: invoice.dueDate ? format(new Date(invoice.dueDate), 'yyyy-MM-dd') : '',
         notes: invoice.notes || '',
-      });
+      };
+      console.log('Setting form data:', formData);
+      form.reset(formData);
     }
   }, [invoice, form]);
 
