@@ -95,12 +95,12 @@ export default function PrintReceiptPage() {
 
   // Use React Query to fetch data with proper authentication
   const { data: payment, isLoading: paymentLoading, error: paymentError } = useQuery<CustomerPayment>({
-    queryKey: ["/api/customer-payments", id],
+    queryKey: [`/api/customer-payments/${id}`],
     enabled: !!id,
   });
 
   const { data: customer, isLoading: customerLoading } = useQuery<Customer>({
-    queryKey: ["/api/customers", payment?.customerId],
+    queryKey: [`/api/customers/${payment?.customerId}`],
     enabled: !!payment?.customerId,
   });
 
@@ -114,6 +114,8 @@ export default function PrintReceiptPage() {
 
   const isLoading = paymentLoading || customerLoading || companyLoading || appLoading;
   const error = paymentError;
+
+
 
   // Inject print styles
   useEffect(() => {
@@ -140,7 +142,10 @@ export default function PrintReceiptPage() {
     );
   }
 
-  if (error || !payment || !customer || !companySettings) {
+  // Handle customer data - could be array or object
+  const customerData = Array.isArray(customer) ? customer[0] : customer;
+
+  if (error || !payment || !customerData || !companySettings) {
     return (
       <div className="container mx-auto py-10">
         <div className="bg-destructive/10 border border-destructive rounded-md p-4">
@@ -224,9 +229,9 @@ export default function PrintReceiptPage() {
         <div className="flex mb-6">
           <div className="w-7/12 pr-6">
             <h3 className="font-semibold mb-2">Received From:</h3>
-            <p className="uppercase font-medium">{customer.name}</p>
-            <p>{customer.address.split(',')[0]}</p>
-            <p>{customer.address.split(',').slice(1).join(',')}</p>
+            <p className="uppercase font-medium">{customerData.name}</p>
+            <p>{customerData.address?.split(',')[0] || ''}</p>
+            <p>{customerData.address?.split(',').slice(1).join(',') || ''}</p>
             <p>State: {companyInfo.state}</p>
           </div>
           <div className="w-5/12">
@@ -239,7 +244,7 @@ export default function PrintReceiptPage() {
 
         {/* Payment Highlight */}
         <div className="payment-highlight mb-5 pb-2 border-b border-gray-200">
-          <p className="text-lg">Received amount of <span className="font-bold">₹ {payment.amount.toFixed(2)}</span> from <span className="font-semibold uppercase">{customer.name}</span> as {payment.paymentType || 'advance payment'}</p>
+          <p className="text-lg">Received amount of <span className="font-bold">₹ {payment.amount.toFixed(2)}</span> from <span className="font-semibold uppercase">{customerData.name}</span> as {payment.paymentType || 'advance payment'}</p>
         </div>
 
         {/* Amount in Words */}
