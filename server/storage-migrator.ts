@@ -345,7 +345,7 @@ export class StorageMigrator {
       
       // Check if customer exists (could be in database)
       let customer;
-      if (this.isDatabaseEnabled('customers')) {
+      if (this.enabledModules.has('customers')) {
         try {
           customer = await this.dbStorage.getCustomer(quotation.customerId);
         } catch (error) {
