@@ -489,6 +489,7 @@ export class StorageMigrator {
   async getImage(...args: any[]) { return (this.memStorage as any).getImage(...args); }
   async createImage(...args: any[]) { return (this.memStorage as any).createImage(...args); }
   async deleteImage(...args: any[]) { return (this.memStorage as any).deleteImage(...args); }
+  async updateImage(...args: any[]) { return (this.memStorage as any).updateImage(...args); }
   async reorderImages(...args: any[]) { return (this.memStorage as any).reorderImages(...args); }
   async getInstallationCharges(...args: any[]) { return (this.memStorage as any).getInstallationCharges(...args); }
   async getInstallationCharge(...args: any[]) { return (this.memStorage as any).getInstallationCharge(...args); }
