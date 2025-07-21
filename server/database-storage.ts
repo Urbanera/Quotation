@@ -511,12 +511,23 @@ export class DatabaseStorage implements IStorage {
       quotationNumber = `Q-${new Date().getFullYear()}-${String(maxNumber + 1).padStart(3, '0')}`;
     }
 
-    const [created] = await db.insert(quotations).values({
+    // Ensure required fields have default values to prevent NOT NULL constraint violations
+    const quotationData = {
       ...quotation,
       quotationNumber,
+      totalSellingPrice: quotation.totalSellingPrice ?? 0,
+      totalDiscountedPrice: quotation.totalDiscountedPrice ?? 0,
+      totalInstallationCharges: quotation.totalInstallationCharges ?? 0,
+      installationHandling: quotation.installationHandling ?? 0,
+      globalDiscount: quotation.globalDiscount ?? 0,
+      gstPercentage: quotation.gstPercentage ?? 18,
+      gstAmount: quotation.gstAmount ?? 0,
+      finalPrice: quotation.finalPrice ?? 0,
       createdAt: new Date(),
       updatedAt: new Date()
-    }).returning();
+    };
+
+    const [created] = await db.insert(quotations).values(quotationData).returning();
     return created;
   }
 
