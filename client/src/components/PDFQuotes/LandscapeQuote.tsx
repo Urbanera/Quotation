@@ -574,28 +574,28 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
               <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#009245', marginBottom: 15 }}>Why Choose Us</Text>
               <View style={{ marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <Text style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }}></Text>
+                  <View style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }} />
                   <Text style={{ fontSize: 11, lineHeight: 1.4, color: '#333333', flex: 1 }}>
                     <Text style={{ fontWeight: 'bold' }}>Premium Quality Materials: </Text>
                     Best-in-class raw materials ensuring durability
                   </Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <Text style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }}></Text>
+                  <View style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }} />
                   <Text style={{ fontSize: 11, lineHeight: 1.4, color: '#333333', flex: 1 }}>
                     <Text style={{ fontWeight: 'bold' }}>Expert Installation: </Text>
                     Professional team with years of experience
                   </Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <Text style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }}></Text>
+                  <View style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }} />
                   <Text style={{ fontSize: 11, lineHeight: 1.4, color: '#333333', flex: 1 }}>
                     <Text style={{ fontWeight: 'bold' }}>Timely Delivery: </Text>
                     Project completion within agreed timelines
                   </Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <Text style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }}></Text>
+                  <View style={{ width: 8, height: 8, backgroundColor: '#009245', borderRadius: 4, marginTop: 4, marginRight: 8 }} />
                   <Text style={{ fontSize: 11, lineHeight: 1.4, color: '#333333', flex: 1 }}>
                     <Text style={{ fontWeight: 'bold' }}>After-Sales Support: </Text>
                     Comprehensive warranty and maintenance
