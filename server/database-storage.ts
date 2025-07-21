@@ -466,15 +466,18 @@ export class DatabaseStorage implements IStorage {
         .where(eq(rooms.quotationId, id))
         .orderBy(rooms.order);
       
-      // For now, return rooms with empty arrays for products/accessories/images
-      // This can be enhanced later with proper join queries
-      const roomsWithItems: RoomWithItems[] = roomsList.map(room => ({
-        ...room,
-        products: [], // Will be implemented when needed
-        accessories: [], // Will be implemented when needed  
-        images: [], // Will be implemented when needed
-        installationCharges: [] // Will be implemented when needed
-      }));
+      // Get all related data for each room
+      const roomsWithItems: RoomWithItems[] = [];
+      for (const room of roomsList) {
+        const roomWithItems = {
+          ...room,
+          products: await this.getProducts(room.id),
+          accessories: await this.getAccessories(room.id),
+          images: [], // Will be implemented when needed
+          installationCharges: await this.getInstallationCharges(room.id)
+        };
+        roomsWithItems.push(roomWithItems);
+      }
       
       return {
         ...quotation,
@@ -595,10 +598,10 @@ export class DatabaseStorage implements IStorage {
     
     return {
       ...room,
-      products: [], // Will be implemented when needed
-      accessories: [], // Will be implemented when needed
+      products: await this.getProducts(room.id),
+      accessories: await this.getAccessories(room.id),
       images: [], // Will be implemented when needed
-      installationCharges: [] // Will be implemented when needed
+      installationCharges: await this.getInstallationCharges(room.id)
     };
   }
 
@@ -659,7 +662,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProducts(roomId: number): Promise<Product[]> {
-    return [];
+    return db.select().from(products).where(eq(products.roomId, roomId));
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
@@ -667,7 +670,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
-    throw new Error("Method not implemented");
+    const [created] = await db.insert(products).values(product).returning();
+    return created;
   }
 
   async updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined> {
@@ -679,7 +683,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAccessories(roomId: number): Promise<Accessory[]> {
-    return [];
+    return db.select().from(accessories).where(eq(accessories.roomId, roomId));
   }
 
   async getAccessory(id: number): Promise<Accessory | undefined> {
@@ -687,7 +691,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAccessory(accessory: InsertAccessory): Promise<Accessory> {
-    throw new Error("Method not implemented");
+    const [created] = await db.insert(accessories).values(accessory).returning();
+    return created;
   }
 
   async updateAccessory(id: number, accessory: Partial<InsertAccessory>): Promise<Accessory | undefined> {
@@ -719,7 +724,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getInstallationCharges(roomId: number): Promise<InstallationCharge[]> {
-    return [];
+    return db.select().from(installationCharges).where(eq(installationCharges.roomId, roomId));
   }
 
   async getInstallationCharge(id: number): Promise<InstallationCharge | undefined> {
@@ -727,7 +732,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInstallationCharge(charge: any): Promise<InstallationCharge> {
-    throw new Error("Method not implemented");
+    const [created] = await db.insert(installationCharges).values(charge).returning();
+    return created;
   }
 
   async updateInstallationCharge(id: number, charge: any): Promise<InstallationCharge | undefined> {

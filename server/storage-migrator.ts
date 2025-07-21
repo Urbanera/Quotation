@@ -711,14 +711,54 @@ export class StorageMigrator {
   async deleteRoom(...args: any[]) { return (this.memStorage as any).deleteRoom(...args); }
   async reorderRooms(...args: any[]) { return (this.memStorage as any).reorderRooms(...args); }
   async updateRoomTeowinEstimate(...args: any[]) { return (this.memStorage as any).updateRoomTeowinEstimate(...args); }
-  async getProducts(...args: any[]) { return (this.memStorage as any).getProducts(...args); }
+  async getProducts(roomId: number) { 
+    if (this.shouldUseDatabase('products')) {
+      try {
+        return await this.dbStorage.getProducts(roomId);
+      } catch (error) {
+        console.error('Database error in getProducts, falling back to memory:', error);
+        this.disableModule('products');
+      }
+    }
+    return this.memStorage.getProducts(roomId); 
+  }
   async getProduct(...args: any[]) { return (this.memStorage as any).getProduct(...args); }
-  async createProduct(...args: any[]) { return (this.memStorage as any).createProduct(...args); }
+  async createProduct(product: any) { 
+    if (this.shouldUseDatabase('products')) {
+      try {
+        return await this.dbStorage.createProduct(product);
+      } catch (error) {
+        console.error('Database error in createProduct, falling back to memory:', error);
+        this.disableModule('products');
+      }
+    }
+    return this.memStorage.createProduct(product); 
+  }
   async updateProduct(...args: any[]) { return (this.memStorage as any).updateProduct(...args); }
   async deleteProduct(...args: any[]) { return (this.memStorage as any).deleteProduct(...args); }
-  async getAccessories(...args: any[]) { return (this.memStorage as any).getAccessories(...args); }
+  async getAccessories(roomId: number) { 
+    if (this.shouldUseDatabase('accessories')) {
+      try {
+        return await this.dbStorage.getAccessories(roomId);
+      } catch (error) {
+        console.error('Database error in getAccessories, falling back to memory:', error);
+        this.disableModule('accessories');
+      }
+    }
+    return this.memStorage.getAccessories(roomId); 
+  }
   async getAccessory(...args: any[]) { return (this.memStorage as any).getAccessory(...args); }
-  async createAccessory(...args: any[]) { return (this.memStorage as any).createAccessory(...args); }
+  async createAccessory(accessory: any) { 
+    if (this.shouldUseDatabase('accessories')) {
+      try {
+        return await this.dbStorage.createAccessory(accessory);
+      } catch (error) {
+        console.error('Database error in createAccessory, falling back to memory:', error);
+        this.disableModule('accessories');
+      }
+    }
+    return this.memStorage.createAccessory(accessory); 
+  }
   async updateAccessory(...args: any[]) { return (this.memStorage as any).updateAccessory(...args); }
   async deleteAccessory(...args: any[]) { return (this.memStorage as any).deleteAccessory(...args); }
   async getImages(...args: any[]) { return (this.memStorage as any).getImages(...args); }
@@ -727,9 +767,29 @@ export class StorageMigrator {
   async deleteImage(...args: any[]) { return (this.memStorage as any).deleteImage(...args); }
   async updateImage(...args: any[]) { return (this.memStorage as any).updateImage(...args); }
   async reorderImages(...args: any[]) { return (this.memStorage as any).reorderImages(...args); }
-  async getInstallationCharges(...args: any[]) { return (this.memStorage as any).getInstallationCharges(...args); }
+  async getInstallationCharges(roomId: number) { 
+    if (this.shouldUseDatabase('installation-charges')) {
+      try {
+        return await this.dbStorage.getInstallationCharges(roomId);
+      } catch (error) {
+        console.error('Database error in getInstallationCharges, falling back to memory:', error);
+        this.disableModule('installation-charges');
+      }
+    }
+    return this.memStorage.getInstallationCharges(roomId); 
+  }
   async getInstallationCharge(...args: any[]) { return (this.memStorage as any).getInstallationCharge(...args); }
-  async createInstallationCharge(...args: any[]) { return (this.memStorage as any).createInstallationCharge(...args); }
+  async createInstallationCharge(charge: any) { 
+    if (this.shouldUseDatabase('installation-charges')) {
+      try {
+        return await this.dbStorage.createInstallationCharge(charge);
+      } catch (error) {
+        console.error('Database error in createInstallationCharge, falling back to memory:', error);
+        this.disableModule('installation-charges');
+      }
+    }
+    return this.memStorage.createInstallationCharge(charge); 
+  }
   async updateInstallationCharge(...args: any[]) { return (this.memStorage as any).updateInstallationCharge(...args); }
   async deleteInstallationCharge(...args: any[]) { return (this.memStorage as any).deleteInstallationCharge(...args); }
   async getTeams(...args: any[]) { return (this.memStorage as any).getTeams(...args); }
