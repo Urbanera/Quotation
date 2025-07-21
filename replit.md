@@ -16,6 +16,15 @@ DesignQuotes is a full-stack web application for interior design businesses to m
   - Fixed `value.toISOString is not a function` error in sales order creation by properly handling date fields
   - Enhanced `createSalesOrderFromQuotation` method with safe date object handling and selective field insertion
   - **Result**: Sales orders now convert successfully with proper order numbers (SO-2025-003) and correct amounts
+- **✅ RESOLVED: Invoice Editing Functionality**: Implemented complete invoice editing system with smart number management
+  - Created edit form with invoice number, status, due date, and notes editing capabilities
+  - Fixed API request errors and null reference issues in edit components
+  - Enhanced invoice number generation to properly handle edited numbers (e.g., INV-2025-09 → next invoice INV-2025-010)
+  - Added proper form pre-population and authentication for all invoice edit operations
+- **✅ RESOLVED: PDF Generation Issues**: Fixed presentation quote blank page and landscape image margins
+  - Removed extra blank page in presentation quotes by integrating Terms & Conditions into summary page
+  - Increased bottom margin in landscape PDF images from 40px to 60px to prevent footer overlap
+  - Corrected page numbering calculations to eliminate unnecessary pages
 
 ## Previous Updates (July 19, 2025)
 

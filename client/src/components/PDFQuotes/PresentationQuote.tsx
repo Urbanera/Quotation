@@ -625,66 +625,31 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
                 </table>
               </div>
             </div>
-          </div>
-        </div>
-        
-        {/* Simple Footer */}
-        <div className="print-footer">
-          <div className="flex justify-between items-center px-10 py-2">
-            <div className="text-xs text-gray-500">
-              {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
-            </div>
-            <div className="text-xs text-gray-500">
-              Page {safeQuotation.rooms.length + 4} of {safeQuotation.rooms.length + 5}
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Terms and Conditions Page */}
-      <div className="print-page">
-        <div className="print-content p-8">
-          {/* Logo and Quotation Number */}
-          <div className="flex items-start justify-between mb-6 border-b border-gray-200 pb-4">
-            <div className="logo-container">
-              {companySettings?.logo ? (
-                <img 
-                  src={companySettings.logo} 
-                  alt={companyName} 
-                  className="h-10" 
+
+            {/* Terms and Conditions Section - Integrated into Summary Page */}
+            <div className="mt-8">
+              <h3 className="text-xl font-bold text-[#009245] mb-4">Terms and Conditions</h3>
+              
+              {appSettings?.presentationTermsAndConditions ? (
+                <div 
+                  className="text-sm text-gray-700 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: appSettings.presentationTermsAndConditions }}
                 />
               ) : (
-                <h1 className="text-xl font-bold text-[#009245]">{companyName}</h1>
+                <div className="text-sm space-y-3 text-gray-700">
+                  <p>1. 50% advance payment required to begin work.</p>
+                  <p>2. Balance payment due before installation.</p>
+                  <p>3. Prices are valid for 30 days from the date of this quotation.</p>
+                  <p>4. Delivery timeline: 4-6 weeks from date of advance payment.</p>
+                  <p>5. Any changes after design approval may incur additional charges.</p>
+                  <p>6. All materials and workmanship carry a warranty of 1 year from the date of installation.</p>
+                  <p>7. The client is responsible for providing access to the site during the installation period.</p>
+                  <p>8. Measurements and specifications are approximate and may vary slightly in the final product.</p>
+                  <p>9. Cancellation after design approval will incur a fee of 15% of the total quotation value.</p>
+                  <p>10. Prices include standard installation. Additional charges may apply for non-standard installations.</p>
+                </div>
               )}
             </div>
-            <div className="bg-[#E6E6E6] px-4 py-2 rounded-md">
-              <h4 className="text-lg font-semibold text-[#009245]">Quotation #{safeQuotation.quotationNumber}</h4>
-            </div>
-          </div>
-          
-          {/* Terms and Conditions Section */}
-          <div className="mt-8">
-            <h3 className="text-xl font-bold text-[#009245] mb-4">Terms and Conditions</h3>
-            
-            {appSettings?.presentationTermsAndConditions ? (
-              <div 
-                className="text-sm text-gray-700 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: appSettings.presentationTermsAndConditions }}
-              />
-            ) : (
-              <div className="text-sm space-y-3 text-gray-700">
-                <p>1. 50% advance payment required to begin work.</p>
-                <p>2. Balance payment due before installation.</p>
-                <p>3. Prices are valid for 30 days from the date of this quotation.</p>
-                <p>4. Delivery timeline: 4-6 weeks from date of advance payment.</p>
-                <p>5. Any changes after design approval may incur additional charges.</p>
-                <p>6. All materials and workmanship carry a warranty of 1 year from the date of installation.</p>
-                <p>7. The client is responsible for providing access to the site during the installation period.</p>
-                <p>8. Measurements and specifications are approximate and may vary slightly in the final product.</p>
-                <p>9. Cancellation after design approval will incur a fee of 15% of the total quotation value.</p>
-                <p>10. Prices include standard installation. Additional charges may apply for non-standard installations.</p>
-              </div>
-            )}
           </div>
         </div>
         
@@ -695,7 +660,7 @@ const PresentationQuote = forwardRef<HTMLDivElement, PresentationQuoteProps>(({ 
               {safeQuotation.quotationNumber} | {formatDate(safeQuotation.createdAt)}
             </div>
             <div className="text-xs text-gray-500">
-              Page {safeQuotation.rooms.length + 5} of {safeQuotation.rooms.length + 5}
+              Page {safeQuotation.rooms.length + 4} of {safeQuotation.rooms.length + 4}
             </div>
           </div>
         </div>
