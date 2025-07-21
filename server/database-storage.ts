@@ -556,33 +556,45 @@ export class DatabaseStorage implements IStorage {
     let totalDiscountedPrice = 0;
     let totalInstallationCharges = 0;
     
-    // Calculate totals from all rooms
+    // First, update each room's prices, then calculate totals
     for (const room of quotationRooms) {
       if (!room.included) continue; // Skip excluded rooms
+      
+      let roomSellingPrice = 0;
+      let roomDiscountedPrice = 0;
       
       // Get products for this room
       const roomProducts = await this.getProducts(room.id);
       for (const product of roomProducts) {
-        totalSellingPrice += product.sellingPrice * product.quantity;
-        totalDiscountedPrice += product.discountedPrice * product.quantity;
+        roomSellingPrice += product.sellingPrice * product.quantity;
+        roomDiscountedPrice += product.discountedPrice * product.quantity;
       }
       
       // Get accessories for this room
       const roomAccessories = await this.getAccessories(room.id);
       for (const accessory of roomAccessories) {
-        totalSellingPrice += accessory.sellingPrice * accessory.quantity;
-        totalDiscountedPrice += accessory.discountedPrice * accessory.quantity;
+        roomSellingPrice += accessory.sellingPrice * accessory.quantity;
+        roomDiscountedPrice += accessory.discountedPrice * accessory.quantity;
       }
+      
+      // Update room prices in database
+      await db
+        .update(rooms)
+        .set({
+          sellingPrice: roomSellingPrice,
+          discountedPrice: roomDiscountedPrice
+        })
+        .where(eq(rooms.id, room.id));
+      
+      // Add to quotation totals
+      totalSellingPrice += roomSellingPrice;
+      totalDiscountedPrice += roomDiscountedPrice;
       
       // Get installation charges for this room
       const roomCharges = await this.getInstallationCharges(room.id);
       for (const charge of roomCharges) {
         totalInstallationCharges += charge.amount;
       }
-      
-      // Add room's own prices
-      totalSellingPrice += room.sellingPrice;
-      totalDiscountedPrice += room.discountedPrice;
     }
     
     // Get current quotation to preserve other fields

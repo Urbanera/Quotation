@@ -1937,6 +1937,14 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         ...req.body,
         roomId
       });
+      
+      // Trigger price recalculation for the quotation
+      const room = await storage.getRoom(roomId);
+      if (room) {
+        // Trigger price recalculation
+        await (storage as any).updateQuotationPrices(room.quotationId);
+      }
+      
       res.status(201).json(product);
     } catch (error) {
       res.status(500).json({ message: "Failed to create product" });
@@ -2000,6 +2008,14 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         ...req.body,
         roomId
       });
+      
+      // Trigger price recalculation for the quotation
+      const room = await storage.getRoom(roomId);
+      if (room) {
+        // Trigger price recalculation
+        await (storage as any).updateQuotationPrices(room.quotationId);
+      }
+      
       res.status(201).json(accessory);
     } catch (error) {
       res.status(500).json({ message: "Failed to create accessory" });
