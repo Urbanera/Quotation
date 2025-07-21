@@ -1114,47 +1114,209 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getInvoices(): Promise<Invoice[]> {
-    return [];
+    try {
+      const result = await db.select().from(invoices)
+        .orderBy(desc(invoices.createdAt));
+      return result;
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      return [];
+    }
   }
 
   async getInvoicesByCustomer(customerId: number): Promise<Invoice[]> {
-    return [];
+    try {
+      const result = await db.select().from(invoices)
+        .where(eq(invoices.customerId, customerId))
+        .orderBy(desc(invoices.createdAt));
+      return result;
+    } catch (error) {
+      console.error('Error fetching invoices by customer:', error);
+      return [];
+    }
   }
 
   async getInvoice(id: number): Promise<Invoice | undefined> {
-    return undefined;
+    try {
+      const [result] = await db.select().from(invoices)
+        .where(eq(invoices.id, id));
+      return result || undefined;
+    } catch (error) {
+      console.error('Error fetching invoice:', error);
+      return undefined;
+    }
   }
 
   async getInvoiceByQuotation(quotationId: number): Promise<Invoice | undefined> {
-    return undefined;
+    try {
+      const [result] = await db.select().from(invoices)
+        .where(eq(invoices.quotationId, quotationId));
+      return result || undefined;
+    } catch (error) {
+      console.error('Error fetching invoice by quotation:', error);
+      return undefined;
+    }
   }
 
   async getInvoiceBySalesOrder(salesOrderId: number): Promise<Invoice | undefined> {
-    return undefined;
+    try {
+      // First get the sales order to find its quotation ID
+      const salesOrder = await this.getSalesOrder(salesOrderId);
+      if (!salesOrder) return undefined;
+      
+      // Then use the quotation ID to find the invoice
+      return await this.getInvoiceByQuotation(salesOrder.quotationId);
+    } catch (error) {
+      console.error('Error fetching invoice by sales order:', error);
+      return undefined;
+    }
   }
 
   async getInvoiceWithDetails(id: number): Promise<Invoice & { customer: Customer, quotation: QuotationWithDetails } | undefined> {
-    return undefined;
+    try {
+      const invoice = await this.getInvoice(id);
+      if (!invoice) return undefined;
+      
+      const customer = await this.getCustomer(invoice.customerId);
+      if (!customer) return undefined;
+      
+      const quotation = await this.getQuotationWithDetails(invoice.quotationId);
+      if (!quotation) return undefined;
+      
+      return {
+        ...invoice,
+        customer,
+        quotation
+      };
+    } catch (error) {
+      console.error('Error fetching invoice with details:', error);
+      return undefined;
+    }
   }
 
   async createInvoiceFromQuotation(quotationId: number, data?: Partial<InsertInvoice>): Promise<Invoice> {
-    throw new Error("Method not implemented");
+    // Get quotation details
+    const quotation = await this.getQuotation(quotationId);
+    if (!quotation) {
+      throw new Error("Quotation not found");
+    }
+    
+    // Generate invoice number
+    const existingInvoices = await db.select().from(invoices);
+    const maxNumber = existingInvoices.reduce((max, invoice) => {
+      if (invoice.invoiceNumber) {
+        const match = invoice.invoiceNumber.match(/INV-(\d{4})-(\d{3})/);
+        if (match) {
+          const number = parseInt(match[2]);
+          return Math.max(max, number);
+        }
+      }
+      return max;
+    }, 0);
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(maxNumber + 1).padStart(3, '0')}`;
+    
+    // Prepare insert values
+    const insertData: Partial<InsertInvoice> = {
+      invoiceNumber,
+      quotationId,
+      customerId: quotation.customerId,
+      totalAmount: quotation.finalPrice || 0,
+      amountPaid: 0,
+      amountDue: quotation.finalPrice || 0,
+      status: "pending",
+      dueDate: data?.dueDate ? new Date(data.dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
+      notes: data?.notes || null
+    };
+    
+    const [created] = await db.insert(invoices).values(insertData).returning();
+    return created;
   }
 
   async createInvoiceFromSalesOrder(salesOrderId: number, data?: Partial<InsertInvoice>): Promise<Invoice> {
-    throw new Error("Method not implemented");
+    console.log(`Database createInvoiceFromSalesOrder called with ID: ${salesOrderId}`);
+    
+    // Get the sales order with details
+    const salesOrder = await this.getSalesOrder(salesOrderId);
+    console.log(`Database createInvoiceFromSalesOrder - salesOrder result:`, salesOrder);
+    
+    if (!salesOrder) {
+      console.error(`Database createInvoiceFromSalesOrder - Sales Order with ID ${salesOrderId} not found`);
+      throw new Error(`Sales Order with ID ${salesOrderId} not found`);
+    }
+    
+    // Get the quotation
+    const quotation = await this.getQuotation(salesOrder.quotationId);
+    if (!quotation) {
+      throw new Error(`Quotation with ID ${salesOrder.quotationId} not found`);
+    }
+    
+    // Check if the quotation is already converted to an invoice
+    const existingInvoice = await this.getInvoiceByQuotation(quotation.id);
+    if (existingInvoice) {
+      throw new Error(`Quotation with ID ${quotation.id} is already converted to Invoice #${existingInvoice.invoiceNumber}`);
+    }
+    
+    // Generate invoice number
+    const existingInvoices = await db.select().from(invoices);
+    const maxNumber = existingInvoices.reduce((max, invoice) => {
+      if (invoice.invoiceNumber) {
+        const match = invoice.invoiceNumber.match(/INV-(\d{4})-(\d{3})/);
+        if (match) {
+          const number = parseInt(match[2]);
+          return Math.max(max, number);
+        }
+      }
+      return max;
+    }, 0);
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(maxNumber + 1).padStart(3, '0')}`;
+    
+    // Prepare insert values
+    const insertData: Partial<InsertInvoice> = {
+      invoiceNumber,
+      quotationId: quotation.id,
+      customerId: quotation.customerId,
+      totalAmount: salesOrder.totalAmount,
+      amountPaid: salesOrder.amountPaid,
+      amountDue: salesOrder.amountDue,
+      status: salesOrder.paymentStatus === 'paid' ? 'paid' : (salesOrder.paymentStatus === 'partially_paid' ? 'partially_paid' : 'pending'),
+      dueDate: data?.dueDate ? new Date(data.dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
+      notes: data?.notes || null
+    };
+    
+    const [created] = await db.insert(invoices).values(insertData).returning();
+    return created;
   }
 
   async updateInvoiceStatus(id: number, status: "pending" | "paid" | "partially_paid" | "overdue" | "cancelled"): Promise<Invoice | undefined> {
-    return undefined;
+    try {
+      const [updated] = await db
+        .update(invoices)
+        .set({ status: status })
+        .where(eq(invoices.id, id))
+        .returning();
+      return updated || undefined;
+    } catch (error) {
+      console.error('Error updating invoice status:', error);
+      return undefined;
+    }
   }
 
   async updateInvoice(id: number, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
-    return undefined;
+    try {
+      const [updated] = await db
+        .update(invoices)
+        .set(invoice)
+        .where(eq(invoices.id, id))
+        .returning();
+      return updated || undefined;
+    } catch (error) {
+      console.error('Error updating invoice:', error);
+      return undefined;
+    }
   }
 
   async cancelInvoice(id: number): Promise<Invoice | undefined> {
-    return undefined;
+    return await this.updateInvoiceStatus(id, 'cancelled');
   }
 
   async getAllPayments(): Promise<Payment[]> {

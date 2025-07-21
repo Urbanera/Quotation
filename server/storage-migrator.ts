@@ -930,17 +930,136 @@ export class StorageMigrator {
   async createPayment(...args: any[]) { return (this.memStorage as any).createPayment(...args); }
   async recordPayment(...args: any[]) { return (this.memStorage as any).recordPayment(...args); }
   async deletePayment(...args: any[]) { return (this.memStorage as any).deletePayment(...args); }
-  async getInvoices(...args: any[]) { return (this.memStorage as any).getInvoices(...args); }
-  async getInvoicesByCustomer(...args: any[]) { return (this.memStorage as any).getInvoicesByCustomer(...args); }
-  async getInvoice(...args: any[]) { return (this.memStorage as any).getInvoice(...args); }
-  async getInvoiceByQuotation(...args: any[]) { return (this.memStorage as any).getInvoiceByQuotation(...args); }
-  async getInvoiceBySalesOrder(...args: any[]) { return (this.memStorage as any).getInvoiceBySalesOrder(...args); }
-  async getInvoiceWithDetails(...args: any[]) { return (this.memStorage as any).getInvoiceWithDetails(...args); }
-  async createInvoiceFromQuotation(...args: any[]) { return (this.memStorage as any).createInvoiceFromQuotation(...args); }
-  async createInvoiceFromSalesOrder(...args: any[]) { return (this.memStorage as any).createInvoiceFromSalesOrder(...args); }
-  async updateInvoiceStatus(...args: any[]) { return (this.memStorage as any).updateInvoiceStatus(...args); }
-  async updateInvoice(...args: any[]) { return (this.memStorage as any).updateInvoice(...args); }
-  async cancelInvoice(...args: any[]) { return (this.memStorage as any).cancelInvoice(...args); }
+  async getInvoices() { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.getInvoices();
+      } catch (error) {
+        console.error('Database error in getInvoices, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).getInvoices(); 
+  }
+  
+  async getInvoicesByCustomer(customerId: number) { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.getInvoicesByCustomer(customerId);
+      } catch (error) {
+        console.error('Database error in getInvoicesByCustomer, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).getInvoicesByCustomer(customerId); 
+  }
+  
+  async getInvoice(id: number) { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.getInvoice(id);
+      } catch (error) {
+        console.error('Database error in getInvoice, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).getInvoice(id); 
+  }
+  
+  async getInvoiceByQuotation(quotationId: number) { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.getInvoiceByQuotation(quotationId);
+      } catch (error) {
+        console.error('Database error in getInvoiceByQuotation, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).getInvoiceByQuotation(quotationId); 
+  }
+  
+  async getInvoiceBySalesOrder(salesOrderId: number) { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.getInvoiceBySalesOrder(salesOrderId);
+      } catch (error) {
+        console.error('Database error in getInvoiceBySalesOrder, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).getInvoiceBySalesOrder(salesOrderId); 
+  }
+  
+  async getInvoiceWithDetails(id: number) { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.getInvoiceWithDetails(id);
+      } catch (error) {
+        console.error('Database error in getInvoiceWithDetails, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).getInvoiceWithDetails(id); 
+  }
+  
+  async createInvoiceFromQuotation(quotationId: number, data?: any) { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.createInvoiceFromQuotation(quotationId, data);
+      } catch (error) {
+        console.error('Database error in createInvoiceFromQuotation, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).createInvoiceFromQuotation(quotationId, data); 
+  }
+  
+  async createInvoiceFromSalesOrder(salesOrderId: number, data?: any) { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.createInvoiceFromSalesOrder(salesOrderId, data);
+      } catch (error) {
+        console.error('Database error in createInvoiceFromSalesOrder, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).createInvoiceFromSalesOrder(salesOrderId, data); 
+  }
+  
+  async updateInvoiceStatus(id: number, status: any) { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.updateInvoiceStatus(id, status);
+      } catch (error) {
+        console.error('Database error in updateInvoiceStatus, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).updateInvoiceStatus(id, status); 
+  }
+  
+  async updateInvoice(id: number, invoice: any) { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.updateInvoice(id, invoice);
+      } catch (error) {
+        console.error('Database error in updateInvoice, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).updateInvoice(id, invoice); 
+  }
+  async cancelInvoice(id: number) { 
+    if (this.shouldUseDatabase('invoices')) {
+      try {
+        return await this.dbStorage.cancelInvoice(id);
+      } catch (error) {
+        console.error('Database error in cancelInvoice, falling back to memory:', error);
+        this.disableModule('invoices');
+      }
+    }
+    return (this.memStorage as any).cancelInvoice(id); 
+  }
   async getFollowUp(...args: any[]) { return (this.memStorage as any).getFollowUp(...args); }
   async updateFollowUp(...args: any[]) { return (this.memStorage as any).updateFollowUp(...args); }
   async deleteFollowUp(...args: any[]) { return (this.memStorage as any).deleteFollowUp(...args); }
