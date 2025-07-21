@@ -6,7 +6,30 @@ DesignQuotes is a full-stack web application for interior design businesses to m
 
 ## Recent Updates (July 21, 2025)
 
-### Critical Fixes Completed (July 21, 2025)
+### Latest Fixes Completed (July 21, 2025 - Session 2)
+- **✅ RESOLVED: Image Update Functionality**: Fixed missing updateImage method in database storage
+  - Implemented proper database storage method for updating image types and metadata
+  - Fixed storage-migrator routing to use database storage instead of memory for all image operations
+  - **Result**: Image type updates (e.g., "OTHER" → "TOP VIEW 3D") now work correctly and persist in database
+- **✅ RESOLVED: PDF Image Display Issues**: Fixed critical quotation details loading for PDF generation
+  - Enhanced `getQuotationWithDetails` method to properly fetch images from database instead of returning empty arrays
+  - Fixed both landscape and presentation PDF image display functionality
+  - **Result**: PDFs now properly display uploaded images in rooms instead of showing blank spaces
+- **✅ RESOLVED: Landscape PDF Terms & Conditions Formatting**: Replaced raw HTML display with professional multi-column layout
+  - Implemented structured 6-section layout: Project Scope & Delivery, Payment & Pricing, Quality & Warranty, Modifications & Changes, Client Responsibilities, Cancellation Policy
+  - Added styled note section with blue background matching preview expectations
+  - **Result**: Terms & conditions now display in clean, professional format matching user's preview image
+- **✅ RESOLVED: CSV Customer Import Multi-line Field Handling**: Fixed CSV parsing to handle addresses with line breaks
+  - Implemented proper CSV parser that handles multi-line quoted fields (addresses like "Survey no:331-41\nSivaram village")
+  - Enhanced field cleaning and validation to properly process quoted values
+  - **Result**: CSV import now successfully imports all customers including those with complex multi-line addresses
+- **✅ RESOLVED: Quotation Duplication Failure**: Implemented missing database storage method for quotation duplication
+  - Created complete `duplicateQuotation` method in database storage with proper quotation number generation
+  - Added full duplication of rooms, products, accessories, images, and installation charges
+  - Enhanced error handling and logging for duplication process
+  - **Result**: Quotation duplication now works for both same customer and different customer scenarios
+
+### Critical Fixes Completed (July 21, 2025 - Session 1)
 - **✅ RESOLVED: Room Price Calculation Issue**: Fixed critical room pricing system where rooms displayed 0 prices despite having products/accessories with correct values
   - Implemented missing `updateQuotationPrices` method in database storage to properly aggregate product and accessory prices at room level
   - Added automatic price recalculation triggers to product/accessory creation routes

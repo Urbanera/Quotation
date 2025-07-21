@@ -637,7 +637,158 @@ export class DatabaseStorage implements IStorage {
   // Full implementations would be added as needed
 
   async duplicateQuotation(id: number, customerId?: number): Promise<Quotation> {
-    throw new Error("Method not implemented");
+    console.log(`Duplicating quotation ${id} in database storage`);
+    
+    // Get the original quotation with all details
+    const originalQuotation = await this.getQuotationWithDetails(id);
+    if (!originalQuotation) {
+      throw new Error("Original quotation not found");
+    }
+
+    // Generate new quotation number
+    const now = new Date();
+    const year = now.getFullYear();
+    
+    // Get the latest quotation number for this year
+    const latestQuotations = await db
+      .select({ quotationNumber: quotations.quotationNumber })
+      .from(quotations)
+      .where(sql`quotation_number LIKE ${`Q-${year}-%`}`)
+      .orderBy(desc(quotations.quotationNumber))
+      .limit(1);
+    
+    let nextNumber = 1;
+    if (latestQuotations.length > 0) {
+      const lastNumber = latestQuotations[0].quotationNumber;
+      const parts = lastNumber.split('-');
+      if (parts.length >= 3 && parts[2]) {
+        const numberPart = parseInt(parts[2], 10);
+        if (!isNaN(numberPart)) {
+          nextNumber = numberPart + 1;
+        }
+      }
+    }
+    
+    const quotationNumber = `Q-${year}-${String(nextNumber).padStart(3, '0')}`;
+
+    // Create the new quotation
+    const [newQuotation] = await db
+      .insert(quotations)
+      .values({
+        customerId: customerId || originalQuotation.customerId,
+        quotationNumber,
+        status: "draft",
+        title: `${originalQuotation.title || ''} (Copy)`,
+        description: originalQuotation.description,
+        gstPercentage: originalQuotation.gstPercentage,
+        globalDiscount: originalQuotation.globalDiscount,
+        installationHandling: originalQuotation.installationHandling,
+        totalSellingPrice: originalQuotation.totalSellingPrice,
+        totalDiscountedPrice: originalQuotation.totalDiscountedPrice,
+        totalInstallationCharges: originalQuotation.totalInstallationCharges || 0,
+        gstAmount: originalQuotation.gstAmount,
+        finalPrice: originalQuotation.finalPrice,
+        validUntil: originalQuotation.validUntil,
+        terms: originalQuotation.terms,
+        createdAt: now,
+        updatedAt: now
+      })
+      .returning();
+
+    console.log(`Created new quotation ${newQuotation.id} with number ${quotationNumber}`);
+
+    // Duplicate all rooms with their items
+    for (const originalRoom of originalQuotation.rooms) {
+      console.log(`Duplicating room "${originalRoom.name}" with ${originalRoom.products.length} products, ${originalRoom.accessories.length} accessories, ${originalRoom.images.length} images`);
+      
+      // Create the new room
+      const [newRoom] = await db
+        .insert(rooms)
+        .values({
+          quotationId: newQuotation.id,
+          name: originalRoom.name,
+          description: originalRoom.description,
+          sellingPrice: originalRoom.sellingPrice,
+          discountedPrice: originalRoom.discountedPrice,
+          order: originalRoom.order,
+          installDescription: originalRoom.installDescription,
+          widthMm: originalRoom.widthMm,
+          heightMm: originalRoom.heightMm,
+          areaSqft: originalRoom.areaSqft,
+          pricePerSqft: originalRoom.pricePerSqft,
+          installAmount: originalRoom.installAmount,
+          teowinEstimateUrl: originalRoom.teowinEstimateUrl,
+          teowinEstimateType: originalRoom.teowinEstimateType,
+          teowinEstimateName: originalRoom.teowinEstimateName,
+          included: originalRoom.included
+        })
+        .returning();
+
+      // Create products for the new room
+      if (originalRoom.products.length > 0) {
+        const newProducts = originalRoom.products.map(product => ({
+          roomId: newRoom.id,
+          name: product.name,
+          description: product.description,
+          sellingPrice: product.sellingPrice,
+          discount: product.discount,
+          discountType: product.discountType,
+          discountedPrice: product.discountedPrice,
+          quantity: product.quantity
+        }));
+        
+        await db.insert(products).values(newProducts);
+      }
+
+      // Create accessories for the new room
+      if (originalRoom.accessories.length > 0) {
+        const newAccessories = originalRoom.accessories.map(accessory => ({
+          roomId: newRoom.id,
+          name: accessory.name,
+          description: accessory.description,
+          sellingPrice: accessory.sellingPrice,
+          discount: accessory.discount,
+          discountType: accessory.discountType,
+          discountedPrice: accessory.discountedPrice,
+          quantity: accessory.quantity
+        }));
+        
+        await db.insert(accessories).values(newAccessories);
+      }
+
+      // Create images for the new room (reference the same files)
+      if (originalRoom.images.length > 0) {
+        const newImages = originalRoom.images.map(image => ({
+          roomId: newRoom.id,
+          filename: image.filename,
+          path: image.path,
+          type: image.type,
+          order: image.order
+        }));
+        
+        await db.insert(images).values(newImages);
+      }
+
+      // Create installation charges for the new room
+      if (originalRoom.installationCharges && originalRoom.installationCharges.length > 0) {
+        const newCharges = originalRoom.installationCharges.map(charge => ({
+          roomId: newRoom.id,
+          cabinetType: charge.cabinetType,
+          widthMm: charge.widthMm,
+          heightMm: charge.heightMm,
+          areaSqft: charge.areaSqft,
+          pricePerSqft: charge.pricePerSqft,
+          amount: charge.amount
+        }));
+        
+        await db.insert(installationCharges).values(newCharges);
+      }
+    }
+
+    console.log(`Successfully duplicated quotation ${id} as ${newQuotation.id}`);
+    
+    // Return the new quotation with all details
+    return this.getQuotationWithDetails(newQuotation.id) as Promise<Quotation>;
   }
 
   async updateQuotationStatus(id: number, status: "draft" | "sent" | "approved" | "rejected" | "expired" | "converted"): Promise<Quotation | undefined> {
