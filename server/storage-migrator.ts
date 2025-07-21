@@ -332,7 +332,14 @@ export class StorageMigrator {
   // For all other methods, delegate to MemStorage (unchanged behavior)
   async getQuotations() { return this.memStorage.getQuotations(); }
   async getQuotation(id: number) { return this.memStorage.getQuotation(id); }
-  async getQuotationWithDetails(id: number) { return this.memStorage.getQuotationWithDetails(id); }
+  async getQuotationWithDetails(id: number) { 
+    try {
+      return await this.memStorage.getQuotationWithDetails(id);
+    } catch (error) {
+      console.error('Error getting quotation details:', error);
+      return undefined;
+    }
+  }
   async getQuotationsByCustomer(customerId: number) { return this.memStorage.getQuotationsByCustomer(customerId); }
   async createQuotation(quotation: any) { return this.memStorage.createQuotation(quotation); }
   async updateQuotation(id: number, quotation: any) { return this.memStorage.updateQuotation(id, quotation); }
