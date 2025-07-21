@@ -1010,6 +1010,11 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Quotation not found");
     }
     
+    // Update quotation status to converted
+    await db.update(quotations)
+      .set({ status: "converted", updatedAt: new Date() })
+      .where(eq(quotations.id, quotationId));
+    
     // Generate order number
     const existingOrders = await db.select().from(salesOrders);
     const maxNumber = existingOrders.reduce((max, order) => {
@@ -1049,6 +1054,8 @@ export class DatabaseStorage implements IStorage {
     }
     
     const [created] = await db.insert(salesOrders).values(insertData).returning();
+    
+    console.log(`Created sales order ${created.orderNumber} from quotation ${quotationId}, quotation status set to converted`);
     
     return created;
   }
