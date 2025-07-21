@@ -904,10 +904,73 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
       }
       
       const fileContent = fs.readFileSync(req.file.path, 'utf8');
-      const lines = fileContent.split('\n');
+      
+      // Proper CSV parsing function that handles multi-line quoted fields
+      const parseCSV = (content: string): string[][] => {
+        const rows: string[][] = [];
+        let currentRow: string[] = [];
+        let currentField = '';
+        let inQuotes = false;
+        let i = 0;
+        
+        while (i < content.length) {
+          const char = content[i];
+          
+          if (char === '"') {
+            if (inQuotes && i + 1 < content.length && content[i + 1] === '"') {
+              // Escaped quote - add one quote to field
+              currentField += '"';
+              i += 2;
+              continue;
+            } else {
+              // Toggle quote state
+              inQuotes = !inQuotes;
+            }
+          } else if (char === ',' && !inQuotes) {
+            // End of field
+            currentRow.push(currentField.trim());
+            currentField = '';
+          } else if ((char === '\n' || char === '\r') && !inQuotes) {
+            // End of row
+            if (currentField || currentRow.length > 0) {
+              currentRow.push(currentField.trim());
+              if (currentRow.some(field => field.length > 0)) {
+                rows.push(currentRow);
+              }
+              currentRow = [];
+              currentField = '';
+            }
+            // Skip \r\n combinations
+            if (char === '\r' && i + 1 < content.length && content[i + 1] === '\n') {
+              i++;
+            }
+          } else {
+            // Regular character or newline within quotes
+            currentField += char;
+          }
+          
+          i++;
+        }
+        
+        // Add final field and row if not empty
+        if (currentField || currentRow.length > 0) {
+          currentRow.push(currentField.trim());
+          if (currentRow.some(field => field.length > 0)) {
+            rows.push(currentRow);
+          }
+        }
+        
+        return rows;
+      };
+      
+      const rows = parseCSV(fileContent);
+      
+      if (rows.length === 0) {
+        return res.status(400).json({ message: 'CSV file is empty or invalid' });
+      }
       
       // Parse header line to get column indices
-      const headers = lines[0].split(',').map(header => header.trim());
+      const headers = rows[0].map(header => header.trim().replace(/^"|"$/g, ''));
       
       const nameIndex = headers.findIndex(h => h.toLowerCase() === 'name');
       const emailIndex = headers.findIndex(h => h.toLowerCase() === 'email');
@@ -930,53 +993,30 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
         errors: [] as string[]
       };
       
-      // Process each line (skip header)
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue; // Skip empty lines
+      // Process each row (skip header)
+      for (let i = 1; i < rows.length; i++) {
+        const values = rows[i];
+        if (!values || values.every(v => !v.trim())) continue; // Skip empty rows
         
         importResults.total++;
         
         try {
-          // Parse the CSV line, handling quoted values with commas
-          const values = [];
-          let inQuotes = false;
-          let currentValue = '';
           
-          for (let j = 0; j < line.length; j++) {
-            const char = line[j];
-            
-            if (char === '"') {
-              if (inQuotes && j < line.length - 1 && line[j + 1] === '"') {
-                // Handle escaped quotes (double quotes)
-                currentValue += '"';
-                j++; // Skip the next quote
-              } else {
-                // Toggle quote state
-                inQuotes = !inQuotes;
-              }
-            } else if (char === ',' && !inQuotes) {
-              // End of field
-              values.push(currentValue);
-              currentValue = '';
-            } else {
-              currentValue += char;
-            }
-          }
+          // Extract customer data - clean quoted fields
+          const cleanValue = (index: number) => {
+            if (index < 0 || index >= values.length) return '';
+            return values[index].replace(/^"|"$/g, '').trim();
+          };
           
-          // Add the last value
-          values.push(currentValue);
-          
-          // Extract customer data
           const customerData = {
-            name: nameIndex >= 0 ? values[nameIndex].trim() : '',
-            email: emailIndex >= 0 ? values[emailIndex].trim() : '',
-            phone: phoneIndex >= 0 ? values[phoneIndex].trim() : '',
-            address: addressIndex >= 0 ? values[addressIndex].trim() : '',
-            city: cityIndex >= 0 ? values[cityIndex].trim() : '',
-            stage: (stageIndex >= 0 ? values[stageIndex].trim().toLowerCase() : 'new') as "new" | "pipeline" | "cold" | "warm" | "booked" | "lost",
-            leadSource: leadSourceIndex >= 0 ? values[leadSourceIndex].trim() : '',
-            notes: notesIndex >= 0 ? values[notesIndex].trim() : ''
+            name: cleanValue(nameIndex),
+            email: cleanValue(emailIndex),
+            phone: cleanValue(phoneIndex),
+            address: cleanValue(addressIndex),
+            city: cleanValue(cityIndex),
+            stage: (cleanValue(stageIndex).toLowerCase() || 'new') as "new" | "pipeline" | "cold" | "warm" | "booked" | "lost",
+            leadSource: cleanValue(leadSourceIndex),
+            notes: cleanValue(notesIndex)
           };
           
           // Validate required fields
@@ -999,8 +1039,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
           const newCustomer = await storage.createCustomer(customerData);
           
           // Create a follow-up if next follow-up date is provided
-          if (nextFollowUpDateIndex >= 0 && values[nextFollowUpDateIndex].trim()) {
-            const nextFollowUpDate = values[nextFollowUpDateIndex].trim();
+          if (nextFollowUpDateIndex >= 0 && cleanValue(nextFollowUpDateIndex)) {
+            const nextFollowUpDate = cleanValue(nextFollowUpDateIndex);
             
             try {
               const date = new Date(nextFollowUpDate);
