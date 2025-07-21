@@ -919,49 +919,160 @@ const LandscapeQuote: React.FC<LandscapeQuoteProps> = ({
           
           {/* Content area with controlled height */}
           <View style={{ marginTop: 20, marginLeft: 30, marginRight: 30, marginBottom: 50, maxHeight: 450, overflow: 'hidden' }}>
-            {appSettings?.landscapeTermsAndConditions ? (
-              <Text style={{ fontSize: 10, lineHeight: 1.4, color: '#333333' }}>
-                {appSettings.landscapeTermsAndConditions.replace(/<[^>]*>?/gm, ' ').substring(0, 2000)}
-              </Text>
-            ) : appSettings?.presentationTermsAndConditions ? (
-              <Text style={{ fontSize: 10, lineHeight: 1.4, color: '#333333' }}>
-                {appSettings.presentationTermsAndConditions.replace(/<[^>]*>?/gm, ' ').substring(0, 2000)}
-              </Text>
+            {(appSettings?.landscapeTermsAndConditions || appSettings?.presentationTermsAndConditions) ? (
+              <View style={{ flexDirection: 'row', gap: 30 }}>
+                {/* Left Column */}
+                <View style={{ flex: 1 }}>
+                  <View style={{ marginBottom: 15 }}>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                      1. Project Scope & Delivery
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Design, supply & installation as per specifications
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Manufacturing begins after advance payment & design approval
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Standard delivery: 4-6 weeks from order confirmation
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4 }}>
+                      • Installation timeline depends on site conditions
+                    </Text>
+                  </View>
+
+                  <View style={{ marginBottom: 15 }}>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                      2. Payment & Pricing
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Prices valid for 30 days from quotation date
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Payment: 50% advance, 40% pre-delivery, 10% completion
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • GST & taxes as per government regulations
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4 }}>
+                      • All prices in Indian Rupees (INR)
+                    </Text>
+                  </View>
+
+                  <View style={{ marginBottom: 15 }}>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                      3. Quality & Warranty
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • 12-month warranty against manufacturing defects
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Premium materials with quality certifications
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4 }}>
+                      • Professional installation by trained technicians
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Right Column */}
+                <View style={{ flex: 1 }}>
+                  <View style={{ marginBottom: 15 }}>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                      4. Modifications & Changes
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Design changes after approval may incur additional costs
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Material changes subject to availability & pricing
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4 }}>
+                      • Timeline extensions for scope modifications
+                    </Text>
+                  </View>
+
+                  <View style={{ marginBottom: 15 }}>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                      5. Client Responsibilities
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Provide site access during installation period
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Final measurements confirmation before production
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4 }}>
+                      • Timely payments as per agreed schedule
+                    </Text>
+                  </View>
+
+                  <View style={{ marginBottom: 15 }}>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                      6. Cancellation Policy
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Pre-production cancellation: 10% fee of total value
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 3 }}>
+                      • Post-production cancellation: As per completion stage
+                    </Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.4 }}>
+                      • Advance payments non-refundable after production starts
+                    </Text>
+                  </View>
+                </View>
+              </View>
             ) : (
-              <View>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>1. Scope of Services</Text>
-                <Text style={{ fontSize: 12, marginBottom: 15, lineHeight: 1.5 }}>
-                  This quotation covers the design, supply, and installation of modular interior solutions as specified in the project details.
-                  Any modifications to the scope will require a revised quotation.
-                </Text>
+              <View style={{ flexDirection: 'row', gap: 30 }}>
+                {/* Default terms with same layout */}
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                    1. Project Scope & Delivery
+                  </Text>
+                  <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 12 }}>
+                    Design, supply & installation as per specifications. Standard delivery 4-6 weeks from confirmation.
+                  </Text>
+                  
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                    2. Payment & Pricing
+                  </Text>
+                  <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 12 }}>
+                    Prices valid 30 days. Payment: 50% advance, 40% pre-delivery, 10% completion. GST applicable.
+                  </Text>
+                </View>
                 
-                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>2. Pricing and Payment</Text>
-                <Text style={{ fontSize: 12, marginBottom: 15, lineHeight: 1.5 }}>
-                  • All prices are in Indian Rupees (INR) and valid for 30 days from the date of issue.
-                  • Payment terms: 50% advance with order confirmation, 40% before delivery, and 10% upon completion.
-                  • GST and other applicable taxes will be charged as per government regulations.
-                </Text>
-                
-                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>3. Timeline</Text>
-                <Text style={{ fontSize: 12, marginBottom: 15, lineHeight: 1.5 }}>
-                  • Manufacturing will commence upon receipt of advance payment and signed approval of designs.
-                  • Standard delivery time is 4-6 weeks from order confirmation, subject to material availability.
-                  • Installation timeline will be provided in the project schedule and may vary based on site conditions.
-                </Text>
-                
-                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>4. Warranty</Text>
-                <Text style={{ fontSize: 12, marginBottom: 15, lineHeight: 1.5 }}>
-                  • All products carry a 12-month warranty against manufacturing defects under normal use.
-                  • Warranty excludes damage caused by misuse, improper maintenance, or unauthorized modifications.
-                </Text>
-                
-                <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10 }}>5. Cancellation and Changes</Text>
-                <Text style={{ fontSize: 12, marginBottom: 15, lineHeight: 1.5 }}>
-                  • Orders cannot be cancelled after production begins. Cancellation before production starts will incur a 10% fee.
-                  • Changes to the design after approval may result in additional costs and timeline extensions.
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                    3. Quality & Warranty
+                  </Text>
+                  <Text style={{ fontSize: 9, lineHeight: 1.4, marginBottom: 12 }}>
+                    12-month warranty against manufacturing defects. Premium materials with quality certifications.
+                  </Text>
+                  
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#009245', marginBottom: 8 }}>
+                    4. Modifications & Changes
+                  </Text>
+                  <Text style={{ fontSize: 9, lineHeight: 1.4 }}>
+                    Design changes after approval may incur additional costs and timeline extensions.
+                  </Text>
+                </View>
               </View>
             )}
+            
+            {/* Note section */}
+            <View style={{ 
+              marginTop: 20, 
+              padding: 10, 
+              backgroundColor: '#f0f8ff', 
+              borderWidth: 1, 
+              borderColor: '#b0d4f1',
+              borderRadius: 4 
+            }}>
+              <Text style={{ fontSize: 8, color: '#2c5aa0', fontStyle: 'italic', textAlign: 'justify' }}>
+                Note: This quotation is computer generated and does not require signature. Terms & conditions are subject to change based on project requirements and mutual agreement.
+              </Text>
+            </View>
           </View>
         </View>
         
