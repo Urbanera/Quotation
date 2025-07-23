@@ -46,9 +46,24 @@ export default function EditQuotation() {
   });
 
   // Fetch customers
-  const { data: customers, isLoading: customersLoading } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
+  const { data: customersResponse, isLoading: customersLoading } = useQuery({
+    queryKey: ["/api/customers", { page: 1, limit: 1000 }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '1000'
+      });
+      const res = await apiRequest("GET", `/api/customers?${params}`);
+      const data = await res.json();
+      
+      if (Array.isArray(data)) {
+        return { customers: data, pagination: { page: 1, totalCustomers: data.length, totalPages: 1 } };
+      }
+      return data;
+    },
   });
+
+  const customers = customersResponse?.customers || [];
 
   // Initialize form with quotation data when loaded (only once)
   useEffect(() => {

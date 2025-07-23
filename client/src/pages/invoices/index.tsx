@@ -21,9 +21,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FileText, Search, Eye, Edit, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Invoice } from '@shared/schema';
+import { Invoice, Customer } from '@shared/schema';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function InvoicesPage() {
   const [, navigate] = useLocation();
@@ -35,6 +36,31 @@ export default function InvoicesPage() {
   const { data: invoices, isLoading } = useQuery<Invoice[]>({
     queryKey: ['/api/invoices'],
   });
+
+  // Fetch customers for name display
+  const { data: customersResponse } = useQuery({
+    queryKey: ["/api/customers", { page: 1, limit: 1000 }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '1000'
+      });
+      const res = await apiRequest("GET", `/api/customers?${params}`);
+      const data = await res.json();
+      
+      if (Array.isArray(data)) {
+        return { customers: data, pagination: { page: 1, totalCustomers: data.length, totalPages: 1 } };
+      }
+      return data;
+    },
+  });
+
+  const customers = customersResponse?.customers || [];
+
+  const getCustomerName = (customerId: number) => {
+    const customer = customers.find((c) => c.id === customerId);
+    return customer ? customer.name : "Unknown Customer";
+  };
 
   // Filter invoices based on search term and status
   const filteredInvoices = invoices
@@ -145,6 +171,7 @@ export default function InvoicesPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Invoice Number</TableHead>
+                      <TableHead>Customer</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Amount</TableHead>
@@ -156,6 +183,7 @@ export default function InvoicesPage() {
                     {paginatedInvoices.map((invoice) => (
                       <TableRow key={invoice.id}>
                         <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                        <TableCell>{getCustomerName(invoice.customerId)}</TableCell>
                         <TableCell>{format(new Date(invoice.createdAt), 'MMM dd, yyyy')}</TableCell>
                         <TableCell>
                           {invoice.dueDate
