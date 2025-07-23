@@ -8,6 +8,7 @@ import { Link } from "wouter";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { Customer, Quotation, FollowUp } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 interface DashboardStats {
   totalCustomers: number;
@@ -21,8 +22,22 @@ interface DashboardStats {
 export function ManagerDesignerDashboard() {
   const { user } = useAuth();
 
-  const { data: customers } = useQuery<Customer[]>({
-    queryKey: ['/api/customers'],
+  const { data: customersResponse } = useQuery({
+    queryKey: ['/api/customers', { page: 1, limit: 100 }], // Get first 100 customers for dashboard
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '100'
+      });
+      const res = await apiRequest("GET", `/api/customers?${params}`);
+      const data = await res.json();
+      
+      // Handle both old and new API response formats
+      if (Array.isArray(data)) {
+        return { customers: data, pagination: { page: 1, totalCustomers: data.length, totalPages: 1 } };
+      }
+      return data;
+    },
   });
 
   const { data: quotations } = useQuery<Quotation[]>({
@@ -33,9 +48,12 @@ export function ManagerDesignerDashboard() {
     queryKey: ['/api/follow-ups/all'],
   });
 
+  // Extract customers from pagination response
+  const customers = customersResponse?.customers || [];
+
   // Calculate stats
   const stats = {
-    totalCustomers: customers?.length || 0,
+    totalCustomers: customersResponse?.pagination?.totalCustomers || customers.length || 0,
     totalQuotations: quotations?.length || 0,
     pendingFollowUps: followUps?.filter(f => !f.completed).length || 0,
     recentQuotations: quotations?.slice(0, 5) || [],
@@ -72,7 +90,7 @@ export function ManagerDesignerDashboard() {
             </p>
           </div>
           <Badge variant="outline" className="text-sm">
-            {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
+            {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
           </Badge>
         </div>
       </div>
@@ -134,7 +152,7 @@ export function ManagerDesignerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {stats.recentCustomers.map((customer) => (
+              {stats.recentCustomers.map((customer: Customer) => (
                 <div key={customer.id} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-8 w-8">
@@ -145,8 +163,8 @@ export function ManagerDesignerDashboard() {
                       <p className="text-xs text-gray-500">{customer.email}</p>
                     </div>
                   </div>
-                  <Badge className={getStageColor(customer.stage)}>
-                    {customer.stage}
+                  <Badge className={getStageColor(customer.stage || '')}>
+                    {customer.stage || 'Unknown'}
                   </Badge>
                 </div>
               ))}
@@ -185,7 +203,7 @@ export function ManagerDesignerDashboard() {
               {stats.pendingFollowUpsList.map((followUp) => (
                 <div key={followUp.id} className="border rounded-md p-3">
                   <div className="flex justify-between items-start mb-2">
-                    <p className="font-medium text-sm">{followUp.customer?.name}</p>
+                    <p className="font-medium text-sm">Customer ID: {followUp.customerId}</p>
                     <Badge variant="outline" className="text-xs">
                       Due
                     </Badge>
