@@ -4,12 +4,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { FileText, Users, Plus, FolderPlus, Bell } from "lucide-react";
 import { Customer, Quotation } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 import PendingFollowUps from "@/components/customers/PendingFollowUps";
 
 export default function Dashboard() {
-  const { data: customers, isLoading: isLoadingCustomers } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
+  const { data: customersResponse, isLoading: isLoadingCustomers } = useQuery({
+    queryKey: ["/api/customers", { page: 1, limit: 1000 }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '1000'
+      });
+      const res = await apiRequest("GET", `/api/customers?${params}`);
+      const data = await res.json();
+      
+      if (Array.isArray(data)) {
+        return { customers: data, pagination: { page: 1, totalCustomers: data.length, totalPages: 1 } };
+      }
+      return data;
+    },
   });
+
+  const customers = customersResponse?.customers || [];
 
   const { data: quotations, isLoading: isLoadingQuotations } = useQuery<Quotation[]>({
     queryKey: ["/api/quotations"],
@@ -33,7 +49,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div className="text-3xl font-bold">
                   {isLoadingCustomers ? "..." : 
-                    customers?.filter(customer => customer.stage !== "lost").length || 0}
+                    customers.filter((customer: Customer) => customer.stage !== "lost").length || 0}
                 </div>
                 <div className="p-2 bg-indigo-100 rounded-full">
                   <Users className="h-6 w-6 text-indigo-600" />

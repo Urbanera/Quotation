@@ -78,12 +78,27 @@ export default function SalesOrdersPage() {
     queryKey: ["/api/sales-orders"],
   });
 
-  const { data: customers } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
+  const { data: customersResponse } = useQuery({
+    queryKey: ["/api/customers", { page: 1, limit: 1000 }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '1000'
+      });
+      const res = await apiRequest("GET", `/api/customers?${params}`);
+      const data = await res.json();
+      
+      if (Array.isArray(data)) {
+        return { customers: data, pagination: { page: 1, totalCustomers: data.length, totalPages: 1 } };
+      }
+      return data;
+    },
   });
 
+  const customers = customersResponse?.customers || [];
+
   const getCustomerName = (customerId: number) => {
-    const customer = customers?.find((c) => c.id === customerId);
+    const customer = customers.find((c: Customer) => c.id === customerId);
     return customer ? customer.name : "Unknown Customer";
   };
 

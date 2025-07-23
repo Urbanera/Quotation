@@ -31,9 +31,24 @@ export default function CustomerList() {
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const { toast } = useToast();
 
-  const { data: customers, isLoading } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
+  const { data: customersResponse, isLoading } = useQuery({
+    queryKey: ["/api/customers", { page: 1, limit: 1000 }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '1000'
+      });
+      const res = await apiRequest("GET", `/api/customers?${params}`);
+      const data = await res.json();
+      
+      if (Array.isArray(data)) {
+        return { customers: data, pagination: { page: 1, totalCustomers: data.length, totalPages: 1 } };
+      }
+      return data;
+    },
   });
+
+  const customers = customersResponse?.customers || [];
 
   const handleDeleteCustomer = async () => {
     if (!customerToDelete) return;
@@ -55,7 +70,7 @@ export default function CustomerList() {
     }
   };
 
-  const filteredCustomers = customers?.filter(customer => 
+  const filteredCustomers = customers.filter((customer: Customer) => 
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone.includes(searchTerm)
