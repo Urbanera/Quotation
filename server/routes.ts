@@ -152,6 +152,30 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
   // Serve static files from the uploads directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+  // General image upload route (for accessories, etc.)
+  app.post('/api/upload', imageUpload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+      
+      console.log("Uploaded file:", req.file);
+      
+      const imageUrl = `/uploads/${req.file.filename}`;
+      console.log("Image URL:", imageUrl);
+      
+      res.json({ 
+        url: imageUrl,
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        size: req.file.size
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
   // Auth routes (public)
   app.post('/api/auth/login', async (req, res) => {
     try {
@@ -2895,8 +2919,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
     try {
       const accessories = await storage.getAccessoryCatalog();
       
-      // Create CSV content
-      const header = "Category,Code,Name,Selling Price,Kitchen Price,Wardrobe Price,Size,Description\n";
+      // Create CSV content with image column
+      const header = "Category,Code,Name,Selling Price,Kitchen Price,Wardrobe Price,Size,Description,Image URL\n";
       const csvContent = accessories.map(item => {
         const escapeCsvField = (field: string | number | null | undefined) => {
           if (field === null || field === undefined) return '';
@@ -2915,7 +2939,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
           escapeCsvField(item.kitchenPrice),
           escapeCsvField(item.wardrobePrice),
           escapeCsvField(item.size || ''),
-          escapeCsvField(item.description || '')
+          escapeCsvField(item.description || ''),
+          escapeCsvField(item.image || '')
         ].join(',');
       }).join('\n');
       
@@ -3015,7 +3040,7 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
             continue;
           }
           
-          const [category, code, name, sellingPriceStr, kitchenPriceStr = "", wardrobePriceStr = "", sizeStr = "", descriptionStr = ""] = columns.map(col => col.trim());
+          const [category, code, name, sellingPriceStr, kitchenPriceStr = "", wardrobePriceStr = "", sizeStr = "", descriptionStr = "", imageUrl = ""] = columns.map(col => col.trim());
           
           if (!category || !code || !name || !sellingPriceStr) {
             results.errorCount++;
@@ -3053,7 +3078,8 @@ export async function registerRoutes(app: express.Express): Promise<Server> {
             kitchenPrice,
             wardrobePrice,
             size: sizeStr || undefined,
-            description: descriptionStr || undefined
+            description: descriptionStr || undefined,
+            image: imageUrl || undefined
           });
           
           results.successCount++;

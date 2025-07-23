@@ -172,7 +172,7 @@ export default function AccessoryCatalogPage() {
                   <DialogTitle>Import Accessories from CSV</DialogTitle>
                   <DialogDescription>
                     Upload a CSV file to import accessories in bulk.
-                    The CSV must include code, name, and category columns.
+                    The CSV must include code, name, and category columns. Image URLs are optional.
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -193,7 +193,8 @@ export default function AccessoryCatalogPage() {
                       {importing && <Loader2 className="h-4 w-4 animate-spin" />}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Required columns: code, name, category (handle, kitchen, light, wardrobe)
+                      Required columns: Category, Code, Name, Selling Price<br/>
+                      Optional: Kitchen Price, Wardrobe Price, Size, Description, Image URL
                     </p>
                   </div>
                   
