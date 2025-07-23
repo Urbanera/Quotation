@@ -61,9 +61,24 @@ export default function CreatePaymentPage() {
   });
 
   // Fetch customers
-  const { data: customers, isLoading: isLoadingCustomers } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"]
+  const { data: customersResponse, isLoading: isLoadingCustomers } = useQuery({
+    queryKey: ["/api/customers", { page: 1, limit: 1000 }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '1000'
+      });
+      const res = await apiRequest("GET", `/api/customers?${params}`);
+      const data = await res.json();
+      
+      if (Array.isArray(data)) {
+        return { customers: data, pagination: { page: 1, totalCustomers: data.length, totalPages: 1 } };
+      }
+      return data;
+    },
   });
+
+  const customers = customersResponse?.customers || [];
 
   // Get selected customer ID
   const selectedCustomerId = form.watch("customerId");
@@ -87,11 +102,11 @@ export default function CreatePaymentPage() {
   });
 
   // Filter customers in 'booked' stage
-  const bookedCustomers = customers?.filter(customer => customer.stage === 'booked') || [];
+  const bookedCustomers = customers?.filter((customer: Customer) => customer.stage === 'booked') || [];
   const allCustomers = customers || [];
   
   // Get selected customer info
-  const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
+  const selectedCustomer = customers?.find((c: Customer) => c.id === selectedCustomerId);
 
   // Create payment mutation
   const createPaymentMutation = useMutation({
@@ -176,7 +191,7 @@ export default function CreatePaymentPage() {
                                 <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
                                   Booked Customers (Recommended)
                                 </div>
-                                {bookedCustomers.map((customer) => (
+                                {bookedCustomers.map((customer: Customer) => (
                                   <SelectItem
                                     key={`booked-${customer.id}`}
                                     value={customer.id.toString()}
@@ -191,8 +206,8 @@ export default function CreatePaymentPage() {
                               </>
                             )}
                             {allCustomers
-                              .filter(c => c.stage !== 'booked')
-                              .map((customer) => (
+                              .filter((c: Customer) => c.stage !== 'booked')
+                              .map((customer: Customer) => (
                                 <SelectItem
                                   key={`other-${customer.id}`}
                                   value={customer.id.toString()}

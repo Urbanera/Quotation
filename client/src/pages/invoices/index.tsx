@@ -58,7 +58,7 @@ export default function InvoicesPage() {
   const customers = customersResponse?.customers || [];
 
   const getCustomerName = (customerId: number) => {
-    const customer = customers.find((c) => c.id === customerId);
+    const customer = customers.find((c: Customer) => c.id === customerId);
     return customer ? customer.name : "Unknown Customer";
   };
 
