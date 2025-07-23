@@ -645,31 +645,61 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Original quotation not found");
     }
 
-    // Generate new quotation number
+    // Generate new quotation number with retry logic
     const now = new Date();
     const year = now.getFullYear();
     
-    // Get the latest quotation number for this year
-    const latestQuotations = await db
-      .select({ quotationNumber: quotations.quotationNumber })
-      .from(quotations)
-      .where(sql`quotation_number LIKE ${`Q-${year}-%`}`)
-      .orderBy(desc(quotations.quotationNumber))
-      .limit(1);
+    let quotationNumber = '';
+    let attempts = 0;
+    const maxAttempts = 10;
     
-    let nextNumber = 1;
-    if (latestQuotations.length > 0) {
-      const lastNumber = latestQuotations[0].quotationNumber;
-      const parts = lastNumber.split('-');
-      if (parts.length >= 3 && parts[2]) {
-        const numberPart = parseInt(parts[2], 10);
-        if (!isNaN(numberPart)) {
-          nextNumber = numberPart + 1;
+    while (attempts < maxAttempts) {
+      // Get all quotation numbers for this year to find the highest
+      const existingQuotations = await db
+        .select({ quotationNumber: quotations.quotationNumber })
+        .from(quotations)
+        .where(sql`quotation_number LIKE ${`Q-${year}-%`}`)
+        .orderBy(quotations.quotationNumber);
+      
+      let nextNumber = 1;
+      if (existingQuotations.length > 0) {
+        // Find the highest number
+        const numbers = existingQuotations
+          .map(q => {
+            const parts = q.quotationNumber.split('-');
+            if (parts.length >= 3 && parts[2]) {
+              const num = parseInt(parts[2], 10);
+              return isNaN(num) ? 0 : num;
+            }
+            return 0;
+          })
+          .filter(n => n > 0);
+        
+        if (numbers.length > 0) {
+          nextNumber = Math.max(...numbers) + 1;
         }
       }
+      
+      quotationNumber = `Q-${year}-${String(nextNumber).padStart(3, '0')}`;
+      
+      // Check if this number already exists
+      const existing = await db
+        .select({ id: quotations.id })
+        .from(quotations)
+        .where(eq(quotations.quotationNumber, quotationNumber))
+        .limit(1);
+        
+      if (existing.length === 0) {
+        break; // Number is available
+      }
+      
+      attempts++;
+      if (attempts >= maxAttempts) {
+        // Fallback: use timestamp
+        quotationNumber = `Q-${year}-${String(Date.now()).slice(-6)}`;
+        break;
+      }
     }
-    
-    const quotationNumber = `Q-${year}-${String(nextNumber).padStart(3, '0')}`;
 
     // Create the new quotation
     const [newQuotation] = await db
